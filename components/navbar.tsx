@@ -21,11 +21,12 @@ import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, MoveRight, X, User, LogOut } from "lucide-react";
+import { Menu, MoveRight, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Spinner } from "./ui/kibo-ui/spinner";
+import { sidebarItems } from "./profile-sidebar";
 
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
@@ -61,7 +62,7 @@ export const Navbar = () => {
                     {item.href ? (
                       <NavigationMenuLink asChild>
                         <Link href={item.href}>
-                          <Button variant="ghost" size="xs">
+                          <Button variant="ghost" size="sm">
                             {item.title}
                           </Button>
                         </Link>
@@ -82,7 +83,7 @@ export const Navbar = () => {
                                   {item.description}
                                 </p>
                               </div>
-                              <Button size="xs" className="mt-4" asChild>
+                              <Button size="sm" className="mt-4" asChild>
                                 <Link href="/services">Se alle tjenester</Link>
                               </Button>
                             </div>
@@ -127,19 +128,26 @@ export const Navbar = () => {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/profiler/${user.id}`}
-                        className="flex items-center gap-2"
-                      >
-                        <User className="w-4 h-4" />
-                        Min side
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
+                    <div>
+                      {sidebarItems.map((item) => {
+                        const Icon = item.icon;
+                        return (
+                          <DropdownMenuItem key={item.href} asChild>
+                            <Link
+                              href={`/profiler/${user.id}${item.href}`}
+                              className="flex items-center gap-2"
+                            >
+                              <Icon className="w-4 h-4" />
+                              {item.title}
+                            </Link>
+                          </DropdownMenuItem>
+                        );
+                      })}
+                      <DropdownMenuSeparator />
+                    </div>
                     <DropdownMenuItem
                       onClick={handleSignOut}
-                      className="flex items-center gap-2 text-destructive focus:text-destructive"
+                      className="flex items-center gap-2"
                     >
                       <LogOut className="w-4 h-4" />
                       Logg ut

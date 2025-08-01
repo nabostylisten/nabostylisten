@@ -5,8 +5,9 @@ import { ProfileForm } from "@/components/profile-form";
 export default async function ProfilePage({
   params,
 }: {
-  params: { profileId: string };
+  params: Promise<{ profileId: string }>;
 }) {
+  const { profileId } = await params;
   const supabase = await createClient();
 
   // Get current user session
@@ -18,7 +19,7 @@ export default async function ProfilePage({
   const { data: profile, error } = await supabase
     .from("profiles")
     .select("*")
-    .eq("id", params.profileId)
+    .eq("id", profileId)
     .single();
 
   if (error || !profile) {
@@ -26,11 +27,11 @@ export default async function ProfilePage({
   }
 
   // Check if user is authenticated and owns this profile
-  const isOwner = user && user.id === params.profileId;
+  const isOwner = user && user.id === profileId;
 
   // If user owns this profile, redirect to the profil subpage
   if (isOwner) {
-    redirect(`/profiler/${params.profileId}/profil`);
+    redirect(`/profiler/${profileId}/profil`);
   }
 
   // For non-owners, show read-only profile view

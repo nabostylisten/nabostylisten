@@ -2,12 +2,14 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign } from "lucide-react";
+import { ProfileLayout } from "@/components/profile-layout";
 
 export default async function InntjeningPage({
   params,
 }: {
-  params: { profileId: string };
+  params: Promise<{ profileId: string }>;
 }) {
+  const { profileId } = await params;
   const supabase = await createClient();
 
   // Get current user session
@@ -16,35 +18,37 @@ export default async function InntjeningPage({
   } = await supabase.auth.getUser();
 
   // Non-owners shouldn't be able to access this subpage
-  if (!user || user.id !== params.profileId) {
-    redirect(`/profiler/${params.profileId}`);
+  if (!user || user.id !== profileId) {
+    redirect(`/profiler/${profileId}`);
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <div className="max-w-2xl mx-auto w-full">
-        <div className="flex items-center gap-3 mb-6">
-          <DollarSign className="w-8 h-8" />
-          <div>
-            <h1 className="text-3xl font-bold">Inntjening</h1>
-            <p className="text-muted-foreground mt-1">
-              Oversikt over din inntjening og utbetalinger
-            </p>
+    <ProfileLayout profileId={profileId}>
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        <div className="max-w-2xl mx-auto w-full">
+          <div className="flex items-center gap-3 mb-6">
+            <DollarSign className="w-8 h-8" />
+            <div>
+              <h1 className="text-3xl font-bold">Inntjening</h1>
+              <p className="text-muted-foreground mt-1">
+                Oversikt over din inntjening og utbetalinger
+              </p>
+            </div>
           </div>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Inntjening og utbetalinger</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">
-              Denne siden er under utvikling. Her vil du kunne se din
-              inntjening, utbetalingshistorikk og skatteopplysninger.
-            </p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Inntjening og utbetalinger</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">
+                Denne siden er under utvikling. Her vil du kunne se din
+                inntjening, utbetalingshistorikk og skatteopplysninger.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-    </div>
+    </ProfileLayout>
   );
 }

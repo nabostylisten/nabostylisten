@@ -1,5 +1,8 @@
 import { Dispatch, SVGProps } from "react";
 import { z } from "zod";
+import { Database } from "./database.types";
+
+export type DatabaseTables = Database["public"]["Tables"];
 
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;

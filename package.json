@@ -24,6 +24,7 @@
     "email:export": "cd transactional && bun run export"
   },
   "dependencies": {
+    "@getbrevo/brevo": "^3.0.1",
     "@mapbox/search-js-react": "^1.3.0",
     "@radix-ui/react-avatar": "^1.1.10",
     "@radix-ui/react-checkbox": "^1.3.1",

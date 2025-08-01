@@ -129,7 +129,7 @@ export const Navbar = () => {
                   <DropdownMenuContent align="end" className="w-48">
                     <DropdownMenuItem asChild>
                       <Link
-                        href="/protected"
+                        href={`/profiler/${user.id}`}
                         className="flex items-center gap-2"
                       >
                         <User className="w-4 h-4" />

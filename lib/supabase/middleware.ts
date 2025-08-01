@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
 import { hasEnvVars } from "../utils";
 import { isAdmin } from "../permissions";
+import { Database } from "@/types/database.types";
 
 // Define public routes that don't require authentication
 const publicRoutes = [
@@ -17,6 +18,7 @@ const publicRoutePatterns = [
   /^\/auth(\/.*)?$/, // /auth and all sub-routes
   /^\/tjenester\/[^/]+$/, // /tjenester/[tjenesteId]
   /^\/stylister\/[^/]+$/, // /stylister/[profilId]
+  /^\/profiler\/[^/]+$/, // /profiler/[profileId]
 ];
 
 function isPublicRoute(pathname: string): boolean {
@@ -42,7 +44,7 @@ export async function updateSession(request: NextRequest) {
 
   // With Fluid compute, don't put this client in a global environment
   // variable. Always create a new one on each request.
-  const supabase = createServerClient(
+  const supabase = createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY!,
     {

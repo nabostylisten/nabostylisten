@@ -41,7 +41,7 @@ export default async function AdminPage() {
   }
 
   // Get applications count for dashboard
-  const { data: applications, error: applicationsError } = await supabase
+  const { data: applications } = await supabase
     .from("applications")
     .select("status")
     .order("created_at", { ascending: false });

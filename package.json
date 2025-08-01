@@ -12,7 +12,10 @@
     "supabase:db:push": "bun ensure:docker && supabase db push",
     "supabase:db:types": "supabase gen types typescript --project-id rbkpzpaarsaoorgfyfvh --schema public > types/database.types.ts",
     "supabase:db:types:zod": "supabase-to-zod --input types/database.types.ts --output schemas/database.schema.ts",
-    "gen:types": "bun run supabase:db:types && bun run supabase:db:types:zod"
+    "gen:types": "bun run supabase:db:types && bun run supabase:db:types:zod",
+    "buckets:create": "bun run scripts/supabase/buckets.ts create",
+    "buckets:list": "bun run scripts/supabase/buckets.ts list",
+    "buckets:delete": "bun run scripts/supabase/buckets.ts delete"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -58,6 +61,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
+    "tsx": "^4.19.2",
     "typescript": "^5"
   }
 }

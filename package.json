@@ -9,7 +9,10 @@
     "supabase:start": "bun ensure:docker && supabase start",
     "supabase:db:diff": "bun ensure:docker && supabase db diff -f",
     "supabase:migrate:up": "bun ensure:docker && supabase migration up",
-    "supabase:db:push": "bun ensure:docker && supabase db push"
+    "supabase:db:push": "bun ensure:docker && supabase db push",
+    "supabase:db:types": "supabase gen types typescript --project-id rbkpzpaarsaoorgfyfvh --schema public > types/database.types.ts",
+    "supabase:db:types:zod": "supabase-to-zod --input types/database.types.ts --output schemas/database.schema.ts",
+    "gen:types": "bun run supabase:db:types && bun run supabase:db:types:zod"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -39,6 +42,7 @@
     "react-image-crop": "^11.0.10",
     "react-medium-image-zoom": "^5.3.0",
     "supabase": "^2.33.7",
+    "supabase-to-zod": "^1.0.7",
     "tailwind-merge": "^3.3.0",
     "zustand": "^5.0.7"
   },

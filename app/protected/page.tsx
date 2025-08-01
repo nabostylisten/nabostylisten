@@ -5,6 +5,7 @@ import { InfoIcon } from "lucide-react";
 import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
 import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import StoreDemo from "@/components/store-demo";
+import TanstackDemo from "@/components/tanstack-demo";
 
 export default async function ProtectedPage() {
   const supabase = await createClient();
@@ -24,6 +25,8 @@ export default async function ProtectedPage() {
         </div>
 
         <CurrentUserAvatar />
+
+        <TanstackDemo />
 
         <StoreDemo />
       </div>

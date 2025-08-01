@@ -101,7 +101,7 @@ const bucketConfigs: BucketConfig[] = [
     // Application attachments - private for security
     {
         name: "applications",
-        public: false,
+        public: true,
         allowedMimeTypes: [
             "image/jpeg",
             "image/png",

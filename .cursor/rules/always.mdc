@@ -118,7 +118,7 @@ export const Component = ({
 
 ### Server Actions Pattern
 
-All server actions follow this structure:
+All server actions follow this structure with individual exported async functions:
 
 ```typescript
 "use server";
@@ -126,22 +126,20 @@ All server actions follow this structure:
 import { createClient } from "@/lib/supabase/server";
 import { [tableName]InsertSchema } from "@/schemas/database.schema";
 
-export const [entityName]Service = {
-  async get[EntityName](id: string) {
-    const supabase = await createClient();
-    return await supabase.from("[table]").select("*").eq("id", id);
-  },
+export async function get[EntityName](id: string) {
+  const supabase = await createClient();
+  return await supabase.from("[table]").select("*").eq("id", id);
+}
 
-  async create[EntityName](data: Database["public"]["Tables"]["[table]"]["Insert"]) {
-    const { success, data: validatedData } = [tableName]InsertSchema.safeParse(data);
-    if (!success) {
-      return { error: "Invalid data", data: null };
-    }
-
-    const supabase = await createClient();
-    return await supabase.from("[table]").insert(validatedData);
+export async function create[EntityName](data: Database["public"]["Tables"]["[table]"]["Insert"]) {
+  const { success, data: validatedData } = [tableName]InsertSchema.safeParse(data);
+  if (!success) {
+    return { error: "Invalid data", data: null };
   }
-};
+
+  const supabase = await createClient();
+  return await supabase.from("[table]").insert(validatedData);
+}
 ```
 
 ### Form Handling Pattern
@@ -287,7 +285,7 @@ nabostylisten/
 ### Database Development
 
 - Generate types: `bun gen:types`
-- Create migrations: `bun supabase:db:diff -f <migration_name>`
+- Create migrations: `bun supabase:db:diff <migration_name>`
 - Apply migrations: `bun supabase:migrate:up`
 - Push to production: `bun supabase:db:push`
 

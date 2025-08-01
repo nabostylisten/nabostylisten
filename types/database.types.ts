@@ -102,49 +102,66 @@ export type Database = {
       }
       applications: {
         Row: {
-          address_id: string
+          address_nickname: string | null
           birth_date: string
+          city: string
+          country: string
           created_at: string
+          email: string
+          entry_instructions: string | null
+          full_name: string
           id: string
+          phone_number: string
+          postal_code: string
           price_range_currency: string
           price_range_from: number
           price_range_to: number
           professional_experience: string
           status: Database["public"]["Enums"]["application_status"]
-          user_id: string
+          street_address: string
+          user_id: string | null
         }
         Insert: {
-          address_id: string
+          address_nickname?: string | null
           birth_date: string
+          city: string
+          country: string
           created_at?: string
+          email: string
+          entry_instructions?: string | null
+          full_name: string
           id?: string
+          phone_number: string
+          postal_code: string
           price_range_currency?: string
           price_range_from: number
           price_range_to: number
           professional_experience: string
           status?: Database["public"]["Enums"]["application_status"]
-          user_id: string
+          street_address: string
+          user_id?: string | null
         }
         Update: {
-          address_id?: string
+          address_nickname?: string | null
           birth_date?: string
+          city?: string
+          country?: string
           created_at?: string
+          email?: string
+          entry_instructions?: string | null
+          full_name?: string
           id?: string
+          phone_number?: string
+          postal_code?: string
           price_range_currency?: string
           price_range_from?: number
           price_range_to?: number
           professional_experience?: string
           status?: Database["public"]["Enums"]["application_status"]
-          user_id?: string
+          street_address?: string
+          user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "applications_address_id_fkey"
-            columns: ["address_id"]
-            isOneToOne: false
-            referencedRelation: "addresses"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "applications_user_id_fkey"
             columns: ["user_id"]
@@ -333,7 +350,7 @@ export type Database = {
           file_path: string
           id: string
           media_type: Database["public"]["Enums"]["media_type"]
-          owner_id: string
+          owner_id: string | null
           review_id: string | null
           service_id: string | null
         }
@@ -344,7 +361,7 @@ export type Database = {
           file_path: string
           id?: string
           media_type: Database["public"]["Enums"]["media_type"]
-          owner_id: string
+          owner_id?: string | null
           review_id?: string | null
           service_id?: string | null
         }
@@ -355,7 +372,7 @@ export type Database = {
           file_path?: string
           id?: string
           media_type?: Database["public"]["Enums"]["media_type"]
-          owner_id?: string
+          owner_id?: string | null
           review_id?: string | null
           service_id?: string | null
         }

@@ -76,18 +76,28 @@ CREATE TABLE IF NOT EXISTS public.applications (
     id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
 
-    -- Link to the user profile that is applying
-    user_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    -- Link to the user profile that is applying (nullable for unauthenticated applications)
+    user_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE,
 
-    -- Link to a structured address from the addresses table
-    address_id uuid NOT NULL REFERENCES public.addresses(id) ON DELETE RESTRICT,
-
-    -- Form Fields
-    professional_experience text NOT NULL,
+    -- Applicant Information (stored directly, no foreign key dependencies)
+    full_name text NOT NULL,
+    email text NOT NULL,
+    phone_number text NOT NULL,
     birth_date date NOT NULL,
+
+    -- Address Information (stored directly)
+    address_nickname text,
+    street_address text NOT NULL,
+    city text NOT NULL,
+    postal_code text NOT NULL,
+    country text NOT NULL,
+    entry_instructions text,
+
+    -- Professional Information
+    professional_experience text NOT NULL,
     price_range_from integer NOT NULL,
     price_range_to integer NOT NULL,
-    price_range_currency text DEFAULT 'NOK' NOT NULL, -- e.g., "NOK"
+    price_range_currency text DEFAULT 'NOK' NOT NULL,
 
     -- Status
     status public.application_status DEFAULT 'applied' NOT NULL
@@ -244,7 +254,7 @@ CREATE TABLE IF NOT EXISTS public.chat_messages (
 CREATE TABLE IF NOT EXISTS public.media (
     id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
-    owner_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    owner_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE, -- Nullable for application images
 
     -- The path to the file in Supabase Storage. e.g., 'public/services/service_uuid/image_uuid.jpg'
     file_path text NOT NULL UNIQUE,

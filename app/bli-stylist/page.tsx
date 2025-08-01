@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -8,8 +11,11 @@ import {
 } from "@/components/ui/card";
 import { CheckCircle, Users, Calendar, CreditCard } from "lucide-react";
 import Link from "next/link";
+import { StylistApplicationForm } from "@/components/forms/stylist-application-form";
 
 export default function BliStylistPage() {
+  const [showApplicationForm, setShowApplicationForm] = useState(false);
+
   const benefits = [
     {
       icon: <Users className="w-6 h-6 text-primary" />,
@@ -37,6 +43,22 @@ export default function BliStylistPage() {
     "Politiattest (ikke eldre enn 3 måneder)",
   ];
 
+  const handleShowApplicationForm = () => {
+    setShowApplicationForm(true);
+    // Scroll to form section
+    setTimeout(() => {
+      document.getElementById("application-form")?.scrollIntoView({
+        behavior: "smooth",
+      });
+    }, 100);
+  };
+
+  const handleApplicationSuccess = () => {
+    setShowApplicationForm(false);
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen pt-20 pb-12">
       <div className="container mx-auto px-6 lg:px-12">
@@ -52,8 +74,8 @@ export default function BliStylistPage() {
             lykkes.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" asChild>
-              <Link href="/auth/sign-up">Søk nå</Link>
+            <Button size="lg" onClick={handleShowApplicationForm}>
+              Søk nå
             </Button>
             <Button size="lg" variant="outline" asChild>
               <Link href="#requirements">Les mer</Link>
@@ -108,27 +130,43 @@ export default function BliStylistPage() {
           </div>
         </div>
 
+        {/* Application Form Section */}
+        {showApplicationForm && (
+          <div id="application-form" className="py-16">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">Søk som stylist</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Fyll ut søknadsskjemaet nedenfor for å begynne din reise som
+                stylist på Nabostylisten.
+              </p>
+            </div>
+            <StylistApplicationForm onSuccess={handleApplicationSuccess} />
+          </div>
+        )}
+
         {/* CTA Section */}
-        <div className="py-16 text-center">
-          <div className="bg-primary/5 rounded-lg p-12">
-            <h2 className="text-3xl font-bold mb-6">
-              Klar til å starte din reise?
-            </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Søk nå og bli en del av Norges ledende platform for
-              skjønnhetstjenester. Vi hjelper deg med å bygge din
-              drømmevirksomhet.
-            </p>
-            <div className="flex gap-4 justify-center">
-              <Button size="lg" asChild>
-                <Link href="/auth/sign-up">Søk som stylist</Link>
-              </Button>
-              <Button size="lg" variant="outline" asChild>
-                <Link href="/contact">Kontakt oss</Link>
-              </Button>
+        {!showApplicationForm && (
+          <div className="py-16 text-center">
+            <div className="bg-primary/5 rounded-lg p-12">
+              <h2 className="text-3xl font-bold mb-6">
+                Klar til å starte din reise?
+              </h2>
+              <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+                Søk nå og bli en del av Norges ledende platform for
+                skjønnhetstjenester. Vi hjelper deg med å bygge din
+                drømmevirksomhet.
+              </p>
+              <div className="flex gap-4 justify-center">
+                <Button size="lg" onClick={handleShowApplicationForm}>
+                  Søk som stylist
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="/contact">Kontakt oss</Link>
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

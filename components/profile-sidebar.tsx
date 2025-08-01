@@ -63,9 +63,9 @@ export const ProfileSidebar = ({
   const pathname = usePathname();
 
   return (
-    <aside className={cn("w-64 border-r bg-background p-2", className)}>
-      <div className="space-y-2">
-        <nav className="space-y-1">
+    <aside className={cn("w-64 bg-background p-2", className)}>
+      <div className="flex flex-col gap-4">
+        <nav className="flex flex-col gap-2">
           {sidebarItems.map((item) => {
             const href = `/profiler/${profileId}${item.href}`;
             const isActive = pathname === href;

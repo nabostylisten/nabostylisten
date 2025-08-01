@@ -7,17 +7,19 @@ interface ProfileLayoutProps {
 
 export const ProfileLayout = ({ profileId, children }: ProfileLayoutProps) => {
   return (
-    <div className="flex min-h-screen pt-16">
-      {/* Desktop sidebar - hidden on mobile */}
-      <div className="hidden md:block">
-        <ProfileSidebar
-          profileId={profileId}
-          className="fixed h-screen top-16"
-        />
-      </div>
+    <div className="min-h-[calc(100vh-2rem)]">
+      <div className="flex">
+        {/* Desktop sidebar - hidden on mobile */}
+        <div className="hidden md:block">
+          <ProfileSidebar
+            profileId={profileId}
+            className="w-64 bg-background sticky self-start"
+          />
+        </div>
 
-      {/* Main content area */}
-      <div className="flex-1 md:ml-64">{children}</div>
+        {/* Main content area */}
+        <div className="flex-1">{children}</div>
+      </div>
     </div>
   );
 };

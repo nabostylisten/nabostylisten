@@ -15,7 +15,10 @@
     "gen:types": "bun run supabase:db:types && bun run supabase:db:types:zod",
     "buckets:create": "bun run scripts/supabase/buckets.ts create",
     "buckets:list": "bun run scripts/supabase/buckets.ts list",
-    "buckets:delete": "bun run scripts/supabase/buckets.ts delete"
+    "buckets:delete": "bun run scripts/supabase/buckets.ts delete",
+    "email:dev": "cd transactional && bun run dev",
+    "email:build": "cd transactional && bun run build",
+    "email:export": "cd transactional && bun run export"
   },
   "dependencies": {
     "@radix-ui/react-avatar": "^1.1.10",
@@ -26,6 +29,7 @@
     "@radix-ui/react-popover": "^1.1.14",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
+    "@react-email/components": "^0.4.0",
     "@supabase/postgrest-js": "*",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.53.0",
@@ -44,6 +48,7 @@
     "react-dropzone": "^14.3.8",
     "react-image-crop": "^11.0.10",
     "react-medium-image-zoom": "^5.3.0",
+    "resend": "^4.7.0",
     "supabase": "^2.33.7",
     "supabase-to-zod": "^1.0.7",
     "tailwind-merge": "^3.3.0",

@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Laptop, Moon, Sun } from "lucide-react";
@@ -53,23 +52,27 @@ const ThemeSwitcher = () => {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-content" align="start">
-        <DropdownMenuRadioGroup
-          value={theme}
-          onValueChange={(e) => setTheme(e)}
+        <DropdownMenuItem
+          className="flex gap-2"
+          onClick={() => setTheme("light")}
         >
-          <DropdownMenuRadioItem className="flex gap-2" value="light">
-            <Sun size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Lys</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="dark">
-            <Moon size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>Mørk</span>
-          </DropdownMenuRadioItem>
-          <DropdownMenuRadioItem className="flex gap-2" value="system">
-            <Laptop size={ICON_SIZE} className="text-muted-foreground" />{" "}
-            <span>System</span>
-          </DropdownMenuRadioItem>
-        </DropdownMenuRadioGroup>
+          <Sun size={ICON_SIZE} className="text-muted-foreground" />
+          <span>Lys</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="flex gap-2"
+          onClick={() => setTheme("dark")}
+        >
+          <Moon size={ICON_SIZE} className="text-muted-foreground" />
+          <span>Mørk</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="flex gap-2"
+          onClick={() => setTheme("system")}
+        >
+          <Laptop size={ICON_SIZE} className="text-muted-foreground" />
+          <span>System</span>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

@@ -1,4 +1,4 @@
-import { PostHog } from "posthog-node";
+import posthog from "posthog-js";
 
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY!;
 const POSTHOG_HOST = process.env.NEXT_PUBLIC_POSTHOG_HOST!;
@@ -9,12 +9,7 @@ if (!POSTHOG_KEY || !POSTHOG_HOST) {
     );
 }
 
-export default function PostHogClient() {
-    const posthogClient = new PostHog(POSTHOG_KEY, {
-        host: POSTHOG_HOST,
-        flushAt: 1,
-        flushInterval: 0,
-    });
-
-    return posthogClient;
-}
+posthog.init(POSTHOG_KEY, {
+    api_host: POSTHOG_HOST,
+    defaults: "2025-05-24",
+});

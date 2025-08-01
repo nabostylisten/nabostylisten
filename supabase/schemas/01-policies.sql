@@ -20,6 +20,11 @@ CREATE POLICY "Profiles are viewable by everyone." ON public.profiles
 FOR SELECT TO anon, authenticated
 USING ( true );
 
+-- Allow the trigger function to create profiles for new users.
+CREATE POLICY "Profiles can be created by trigger function." ON public.profiles
+FOR INSERT TO authenticated
+WITH CHECK ( true );
+
 -- A user can update their own profile.
 CREATE POLICY "Users can update their own profile." ON public.profiles
 FOR UPDATE TO authenticated

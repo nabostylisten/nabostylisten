@@ -6,6 +6,8 @@ import type { Database } from "@/types/database.types";
 import { uploadApplicationImage } from "@/server/files.actions";
 import { resend } from "@/lib/resend";
 import { StylistApplicationEmail } from "@/transactional/emails/stylist-application";
+import { ApplicationStatusUpdateEmail } from "@/transactional/emails/application-status-update";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export interface ApplicationFormData {
     // Personal information
@@ -289,12 +291,18 @@ export async function getAllApplications() {
 /**
  * Update application status (admin only)
  */
-export async function updateApplicationStatus(
-    applicationId: string,
-    status: Database["public"]["Enums"]["application_status"],
-) {
+export async function updateApplicationStatus({
+    applicationId,
+    status,
+    message,
+}: {
+    applicationId: string;
+    status: Database["public"]["Enums"]["application_status"];
+    message?: string;
+}) {
     try {
         const supabase = await createClient();
+        const adminSupabaseClient = await createAdminClient();
 
         // Check if user is admin
         const { data: userRole } = await supabase.rpc("get_my_role");
@@ -302,14 +310,23 @@ export async function updateApplicationStatus(
             throw new Error("Ikke autorisert");
         }
 
-        const { data: application, error } = await supabase
+        // Get application details first
+        const { data: application, error: getError } = await supabase
+            .from("applications")
+            .select("*")
+            .eq("id", applicationId)
+            .single();
+
+        if (getError || !application) {
+            throw new Error("Kunne ikke finne søknad");
+        }
+
+        // Update application status
+        const { data: updatedApplication, error } = await supabase
             .from("applications")
             .update({ status })
             .eq("id", applicationId)
-            .select(`
-      *,
-      profiles (full_name, email)
-    `)
+            .select()
             .single();
 
         if (error) {
@@ -318,9 +335,132 @@ export async function updateApplicationStatus(
             );
         }
 
-        // TODO: Send status update email to applicant
+        // Handle different status updates
+        if (status === "pending_info") {
+            // For pending_info, we don't send an email automatically
+            // Admin must manually send email with what information is missing
+            console.log(
+                "Application marked as pending_info. Admin must manually send email to:",
+                application.email,
+            );
 
-        return { data: application, error: null };
+            return {
+                data: updatedApplication,
+                error: null,
+                requiresManualEmail: true,
+                applicantEmail: application.email,
+                applicationId: application.id,
+            };
+        }
+
+        if (status === "rejected") {
+            // For rejected applications, send email with rejection reason
+            if (!message) {
+                throw new Error("Melding er påkrevd for avviste søknader");
+            }
+
+            try {
+                await resend.emails.send({
+                    from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                    to: [application.email],
+                    subject: "Søknadsstatus oppdatert - Avvist",
+                    react: ApplicationStatusUpdateEmail({
+                        applicantName: application.full_name,
+                        applicationId: application.id,
+                        status,
+                        message,
+                    }),
+                });
+            } catch (emailError) {
+                console.error("Error sending rejection email:", emailError);
+                throw new Error("Kunne ikke sende avvisnings-e-post");
+            }
+        }
+
+        if (status === "approved") {
+            // For approved applications, create auth user and profile
+            try {
+                // Create auth user with email
+                const { data: authUser, error: authError } =
+                    await adminSupabaseClient.auth
+                        .admin.createUser({
+                            email: application.email,
+                            email_confirm: true, // Auto-confirm email since we're creating it programmatically
+                            user_metadata: {
+                                full_name: application.full_name,
+                                phone_number: application.phone_number,
+                                role: "stylist",
+                                application_id: application.id,
+                            },
+                            app_metadata: {
+                                role: "stylist",
+                            },
+                        });
+
+                if (authError) {
+                    throw new Error(
+                        `Kunne ikke opprette bruker: ${authError.message}`,
+                    );
+                }
+
+                if (!authUser.user) {
+                    throw new Error(
+                        "Ingen bruker returnert fra auth opprettelse",
+                    );
+                }
+
+                // Update the application with the new user_id
+                const { error: updateError } = await supabase
+                    .from("applications")
+                    .update({ user_id: authUser.user.id })
+                    .eq("id", applicationId);
+
+                if (updateError) {
+                    console.error(
+                        "Error updating application with user_id:",
+                        updateError,
+                    );
+                    // Don't throw here, the user was created successfully
+                }
+
+                // Send approval email with login instructions
+                try {
+                    await resend.emails.send({
+                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                        // TODO: Update this when we have a real email
+                        to: ["magnus.rodseth@gmail.com"],
+                        subject: "Søknadsstatus oppdatert - Godkjent",
+                        react: ApplicationStatusUpdateEmail({
+                            applicantName: application.full_name,
+                            applicationId: application.id,
+                            status,
+                            message: message ||
+                                "Din søknad er godkjent! Du kan nå logge inn på platformen.",
+                        }),
+                    });
+                } catch (emailError) {
+                    console.error("Error sending approval email:", emailError);
+                    // Don't throw here, the user was created successfully
+                }
+
+                return {
+                    data: updatedApplication,
+                    error: null,
+                    createdUserId: authUser.user.id,
+                };
+            } catch (userCreationError) {
+                console.error("Error creating auth user:", userCreationError);
+                throw new Error(
+                    `Kunne ikke opprette bruker: ${
+                        userCreationError instanceof Error
+                            ? userCreationError.message
+                            : "Ukjent feil"
+                    }`,
+                );
+            }
+        }
+
+        return { data: updatedApplication, error: null };
     } catch (error) {
         return {
             data: null,

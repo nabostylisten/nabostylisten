@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/use-auth";
+import { isAdmin } from "@/lib/permissions";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { profile, loading } = useAuth();
 
   const footerLinks = {
     Tjenester: [
@@ -22,6 +27,11 @@ export const Footer = () => {
       { name: "Ofte stilte spørsmål (FAQ)", href: "/faq" },
     ],
   };
+
+  // Add admin link if user is admin and not loading
+  if (!loading && profile && isAdmin(profile.role)) {
+    footerLinks.Selskap.push({ name: "Administrator", href: "/admin" });
+  }
 
   return (
     <footer className="bg-background border-t">

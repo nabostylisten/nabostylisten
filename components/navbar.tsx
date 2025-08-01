@@ -25,6 +25,7 @@ import { Menu, MoveRight, X, User, LogOut } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { Spinner } from "./ui/kibo-ui/spinner";
 
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
@@ -159,6 +160,9 @@ export const Navbar = () => {
             </>
           )}
 
+          {/* Loading State */}
+          {loading && <Spinner className="w-4 h-4" />}
+
           {/* Mobile Menu Toggle */}
           <div className="flex lg:hidden">
             <Button variant="ghost" size="sm" onClick={() => setOpen(!isOpen)}>
@@ -228,6 +232,9 @@ export const Navbar = () => {
                 </Button>
               </div>
             )}
+
+            {/* Mobile Loading State */}
+            {loading && <Spinner className="w-4 h-4" />}
           </div>
         </div>
       )}

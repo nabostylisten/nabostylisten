@@ -19,8 +19,9 @@ export type Database = {
           city: string
           country: string
           created_at: string
+          entry_instructions: string | null
           id: string
-          is_home_address: boolean
+          is_primary: boolean
           latitude: number | null
           longitude: number | null
           nickname: string | null
@@ -33,8 +34,9 @@ export type Database = {
           city: string
           country: string
           created_at?: string
+          entry_instructions?: string | null
           id?: string
-          is_home_address?: boolean
+          is_primary?: boolean
           latitude?: number | null
           longitude?: number | null
           nickname?: string | null
@@ -47,8 +49,9 @@ export type Database = {
           city?: string
           country?: string
           created_at?: string
+          entry_instructions?: string | null
           id?: string
-          is_home_address?: boolean
+          is_primary?: boolean
           latitude?: number | null
           longitude?: number | null
           nickname?: string | null
@@ -67,34 +70,116 @@ export type Database = {
           },
         ]
       }
+      application_categories: {
+        Row: {
+          application_id: string
+          category_id: string
+        }
+        Insert: {
+          application_id: string
+          category_id: string
+        }
+        Update: {
+          application_id?: string
+          category_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "application_categories_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "application_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       applications: {
         Row: {
-          application_status: Database["public"]["Enums"]["application_status"]
-          application_type: Database["public"]["Enums"]["application_type"]
+          address_id: string
+          birth_date: string
           created_at: string
           id: string
+          price_range_currency: string
+          price_range_from: number
+          price_range_to: number
+          professional_experience: string
+          status: Database["public"]["Enums"]["application_status"]
           user_id: string
         }
         Insert: {
-          application_status?: Database["public"]["Enums"]["application_status"]
-          application_type: Database["public"]["Enums"]["application_type"]
+          address_id: string
+          birth_date: string
           created_at?: string
           id?: string
+          price_range_currency?: string
+          price_range_from: number
+          price_range_to: number
+          professional_experience: string
+          status?: Database["public"]["Enums"]["application_status"]
           user_id: string
         }
         Update: {
-          application_status?: Database["public"]["Enums"]["application_status"]
-          application_type?: Database["public"]["Enums"]["application_type"]
+          address_id?: string
+          birth_date?: string
           created_at?: string
           id?: string
+          price_range_currency?: string
+          price_range_from?: number
+          price_range_to?: number
+          professional_experience?: string
+          status?: Database["public"]["Enums"]["application_status"]
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "applications_address_id_fkey"
+            columns: ["address_id"]
+            isOneToOne: false
+            referencedRelation: "addresses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "applications_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      booking_services: {
+        Row: {
+          booking_id: string
+          service_id: string
+        }
+        Insert: {
+          booking_id: string
+          service_id: string
+        }
+        Update: {
+          booking_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_services_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_services_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
             referencedColumns: ["id"]
           },
         ]
@@ -107,12 +192,12 @@ export type Database = {
           end_time: string
           id: string
           message_to_stylist: string | null
-          service_id: string
           start_time: string
           status: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id: string | null
-          stripe_payment_status: string | null
           stylist_id: string
+          total_duration_minutes: number
+          total_price: number
           updated_at: string
         }
         Insert: {
@@ -122,12 +207,12 @@ export type Database = {
           end_time: string
           id?: string
           message_to_stylist?: string | null
-          service_id: string
           start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id?: string | null
-          stripe_payment_status?: string | null
           stylist_id: string
+          total_duration_minutes: number
+          total_price: number
           updated_at?: string
         }
         Update: {
@@ -137,12 +222,12 @@ export type Database = {
           end_time?: string
           id?: string
           message_to_stylist?: string | null
-          service_id?: string
           start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id?: string | null
-          stripe_payment_status?: string | null
           stylist_id?: string
+          total_duration_minutes?: number
+          total_price?: number
           updated_at?: string
         }
         Relationships: [
@@ -158,13 +243,6 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_service_id_fkey"
-            columns: ["service_id"]
-            isOneToOne: false
-            referencedRelation: "services"
             referencedColumns: ["id"]
           },
           {
@@ -222,80 +300,73 @@ export type Database = {
         Row: {
           booking_id: string
           created_at: string
-          customer_id: string
           id: string
-          stylist_id: string
           updated_at: string
         }
         Insert: {
           booking_id: string
           created_at?: string
-          customer_id: string
           id?: string
-          stylist_id: string
           updated_at?: string
         }
         Update: {
           booking_id?: string
           created_at?: string
-          customer_id?: string
           id?: string
-          stylist_id?: string
           updated_at?: string
         }
         Relationships: [
           {
             foreignKeyName: "chats_booking_id_fkey"
             columns: ["booking_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "bookings"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chats_customer_id_fkey"
-            columns: ["customer_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "chats_stylist_id_fkey"
-            columns: ["stylist_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
       }
       media: {
         Row: {
+          application_id: string | null
           chat_message_id: string | null
           created_at: string
           file_path: string
           id: string
           media_type: Database["public"]["Enums"]["media_type"]
           owner_id: string
+          review_id: string | null
           service_id: string | null
         }
         Insert: {
+          application_id?: string | null
           chat_message_id?: string | null
           created_at?: string
           file_path: string
           id?: string
           media_type: Database["public"]["Enums"]["media_type"]
           owner_id: string
+          review_id?: string | null
           service_id?: string | null
         }
         Update: {
+          application_id?: string | null
           chat_message_id?: string | null
           created_at?: string
           file_path?: string
           id?: string
           media_type?: Database["public"]["Enums"]["media_type"]
           owner_id?: string
+          review_id?: string | null
           service_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "media_application_id_fkey"
+            columns: ["application_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "media_chat_message_id_fkey"
             columns: ["chat_message_id"]
@@ -311,6 +382,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "media_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "media_service_id_fkey"
             columns: ["service_id"]
             isOneToOne: false
@@ -321,12 +399,10 @@ export type Database = {
       }
       profiles: {
         Row: {
-          avatar_url: string | null
           bankid_verified: boolean
           created_at: string
           email: string | null
           full_name: string | null
-          gender: string | null
           id: string
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
@@ -335,12 +411,10 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          avatar_url?: string | null
           bankid_verified?: boolean
           created_at?: string
           email?: string | null
           full_name?: string | null
-          gender?: string | null
           id: string
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -349,12 +423,10 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          avatar_url?: string | null
           bankid_verified?: boolean
           created_at?: string
           email?: string | null
           full_name?: string | null
-          gender?: string | null
           id?: string
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
@@ -364,18 +436,105 @@ export type Database = {
         }
         Relationships: []
       }
+      recurring_unavailability_exceptions: {
+        Row: {
+          id: string
+          new_end_time: string | null
+          new_start_time: string | null
+          original_start_time: string
+          series_id: string
+        }
+        Insert: {
+          id?: string
+          new_end_time?: string | null
+          new_start_time?: string | null
+          original_start_time: string
+          series_id: string
+        }
+        Update: {
+          id?: string
+          new_end_time?: string | null
+          new_start_time?: string | null
+          original_start_time?: string
+          series_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "recurring_unavailability_exceptions_series_id_fkey"
+            columns: ["series_id"]
+            isOneToOne: false
+            referencedRelation: "stylist_recurring_unavailability"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reviews: {
+        Row: {
+          booking_id: string
+          comment: string | null
+          created_at: string
+          customer_id: string
+          id: string
+          rating: number
+          stylist_id: string
+        }
+        Insert: {
+          booking_id: string
+          comment?: string | null
+          created_at?: string
+          customer_id: string
+          id?: string
+          rating: number
+          stylist_id: string
+        }
+        Update: {
+          booking_id?: string
+          comment?: string | null
+          created_at?: string
+          customer_id?: string
+          id?: string
+          rating?: number
+          stylist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reviews_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       service_categories: {
         Row: {
+          description: string | null
           id: string
           name: string
           parent_category_id: string | null
         }
         Insert: {
+          description?: string | null
           id?: string
           name: string
           parent_category_id?: string | null
         }
         Update: {
+          description?: string | null
           id?: string
           name?: string
           parent_category_id?: string | null
@@ -392,8 +551,8 @@ export type Database = {
       }
       services: {
         Row: {
-          at_customers_place: boolean
-          at_stylists_place: boolean
+          at_customer_place: boolean
+          at_stylist_place: boolean
           category_id: string
           created_at: string
           description: string | null
@@ -405,8 +564,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          at_customers_place?: boolean
-          at_stylists_place?: boolean
+          at_customer_place?: boolean
+          at_stylist_place?: boolean
           category_id: string
           created_at?: string
           description?: string | null
@@ -418,8 +577,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          at_customers_place?: boolean
-          at_stylists_place?: boolean
+          at_customer_place?: boolean
+          at_stylist_place?: boolean
           category_id?: string
           created_at?: string
           description?: string | null
@@ -447,22 +606,98 @@ export type Database = {
           },
         ]
       }
-      stylist_unavailability: {
+      stylist_availability_rules: {
         Row: {
+          day_of_week: Database["public"]["Enums"]["day_of_week"]
           end_time: string
           id: string
           start_time: string
           stylist_id: string
         }
         Insert: {
+          day_of_week: Database["public"]["Enums"]["day_of_week"]
           end_time: string
           id?: string
           start_time: string
           stylist_id: string
         }
         Update: {
+          day_of_week?: Database["public"]["Enums"]["day_of_week"]
           end_time?: string
           id?: string
+          start_time?: string
+          stylist_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_availability_rules_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stylist_recurring_unavailability: {
+        Row: {
+          end_time: string
+          id: string
+          rrule: string
+          series_end_date: string | null
+          series_start_date: string
+          start_time: string
+          stylist_id: string
+          title: string | null
+        }
+        Insert: {
+          end_time: string
+          id?: string
+          rrule: string
+          series_end_date?: string | null
+          series_start_date: string
+          start_time: string
+          stylist_id: string
+          title?: string | null
+        }
+        Update: {
+          end_time?: string
+          id?: string
+          rrule?: string
+          series_end_date?: string | null
+          series_start_date?: string
+          start_time?: string
+          stylist_id?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_recurring_unavailability_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stylist_unavailability: {
+        Row: {
+          end_time: string
+          id: string
+          reason: string | null
+          start_time: string
+          stylist_id: string
+        }
+        Insert: {
+          end_time: string
+          id?: string
+          reason?: string | null
+          start_time: string
+          stylist_id: string
+        }
+        Update: {
+          end_time?: string
+          id?: string
+          reason?: string | null
           start_time?: string
           stylist_id?: string
         }
@@ -481,21 +716,32 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_my_role: {
+        Args: Record<PropertyKey, never>
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
     }
     Enums: {
       application_status: "applied" | "pending_info" | "rejected" | "approved"
-      application_type: "stylist" | "studio"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
+      day_of_week:
+        | "monday"
+        | "tuesday"
+        | "wednesday"
+        | "thursday"
+        | "friday"
+        | "saturday"
+        | "sunday"
       media_type:
         | "avatar"
         | "service_image"
         | "review_image"
         | "chat_image"
+        | "application_image"
         | "landing_asset"
         | "logo_asset"
         | "other"
-      user_role: "customer" | "stylist" | "studio" | "admin"
+      user_role: "customer" | "stylist" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -624,18 +870,27 @@ export const Constants = {
   public: {
     Enums: {
       application_status: ["applied", "pending_info", "rejected", "approved"],
-      application_type: ["stylist", "studio"],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
+      day_of_week: [
+        "monday",
+        "tuesday",
+        "wednesday",
+        "thursday",
+        "friday",
+        "saturday",
+        "sunday",
+      ],
       media_type: [
         "avatar",
         "service_image",
         "review_image",
         "chat_image",
+        "application_image",
         "landing_asset",
         "logo_asset",
         "other",
       ],
-      user_role: ["customer", "stylist", "studio", "admin"],
+      user_role: ["customer", "stylist", "admin"],
     },
   },
 } as const

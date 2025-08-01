@@ -11,11 +11,12 @@
     "supabase:migrate:up": "bun ensure:docker && supabase migration up",
     "supabase:db:push": "supabase db push",
     "supabase:db:types": "supabase gen types typescript --project-id rbkpzpaarsaoorgfyfvh --schema public > types/database.types.ts",
-    "supabase:db:types:zod": "supabase-to-zod --input types/database.types.ts --output schemas/database.schema.ts",
+    "supabase:db:types:zod": "supazod -i types/database.types.ts -o schemas/database.schema.ts -s public",
+    "remove:public:prefix": "tsx scripts/remove-public-prefix.ts",
     "supabase:stripe:generate-sync-migrations": "bun run scripts/supabase/stripe-sync-engine.ts",
     "supabase:functions:deploy": "supabase functions deploy",
     "supabase:load:secrets": "sh supabase secrets set --env-file ./supabase/.env",
-    "gen:types": "bun run supabase:db:types && bun run supabase:db:types:zod",
+    "gen:types": "bun run supabase:db:types && bun run supabase:db:types:zod && bun run remove:public:prefix",
     "buckets:create": "bun run scripts/supabase/buckets.ts create",
     "buckets:list": "bun run scripts/supabase/buckets.ts list",
     "buckets:delete": "bun run scripts/supabase/buckets.ts delete",
@@ -59,11 +60,11 @@
     "resend": "^4.7.0",
     "stripe": "^18.4.0",
     "supabase": "^2.33.7",
-    "supabase-to-zod": "^1.0.7",
     "tailwind-merge": "^3.3.0",
     "zustand": "^5.0.7"
   },
   "devDependencies": {
+    "supazod": "^2.0.0",
     "@eslint/eslintrc": "^3",
     "@tanstack/eslint-plugin-query": "^5.83.1",
     "@types/node": "^20",
@@ -75,7 +76,7 @@
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
     "tailwindcss-animate": "^1.0.7",
-    "tsx": "^4.19.2",
+    "tsx": "^4.20.3",
     "typescript": "^5"
   }
 }

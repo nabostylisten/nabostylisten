@@ -173,9 +173,10 @@ export async function createApplication(data: ApplicationFormData) {
 
         // Send email notification to admin
         try {
+            // TODO: Update this
             await resend.emails.send({
-                from: "Nabostylisten <no-reply@nabostylisten.no>",
-                to: ["admin@nabostylisten.no"], // Replace with actual admin email
+                from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                to: ["magnus.rodseth@gmail.com"], // Replace with actual admin email
                 subject: "Ny stylist-søknad mottatt",
                 react: StylistApplicationEmail({
                     applicantName: data.fullName,

@@ -272,14 +272,16 @@ export function ServiceCategoryForm({
                       </div>
                     ) : (
                       <Select
-                        value={field.value || ""}
-                        onValueChange={(value) => field.onChange(value || null)}
+                        value={field.value || "none"}
+                        onValueChange={(value) =>
+                          field.onChange(value === "none" ? null : value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Velg overordnet kategori (valgfritt)" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">
+                          <SelectItem value="none">
                             Ingen overordnet kategori
                           </SelectItem>
                           {availableParentCategories.map((cat) => (

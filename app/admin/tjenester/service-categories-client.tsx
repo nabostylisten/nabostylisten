@@ -4,7 +4,7 @@ import * as React from "react";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -16,13 +16,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Edit, Trash2, FolderIcon, FolderOpenIcon } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  FolderIcon,
+  FolderOpenIcon,
+  AlertTriangle,
+} from "lucide-react";
 import { ServiceCategoryForm } from "@/components/service-category-form";
 import { deleteServiceCategory } from "@/server/service-category.actions";
 import type { Database } from "@/types/database.types";
 
 type ServiceCategory =
   Database["public"]["Tables"]["service_categories"]["Row"];
+
+type CategoryWithChildren = ServiceCategory & { children: ServiceCategory[] };
 
 interface ServiceCategoriesClientProps {
   categories: ServiceCategory[];
@@ -31,13 +40,9 @@ interface ServiceCategoriesClientProps {
 // Helper function to build nested category structure
 function buildCategoryTree(
   categories: ServiceCategory[]
-): (ServiceCategory & { children: ServiceCategory[] })[] {
-  const categoryMap = new Map<
-    string,
-    ServiceCategory & { children: ServiceCategory[] }
-  >();
-  const rootCategories: (ServiceCategory & { children: ServiceCategory[] })[] =
-    [];
+): CategoryWithChildren[] {
+  const categoryMap = new Map<string, CategoryWithChildren>();
+  const rootCategories: CategoryWithChildren[] = [];
 
   // First pass: create map and initialize children arrays
   categories.forEach((category) => {
@@ -61,8 +66,20 @@ function buildCategoryTree(
   return rootCategories;
 }
 
+// Helper function to count all descendants of a category
+function countDescendants(category: CategoryWithChildren): number {
+  let count = 0;
+  if (category.children) {
+    count += category.children.length;
+    category.children.forEach((child) => {
+      count += countDescendants(child as CategoryWithChildren);
+    });
+  }
+  return count;
+}
+
 interface CategoryItemProps {
-  category: ServiceCategory & { children: ServiceCategory[] };
+  category: CategoryWithChildren;
   depth: number;
   onEdit: (category: ServiceCategory) => void;
   onDelete: (category: ServiceCategory) => void;
@@ -135,7 +152,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
           {category.children.map((child) => (
             <CategoryItem
               key={child.id}
-              category={child}
+              category={child as CategoryWithChildren}
               depth={depth + 1}
               onEdit={onEdit}
               onDelete={onDelete}
@@ -177,13 +194,27 @@ export function ServiceCategoriesClient({
     mutationFn: async (categoryId: string) => {
       const result = await deleteServiceCategory(categoryId);
       if (result.error) {
-        throw new Error(
-          typeof result.error === "string" ? result.error : result.error.message
-        );
+        throw new Error(result.error);
       }
+
+      return result.data;
     },
     onSuccess: () => {
-      toast.success("Kategori slettet!");
+      // Calculate how many categories were deleted for the success message
+      const foundCategory = categoryToDelete
+        ? categoryTree.find((c) => c.id === categoryToDelete.id)
+        : null;
+      const descendantCount = foundCategory
+        ? countDescendants(foundCategory)
+        : 0;
+      const totalCategories = descendantCount + 1;
+
+      const message =
+        totalCategories > 1
+          ? `${totalCategories} kategorier slettet!`
+          : "Kategori slettet!";
+
+      toast.success(message);
       setDeleteDialogOpen(false);
       setCategoryToDelete(undefined);
       // Refresh the page to show updated data
@@ -234,13 +265,11 @@ export function ServiceCategoriesClient({
 
   const expandAll = () => {
     const allIds = new Set<string>();
-    const collectIds = (
-      cats: (ServiceCategory & { children: ServiceCategory[] })[]
-    ) => {
+    const collectIds = (cats: CategoryWithChildren[]) => {
       cats.forEach((cat) => {
         allIds.add(cat.id);
         if (cat.children.length > 0) {
-          collectIds(cat.children);
+          collectIds(cat.children as CategoryWithChildren[]);
         }
       });
     };
@@ -329,16 +358,48 @@ export function ServiceCategoriesClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Slett kategori</AlertDialogTitle>
             <AlertDialogDescription>
-              Er du sikker på at du vil slette kategorien "
-              {categoryToDelete?.name}"?
-              {categoryToDelete &&
-                categoryTree.find((c) => c.id === categoryToDelete.id)?.children
-                  .length > 0 && (
-                  <span className="block mt-2 text-red-600 font-medium">
-                    Denne kategorien har underkategorier som må slettes først.
-                  </span>
-                )}
-              Denne handlingen kan ikke angres.
+              {(() => {
+                if (!categoryToDelete) return null;
+
+                const foundCategory = categoryTree.find(
+                  (c) => c.id === categoryToDelete.id
+                );
+                const descendantCount = foundCategory
+                  ? countDescendants(foundCategory)
+                  : 0;
+                const totalCategories = descendantCount + 1;
+
+                return (
+                  <div className="space-y-3">
+                    <p>
+                      Er du sikker på at du vil slette kategorien{" "}
+                      <span className="font-bold">{categoryToDelete.name}</span>
+                      ?
+                    </p>
+
+                    {descendantCount > 0 && (
+                      <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                        <p className="text-orange-800 font-medium flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4" /> Advarsel: Denne
+                          handlingen vil slette{" "}
+                          <span className="font-bold">
+                            {totalCategories} kategorier
+                          </span>{" "}
+                          totalt:
+                        </p>
+                        <ul className="mt-2 text-sm text-orange-700">
+                          <li>• 1 hovedkategori ({categoryToDelete.name})</li>
+                          <li>• {descendantCount} underkategorier</li>
+                        </ul>
+                      </div>
+                    )}
+
+                    <p className="text-sm text-muted-foreground">
+                      Denne handlingen kan ikke angres.
+                    </p>
+                  </div>
+                );
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -348,7 +409,21 @@ export function ServiceCategoriesClient({
               disabled={deleteMutation.isPending}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleteMutation.isPending ? "Sletter..." : "Slett"}
+              {deleteMutation.isPending
+                ? "Sletter..."
+                : (() => {
+                    if (!categoryToDelete) return "Slett";
+                    const foundCategory = categoryTree.find(
+                      (c) => c.id === categoryToDelete.id
+                    );
+                    const descendantCount = foundCategory
+                      ? countDescendants(foundCategory)
+                      : 0;
+                    const totalCategories = descendantCount + 1;
+                    return totalCategories > 1
+                      ? `Slett ${totalCategories} kategorier`
+                      : "Slett kategori";
+                  })()}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

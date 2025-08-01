@@ -10,57 +10,79 @@ import {
   Settings,
   Calendar,
   MessageCircle,
+  Scissors,
 } from "lucide-react";
 
 interface ProfileSidebarProps {
   profileId: string;
+  userRole?: string;
   className?: string;
 }
 
-const sidebarItems = [
-  {
-    title: "Min side",
-    href: "/profil",
-    icon: User,
-    description: "Rediger profilinformasjon",
-  },
-  {
-    title: "Mine bookinger",
-    href: "/mine-bookinger",
-    icon: BookOpen,
-    description: "Oversikt over bookinger",
-  },
-  {
-    title: "Tilgjengelighet",
-    href: "/tilgjengelighet",
-    icon: Calendar,
-    description: "Administrer kalender",
-  },
-  {
-    title: "Chat",
-    href: "/chat",
-    icon: MessageCircle,
-    description: "Meldinger og samtaler",
-  },
-  {
-    title: "Inntjening",
-    href: "/inntjening",
-    icon: DollarSign,
-    description: "Inntekter og utbetalinger",
-  },
-  {
-    title: "Preferanser",
-    href: "/preferanser",
-    icon: Settings,
-    description: "Innstillinger og preferanser",
-  },
-];
+const getSidebarItems = (userRole?: string) => {
+  const baseItems = [
+    {
+      title: "Min side",
+      href: "/profil",
+      icon: User,
+      description: "Rediger profilinformasjon",
+    },
+    {
+      title: "Mine bookinger",
+      href: "/mine-bookinger",
+      icon: BookOpen,
+      description: "Oversikt over bookinger",
+    },
+    {
+      title: "Tilgjengelighet",
+      href: "/tilgjengelighet",
+      icon: Calendar,
+      description: "Administrer kalender",
+    },
+    {
+      title: "Chat",
+      href: "/chat",
+      icon: MessageCircle,
+      description: "Meldinger og samtaler",
+    },
+  ];
+
+  // Add stylist-specific items
+  if (userRole === "stylist") {
+    baseItems.push({
+      title: "Mine tjenester",
+      href: "/mine-tjenester",
+      icon: Scissors,
+      description: "Administrer dine tjenester",
+    });
+  }
+
+  // Add common items at the end
+  baseItems.push(
+    {
+      title: "Inntjening",
+      href: "/inntjening",
+      icon: DollarSign,
+      description: "Inntekter og utbetalinger",
+    },
+    {
+      title: "Preferanser",
+      href: "/preferanser",
+      icon: Settings,
+      description: "Innstillinger og preferanser",
+    }
+  );
+
+  return baseItems;
+};
 
 export const ProfileSidebar = ({
   profileId,
+  userRole,
   className,
 }: ProfileSidebarProps) => {
   const pathname = usePathname();
+  const sidebarItems = getSidebarItems(userRole);
 
   return (
     <aside className={cn("w-64 bg-background p-2", className)}>
@@ -96,5 +118,5 @@ export const ProfileSidebar = ({
   );
 };
 
-// Export the sidebar items for use in mobile navigation
-export { sidebarItems };
+// Export the sidebar items function for use in mobile navigation
+export { getSidebarItems };

@@ -22,8 +22,15 @@ export default async function InntjeningPage({
     redirect(`/profiler/${profileId}`);
   }
 
+  // Fetch profile data to get user role
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", profileId)
+    .single();
+
   return (
-    <ProfileLayout profileId={profileId}>
+    <ProfileLayout profileId={profileId} userRole={profile?.role}>
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="max-w-2xl mx-auto w-full">
           <div className="flex items-center gap-3 mb-6">

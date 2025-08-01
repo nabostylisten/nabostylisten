@@ -26,11 +26,13 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Spinner } from "./ui/kibo-ui/spinner";
-import { sidebarItems } from "./profile-sidebar";
+import { getSidebarItems } from "./profile-sidebar";
+import { adminSidebarItems } from "./admin-sidebar";
+import { isAdmin } from "@/lib/permissions";
 
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
-  const { user, loading, signOut } = useAuth();
+  const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
 
   const handleSignOut = async () => {
@@ -129,7 +131,7 @@ export const Navbar = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <div>
-                      {sidebarItems.map((item) => {
+                      {getSidebarItems(profile?.role).map((item) => {
                         const Icon = item.icon;
                         return (
                           <DropdownMenuItem key={item.href} asChild>
@@ -145,6 +147,27 @@ export const Navbar = () => {
                       })}
                       <DropdownMenuSeparator />
                     </div>
+
+                    {/* Admin navigation - only show on mobile for admins */}
+                    {profile && isAdmin(profile.role) && (
+                      <div>
+                        {adminSidebarItems.map((item) => {
+                          const Icon = item.icon;
+                          return (
+                            <DropdownMenuItem key={item.href} asChild>
+                              <Link
+                                href={item.href}
+                                className="flex items-center gap-2"
+                              >
+                                <Icon className="w-4 h-4" />
+                                {item.title}
+                              </Link>
+                            </DropdownMenuItem>
+                          );
+                        })}
+                        <DropdownMenuSeparator />
+                      </div>
+                    )}
                     <DropdownMenuItem
                       onClick={handleSignOut}
                       className="flex items-center gap-2"

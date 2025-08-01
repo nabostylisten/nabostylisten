@@ -144,7 +144,7 @@ export default async function AdminPage() {
                 </Badge>
               </div>
               <Button asChild className="w-full">
-                <Link href="/admin/applications">Se alle søknader</Link>
+                <Link href="/admin/soknader">Se alle søknader</Link>
               </Button>
             </div>
           </CardContent>

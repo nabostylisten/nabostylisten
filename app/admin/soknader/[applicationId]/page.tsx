@@ -15,6 +15,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { ApplicationStatusForm } from "./application-status-form";
+import { ChevronLeft } from "lucide-react";
 
 type Application = {
   id: string;
@@ -95,7 +96,7 @@ export default async function ApplicationDetailPage({
     .single();
 
   if (applicationError || !application) {
-    redirect("/admin/applications");
+    redirect("/admin/soknader");
   }
 
   // Get application media/images
@@ -119,7 +120,10 @@ export default async function ApplicationDetailPage({
             </p>
           </div>
           <Button asChild>
-            <Link href="/admin/applications">← Tilbake til søknader</Link>
+            <Link href="/admin/soknader">
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Tilbake til søknader
+            </Link>
           </Button>
         </div>
       </div>

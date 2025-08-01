@@ -140,7 +140,7 @@ export const StylistApplicationEmail = ({
             </Text>
 
             <Button
-              href={`${baseUrl}/admin/applications/${applicationId}`}
+              href={`${baseUrl}/admin/soknader/${applicationId}`}
               style={button}
             >
               Se søknad i admin-panel

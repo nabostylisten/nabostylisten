@@ -219,7 +219,7 @@ export default async function ApplicationsPage() {
 
                     <div className="flex flex-col gap-2 ml-4">
                       <Button asChild size="sm">
-                        <Link href={`/admin/applications/${application.id}`}>
+                        <Link href={`/admin/soknader/${application.id}`}>
                           Se detaljer
                         </Link>
                       </Button>

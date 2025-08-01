@@ -1,6 +1,32 @@
 import { createServerClient } from "@supabase/ssr";
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { hasEnvVars } from "../utils";
+
+// Define public routes that don't require authentication
+const publicRoutes = [
+  "/",
+  "/bli-stylist",
+  "/tjenester",
+  "/terms-of-service",
+  "/faq",
+];
+
+// Define route patterns for dynamic public routes
+const publicRoutePatterns = [
+  /^\/auth(\/.*)?$/, // /auth and all sub-routes
+  /^\/tjenester\/[^/]+$/, // /tjenester/[tjenesteId]
+  /^\/stylister\/[^/]+$/, // /stylister/[profilId]
+];
+
+function isPublicRoute(pathname: string): boolean {
+  // Check exact matches first
+  if (publicRoutes.includes(pathname)) {
+    return true;
+  }
+
+  // Check pattern matches
+  return publicRoutePatterns.some((pattern) => pattern.test(pathname));
+}
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({
@@ -25,13 +51,13 @@ export async function updateSession(request: NextRequest) {
         },
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
+            request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({
             request,
           });
           cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options),
+            supabaseResponse.cookies.set(name, value, options)
           );
         },
       },
@@ -47,13 +73,11 @@ export async function updateSession(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
-    // no user, potentially respond by redirecting the user to the login page
+  // Check if the current route is public
+  const isPublic = isPublicRoute(request.nextUrl.pathname);
+
+  // Only redirect to login if the route is not public and user is not authenticated
+  if (!isPublic && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);

@@ -4,6 +4,9 @@ import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+import { Navbar } from "@/components/navbar";
+import { Footer } from "@/components/footer";
+import { Toaster } from "@/components/ui/sonner";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -11,8 +14,9 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Next.js and Supabase Starter Kit",
-  description: "The fastest way to build apps with Next.js and Supabase",
+  title: "Nabostylisten - Book din stylist hjemme",
+  description:
+    "Norges ledende platform for å booke skjønnhetstjenester hjemme eller på salong. Finn din perfekte stylist i dag.",
 };
 
 const geistSans = Geist({
@@ -27,7 +31,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="no" suppressHydrationWarning className="scroll-smooth">
       <body className={`${geistSans.className} antialiased`}>
         <TanstackQueryProvider>
           <ThemeProvider
@@ -36,7 +40,12 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <main className="flex-1">{children}</main>
+              <Footer />
+            </div>
+            <Toaster />
           </ThemeProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </TanstackQueryProvider>

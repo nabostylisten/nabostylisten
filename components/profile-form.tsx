@@ -35,6 +35,7 @@ import {
 
 import { updateProfile } from "@/server/profile.actions";
 import type { Database } from "@/types/database.types";
+import { CurrentUserAvatar } from "@/components/current-user-avatar";
 
 // Form schema for profile updates
 const profileFormSchema = z.object({
@@ -100,13 +101,16 @@ export function ProfileForm({ profile, isOwner }: ProfileFormProps) {
     <>
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Min profil</h1>
-          <p className="text-muted-foreground mt-1">
-            {isOwner
-              ? "Administrer din personlige informasjon"
-              : "Profilinformasjon"}
-          </p>
+        <div className="flex items-center gap-4">
+          <CurrentUserAvatar />
+          <div>
+            <h1 className="text-3xl font-bold">Min profil</h1>
+            <p className="text-muted-foreground mt-1">
+              {isOwner
+                ? "Administrer din personlige informasjon"
+                : "Profilinformasjon"}
+            </p>
+          </div>
         </div>
         {isOwner && !isEditing ? (
           <Button onClick={handleEdit} variant="outline" size="sm">

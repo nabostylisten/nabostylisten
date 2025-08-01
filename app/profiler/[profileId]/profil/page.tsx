@@ -26,18 +26,17 @@ export default async function ProfilePage({
   }
 
   // Check if user is authenticated and owns this profile
-  const isOwner = user && user.id === params.profileId;
+  const isOwner = user && user.id === params.profileId ? true : false;
 
-  // If user owns this profile, redirect to the profil subpage
-  if (isOwner) {
-    redirect(`/profiler/${params.profileId}/profil`);
+  // Non-owners shouldn't be able to access this subpage
+  if (!isOwner) {
+    redirect(`/profiler/${params.profileId}`);
   }
 
-  // For non-owners, show read-only profile view
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-2xl mx-auto">
-        <ProfileForm profile={profile} isOwner={false} />
+    <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="max-w-2xl mx-auto w-full">
+        <ProfileForm profile={profile} isOwner={isOwner} />
       </div>
     </div>
   );

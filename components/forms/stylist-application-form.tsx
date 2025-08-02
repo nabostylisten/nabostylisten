@@ -8,6 +8,7 @@ import { z } from "zod";
 import { useState } from "react";
 import { CalendarIcon, Upload } from "lucide-react";
 import { format } from "date-fns";
+import imageCompression from "browser-image-compression";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -581,12 +582,36 @@ export function StylistApplicationForm({
                   Last opp bilder av ditt arbeid
                 </label>
                 <Dropzone
-                  onDrop={(acceptedFiles) => {
-                    const newFiles = [...portfolioImages, ...acceptedFiles];
-                    if (newFiles.length > 10) {
-                      toast.error("Maksimalt 10 bilder tillatt");
-                      return;
+                  onDrop={async (acceptedFiles) => {
+                    const newFiles = [...portfolioImages];
+
+                    // Process each file with compression
+                    for (const file of acceptedFiles) {
+                      if (newFiles.length >= 10) {
+                        toast.error("Maksimalt 10 bilder tillatt");
+                        break;
+                      }
+
+                      try {
+                        // Compress the image
+                        const compressedFile = await imageCompression(file, {
+                          maxSizeMB: 15, // Match the max size from the dropzone config
+                          maxWidthOrHeight: 2048,
+                          useWebWorker: true,
+                          fileType: file.type,
+                        });
+
+                        newFiles.push(compressedFile);
+                      } catch (compressionError) {
+                        console.error(
+                          "Image compression failed:",
+                          compressionError
+                        );
+                        // If compression fails, use original file
+                        newFiles.push(file);
+                      }
                     }
+
                     setPortfolioImages(newFiles);
                   }}
                   multiple

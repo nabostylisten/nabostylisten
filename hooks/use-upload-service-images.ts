@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
 import { createClient } from "@/lib/supabase/client";
 import {
     bucketConfigs,
@@ -23,31 +24,60 @@ export const useUploadServiceImages = () => {
             const results = [];
 
             for (const file of files) {
-                // Validate file
-                const validation = validateFile(
-                    file,
-                    [...bucketConfigs["service-media"].allowedTypes],
-                    bucketConfigs["service-media"].maxSize,
-                );
-                if (validation) {
-                    throw new Error(validation);
+                // Validate original file type
+                const allowedTypes = [
+                    ...bucketConfigs["service-media"].allowedTypes,
+                ] as string[];
+                if (!allowedTypes.includes(file.type)) {
+                    throw new Error(
+                        `File type ${file.type} is not allowed. Allowed types: ${
+                            allowedTypes.join(", ")
+                        }`,
+                    );
+                }
+
+                // Compress the image before upload
+                let compressedFile: File;
+                try {
+                    compressedFile = await imageCompression(file, {
+                        maxSizeMB: bucketConfigs["service-media"].maxSize /
+                            (1024 * 1024), // Convert bytes to MB
+                        maxWidthOrHeight: 2048,
+                        useWebWorker: true,
+                        fileType: file.type,
+                    });
+                } catch (compressionError) {
+                    console.error(
+                        "Image compression failed:",
+                        compressionError,
+                    );
+                    // If compression fails, use original file but validate size
+                    const validation = validateFile(
+                        file,
+                        allowedTypes,
+                        bucketConfigs["service-media"].maxSize,
+                    );
+                    if (validation) {
+                        throw new Error(validation);
+                    }
+                    compressedFile = file;
                 }
 
                 // Generate storage path for new file
                 const filename = `${Date.now()}-${
                     Math.random().toString(36).substring(2, 15)
-                }.${file.name.split(".").pop()}`;
+                }.${compressedFile.name.split(".").pop()}`;
                 const storagePath = storagePaths.serviceMedia(
                     serviceId,
                     filename,
                 );
 
-                // Upload file to storage
+                // Upload compressed file to storage
                 await uploadFile(supabase, {
                     bucket: storagePath.bucket,
                     path: storagePath.path,
-                    file,
-                    contentType: file.type,
+                    file: compressedFile,
+                    contentType: compressedFile.type,
                 });
 
                 // Get public URL for the new file
@@ -80,11 +110,11 @@ export const useUploadServiceImages = () => {
 
             return results;
         },
-        onSuccess: () => {
+        onSuccess: (data) => {
             // Invalidate service queries to refresh the UI
             queryClient.invalidateQueries({ queryKey: ["services"] });
             queryClient.invalidateQueries({ queryKey: ["service"] });
-            toast.success("Bilder opplastet!");
+            toast.success(`${data.length} bilde(r) lastet opp til Supabase!`);
         },
         onError: (error) => {
             toast.error("Feil ved opplasting av bilder: " + error.message);

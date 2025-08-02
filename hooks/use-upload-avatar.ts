@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import imageCompression from "browser-image-compression";
 import { createClient } from "@/lib/supabase/client";
 import {
     bucketConfigs,
@@ -21,14 +22,39 @@ export const useUploadAvatar = () => {
         mutationFn: async ({ userId, file }: UploadAvatarParams) => {
             const supabase = createClient();
 
-            // Validate file
-            const validation = validateFile(
-                file,
-                [...bucketConfigs.avatars.allowedTypes],
-                bucketConfigs.avatars.maxSize,
-            );
-            if (validation) {
-                throw new Error(validation);
+            // Validate original file type
+            const allowedTypes = [
+                ...bucketConfigs.avatars.allowedTypes,
+            ] as string[];
+            if (!allowedTypes.includes(file.type)) {
+                throw new Error(
+                    `File type ${file.type} is not allowed. Allowed types: ${
+                        allowedTypes.join(", ")
+                    }`,
+                );
+            }
+
+            // Compress the image before upload
+            let compressedFile: File;
+            try {
+                compressedFile = await imageCompression(file, {
+                    maxSizeMB: bucketConfigs.avatars.maxSize / (1024 * 1024), // Convert bytes to MB
+                    maxWidthOrHeight: 1024, // Smaller for avatars
+                    useWebWorker: true,
+                    fileType: file.type,
+                });
+            } catch (compressionError) {
+                console.error("Image compression failed:", compressionError);
+                // If compression fails, use original file but validate size
+                const validation = validateFile(
+                    file,
+                    allowedTypes,
+                    bucketConfigs.avatars.maxSize,
+                );
+                if (validation) {
+                    throw new Error(validation);
+                }
+                compressedFile = file;
             }
 
             // First, get the existing avatar media record to delete the old file
@@ -74,15 +100,15 @@ export const useUploadAvatar = () => {
             // Generate storage path for new file
             const filename = `${Date.now()}-${
                 Math.random().toString(36).substring(2, 15)
-            }.${file.name.split(".").pop()}`;
+            }.${compressedFile.name.split(".").pop()}`;
             const storagePath = storagePaths.avatar(userId, filename);
 
-            // Upload new file to storage
+            // Upload compressed file to storage
             await uploadFile(supabase, {
                 bucket: storagePath.bucket,
                 path: storagePath.path,
-                file,
-                contentType: file.type,
+                file: compressedFile,
+                contentType: compressedFile.type,
             });
 
             // Get public URL for the new file

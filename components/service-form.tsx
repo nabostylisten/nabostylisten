@@ -104,6 +104,7 @@ export function ServiceForm({
   onSuccess,
 }: ServiceFormProps) {
   const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
+  const [fileProcessing, setFileProcessing] = React.useState(false);
 
   const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
@@ -155,12 +156,16 @@ export function ServiceForm({
       // Upload images if any were selected
       if (uploadedFiles.length > 0 && data?.id) {
         try {
+          toast.info(
+            `Laster opp ${uploadedFiles.length} bilde(r) til Supabase...`
+          );
           await uploadImagesMutation.mutateAsync({
             serviceId: data.id,
             files: uploadedFiles,
           });
         } catch (error) {
           console.error("Failed to upload images:", error);
+          toast.error("Kunne ikke laste opp bilder til Supabase");
         }
       }
 
@@ -194,12 +199,16 @@ export function ServiceForm({
       // Upload images if any were selected
       if (uploadedFiles.length > 0 && service?.id) {
         try {
+          toast.info(
+            `Laster opp ${uploadedFiles.length} bilde(r) til Supabase...`
+          );
           await uploadImagesMutation.mutateAsync({
             serviceId: service.id,
             files: uploadedFiles,
           });
         } catch (error) {
           console.error("Failed to upload images:", error);
+          toast.error("Kunne ikke laste opp bilder til Supabase");
         }
       }
 
@@ -212,8 +221,77 @@ export function ServiceForm({
     },
   });
 
-  const handleDrop = (files: File[]) => {
-    setUploadedFiles(files);
+  const handleDrop = async (files: File[]) => {
+    setFileProcessing(true);
+    const processedFiles: File[] = [];
+
+    try {
+      for (const file of files) {
+        // Validate file type immediately
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        if (!allowedTypes.includes(file.type)) {
+          toast.error(
+            `Filtype ${file.type} er ikke tillatt. Tillatte typer: JPG, PNG, WebP`
+          );
+          continue;
+        }
+
+        // Validate file size
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          toast.error(
+            `Filen "${file.name}" er for stor. Maksimal størrelse er 10MB`
+          );
+          continue;
+        }
+
+        toast.success(`Behandler bilde: ${file.name}`);
+
+        try {
+          // Compress the image
+          const { default: imageCompression } = await import(
+            "browser-image-compression"
+          );
+          const compressedFile = await imageCompression(file, {
+            maxSizeMB: 10,
+            maxWidthOrHeight: 2048,
+            useWebWorker: true,
+            fileType: file.type,
+          });
+
+          const compressionRatio = (
+            ((file.size - compressedFile.size) / file.size) *
+            100
+          ).toFixed(1);
+          if (compressedFile.size < file.size) {
+            toast.success(
+              `Bilde komprimert: ${file.name} (${compressionRatio}% mindre)`
+            );
+          } else {
+            toast.success(`Bilde klar: ${file.name}`);
+          }
+
+          processedFiles.push(compressedFile);
+        } catch (compressionError) {
+          console.error("Compression failed:", compressionError);
+          toast.warning(`Kunne ikke komprimere ${file.name}, bruker original`);
+          processedFiles.push(file);
+        }
+      }
+
+      if (processedFiles.length > 0) {
+        setUploadedFiles(processedFiles);
+        toast.success(`${processedFiles.length} bilde(r) klar for opplasting`);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Feil ved behandling av filer";
+      toast.error("En feil oppstod ved behandling av filer", {
+        description: message,
+      });
+    } finally {
+      setFileProcessing(false);
+    }
   };
 
   const onSubmit = (data: ServiceFormData) => {
@@ -227,7 +305,8 @@ export function ServiceForm({
   const isLoading =
     createMutation.isPending ||
     updateMutation.isPending ||
-    uploadImagesMutation.isPending;
+    uploadImagesMutation.isPending ||
+    fileProcessing;
 
   // Reset form when service prop changes (for edit mode)
   React.useEffect(() => {
@@ -401,9 +480,59 @@ export function ServiceForm({
                 src={uploadedFiles}
                 disabled={isLoading}
               >
-                <DropzoneEmptyState />
+                <DropzoneEmptyState>
+                  {fileProcessing ? (
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                      </div>
+                      <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+                        Behandler bilder...
+                      </p>
+                      <p className="w-full truncate text-wrap text-muted-foreground text-xs">
+                        Komprimerer og validerer filer
+                      </p>
+                    </div>
+                  ) : null}
+                </DropzoneEmptyState>
                 <DropzoneContent />
               </Dropzone>
+
+              {uploadedFiles.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <p className="text-sm font-medium">
+                    {uploadedFiles.length} bilde(r) klar for opplasting:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {uploadedFiles.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 bg-muted px-3 py-1 rounded-md text-sm"
+                      >
+                        <span className="truncate max-w-[200px]">
+                          {file.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {(file.size / 1024 / 1024).toFixed(1)}MB
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newFiles = [...uploadedFiles];
+                            newFiles.splice(index, 1);
+                            setUploadedFiles(newFiles);
+                            toast.success("Bilde fjernet");
+                          }}
+                          className="text-muted-foreground hover:text-destructive ml-1"
+                          disabled={isLoading}
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="space-y-4">

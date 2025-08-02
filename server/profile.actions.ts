@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { profilesInsertSchema } from "@/schemas/database.schema";
 import type { Database } from "@/types/database.types";
-
 export async function getProfile(id: string) {
     const supabase = await createClient();
     return await supabase.from("profiles").select("*").eq("id", id).single();

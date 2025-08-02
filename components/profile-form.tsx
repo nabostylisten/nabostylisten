@@ -102,7 +102,10 @@ export function ProfileForm({ profile, isOwner }: ProfileFormProps) {
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-4">
-          <CurrentUserAvatar />
+          <CurrentUserAvatar
+            className="w-16 h-16"
+            isEditing={isOwner && isEditing}
+          />
           <div>
             <h1 className="text-3xl font-bold">Min profil</h1>
             <p className="text-muted-foreground mt-1">

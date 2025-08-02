@@ -60,11 +60,15 @@ export const Navbar = () => {
         {/* Right Side Actions */}
         <div className="flex items-center gap-3">
           {/* Bli stylist button for customers */}
-          {!loading && user && profile?.role === "customer" && (
-            <Button variant="outline" size="sm" asChild>
-              <Link href="/bli-stylist">Bli stylist</Link>
-            </Button>
-          )}
+          {!loading &&
+            user &&
+            (profile?.role === "customer" || !profile?.role) && (
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/bli-stylist">Bli stylist</Link>
+              </Button>
+            )}
+
+          <Separator orientation="vertical" className="h-6" />
 
           {/* Theme Switcher */}
           <ThemeSwitcher />

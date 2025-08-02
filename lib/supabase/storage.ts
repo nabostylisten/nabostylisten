@@ -1,5 +1,4 @@
-import { createClient } from "./client";
-import { createClient as createServerClient } from "./server";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface UploadOptions {
     bucket: string;
@@ -71,13 +70,12 @@ export const storagePaths = {
 };
 
 /**
- * Upload a file to Supabase storage (client-side)
+ * Upload a file to Supabase storage
  */
 export async function uploadFile(
+    supabase: SupabaseClient,
     { bucket, path, file, contentType }: UploadOptions,
 ) {
-    const supabase = createClient();
-
     const { data, error } = await supabase.storage
         .from(bucket)
         .upload(path, file, {
@@ -95,9 +93,11 @@ export async function uploadFile(
 /**
  * Get a public URL for a file (for public buckets)
  */
-export function getPublicUrl(bucket: string, path: string) {
-    const supabase = createClient();
-
+export function getPublicUrl(
+    supabase: SupabaseClient,
+    bucket: string,
+    path: string,
+) {
     const { data } = supabase.storage
         .from(bucket)
         .getPublicUrl(path);
@@ -109,12 +109,11 @@ export function getPublicUrl(bucket: string, path: string) {
  * Get a signed URL for a file (for private buckets)
  */
 export async function getSignedUrl(
+    supabase: SupabaseClient,
     bucket: string,
     path: string,
     expiresIn: number = 3600,
 ) {
-    const supabase = createClient();
-
     const { data, error } = await supabase.storage
         .from(bucket)
         .createSignedUrl(path, expiresIn);
@@ -129,9 +128,11 @@ export async function getSignedUrl(
 /**
  * Delete a file from storage
  */
-export async function deleteFile(bucket: string, path: string) {
-    const supabase = createClient();
-
+export async function deleteFile(
+    supabase: SupabaseClient,
+    bucket: string,
+    path: string,
+) {
     const { error } = await supabase.storage
         .from(bucket)
         .remove([path]);
@@ -142,11 +143,13 @@ export async function deleteFile(bucket: string, path: string) {
 }
 
 /**
- * List files in a bucket (server-side only)
+ * List files in a bucket
  */
-export async function listFiles(bucket: string, path?: string) {
-    const supabase = await createServerClient();
-
+export async function listFiles(
+    supabase: SupabaseClient,
+    bucket: string,
+    path?: string,
+) {
     const { data, error } = await supabase.storage
         .from(bucket)
         .list(path || "");
@@ -159,11 +162,13 @@ export async function listFiles(bucket: string, path?: string) {
 }
 
 /**
- * Download a file (server-side only)
+ * Download a file
  */
-export async function downloadFile(bucket: string, path: string) {
-    const supabase = await createServerClient();
-
+export async function downloadFile(
+    supabase: SupabaseClient,
+    bucket: string,
+    path: string,
+) {
     const { data, error } = await supabase.storage
         .from(bucket)
         .download(path);

@@ -16,17 +16,3 @@ export const navigationItems: NavigationItem[] = [
         description: "Finn den perfekte stylisten for dine behov",
     },
 ];
-
-// Authenticated user navigation items
-export const authenticatedNavigationItems: NavigationItem[] = [
-    {
-        title: "Mine bookinger",
-        href: "/protected/bookings",
-        description: "Se dine kommende og tidligere bookinger",
-    },
-    {
-        title: "Profil",
-        href: "/protected/profile",
-        description: "Administrer din profil",
-    },
-];

@@ -29,7 +29,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
+import {
+  Dropzone,
+  DropzoneContent,
+  DropzoneEmptyState,
+} from "@/components/ui/kibo-ui/dropzone";
 import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
+import { useUploadServiceImages } from "@/hooks/use-upload-service-images";
 import {
   createService,
   updateService,
@@ -67,10 +73,7 @@ const serviceFormSchema = servicesInsertSchema
       .max(500, "Beskrivelse kan ikke være lengre enn 500 tegn")
       .optional()
       .nullable(),
-    price: z
-      .number()
-      .min(1, "Pris må være større enn 0")
-      .max(10000, "Pris kan ikke være mer enn 10 000 kr"),
+    price: z.number().min(1, "Pris må være større enn 0"),
     duration_minutes: z
       .number()
       .min(15, "Varighet må være minst 15 minutter")
@@ -100,6 +103,8 @@ export function ServiceForm({
   service,
   onSuccess,
 }: ServiceFormProps) {
+  const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
+
   const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
     defaultValues: {
@@ -130,6 +135,9 @@ export function ServiceForm({
     },
   });
 
+  // Upload service images mutation
+  const uploadImagesMutation = useUploadServiceImages();
+
   // Create service mutation
   const createMutation = useMutation({
     mutationFn: async (data: ServiceFormData) => {
@@ -141,9 +149,23 @@ export function ServiceForm({
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: async (data) => {
       toast.success("Tjeneste opprettet!");
+
+      // Upload images if any were selected
+      if (uploadedFiles.length > 0 && data?.id) {
+        try {
+          await uploadImagesMutation.mutateAsync({
+            serviceId: data.id,
+            files: uploadedFiles,
+          });
+        } catch (error) {
+          console.error("Failed to upload images:", error);
+        }
+      }
+
       form.reset();
+      setUploadedFiles([]);
       onOpenChange(false);
       onSuccess?.();
     },
@@ -166,8 +188,22 @@ export function ServiceForm({
       }
       return result.data;
     },
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success("Tjeneste oppdatert!");
+
+      // Upload images if any were selected
+      if (uploadedFiles.length > 0 && service?.id) {
+        try {
+          await uploadImagesMutation.mutateAsync({
+            serviceId: service.id,
+            files: uploadedFiles,
+          });
+        } catch (error) {
+          console.error("Failed to upload images:", error);
+        }
+      }
+
+      setUploadedFiles([]);
       onOpenChange(false);
       onSuccess?.();
     },
@@ -175,6 +211,10 @@ export function ServiceForm({
       toast.error(`Feil ved oppdatering: ${error.message}`);
     },
   });
+
+  const handleDrop = (files: File[]) => {
+    setUploadedFiles(files);
+  };
 
   const onSubmit = (data: ServiceFormData) => {
     if (mode === "create") {
@@ -184,7 +224,10 @@ export function ServiceForm({
     }
   };
 
-  const isLoading = createMutation.isPending || updateMutation.isPending;
+  const isLoading =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    uploadImagesMutation.isPending;
 
   // Reset form when service prop changes (for edit mode)
   React.useEffect(() => {
@@ -212,6 +255,7 @@ export function ServiceForm({
         at_stylist_place: true,
       });
     }
+    setUploadedFiles([]);
   }, [service, mode, form]);
 
   return (
@@ -339,6 +383,28 @@ export function ServiceForm({
                 </FormItem>
               )}
             />
+
+            <div className="space-y-4">
+              <FormLabel>Bilder av tjenesten</FormLabel>
+              <FormDescription>
+                Last opp bilder som viser resultatet av tjenesten din
+              </FormDescription>
+              <Dropzone
+                accept={{ "image/*": [] }}
+                maxFiles={5}
+                maxSize={1024 * 1024 * 10} // 10MB
+                minSize={1024} // 1KB
+                onDrop={handleDrop}
+                onError={(error) => {
+                  toast.error(`Feil ved opplasting: ${error.message}`);
+                }}
+                src={uploadedFiles}
+                disabled={isLoading}
+              >
+                <DropzoneEmptyState />
+                <DropzoneContent />
+              </Dropzone>
+            </div>
 
             <div className="space-y-4">
               <FormLabel>Hvor kan tjenesten utføres? *</FormLabel>

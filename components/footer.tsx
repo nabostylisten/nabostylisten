@@ -17,12 +17,12 @@ export const Footer = () => {
       { name: "Vipper & Bryn", href: "/tjenester?category=lashes-brows" },
     ],
     Selskap: [
-      { name: "Om oss", href: "/about" },
-      { name: "Kontakt", href: "/contact" },
+      { name: "Om oss", href: "/om-oss" },
+      { name: "Kontakt", href: "/kontakt" },
       { name: "Bli stylist", href: "/bli-stylist" },
     ],
     Juridisk: [
-      { name: "Personvern", href: "/privacy-policy" },
+      { name: "Personvern", href: "/privacy" },
       { name: "Vilkår", href: "/terms-of-service" },
       { name: "Ofte stilte spørsmål (FAQ)", href: "/faq" },
     ],
@@ -74,24 +74,10 @@ export const Footer = () => {
         <Separator className="my-8" />
 
         {/* Bottom Footer */}
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="flex justify-center">
           <p className="text-sm text-muted-foreground">
             © {currentYear} Nabostylisten. Alle rettigheter reservert.
           </p>
-          <div className="flex items-center gap-6">
-            <Link
-              href="/privacy"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Personvern
-            </Link>
-            <Link
-              href="/terms"
-              className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Vilkår
-            </Link>
-          </div>
         </div>
       </div>
     </footer>

@@ -2,14 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -21,7 +13,7 @@ import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, MoveRight, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -57,65 +49,23 @@ export const Navbar = () => {
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center">
-            <NavigationMenu className="flex justify-start items-start">
-              <NavigationMenuList className="flex justify-start gap-1 flex-row">
-                {navigationItems.map((item) => (
-                  <NavigationMenuItem key={item.title}>
-                    {item.href ? (
-                      <NavigationMenuLink asChild>
-                        <Link href={item.href}>
-                          <Button variant="ghost" size="sm">
-                            {item.title}
-                          </Button>
-                        </Link>
-                      </NavigationMenuLink>
-                    ) : (
-                      <>
-                        <NavigationMenuTrigger className="font-medium text-sm">
-                          {item.title}
-                        </NavigationMenuTrigger>
-                        <NavigationMenuContent className="!w-[400px] p-4">
-                          <div className="flex flex-col lg:grid grid-cols-2 gap-4">
-                            <div className="flex flex-col h-full justify-between">
-                              <div className="flex flex-col">
-                                <p className="text-base font-medium">
-                                  {item.title}
-                                </p>
-                                <p className="text-muted-foreground text-sm">
-                                  {item.description}
-                                </p>
-                              </div>
-                              <Button size="sm" className="mt-4" asChild>
-                                <Link href="/services">Se alle tjenester</Link>
-                              </Button>
-                            </div>
-                            <div className="flex flex-col text-sm h-full justify-end">
-                              {item.items?.map((subItem) => (
-                                <NavigationMenuLink
-                                  key={subItem.title}
-                                  asChild
-                                  className="flex flex-row justify-between items-center hover:bg-muted py-2 px-4 rounded"
-                                >
-                                  <Link href={subItem.href}>
-                                    <span>{subItem.title}</span>
-                                    <MoveRight className="w-4 h-4 text-muted-foreground" />
-                                  </Link>
-                                </NavigationMenuLink>
-                              ))}
-                            </div>
-                          </div>
-                        </NavigationMenuContent>
-                      </>
-                    )}
-                  </NavigationMenuItem>
-                ))}
-              </NavigationMenuList>
-            </NavigationMenu>
+            {navigationItems.map((item) => (
+              <Button key={item.title} variant="ghost" size="sm" asChild>
+                <Link href={item.href!}>{item.title}</Link>
+              </Button>
+            ))}
           </div>
         </div>
 
         {/* Right Side Actions */}
         <div className="flex items-center gap-3">
+          {/* Bli stylist button for customers */}
+          {!loading && user && profile?.role === "customer" && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/bli-stylist">Bli stylist</Link>
+            </Button>
+          )}
+
           {/* Theme Switcher */}
           <ThemeSwitcher />
 
@@ -211,39 +161,14 @@ export const Navbar = () => {
           <div className="px-6 py-4 space-y-4">
             {/* Mobile Navigation Items */}
             {navigationItems.map((item) => (
-              <div key={item.title} className="space-y-2">
-                {item.href ? (
-                  <Link
-                    href={item.href}
-                    className="flex justify-between items-center py-2"
-                    onClick={() => setOpen(false)}
-                  >
-                    <span className="text-lg">{item.title}</span>
-                    <MoveRight className="w-4 h-4 stroke-1 text-muted-foreground" />
-                  </Link>
-                ) : (
-                  <>
-                    <p className="text-lg font-medium">{item.title}</p>
-                    {item.items && (
-                      <div className="pl-4 space-y-1">
-                        {item.items.map((subItem) => (
-                          <Link
-                            key={subItem.title}
-                            href={subItem.href}
-                            className="flex justify-between items-center py-1"
-                            onClick={() => setOpen(false)}
-                          >
-                            <span className="text-muted-foreground">
-                              {subItem.title}
-                            </span>
-                            <MoveRight className="w-4 h-4 stroke-1" />
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
+              <Link
+                key={item.title}
+                href={item.href!}
+                className="flex justify-between items-center py-2"
+                onClick={() => setOpen(false)}
+              >
+                <span className="text-lg">{item.title}</span>
+              </Link>
             ))}
 
             {/* Mobile Auth Buttons */}

@@ -1,7 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function TermsOfServicePage() {
-  const lastUpdated = "15. januar 2024";
+  const lastUpdated = new Date("2025-08-02").toLocaleDateString("no-NO", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+  const contactEmail = "kontakt@nabostylisten.no";
 
   return (
     <div className="min-h-screen pt-20 pb-12">
@@ -24,7 +30,7 @@ export default function TermsOfServicePage() {
                 <CardTitle>1. Generelle vilkår</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <p>
+                <p className="mb-4">
                   Velkommen til Nabostylisten. Ved å bruke vår plattform godtar
                   du disse vilkårene og betingelsene. Nabostylisten er en
                   digital markedsplass som kobler sammen kunder og stylister for
@@ -43,8 +49,8 @@ export default function TermsOfServicePage() {
                 <CardTitle>2. Booking og betaling</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <h4>Booking</h4>
-                <ul>
+                <h4 className="text-lg font-semibold mb-3">Booking</h4>
+                <ul className="list-disc pl-6 mb-6 space-y-2">
                   <li>
                     Alle bookinger må bekreftes av stylisten før de blir gyldige
                   </li>
@@ -52,8 +58,8 @@ export default function TermsOfServicePage() {
                   <li>Endringer i booking må godkjennes av begge parter</li>
                 </ul>
 
-                <h4>Betaling</h4>
-                <ul>
+                <h4 className="text-lg font-semibold mb-3">Betaling</h4>
+                <ul className="list-disc pl-6 space-y-2">
                   <li>Betaling behandles sikkert gjennom Stripe</li>
                   <li>Betaling trekkes 24 timer før avtalt tid</li>
                   <li>
@@ -70,8 +76,8 @@ export default function TermsOfServicePage() {
                 <CardTitle>3. Avbestillingsregler</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <h4>For kunder</h4>
-                <ul>
+                <h4 className="text-lg font-semibold mb-3">For kunder</h4>
+                <ul className="list-disc pl-6 mb-6 space-y-2">
                   <li>Gratis avbestilling frem til 24 timer før avtalt tid</li>
                   <li>
                     Ved avbestilling 12-24 timer før: 50% av prisen belastes
@@ -81,8 +87,8 @@ export default function TermsOfServicePage() {
                   </li>
                 </ul>
 
-                <h4>For stylister</h4>
-                <ul>
+                <h4 className="text-lg font-semibold mb-3">For stylister</h4>
+                <ul className="list-disc pl-6 space-y-2">
                   <li>Må gi minst 24 timers varsel ved avbestilling</li>
                   <li>
                     Ved kortere varsel kan stylist bli suspendert fra
@@ -98,12 +104,12 @@ export default function TermsOfServicePage() {
                 <CardTitle>4. Ansvar og forsikring</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <p>
+                <p className="mb-4">
                   Nabostylisten fungerer som en markedsplass og er ikke
                   ansvarlig for kvaliteten på tjenestene som leveres av
                   stylistene. Alle stylister må ha gyldig ansvarsforsikring.
                 </p>
-                <ul>
+                <ul className="list-disc pl-6 space-y-2">
                   <li>
                     Stylister er ansvarlige for sine egne tjenester og
                     eventuelle skader
@@ -124,8 +130,10 @@ export default function TermsOfServicePage() {
                 <CardTitle>5. Brukeroppførsel</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <h4>Forbudt oppførsel</h4>
-                <ul>
+                <h4 className="text-lg font-semibold mb-3">
+                  Forbudt oppførsel
+                </h4>
+                <ul className="list-disc pl-6 mb-4 space-y-2">
                   <li>
                     Trakassering, diskriminering eller upassende oppførsel
                   </li>
@@ -148,12 +156,12 @@ export default function TermsOfServicePage() {
                 <CardTitle>6. Personvern</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <p>
+                <p className="mb-4">
                   Vi tar personvernet ditt på alvor. Se vår personvernerklæring
                   for detaljert informasjon om hvordan vi samler inn, bruker og
                   beskytter dine personopplysninger.
                 </p>
-                <ul>
+                <ul className="list-disc pl-6 space-y-2">
                   <li>
                     Vi deler ikke personopplysninger med tredjeparter uten ditt
                     samtykke
@@ -171,12 +179,12 @@ export default function TermsOfServicePage() {
                 <CardTitle>7. Tvister og klager</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <p>
+                <p className="mb-4">
                   Ved tvister mellom kunde og stylist, tilbyr Nabostylisten
                   megling som første instans. Klager kan sendes til vårt
                   kundeservice-team.
                 </p>
-                <ul>
+                <ul className="list-disc pl-6 space-y-2">
                   <li>Klager må sendes innen 48 timer etter utført tjeneste</li>
                   <li>
                     Vi streber etter å løse alle tvister innen 7 virkedager
@@ -191,9 +199,19 @@ export default function TermsOfServicePage() {
                 <CardTitle>8. Kontaktinformasjon</CardTitle>
               </CardHeader>
               <CardContent className="prose prose-gray max-w-none">
-                <p>For spørsmål om disse vilkårene, kontakt oss på:</p>
-                <ul>
-                  <li>E-post: support@nabostylisten.no</li>
+                <p className="mb-4">
+                  For spørsmål om disse vilkårene, kontakt oss på:
+                </p>
+                <ul className="list-disc pl-6 mb-6 space-y-2">
+                  <li>
+                    E-post:{" "}
+                    <Link
+                      href={`mailto:${contactEmail}`}
+                      className="text-primary hover:underline"
+                    >
+                      {contactEmail}
+                    </Link>
+                  </li>
                   <li>Telefon: +47 123 45 678</li>
                   <li>Adresse: Nabostylisten AS, Postboks 123, 0159 Oslo</li>
                 </ul>

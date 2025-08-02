@@ -124,10 +124,8 @@ export const Navbar = () => {
               {user ? (
                 // Authenticated User Dropdown
                 <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="p-1">
-                      <CurrentUserAvatar />
-                    </Button>
+                  <DropdownMenuTrigger>
+                    <CurrentUserAvatar />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48">
                     <div>

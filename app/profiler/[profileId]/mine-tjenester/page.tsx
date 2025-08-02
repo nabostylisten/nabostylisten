@@ -39,9 +39,12 @@ export default async function MineTjenesterPage({
     .select(
       `
       *,
-      service_categories (
-        name,
-        description
+      service_service_categories (
+        service_categories (
+          id,
+          name,
+          description
+        )
       )
     `
     )

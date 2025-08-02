@@ -38,7 +38,15 @@ import {
 import { servicesInsertSchema } from "@/schemas/database.schema";
 import type { Database } from "@/types/database.types";
 
-type Service = Database["public"]["Tables"]["services"]["Row"];
+type Service = Database["public"]["Tables"]["services"]["Row"] & {
+  service_service_categories?: Array<{
+    service_categories: {
+      id: string;
+      name: string;
+      description?: string | null;
+    };
+  }>;
+};
 
 // Create a form schema based on the database schema but with some modifications
 const serviceFormSchema = servicesInsertSchema
@@ -49,7 +57,7 @@ const serviceFormSchema = servicesInsertSchema
     updated_at: true,
   })
   .extend({
-    category_id: z.string().min(1, "Du må velge minst én kategori"),
+    category_ids: z.array(z.string()).min(1, "Du må velge minst én kategori"),
     title: z
       .string()
       .min(1, "Tittel er påkrevd")
@@ -99,7 +107,10 @@ export function ServiceForm({
       description: service?.description || "",
       price: service?.price || undefined,
       duration_minutes: service?.duration_minutes || undefined,
-      category_id: service?.category_id || "",
+      category_ids:
+        service?.service_service_categories?.map(
+          (rel) => rel.service_categories.id
+        ) || [],
       at_customer_place: service?.at_customer_place || false,
       at_stylist_place: service?.at_stylist_place || true,
     },
@@ -122,10 +133,7 @@ export function ServiceForm({
   // Create service mutation
   const createMutation = useMutation({
     mutationFn: async (data: ServiceFormData) => {
-      const result = await createService({
-        ...data,
-        stylist_id: "", // Will be set by server action
-      });
+      const result = await createService(data);
       if (result.error) {
         throw new Error(
           typeof result.error === "string" ? result.error : result.error.message
@@ -186,7 +194,10 @@ export function ServiceForm({
         description: service.description,
         price: service.price,
         duration_minutes: service.duration_minutes,
-        category_id: service.category_id,
+        category_ids:
+          service.service_service_categories?.map(
+            (rel) => rel.service_categories.id
+          ) || [],
         at_customer_place: service.at_customer_place,
         at_stylist_place: service.at_stylist_place,
       });
@@ -196,7 +207,7 @@ export function ServiceForm({
         description: "",
         price: undefined,
         duration_minutes: undefined,
-        category_id: "",
+        category_ids: [],
         at_customer_place: false,
         at_stylist_place: true,
       });
@@ -285,10 +296,6 @@ export function ServiceForm({
                     <FormLabel>Varighet (minutter) *</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
-                        min="15"
-                        max="480"
-                        step="15"
                         placeholder="60"
                         value={field.value || ""}
                         onChange={(e) => {
@@ -307,10 +314,10 @@ export function ServiceForm({
 
             <FormField
               control={form.control}
-              name="category_id"
+              name="category_ids"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Kategori *</FormLabel>
+                  <FormLabel>Kategorier *</FormLabel>
                   <FormControl>
                     {categoriesLoading ? (
                       <div className="flex items-center justify-center p-4">
@@ -319,12 +326,12 @@ export function ServiceForm({
                       </div>
                     ) : (
                       <ServiceCategoryCombobox
-                        selectedCategories={field.value ? [field.value] : []}
+                        selectedCategories={field.value || []}
                         onSelectedCategoriesChange={(categories) => {
-                          field.onChange(categories[0] || "");
+                          field.onChange(categories);
                         }}
                         categories={categoriesData || []}
-                        placeholder="Velg en kategori"
+                        placeholder="Velg kategorier"
                       />
                     )}
                   </FormControl>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,10 +22,13 @@ import { deleteService } from "@/server/service.actions";
 import type { Database } from "@/types/database.types";
 
 type Service = Database["public"]["Tables"]["services"]["Row"] & {
-  service_categories?: {
-    name: string;
-    description?: string | null;
-  } | null;
+  service_service_categories?: Array<{
+    service_categories: {
+      id: string;
+      name: string;
+      description?: string | null;
+    };
+  }>;
 };
 
 interface ServicesPageClientProps {
@@ -33,10 +36,8 @@ interface ServicesPageClientProps {
   profileId: string;
 }
 
-export function ServicesPageClient({
-  services,
-  profileId,
-}: ServicesPageClientProps) {
+export function ServicesPageClient({ services }: ServicesPageClientProps) {
+  console.log(services);
   const [serviceFormOpen, setServiceFormOpen] = React.useState(false);
   const [serviceFormMode, setServiceFormMode] = React.useState<
     "create" | "edit"
@@ -48,8 +49,6 @@ export function ServicesPageClient({
   const [serviceToDelete, setServiceToDelete] = React.useState<
     Service | undefined
   >();
-
-  const queryClient = useQueryClient();
 
   // Delete service mutation
   const deleteMutation = useMutation({
@@ -123,30 +122,77 @@ export function ServicesPageClient({
       </div>
 
       {services && services.length > 0 ? (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-6 md:grid-cols-2">
           {services.map((service) => (
-            <Card key={service.id} className="flex flex-col">
-              <CardHeader>
+            <Card
+              key={service.id}
+              className="flex flex-col hover:shadow-lg transition-shadow duration-200"
+            >
+              <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg">{service.title}</CardTitle>
-                    <div className="flex flex-wrap gap-1 mt-2">
-                      <Badge variant="secondary">
-                        {service.service_categories?.name || "Ukategorisert"}
-                      </Badge>
-                      {service.at_customer_place && (
-                        <Badge variant="outline">Hjemme hos kunde</Badge>
-                      )}
-                      {service.at_stylist_place && (
-                        <Badge variant="outline">På salong</Badge>
-                      )}
+                  <div className="flex-1 min-w-0">
+                    <CardTitle className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
+                      {service.title}
+                    </CardTitle>
+                    <div className="flex flex-col gap-2">
+                      <div>
+                        <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                          Kategorier
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {service.service_service_categories?.length ? (
+                            service.service_service_categories.map(
+                              (relation) => (
+                                <Badge
+                                  key={relation.service_categories.id}
+                                  variant="secondary"
+                                  className="text-xs font-medium"
+                                >
+                                  {relation.service_categories.name}
+                                </Badge>
+                              )
+                            )
+                          ) : (
+                            <Badge
+                              variant="secondary"
+                              className="text-xs font-medium"
+                            >
+                              Ukategorisert
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                          Leveringssted
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {service.at_customer_place && (
+                            <Badge variant="outline" className="text-xs">
+                              Hjemme hos kunde
+                            </Badge>
+                          )}
+                          {service.at_stylist_place && (
+                            <Badge variant="outline" className="text-xs">
+                              På salong
+                            </Badge>
+                          )}
+                          {!service.at_customer_place &&
+                            !service.at_stylist_place && (
+                              <Badge variant="outline" className="text-xs">
+                                Ikke spesifisert
+                              </Badge>
+                            )}
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 ml-3 flex-shrink-0">
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleEditService(service)}
+                      className="h-8 w-8 p-0 hover:bg-muted"
                     >
                       <Edit className="w-4 h-4" />
                     </Button>
@@ -154,25 +200,36 @@ export function ServicesPageClient({
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteService(service)}
+                      className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1">
+              <CardContent className="flex-1 flex flex-col justify-between pt-0 pb-4">
                 {service.description && (
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-2">
                     {service.description}
                   </p>
                 )}
-                <div className="flex items-center justify-between">
-                  <span className="text-lg font-semibold">
-                    {service.price} kr
-                  </span>
-                  <span className="text-sm text-muted-foreground">
-                    {service.duration_minutes} min
-                  </span>
+                <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Pris
+                    </span>
+                    <span className="text-xl font-bold text-foreground">
+                      {service.price} kr
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground">
+                      Varighet
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {service.duration_minutes} minutter
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -213,8 +270,9 @@ export function ServicesPageClient({
           <AlertDialogHeader>
             <AlertDialogTitle>Slett tjeneste</AlertDialogTitle>
             <AlertDialogDescription>
-              Er du sikker på at du vil slette tjenesten "
-              {serviceToDelete?.title}"? Denne handlingen kan ikke angres.
+              Er du sikker på at du vil slette tjenesten{" "}
+              <span className="font-bold">{serviceToDelete?.title}</span>? Denne
+              handlingen kan ikke angres.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

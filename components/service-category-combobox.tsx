@@ -1,7 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { ChevronsUpDown, FolderIcon, FolderOpenIcon } from "lucide-react";
+import {
+  ChevronsUpDown,
+  FolderIcon,
+  FolderOpenIcon,
+  ChevronDown,
+  ChevronUp,
+  X,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -81,6 +88,25 @@ function flattenCategories(categories: ServiceCategory[]): ServiceCategory[] {
   return flattened;
 }
 
+// Helper function to get all category IDs that have children
+function getAllCategoryIdsWithChildren(
+  categories: ServiceCategory[]
+): string[] {
+  const idsWithChildren: string[] = [];
+
+  function traverse(cats: ServiceCategory[]) {
+    cats.forEach((cat) => {
+      if (cat.children && cat.children.length > 0) {
+        idsWithChildren.push(cat.id);
+        traverse(cat.children);
+      }
+    });
+  }
+
+  traverse(categories);
+  return idsWithChildren;
+}
+
 interface CategoryItemProps {
   category: ServiceCategory & { depth?: number };
   isSelected: boolean;
@@ -88,6 +114,7 @@ interface CategoryItemProps {
   searchValue: string;
   expandedItems: Set<string>;
   onToggleExpanded: (categoryId: string) => void;
+  selectedCategories: string[];
 }
 
 const CategoryItem: React.FC<CategoryItemProps> = ({
@@ -97,6 +124,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
   searchValue,
   expandedItems,
   onToggleExpanded,
+  selectedCategories,
 }) => {
   const hasChildren = category.children && category.children.length > 0;
   const isExpanded = expandedItems.has(category.id);
@@ -129,7 +157,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
       <CommandItem
         key={category.id}
         value={`${category.name} ${category.description || ""}`}
-        className={cn("flex items-center gap-2 py-2", depth > 0 && "ml-4")}
+        className={cn("flex items-center gap-2 py-2", depth > 0 && "ml-6")}
         onSelect={() => onToggle(category.id)}
       >
         {hasChildren && (
@@ -166,11 +194,12 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
             <CategoryItem
               key={child.id}
               category={{ ...child, depth: depth + 1 }}
-              isSelected={isSelected}
+              isSelected={selectedCategories.includes(child.id)}
               onToggle={onToggle}
               searchValue={searchValue}
               expandedItems={expandedItems}
               onToggleExpanded={onToggleExpanded}
+              selectedCategories={selectedCategories}
             />
           ))}
         </div>
@@ -188,9 +217,6 @@ export function ServiceCategoryCombobox({
 }: ServiceCategoryComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
-  const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
-    new Set()
-  );
 
   const categoryTree = React.useMemo(
     () => buildCategoryTree(categories),
@@ -200,6 +226,16 @@ export function ServiceCategoryCombobox({
     () => flattenCategories(categoryTree),
     [categoryTree]
   );
+
+  // Auto-expand all categories by default
+  const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
+    () => new Set(getAllCategoryIdsWithChildren(categoryTree))
+  );
+
+  // Update expanded items when categories change
+  React.useEffect(() => {
+    setExpandedItems(new Set(getAllCategoryIdsWithChildren(categoryTree)));
+  }, [categoryTree]);
 
   const selectedCategoryNames = React.useMemo(() => {
     return categories
@@ -225,6 +261,14 @@ export function ServiceCategoryCombobox({
     setExpandedItems(newExpanded);
   };
 
+  const handleExpandAll = () => {
+    setExpandedItems(new Set(getAllCategoryIdsWithChildren(categoryTree)));
+  };
+
+  const handleCollapseAll = () => {
+    setExpandedItems(new Set());
+  };
+
   const displayText =
     selectedCategoryNames.length > 0
       ? selectedCategoryNames.length === 1
@@ -247,13 +291,38 @@ export function ServiceCategoryCombobox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full p-0">
+        <PopoverContent className="w-[500px] p-0" align="start">
           <Command>
-            <CommandInput
-              placeholder="Søk kategorier..."
-              value={searchValue}
-              onValueChange={setSearchValue}
-            />
+            <div className="flex w-full items-center border-b">
+              <CommandInput
+                placeholder="Søk kategorier..."
+                value={searchValue}
+                onValueChange={setSearchValue}
+                className="flex-1 border-0 focus:ring-0 w-full"
+              />
+              <div className="flex gap-1 p-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleExpandAll}
+                  className="h-8 px-2 text-xs"
+                  type="button"
+                >
+                  <ChevronDown className="h-3 w-3 mr-1" />
+                  Utvid alle
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleCollapseAll}
+                  className="h-8 px-2 text-xs"
+                  type="button"
+                >
+                  <ChevronUp className="h-3 w-3 mr-1" />
+                  Lukk alle
+                </Button>
+              </div>
+            </div>
             <CommandList>
               <CommandEmpty>Ingen kategorier funnet.</CommandEmpty>
               <CommandGroup>
@@ -279,6 +348,7 @@ export function ServiceCategoryCombobox({
                           searchValue={searchValue}
                           expandedItems={expandedItems}
                           onToggleExpanded={handleToggleExpanded}
+                          selectedCategories={selectedCategories}
                         />
                       ))
                   : // Show tree structure
@@ -291,6 +361,7 @@ export function ServiceCategoryCombobox({
                         searchValue={searchValue}
                         expandedItems={expandedItems}
                         onToggleExpanded={handleToggleExpanded}
+                        selectedCategories={selectedCategories}
                       />
                     ))}
               </CommandGroup>
@@ -308,15 +379,14 @@ export function ServiceCategoryCombobox({
               <Badge
                 key={categoryId}
                 variant="secondary"
-                className="flex items-center gap-1"
+                className="flex items-center justify-between gap-1"
               >
                 {name}
                 <button
                   type="button"
-                  className="ml-1 text-muted-foreground hover:text-foreground"
                   onClick={() => handleToggleCategory(categoryId)}
                 >
-                  ×
+                  <X className="h-3 w-3" />
                 </button>
               </Badge>
             );

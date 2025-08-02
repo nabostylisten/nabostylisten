@@ -4,6 +4,7 @@ ALTER TABLE public.service_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.application_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.service_service_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.booking_services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
@@ -72,6 +73,29 @@ WITH CHECK ( (select auth.uid()) = stylist_id );
 CREATE POLICY "Stylists can delete their own services." ON public.services
 FOR DELETE TO authenticated
 USING ( (select auth.uid()) = stylist_id );
+
+-- Service-category relationships are viewable by everyone (since services are public).
+CREATE POLICY "Service categories relationships are viewable by everyone." ON public.service_service_categories
+FOR SELECT TO anon, authenticated
+USING ( true );
+
+-- Stylists can manage categories for their own services.
+CREATE POLICY "Stylists can add categories to their own services." ON public.service_service_categories
+FOR INSERT TO authenticated
+WITH CHECK (
+  service_id IN (
+    SELECT id FROM public.services WHERE stylist_id = (select auth.uid())
+  )
+);
+
+-- Stylists can remove categories from their own services.
+CREATE POLICY "Stylists can remove categories from their own services." ON public.service_service_categories
+FOR DELETE TO authenticated
+USING (
+  service_id IN (
+    SELECT id FROM public.services WHERE stylist_id = (select auth.uid())
+  )
+);
 
 -- Customers and stylists can view bookings they are involved in.
 CREATE POLICY "Users can view their own bookings." ON public.bookings

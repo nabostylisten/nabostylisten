@@ -636,10 +636,41 @@ export const serviceCategoriesRelationshipsSchema = z.tuple([
   }),
 ]);
 
+export const serviceServiceCategoriesRowSchema = z.object({
+  category_id: z.string(),
+  service_id: z.string(),
+});
+
+export const serviceServiceCategoriesInsertSchema = z.object({
+  category_id: z.string(),
+  service_id: z.string(),
+});
+
+export const serviceServiceCategoriesUpdateSchema = z.object({
+  category_id: z.string().optional(),
+  service_id: z.string().optional(),
+});
+
+export const serviceServiceCategoriesRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("service_service_categories_category_id_fkey"),
+    columns: z.tuple([z.literal("category_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("service_categories"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("service_service_categories_service_id_fkey"),
+    columns: z.tuple([z.literal("service_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("services"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
 export const servicesRowSchema = z.object({
   at_customer_place: z.boolean(),
   at_stylist_place: z.boolean(),
-  category_id: z.string(),
   created_at: z.string(),
   description: z.string().nullable(),
   duration_minutes: z.number(),
@@ -653,7 +684,6 @@ export const servicesRowSchema = z.object({
 export const servicesInsertSchema = z.object({
   at_customer_place: z.boolean().optional(),
   at_stylist_place: z.boolean().optional(),
-  category_id: z.string(),
   created_at: z.string().optional(),
   description: z.string().optional().nullable(),
   duration_minutes: z.number(),
@@ -667,7 +697,6 @@ export const servicesInsertSchema = z.object({
 export const servicesUpdateSchema = z.object({
   at_customer_place: z.boolean().optional(),
   at_stylist_place: z.boolean().optional(),
-  category_id: z.string().optional(),
   created_at: z.string().optional(),
   description: z.string().optional().nullable(),
   duration_minutes: z.number().optional(),
@@ -679,13 +708,6 @@ export const servicesUpdateSchema = z.object({
 });
 
 export const servicesRelationshipsSchema = z.tuple([
-  z.object({
-    foreignKeyName: z.literal("services_category_id_fkey"),
-    columns: z.tuple([z.literal("category_id")]),
-    isOneToOne: z.literal(false),
-    referencedRelation: z.literal("service_categories"),
-    referencedColumns: z.tuple([z.literal("id")]),
-  }),
   z.object({
     foreignKeyName: z.literal("services_stylist_id_fkey"),
     columns: z.tuple([z.literal("stylist_id")]),

@@ -124,11 +124,16 @@ CREATE TABLE IF NOT EXISTS public.services (
     price numeric(10, 2) NOT NULL,
     duration_minutes integer NOT NULL,
 
-    category_id uuid NOT NULL REFERENCES public.service_categories(id) ON DELETE CASCADE,
-
     -- Location options
     at_customer_place boolean DEFAULT false NOT NULL,
     at_stylist_place boolean DEFAULT true NOT NULL
+);
+
+-- Junction table to link services to multiple categories
+CREATE TABLE IF NOT EXISTS public.service_service_categories (
+    service_id uuid NOT NULL REFERENCES public.services(id) ON DELETE CASCADE,
+    category_id uuid NOT NULL REFERENCES public.service_categories(id) ON DELETE CASCADE,
+    PRIMARY KEY (service_id, category_id)
 );
 
 -- Table for booking requests

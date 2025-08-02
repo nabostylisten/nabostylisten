@@ -566,11 +566,40 @@ export type Database = {
           },
         ]
       }
+      service_service_categories: {
+        Row: {
+          category_id: string
+          service_id: string
+        }
+        Insert: {
+          category_id: string
+          service_id: string
+        }
+        Update: {
+          category_id?: string
+          service_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_service_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "service_categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "service_service_categories_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       services: {
         Row: {
           at_customer_place: boolean
           at_stylist_place: boolean
-          category_id: string
           created_at: string
           description: string | null
           duration_minutes: number
@@ -583,7 +612,6 @@ export type Database = {
         Insert: {
           at_customer_place?: boolean
           at_stylist_place?: boolean
-          category_id: string
           created_at?: string
           description?: string | null
           duration_minutes: number
@@ -596,7 +624,6 @@ export type Database = {
         Update: {
           at_customer_place?: boolean
           at_stylist_place?: boolean
-          category_id?: string
           created_at?: string
           description?: string | null
           duration_minutes?: number
@@ -607,13 +634,6 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "services_category_id_fkey"
-            columns: ["category_id"]
-            isOneToOne: false
-            referencedRelation: "service_categories"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "services_stylist_id_fkey"
             columns: ["stylist_id"]

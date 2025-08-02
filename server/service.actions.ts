@@ -4,9 +4,17 @@ import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Database } from "@/types/database.types";
 
-type Service = Database["public"]["Tables"]["services"]["Row"];
 type ServiceInsert = Database["public"]["Tables"]["services"]["Insert"];
 type ServiceUpdate = Database["public"]["Tables"]["services"]["Update"];
+
+// Extended types for form data that includes category_ids
+type ServiceFormInsert = Omit<ServiceInsert, "stylist_id"> & {
+    category_ids: string[];
+};
+
+type ServiceFormUpdate = Omit<ServiceUpdate, "stylist_id"> & {
+    category_ids?: string[];
+};
 
 export async function getServices(stylistId: string) {
     const supabase = await createClient();
@@ -15,9 +23,12 @@ export async function getServices(stylistId: string) {
         .from("services")
         .select(`
       *,
-      service_categories (
-        name,
-        description
+      service_service_categories!inner (
+        service_categories (
+          id,
+          name,
+          description
+        )
       )
     `)
         .eq("stylist_id", stylistId)
@@ -33,9 +44,12 @@ export async function getService(serviceId: string) {
         .from("services")
         .select(`
       *,
-      service_categories (
-        name,
-        description
+      service_service_categories!inner (
+        service_categories (
+          id,
+          name,
+          description
+        )
       )
     `)
         .eq("id", serviceId)
@@ -44,7 +58,7 @@ export async function getService(serviceId: string) {
     return { data, error };
 }
 
-export async function createService(serviceData: ServiceInsert) {
+export async function createService(serviceData: ServiceFormInsert) {
     const supabase = await createClient();
 
     // Get current user to verify they can create services
@@ -65,28 +79,51 @@ export async function createService(serviceData: ServiceInsert) {
         return { error: "Only stylists can create services", data: null };
     }
 
+    // Extract category_ids and remove it from service data
+    const { category_ids, ...serviceFields } = serviceData;
+
     // Ensure the service is created by the authenticated user
     const serviceToCreate = {
-        ...serviceData,
+        ...serviceFields,
         stylist_id: user.id,
     };
 
-    const { data, error } = await supabase
+    // Create the service
+    const { data: service, error: serviceError } = await supabase
         .from("services")
         .insert(serviceToCreate)
         .select()
         .single();
 
-    if (!error) {
-        revalidatePath(`/profiler/${user.id}/mine-tjenester`);
+    if (serviceError || !service) {
+        return { error: serviceError, data: null };
     }
 
-    return { data, error };
+    // Create service-category relationships
+    if (category_ids && category_ids.length > 0) {
+        const categoryRelations = category_ids.map((categoryId) => ({
+            service_id: service.id,
+            category_id: categoryId,
+        }));
+
+        const { error: categoryError } = await supabase
+            .from("service_service_categories")
+            .insert(categoryRelations);
+
+        if (categoryError) {
+            // If category relations fail, clean up the created service
+            await supabase.from("services").delete().eq("id", service.id);
+            return { error: categoryError, data: null };
+        }
+    }
+
+    revalidatePath(`/profiler/${user.id}/mine-tjenester`);
+    return { data: service, error: null };
 }
 
 export async function updateService(
     serviceId: string,
-    serviceData: ServiceUpdate,
+    serviceData: ServiceFormUpdate,
 ) {
     const supabase = await createClient();
 
@@ -108,18 +145,52 @@ export async function updateService(
         return { error: "Service not found or unauthorized", data: null };
     }
 
-    const { data, error } = await supabase
+    // Extract category_ids and remove it from service data
+    const { category_ids, ...serviceFields } = serviceData;
+
+    // Update the service
+    const { data: service, error: serviceError } = await supabase
         .from("services")
-        .update(serviceData)
+        .update(serviceFields)
         .eq("id", serviceId)
         .select()
         .single();
 
-    if (!error) {
-        revalidatePath(`/profiler/${user.id}/mine-tjenester`);
+    if (serviceError || !service) {
+        return { error: serviceError, data: null };
     }
 
-    return { data, error };
+    // Update service-category relationships if category_ids is provided
+    if (category_ids !== undefined) {
+        // First, delete existing category relationships
+        const { error: deleteError } = await supabase
+            .from("service_service_categories")
+            .delete()
+            .eq("service_id", serviceId);
+
+        if (deleteError) {
+            return { error: deleteError, data: null };
+        }
+
+        // Then, create new category relationships
+        if (category_ids.length > 0) {
+            const categoryRelations = category_ids.map((categoryId) => ({
+                service_id: serviceId,
+                category_id: categoryId,
+            }));
+
+            const { error: categoryError } = await supabase
+                .from("service_service_categories")
+                .insert(categoryRelations);
+
+            if (categoryError) {
+                return { error: categoryError, data: null };
+            }
+        }
+    }
+
+    revalidatePath(`/profiler/${user.id}/mine-tjenester`);
+    return { data: service, error: null };
 }
 
 export async function deleteService(serviceId: string) {

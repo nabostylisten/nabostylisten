@@ -38,8 +38,8 @@
     --sidebar-accent-foreground: 106.8 28.7356% 34.1176%;
     --sidebar-border: 253.3333 24.3243% 92.7451%;
     --sidebar-ring: 260 28.9157% 67.451%;
-    --font-sans: AR One Sans, ui-sans-serif, sans-serif, system-ui;
-    --font-serif: Lora, serif;
+    --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+    --font-serif: PT Serif, serif;
     --font-mono: Roboto Mono, monospace;
     --radius: 1rem;
     --shadow-2xs: 0px 2px 4px 0px hsl(0 0% 0% / 0.05);
@@ -92,8 +92,8 @@
     --sidebar-accent-foreground: 253.3333 24.3243% 92.7451%;
     --sidebar-border: 267 16.9492% 23.1373%;
     --sidebar-ring: 260 28.9157% 67.451%;
-    --font-sans: AR One Sans, ui-sans-serif, sans-serif, system-ui;
-    --font-serif: Lora, serif;
+    --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
+    --font-serif: PT Serif, serif;
     --font-mono: Roboto Mono, monospace;
     --radius: 1rem;
     --shadow-2xs: 0px 2px 4px 0px hsl(0 0% 0% / 0.05);

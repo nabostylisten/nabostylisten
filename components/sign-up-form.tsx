@@ -36,7 +36,7 @@ export function SignUpForm({
     setError(null);
 
     if (password !== repeatPassword) {
-      setError("Passwords do not match");
+      setError("Passordene matcher ikke");
       setIsLoading(false);
       return;
     }
@@ -56,7 +56,7 @@ export function SignUpForm({
       if (error) throw error;
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : "En feil oppstod");
     } finally {
       setIsLoading(false);
     }
@@ -66,14 +66,14 @@ export function SignUpForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
+          <CardTitle className="text-2xl">Registrer deg</CardTitle>
+          <CardDescription>Opprett en ny konto</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="full-name">Full Name</Label>
+                <Label htmlFor="full-name">Fullt navn</Label>
                 <Input
                   id="full-name"
                   type="text"
@@ -84,7 +84,7 @@ export function SignUpForm({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">E-post</Label>
                 <Input
                   id="email"
                   type="email"
@@ -95,7 +95,7 @@ export function SignUpForm({
                 />
               </div>
               <div className="grid gap-2">
-                <Label htmlFor="phone-number">Phone Number</Label>
+                <Label htmlFor="phone-number">Telefonnummer</Label>
                 <Input
                   id="phone-number"
                   type="tel"
@@ -107,7 +107,7 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Passord</Label>
                 </div>
                 <Input
                   id="password"
@@ -119,7 +119,7 @@ export function SignUpForm({
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="repeat-password">Repeat Password</Label>
+                  <Label htmlFor="repeat-password">Gjenta passord</Label>
                 </div>
                 <Input
                   id="repeat-password"
@@ -131,13 +131,13 @@ export function SignUpForm({
               </div>
               {error && <p className="text-sm text-red-500">{error}</p>}
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating an account..." : "Sign up"}
+                {isLoading ? "Oppretter konto..." : "Registrer deg"}
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Already have an account?{" "}
+              Har du allerede en konto?{" "}
               <Link href="/auth/login" className="underline underline-offset-4">
-                Login
+                Logg inn
               </Link>
             </div>
           </form>

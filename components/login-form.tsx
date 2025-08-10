@@ -42,7 +42,7 @@ export function LoginForm({
       if (error) throw error;
       setIsSuccess(true);
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
+      setError(error instanceof Error ? error.message : "En feil oppstod");
     } finally {
       setIsLoading(false);
     }
@@ -52,9 +52,9 @@ export function LoginForm({
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl">Login</CardTitle>
+          <CardTitle className="text-2xl">Logg inn</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Skriv inn din e-post for å logge inn på kontoen din
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,10 +62,10 @@ export function LoginForm({
             <div className="flex flex-col gap-4 text-center">
               <div className="rounded-lg bg-green-50 p-4 dark:bg-green-950">
                 <p className="text-sm text-green-800 dark:text-green-200">
-                  Check your email for a login link!
+                  Sjekk e-posten din for en påloggingslenke!
                 </p>
                 <p className="mt-2 text-xs text-green-600 dark:text-green-400">
-                  We&apos;ve sent a one-time login link to {email}
+                  Vi har sendt en engangs påloggingslenke til {email}
                 </p>
               </div>
               <Button
@@ -76,14 +76,14 @@ export function LoginForm({
                 }}
                 className="w-full"
               >
-                Try another email
+                Prøv en annen e-post
               </Button>
             </div>
           ) : (
             <form onSubmit={handleLogin}>
               <div className="flex flex-col gap-6">
                 <div className="grid gap-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">E-post</Label>
                   <Input
                     id="email"
                     type="email"
@@ -96,16 +96,18 @@ export function LoginForm({
 
                 {error && <p className="text-sm text-red-500">{error}</p>}
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? "Sending login link..." : "Send login link"}
+                  {isLoading
+                    ? "Sender påloggingslenke..."
+                    : "Send påloggingslenke"}
                 </Button>
               </div>
               <div className="mt-4 text-center text-sm">
-                Don&apos;t have an account?{" "}
+                Har du ikke en konto?{" "}
                 <Link
                   href="/auth/sign-up"
                   className="underline underline-offset-4"
                 >
-                  Sign up
+                  Registrer deg
                 </Link>
               </div>
             </form>

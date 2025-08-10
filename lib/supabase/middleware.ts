@@ -8,7 +8,10 @@ import { Database } from "@/types/database.types";
 const publicRoutes = [
   "/",
   "/bli-stylist",
+  "/kontakt",
+  "/om-oss",
   "/tjenester",
+  "/privacy",
   "/terms-of-service",
   "/faq",
 ];

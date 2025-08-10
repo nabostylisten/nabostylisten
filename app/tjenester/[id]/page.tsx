@@ -1,31 +1,40 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  MapPin, 
-  Star, 
-  Clock, 
-  CheckCircle, 
+import {
+  MapPin,
+  Star,
+  Clock,
+  CheckCircle,
   Calendar,
   User,
-  Heart
+  Heart,
 } from "lucide-react";
 import Link from "next/link";
 
 interface PageProps {
-  params: {
-    tjenesteId: string;
-  };
+  params: Promise<{
+    id: string;
+  }>;
 }
 
-export default function TjenesteDetailPage({ params }: PageProps) {
-  // This would normally fetch data based on params.tjenesteId
+export default async function TjenesteDetailPage({ params }: PageProps) {
+  const { id } = await params;
+
+  // This would normally fetch data based on id
   const service = {
-    id: params.tjenesteId,
+    id: id,
     title: "Klipp og farge",
-    description: "Profesjonell hårklipp og fargelegging hjemme hos deg. Jeg tilbyr individuell konsultasjon og bruker kun høykvalitetsprodukter for best mulig resultat.",
+    description:
+      "Profesjonell hårklipp og fargelegging hjemme hos deg. Jeg tilbyr individuell konsultasjon og bruker kun høykvalitetsprodukter for best mulig resultat.",
     price: "Fra 850 kr",
     duration: "2-3 timer",
     rating: 4.9,
@@ -42,7 +51,7 @@ export default function TjenesteDetailPage({ params }: PageProps) {
     },
     includes: [
       "Konsultasjon og fargeråd",
-      "Klipp og styling", 
+      "Klipp og styling",
       "Profesjonelle produkter",
       "Oppfølging etter behandling",
     ],
@@ -50,7 +59,7 @@ export default function TjenesteDetailPage({ params }: PageProps) {
       "Tilgang til vask og strøm",
       "God belysning",
       "Plass til arbeid",
-    ]
+    ],
   };
 
   const recentReviews = [
@@ -58,11 +67,12 @@ export default function TjenesteDetailPage({ params }: PageProps) {
       id: "1",
       author: "Sara K.",
       rating: 5,
-      comment: "Fantastisk resultat! Emma var super profesjonell og gjorde en utrolig jobb.",
+      comment:
+        "Fantastisk resultat! Emma var super profesjonell og gjorde en utrolig jobb.",
       date: "2 dager siden",
     },
     {
-      id: "2", 
+      id: "2",
       author: "Maria H.",
       rating: 5,
       comment: "Så fornøyd med fargen! Kommer definitivt til å booke igjen.",
@@ -117,11 +127,16 @@ export default function TjenesteDetailPage({ params }: PageProps) {
                   <Avatar className="w-16 h-16">
                     <AvatarImage src={service.stylist.avatar} />
                     <AvatarFallback>
-                      {service.stylist.name.split(' ').map(n => n[0]).join('')}
+                      {service.stylist.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">{service.stylist.name}</h3>
+                    <h3 className="font-semibold text-lg">
+                      {service.stylist.name}
+                    </h3>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
@@ -192,9 +207,9 @@ export default function TjenesteDetailPage({ params }: PageProps) {
                           <span className="font-medium">{review.author}</span>
                           <div className="flex">
                             {[...Array(review.rating)].map((_, i) => (
-                              <Star 
-                                key={i} 
-                                className="w-4 h-4 fill-yellow-400 text-yellow-400" 
+                              <Star
+                                key={i}
+                                className="w-4 h-4 fill-yellow-400 text-yellow-400"
                               />
                             ))}
                           </div>

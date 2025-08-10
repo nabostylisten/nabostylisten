@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Inter, PT_Serif, JetBrains_Mono } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
@@ -7,6 +7,7 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/sonner";
+import { cn } from "@/lib/utils";
 
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
@@ -19,8 +20,20 @@ export const metadata: Metadata = {
     "Norges ledende platform for å booke skjønnhetstjenester hjemme eller på salong. Finn din perfekte stylist i dag.",
 };
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const ptSerif = PT_Serif({
+  variable: "--font-serif",
+  display: "swap",
+  subsets: ["latin"],
+  weight: ["400", "700"],
+});
+
+const jetBrainsMono = JetBrains_Mono({
+  variable: "--font-mono",
   display: "swap",
   subsets: ["latin"],
 });
@@ -32,7 +45,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="no" suppressHydrationWarning className="scroll-smooth">
-      <body className={`${geistSans.className} antialiased`}>
+      <body
+        className={cn(
+          ptSerif.variable,
+          jetBrainsMono.variable,
+          inter.variable,
+          "antialiased"
+        )}
+      >
         <TanstackQueryProvider>
           <ThemeProvider
             attribute="class"

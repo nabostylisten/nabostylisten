@@ -74,18 +74,18 @@ export default function TjenesterPage() {
             <CardContent className="p-6">
               <div className="flex flex-col md:flex-row gap-4">
                 <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Søk etter tjeneste eller behandling..."
                     className="pl-10"
                   />
                 </div>
                 <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input placeholder="Hvor?" className="pl-10" />
                 </div>
-                <Button size="default" className="md:w-auto">
-                  <Search className="w-4 h-4 mr-2" />
+                <Button size="default" className="md:w-auto flex gap-2">
+                  <Search className="w-4 h-4" />
                   Søk
                 </Button>
               </div>
@@ -170,7 +170,7 @@ export default function TjenesterPage() {
               oss så hjelper vi deg med å finne riktig match.
             </p>
             <Button size="lg" asChild>
-              <Link href="/contact">Kontakt oss</Link>
+              <Link href="/kontakt">Kontakt oss</Link>
             </Button>
           </div>
         </div>

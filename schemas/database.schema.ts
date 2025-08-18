@@ -104,8 +104,7 @@ export const addressesRowSchema = z.object({
   entry_instructions: z.string().nullable(),
   id: z.string(),
   is_primary: z.boolean(),
-  latitude: z.number().nullable(),
-  longitude: z.number().nullable(),
+  location: z.unknown().nullable(),
   nickname: z.string().nullable(),
   postal_code: z.string(),
   street_address: z.string(),
@@ -120,8 +119,7 @@ export const addressesInsertSchema = z.object({
   entry_instructions: z.string().optional().nullable(),
   id: z.string().optional(),
   is_primary: z.boolean().optional(),
-  latitude: z.number().optional().nullable(),
-  longitude: z.number().optional().nullable(),
+  location: z.unknown().optional().nullable(),
   nickname: z.string().optional().nullable(),
   postal_code: z.string(),
   street_address: z.string(),
@@ -136,8 +134,7 @@ export const addressesUpdateSchema = z.object({
   entry_instructions: z.string().optional().nullable(),
   id: z.string().optional(),
   is_primary: z.boolean().optional(),
-  latitude: z.number().optional().nullable(),
-  longitude: z.number().optional().nullable(),
+  location: z.unknown().optional().nullable(),
   nickname: z.string().optional().nullable(),
   postal_code: z.string().optional(),
   street_address: z.string().optional(),
@@ -294,8 +291,12 @@ export const bookingServicesRelationshipsSchema = z.tuple([
 
 export const bookingsRowSchema = z.object({
   address_id: z.string().nullable(),
+  cancellation_reason: z.string().nullable(),
+  cancelled_at: z.string().nullable(),
   created_at: z.string(),
   customer_id: z.string(),
+  discount_applied: z.number(),
+  discount_id: z.string().nullable(),
   end_time: z.string(),
   id: z.string(),
   message_to_stylist: z.string().nullable(),
@@ -310,8 +311,12 @@ export const bookingsRowSchema = z.object({
 
 export const bookingsInsertSchema = z.object({
   address_id: z.string().optional().nullable(),
+  cancellation_reason: z.string().optional().nullable(),
+  cancelled_at: z.string().optional().nullable(),
   created_at: z.string().optional(),
   customer_id: z.string(),
+  discount_applied: z.number().optional(),
+  discount_id: z.string().optional().nullable(),
   end_time: z.string(),
   id: z.string().optional(),
   message_to_stylist: z.string().optional().nullable(),
@@ -326,8 +331,12 @@ export const bookingsInsertSchema = z.object({
 
 export const bookingsUpdateSchema = z.object({
   address_id: z.string().optional().nullable(),
+  cancellation_reason: z.string().optional().nullable(),
+  cancelled_at: z.string().optional().nullable(),
   created_at: z.string().optional(),
   customer_id: z.string().optional(),
+  discount_applied: z.number().optional(),
+  discount_id: z.string().optional().nullable(),
   end_time: z.string().optional(),
   id: z.string().optional(),
   message_to_stylist: z.string().optional().nullable(),
@@ -353,6 +362,13 @@ export const bookingsRelationshipsSchema = z.tuple([
     columns: z.tuple([z.literal("customer_id")]),
     isOneToOne: z.literal(false),
     referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("bookings_discount_id_fkey"),
+    columns: z.tuple([z.literal("discount_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("discounts"),
     referencedColumns: z.tuple([z.literal("id")]),
   }),
   z.object({
@@ -439,6 +455,60 @@ export const chatsRelationshipsSchema = z.tuple([
   }),
 ]);
 
+export const discountsRowSchema = z.object({
+  code: z.string(),
+  created_at: z.string(),
+  currency: z.string(),
+  current_uses: z.number(),
+  description: z.string().nullable(),
+  discount_amount: z.number().nullable(),
+  discount_percentage: z.number().nullable(),
+  expires_at: z.string().nullable(),
+  id: z.string(),
+  is_active: z.boolean(),
+  max_uses: z.number().nullable(),
+  max_uses_per_user: z.number(),
+  minimum_order_amount: z.number().nullable(),
+  updated_at: z.string(),
+  valid_from: z.string(),
+});
+
+export const discountsInsertSchema = z.object({
+  code: z.string(),
+  created_at: z.string().optional(),
+  currency: z.string().optional(),
+  current_uses: z.number().optional(),
+  description: z.string().optional().nullable(),
+  discount_amount: z.number().optional().nullable(),
+  discount_percentage: z.number().optional().nullable(),
+  expires_at: z.string().optional().nullable(),
+  id: z.string().optional(),
+  is_active: z.boolean().optional(),
+  max_uses: z.number().optional().nullable(),
+  max_uses_per_user: z.number().optional(),
+  minimum_order_amount: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  valid_from: z.string().optional(),
+});
+
+export const discountsUpdateSchema = z.object({
+  code: z.string().optional(),
+  created_at: z.string().optional(),
+  currency: z.string().optional(),
+  current_uses: z.number().optional(),
+  description: z.string().optional().nullable(),
+  discount_amount: z.number().optional().nullable(),
+  discount_percentage: z.number().optional().nullable(),
+  expires_at: z.string().optional().nullable(),
+  id: z.string().optional(),
+  is_active: z.boolean().optional(),
+  max_uses: z.number().optional().nullable(),
+  max_uses_per_user: z.number().optional(),
+  minimum_order_amount: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  valid_from: z.string().optional(),
+});
+
 export const mediaRowSchema = z.object({
   application_id: z.string().nullable(),
   chat_message_id: z.string().nullable(),
@@ -509,6 +579,67 @@ export const mediaRelationshipsSchema = z.tuple([
     columns: z.tuple([z.literal("service_id")]),
     isOneToOne: z.literal(false),
     referencedRelation: z.literal("services"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const paymentsRowSchema = z.object({
+  booking_id: z.string(),
+  created_at: z.string(),
+  currency: z.string(),
+  id: z.string(),
+  payment_intent_id: z.string(),
+  payout_completed_at: z.string().nullable(),
+  payout_initiated_at: z.string().nullable(),
+  platform_fee: z.number(),
+  status: z.string(),
+  stylist_payout_amount: z.number(),
+  stylist_transfer_id: z.string().nullable(),
+  succeeded_at: z.string().nullable(),
+  total_amount: z.number(),
+  updated_at: z.string(),
+});
+
+export const paymentsInsertSchema = z.object({
+  booking_id: z.string(),
+  created_at: z.string().optional(),
+  currency: z.string().optional(),
+  id: z.string().optional(),
+  payment_intent_id: z.string(),
+  payout_completed_at: z.string().optional().nullable(),
+  payout_initiated_at: z.string().optional().nullable(),
+  platform_fee: z.number(),
+  status: z.string().optional(),
+  stylist_payout_amount: z.number(),
+  stylist_transfer_id: z.string().optional().nullable(),
+  succeeded_at: z.string().optional().nullable(),
+  total_amount: z.number(),
+  updated_at: z.string().optional(),
+});
+
+export const paymentsUpdateSchema = z.object({
+  booking_id: z.string().optional(),
+  created_at: z.string().optional(),
+  currency: z.string().optional(),
+  id: z.string().optional(),
+  payment_intent_id: z.string().optional(),
+  payout_completed_at: z.string().optional().nullable(),
+  payout_initiated_at: z.string().optional().nullable(),
+  platform_fee: z.number().optional(),
+  status: z.string().optional(),
+  stylist_payout_amount: z.number().optional(),
+  stylist_transfer_id: z.string().optional().nullable(),
+  succeeded_at: z.string().optional().nullable(),
+  total_amount: z.number().optional(),
+  updated_at: z.string().optional(),
+});
+
+export const paymentsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("payments_booking_id_fkey"),
+    columns: z.tuple([z.literal("booking_id")]),
+    isOneToOne: z.literal(true),
+    referencedRelation: z.literal("bookings"),
     referencedColumns: z.tuple([z.literal("id")]),
   }),
 ]);
@@ -733,9 +864,11 @@ export const servicesRowSchema = z.object({
   at_customer_place: z.boolean(),
   at_stylist_place: z.boolean(),
   created_at: z.string(),
+  currency: z.string(),
   description: z.string().nullable(),
   duration_minutes: z.number(),
   id: z.string(),
+  is_published: z.boolean(),
   price: z.number(),
   stylist_id: z.string(),
   title: z.string(),
@@ -746,9 +879,11 @@ export const servicesInsertSchema = z.object({
   at_customer_place: z.boolean().optional(),
   at_stylist_place: z.boolean().optional(),
   created_at: z.string().optional(),
+  currency: z.string().optional(),
   description: z.string().optional().nullable(),
   duration_minutes: z.number(),
   id: z.string().optional(),
+  is_published: z.boolean().optional(),
   price: z.number(),
   stylist_id: z.string(),
   title: z.string(),
@@ -759,9 +894,11 @@ export const servicesUpdateSchema = z.object({
   at_customer_place: z.boolean().optional(),
   at_stylist_place: z.boolean().optional(),
   created_at: z.string().optional(),
+  currency: z.string().optional(),
   description: z.string().optional().nullable(),
   duration_minutes: z.number().optional(),
   id: z.string().optional(),
+  is_published: z.boolean().optional(),
   price: z.number().optional(),
   stylist_id: z.string().optional(),
   title: z.string().optional(),
@@ -807,6 +944,67 @@ export const stylistAvailabilityRulesRelationshipsSchema = z.tuple([
     foreignKeyName: z.literal("stylist_availability_rules_stylist_id_fkey"),
     columns: z.tuple([z.literal("stylist_id")]),
     isOneToOne: z.literal(false),
+    referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const stylistDetailsRowSchema = z.object({
+  bio: z.string().nullable(),
+  can_travel: z.boolean(),
+  created_at: z.string(),
+  facebook_profile: z.string().nullable(),
+  has_own_place: z.boolean(),
+  instagram_profile: z.string().nullable(),
+  other_social_media_urls: z.array(z.string()).nullable(),
+  profile_id: z.string(),
+  snapchat_profile: z.string().nullable(),
+  stripe_account_id: z.string().nullable(),
+  tiktok_profile: z.string().nullable(),
+  travel_distance_km: z.number().nullable(),
+  updated_at: z.string(),
+  youtube_profile: z.string().nullable(),
+});
+
+export const stylistDetailsInsertSchema = z.object({
+  bio: z.string().optional().nullable(),
+  can_travel: z.boolean().optional(),
+  created_at: z.string().optional(),
+  facebook_profile: z.string().optional().nullable(),
+  has_own_place: z.boolean().optional(),
+  instagram_profile: z.string().optional().nullable(),
+  other_social_media_urls: z.array(z.string()).optional().nullable(),
+  profile_id: z.string(),
+  snapchat_profile: z.string().optional().nullable(),
+  stripe_account_id: z.string().optional().nullable(),
+  tiktok_profile: z.string().optional().nullable(),
+  travel_distance_km: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  youtube_profile: z.string().optional().nullable(),
+});
+
+export const stylistDetailsUpdateSchema = z.object({
+  bio: z.string().optional().nullable(),
+  can_travel: z.boolean().optional(),
+  created_at: z.string().optional(),
+  facebook_profile: z.string().optional().nullable(),
+  has_own_place: z.boolean().optional(),
+  instagram_profile: z.string().optional().nullable(),
+  other_social_media_urls: z.array(z.string()).optional().nullable(),
+  profile_id: z.string().optional(),
+  snapchat_profile: z.string().optional().nullable(),
+  stripe_account_id: z.string().optional().nullable(),
+  tiktok_profile: z.string().optional().nullable(),
+  travel_distance_km: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  youtube_profile: z.string().optional().nullable(),
+});
+
+export const stylistDetailsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("stylist_details_profile_id_fkey"),
+    columns: z.tuple([z.literal("profile_id")]),
+    isOneToOne: z.literal(true),
     referencedRelation: z.literal("profiles"),
     referencedColumns: z.tuple([z.literal("id")]),
   }),
@@ -894,6 +1092,29 @@ export const stylistUnavailabilityRelationshipsSchema = z.tuple([
 export const getMyRoleArgsSchema = z.object({});
 
 export const getMyRoleReturnsSchema = UserRoleSchema;
+
+export const nearbyAddressesArgsSchema = z.object({
+  lat: z.number(),
+  long: z.number(),
+  radius_km: z.number().optional(),
+});
+
+export const nearbyAddressesReturnsSchema = z.array(
+  z.object({
+    city: z.string(),
+    country: z.string(),
+    distance_meters: z.number(),
+    entry_instructions: z.string(),
+    id: z.string(),
+    is_primary: z.boolean(),
+    lat: z.number(),
+    long: z.number(),
+    nickname: z.string(),
+    postal_code: z.string(),
+    street_address: z.string(),
+    user_id: z.string(),
+  }),
+);
 
 export const chargesRowSchema = z.object({
   amount: z.number().nullable(),

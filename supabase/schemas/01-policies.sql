@@ -1,4 +1,5 @@
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.stylist_details ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.addresses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.service_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.applications ENABLE ROW LEVEL SECURITY;
@@ -8,6 +9,8 @@ ALTER TABLE public.service_service_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.booking_services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stylist_availability_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stylist_unavailability ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stylist_recurring_unavailability ENABLE ROW LEVEL SECURITY;
@@ -15,6 +18,15 @@ ALTER TABLE public.recurring_unavailability_exceptions ENABLE ROW LEVEL SECURITY
 ALTER TABLE public.chats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
+
+-- A function to check the current user's role (recommended for performance).
+CREATE OR REPLACE FUNCTION public.get_my_role()
+RETURNS public.user_role
+LANGUAGE sql
+SECURITY DEFINER
+AS $$
+  SELECT role::public.user_role FROM public.profiles WHERE id = auth.uid();
+$$;
 
 -- Profiles are public and can be viewed by anyone.
 CREATE POLICY "Profiles are viewable by everyone." ON public.profiles
@@ -31,6 +43,27 @@ CREATE POLICY "Users can update their own profile." ON public.profiles
 FOR UPDATE TO authenticated
 USING ( (select auth.uid()) = id )
 WITH CHECK ( (select auth.uid()) = id );
+
+-- Stylist details are viewable by everyone (for displaying stylist profiles).
+CREATE POLICY "Stylist details are viewable by everyone." ON public.stylist_details
+FOR SELECT TO anon, authenticated
+USING ( true );
+
+-- Stylists can create their own details.
+CREATE POLICY "Stylists can create their own details." ON public.stylist_details
+FOR INSERT TO authenticated
+WITH CHECK ( (select auth.uid()) = profile_id );
+
+-- Stylists can update their own details.
+CREATE POLICY "Stylists can update their own details." ON public.stylist_details
+FOR UPDATE TO authenticated
+USING ( (select auth.uid()) = profile_id )
+WITH CHECK ( (select auth.uid()) = profile_id );
+
+-- Stylists can delete their own details.
+CREATE POLICY "Stylists can delete their own details." ON public.stylist_details
+FOR DELETE TO authenticated
+USING ( (select auth.uid()) = profile_id );
 
 -- A user can view their own addresses.
 CREATE POLICY "Users can view their own addresses." ON public.addresses
@@ -151,6 +184,34 @@ CREATE POLICY "Customers can delete their own reviews." ON public.reviews
 FOR DELETE TO authenticated
 USING ( (select auth.uid()) = customer_id );
 
+-- Payment records can be viewed by involved parties (customer, stylist) and admins.
+CREATE POLICY "Users can view payments for their bookings." ON public.payments
+FOR SELECT TO authenticated
+USING (
+  booking_id IN (
+    SELECT id FROM public.bookings 
+    WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
+  ) OR public.get_my_role() = 'admin'
+);
+
+-- Discounts are viewable by everyone (to validate codes).
+CREATE POLICY "Discounts are viewable by everyone." ON public.discounts
+FOR SELECT TO anon, authenticated
+USING ( true );
+
+-- Only admins can manage discounts.
+CREATE POLICY "Only admins can insert discounts." ON public.discounts
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Only admins can update discounts." ON public.discounts
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Only admins can delete discounts." ON public.discounts
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 -- Authenticated users can view stylist availability to enable booking.
 CREATE POLICY "Availability is viewable by authenticated users." ON public.stylist_availability_rules FOR SELECT TO authenticated USING ( true );
 CREATE POLICY "Unavailability is viewable by authenticated users." ON public.stylist_unavailability FOR SELECT TO authenticated USING ( true );
@@ -238,14 +299,6 @@ CREATE POLICY "Anyone can upload application images." ON public.media
 FOR INSERT TO anon, authenticated
 WITH CHECK ( media_type = 'application_image' );
 
--- A function to check the current user's role (recommended for performance).
-CREATE OR REPLACE FUNCTION public.get_my_role()
-RETURNS public.user_role
-LANGUAGE sql
-SECURITY DEFINER
-AS $$
-  SELECT role::public.user_role FROM public.profiles WHERE id = auth.uid();
-$$;
 
 -- Policies for `service_categories`
 CREATE POLICY "Service categories are viewable by everyone." ON public.service_categories FOR SELECT TO anon, authenticated USING (true);

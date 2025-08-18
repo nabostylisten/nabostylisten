@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
@@ -22,8 +22,7 @@ export type Database = {
           entry_instructions: string | null
           id: string
           is_primary: boolean
-          latitude: number | null
-          longitude: number | null
+          location: unknown | null
           nickname: string | null
           postal_code: string
           street_address: string
@@ -37,8 +36,7 @@ export type Database = {
           entry_instructions?: string | null
           id?: string
           is_primary?: boolean
-          latitude?: number | null
-          longitude?: number | null
+          location?: unknown | null
           nickname?: string | null
           postal_code: string
           street_address: string
@@ -52,8 +50,7 @@ export type Database = {
           entry_instructions?: string | null
           id?: string
           is_primary?: boolean
-          latitude?: number | null
-          longitude?: number | null
+          location?: unknown | null
           nickname?: string | null
           postal_code?: string
           street_address?: string
@@ -204,8 +201,12 @@ export type Database = {
       bookings: {
         Row: {
           address_id: string | null
+          cancellation_reason: string | null
+          cancelled_at: string | null
           created_at: string
           customer_id: string
+          discount_applied: number
+          discount_id: string | null
           end_time: string
           id: string
           message_to_stylist: string | null
@@ -219,8 +220,12 @@ export type Database = {
         }
         Insert: {
           address_id?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_id: string
+          discount_applied?: number
+          discount_id?: string | null
           end_time: string
           id?: string
           message_to_stylist?: string | null
@@ -234,8 +239,12 @@ export type Database = {
         }
         Update: {
           address_id?: string | null
+          cancellation_reason?: string | null
+          cancelled_at?: string | null
           created_at?: string
           customer_id?: string
+          discount_applied?: number
+          discount_id?: string | null
           end_time?: string
           id?: string
           message_to_stylist?: string | null
@@ -260,6 +269,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
             referencedColumns: ["id"]
           },
           {
@@ -342,6 +358,60 @@ export type Database = {
           },
         ]
       }
+      discounts: {
+        Row: {
+          code: string
+          created_at: string
+          currency: string
+          current_uses: number
+          description: string | null
+          discount_amount: number | null
+          discount_percentage: number | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          max_uses: number | null
+          max_uses_per_user: number
+          minimum_order_amount: number | null
+          updated_at: string
+          valid_from: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          currency?: string
+          current_uses?: number
+          description?: string | null
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          max_uses_per_user?: number
+          minimum_order_amount?: number | null
+          updated_at?: string
+          valid_from?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          currency?: string
+          current_uses?: number
+          description?: string | null
+          discount_amount?: number | null
+          discount_percentage?: number | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          max_uses?: number | null
+          max_uses_per_user?: number
+          minimum_order_amount?: number | null
+          updated_at?: string
+          valid_from?: string
+        }
+        Relationships: []
+      }
       media: {
         Row: {
           application_id: string | null
@@ -410,6 +480,65 @@ export type Database = {
             columns: ["service_id"]
             isOneToOne: false
             referencedRelation: "services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          booking_id: string
+          created_at: string
+          currency: string
+          id: string
+          payment_intent_id: string
+          payout_completed_at: string | null
+          payout_initiated_at: string | null
+          platform_fee: number
+          status: string
+          stylist_payout_amount: number
+          stylist_transfer_id: string | null
+          succeeded_at: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          booking_id: string
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_intent_id: string
+          payout_completed_at?: string | null
+          payout_initiated_at?: string | null
+          platform_fee: number
+          status?: string
+          stylist_payout_amount: number
+          stylist_transfer_id?: string | null
+          succeeded_at?: string | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          booking_id?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          payment_intent_id?: string
+          payout_completed_at?: string | null
+          payout_initiated_at?: string | null
+          platform_fee?: number
+          status?: string
+          stylist_payout_amount?: number
+          stylist_transfer_id?: string | null
+          succeeded_at?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -601,9 +730,11 @@ export type Database = {
           at_customer_place: boolean
           at_stylist_place: boolean
           created_at: string
+          currency: string
           description: string | null
           duration_minutes: number
           id: string
+          is_published: boolean
           price: number
           stylist_id: string
           title: string
@@ -613,9 +744,11 @@ export type Database = {
           at_customer_place?: boolean
           at_stylist_place?: boolean
           created_at?: string
+          currency?: string
           description?: string | null
           duration_minutes: number
           id?: string
+          is_published?: boolean
           price: number
           stylist_id: string
           title: string
@@ -625,9 +758,11 @@ export type Database = {
           at_customer_place?: boolean
           at_stylist_place?: boolean
           created_at?: string
+          currency?: string
           description?: string | null
           duration_minutes?: number
           id?: string
+          is_published?: boolean
           price?: number
           stylist_id?: string
           title?: string
@@ -670,6 +805,65 @@ export type Database = {
             foreignKeyName: "stylist_availability_rules_stylist_id_fkey"
             columns: ["stylist_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stylist_details: {
+        Row: {
+          bio: string | null
+          can_travel: boolean
+          created_at: string
+          facebook_profile: string | null
+          has_own_place: boolean
+          instagram_profile: string | null
+          other_social_media_urls: string[] | null
+          profile_id: string
+          snapchat_profile: string | null
+          stripe_account_id: string | null
+          tiktok_profile: string | null
+          travel_distance_km: number | null
+          updated_at: string
+          youtube_profile: string | null
+        }
+        Insert: {
+          bio?: string | null
+          can_travel?: boolean
+          created_at?: string
+          facebook_profile?: string | null
+          has_own_place?: boolean
+          instagram_profile?: string | null
+          other_social_media_urls?: string[] | null
+          profile_id: string
+          snapchat_profile?: string | null
+          stripe_account_id?: string | null
+          tiktok_profile?: string | null
+          travel_distance_km?: number | null
+          updated_at?: string
+          youtube_profile?: string | null
+        }
+        Update: {
+          bio?: string | null
+          can_travel?: boolean
+          created_at?: string
+          facebook_profile?: string | null
+          has_own_place?: boolean
+          instagram_profile?: string | null
+          other_social_media_urls?: string[] | null
+          profile_id?: string
+          snapchat_profile?: string | null
+          stripe_account_id?: string | null
+          tiktok_profile?: string | null
+          travel_distance_km?: number | null
+          updated_at?: string
+          youtube_profile?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stylist_details_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -756,6 +950,23 @@ export type Database = {
       get_my_role: {
         Args: Record<PropertyKey, never>
         Returns: Database["public"]["Enums"]["user_role"]
+      }
+      nearby_addresses: {
+        Args: { lat: number; long: number; radius_km?: number }
+        Returns: {
+          city: string
+          country: string
+          distance_meters: number
+          entry_instructions: string
+          id: string
+          is_primary: boolean
+          lat: number
+          long: number
+          nickname: string
+          postal_code: string
+          street_address: string
+          user_id: string
+        }[]
       }
     }
     Enums: {

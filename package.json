@@ -10,6 +10,7 @@
     "supabase:db:diff": "bun ensure:docker && supabase db diff -f",
     "supabase:migrate:up": "bun ensure:docker && supabase migration up",
     "supabase:db:push": "supabase db push",
+    "supabase:db:reset": "supabase db reset",
     "supabase:db:types": "supabase gen types typescript --project-id rbkpzpaarsaoorgfyfvh --schema public,stripe > types/database.types.ts",
     "supabase:db:types:zod": "supazod -i types/database.types.ts -o schemas/database.schema.ts -s public,stripe",
     "remove:public:prefix": "tsx scripts/remove-public-prefix.ts",

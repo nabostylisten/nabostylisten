@@ -1,6 +1,12 @@
 -- Create a public schema for all tables
 CREATE SCHEMA IF NOT EXISTS public;
 
+-- Create a dedicated schema for PostGIS
+CREATE SCHEMA IF NOT EXISTS gis;
+
+-- Enable PostGIS extension in the gis schema for geographic queries
+CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA gis;
+
 -- ================== ENUMS ==================
 
 -- Enum for user roles 
@@ -42,6 +48,30 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     subscribed_to_newsletter boolean DEFAULT false NOT NULL
 );
 
+-- Table for stylist-specific details (one-to-one with profiles where role = 'stylist')
+CREATE TABLE IF NOT EXISTS public.stylist_details (
+    profile_id uuid NOT NULL PRIMARY KEY REFERENCES public.profiles(id) ON DELETE CASCADE,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Professional Details
+    bio text,
+    can_travel boolean DEFAULT true NOT NULL,
+    has_own_place boolean DEFAULT true NOT NULL,
+    travel_distance_km integer, -- Max travel distance in kilometers
+
+    -- Social Media
+    instagram_profile text,
+    facebook_profile text,
+    tiktok_profile text,
+    youtube_profile text,
+    snapchat_profile text,
+    other_social_media_urls text[],
+
+    -- Payment Integration
+    stripe_account_id text -- CRITICAL for stylist payouts via Stripe Connect
+);
+
 -- Table for addresses associated with a user
 CREATE TABLE IF NOT EXISTS public.addresses (
     id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -57,8 +87,7 @@ CREATE TABLE IF NOT EXISTS public.addresses (
     postal_code text NOT NULL,
     country text NOT NULL,
     entry_instructions text, -- For "how to enter the place"
-    latitude double precision,
-    longitude double precision,
+    location gis.geography(Point, 4326), -- PostGIS geography column for efficient spatial queries
 
     is_primary boolean DEFAULT false NOT NULL
 );
@@ -122,7 +151,11 @@ CREATE TABLE IF NOT EXISTS public.services (
     title text NOT NULL,
     description text,
     price numeric(10, 2) NOT NULL,
+    currency text DEFAULT 'NOK' NOT NULL,
     duration_minutes integer NOT NULL,
+
+    -- Publishing status
+    is_published boolean DEFAULT false NOT NULL,
 
     -- Location options
     at_customer_place boolean DEFAULT false NOT NULL,
@@ -134,6 +167,39 @@ CREATE TABLE IF NOT EXISTS public.service_service_categories (
     service_id uuid NOT NULL REFERENCES public.services(id) ON DELETE CASCADE,
     category_id uuid NOT NULL REFERENCES public.service_categories(id) ON DELETE CASCADE,
     PRIMARY KEY (service_id, category_id)
+);
+
+-- Table for discounts
+CREATE TABLE IF NOT EXISTS public.discounts (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    code text NOT NULL UNIQUE,
+    description text,
+
+    -- Discount configuration (either percentage OR fixed amount, not both)
+    discount_percentage numeric(5, 2) CHECK (discount_percentage >= 0 AND discount_percentage <= 100),
+    discount_amount integer, -- In øre/cents
+    currency text DEFAULT 'NOK' NOT NULL,
+
+    -- Usage limits
+    max_uses integer, -- NULL means unlimited
+    current_uses integer DEFAULT 0 NOT NULL,
+    max_uses_per_user integer DEFAULT 1 NOT NULL,
+
+    -- Validity period
+    is_active boolean DEFAULT true NOT NULL,
+    valid_from timestamp with time zone DEFAULT now() NOT NULL,
+    expires_at timestamp with time zone,
+
+    -- Minimum order requirements
+    minimum_order_amount integer, -- In øre/cents
+
+    CONSTRAINT discount_check CHECK (
+        (discount_percentage IS NOT NULL AND discount_amount IS NULL) OR
+        (discount_percentage IS NULL AND discount_amount IS NOT NULL)
+    )
 );
 
 -- Table for booking requests
@@ -151,8 +217,16 @@ CREATE TABLE IF NOT EXISTS public.bookings (
 
     status public.booking_status DEFAULT 'pending' NOT NULL,
 
+    -- Cancellation tracking
+    cancelled_at timestamp with time zone,
+    cancellation_reason text,
+
     -- The address where the service will take place (if at customer's place)
     address_id uuid REFERENCES public.addresses(id) ON DELETE SET NULL,
+
+    -- Discount application
+    discount_id uuid REFERENCES public.discounts(id) ON DELETE SET NULL,
+    discount_applied numeric(10, 2) DEFAULT 0 NOT NULL,
 
     -- Calculated totals
     total_price numeric(10, 2) NOT NULL,
@@ -181,6 +255,34 @@ CREATE TABLE IF NOT EXISTS public.reviews (
     rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
     comment text
 );
+
+-- Table for detailed payment tracking (one-to-one with bookings)
+CREATE TABLE IF NOT EXISTS public.payments (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    booking_id uuid NOT NULL UNIQUE REFERENCES public.bookings(id) ON DELETE CASCADE,
+    payment_intent_id text NOT NULL UNIQUE,
+
+    -- Amounts stored in smallest currency unit (øre/cents) to avoid floating point issues
+    total_amount integer NOT NULL,
+    platform_fee integer NOT NULL,
+    stylist_payout_amount integer NOT NULL,
+    currency text DEFAULT 'NOK' NOT NULL,
+
+    -- Stripe transfer tracking
+    stylist_transfer_id text,
+    
+    -- Payment status tracking
+    status text NOT NULL DEFAULT 'pending', -- e.g., 'pending', 'succeeded', 'pending_payout', 'paid_out', 'failed'
+    
+    -- Timestamps for payment lifecycle
+    succeeded_at timestamp with time zone,
+    payout_initiated_at timestamp with time zone,
+    payout_completed_at timestamp with time zone
+);
+
 
 -- Table for stylist's general availability rules (e.g., "M-F, 9-5")
 CREATE TABLE IF NOT EXISTS public.stylist_availability_rules (
@@ -325,12 +427,65 @@ $$ language 'plpgsql' SECURITY DEFINER SET search_path = public;
 
 -- Triggers to automatically update the 'updated_at' column on relevant tables
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON public.profiles FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_stylist_details_updated_at BEFORE UPDATE ON public.stylist_details FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_addresses_updated_at BEFORE UPDATE ON public.addresses FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_services_updated_at BEFORE UPDATE ON public.services FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON public.bookings FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON public.payments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_discounts_updated_at BEFORE UPDATE ON public.discounts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_chats_updated_at BEFORE UPDATE ON public.chats FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Trigger to automatically create a profile when a new user signs up
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- ================== PERMISSIONS ==================
+
+-- Grant access to the gis schema for PostGIS functions
+GRANT USAGE ON SCHEMA gis TO anon, authenticated;
+
+-- ================== FUNCTIONS ==================
+
+-- Function to find nearby addresses within a given radius
+CREATE OR REPLACE FUNCTION public.nearby_addresses(lat float, long float, radius_km float DEFAULT 10.0)
+RETURNS TABLE (
+  id uuid,
+  user_id uuid,
+  nickname text,
+  street_address text,
+  city text,
+  postal_code text,
+  country text,
+  entry_instructions text,
+  is_primary boolean,
+  lat float,
+  long float,
+  distance_meters float
+)
+SET search_path = ''
+LANGUAGE sql
+AS $$
+  SELECT 
+    a.id,
+    a.user_id,
+    a.nickname,
+    a.street_address,
+    a.city,
+    a.postal_code,
+    a.country,
+    a.entry_instructions,
+    a.is_primary,
+    gis.st_y(a.location::gis.geometry) as lat,
+    gis.st_x(a.location::gis.geometry) as long,
+    gis.st_distance(a.location, gis.st_point(long, lat)::gis.geography) as distance_meters
+  FROM public.addresses a
+  WHERE a.location IS NOT NULL
+    AND gis.st_distance(a.location, gis.st_point(long, lat)::gis.geography) <= (radius_km * 1000)
+  ORDER BY a.location operator(gis.<->) gis.st_point(long, lat)::gis.geography;
+$$;
+
+-- ================== INDEXES ==================
+
+-- Spatial index for efficient geographic queries on addresses
+CREATE INDEX IF NOT EXISTS idx_addresses_location ON public.addresses USING gist (location);

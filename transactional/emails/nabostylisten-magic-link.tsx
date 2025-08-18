@@ -29,7 +29,7 @@ export const NabostylistenMagicLinkEmail = ({
 }: NabostylistenMagicLinkEmailProps) => (
   <Html>
     <Head />
-    <Preview>Logg inn på Nabostylisten med denne magiske lenken</Preview>
+    <Preview>Logg inn på Nabostylisten</Preview>
     <Body style={main}>
       <Container style={container}>
         <Heading style={h1}>Logg inn på Nabostylisten</Heading>

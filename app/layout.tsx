@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, PT_Serif, JetBrains_Mono } from "next/font/google";
+import { Inter, PT_Serif, JetBrains_Mono, Fraunces } from "next/font/google";
 import { ThemeProvider } from "next-themes";
 import "./globals.css";
 import TanstackQueryProvider from "@/providers/tanstack-query-provider";
@@ -38,6 +38,12 @@ const jetBrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  display: "swap",
+  subsets: ["latin"],
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -50,6 +56,7 @@ export default function RootLayout({
           ptSerif.variable,
           jetBrainsMono.variable,
           inter.variable,
+          fraunces.variable,
           "antialiased"
         )}
       >

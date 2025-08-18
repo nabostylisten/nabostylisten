@@ -41,9 +41,7 @@ export const Footer = () => {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center mb-4">
-              <span className="font-bold text-xl text-primary">
-                Nabostylisten
-              </span>
+              <h1 className="font-bold text-xl text-primary">Nabostylisten</h1>
             </Link>
             <p className="text-sm text-muted-foreground mb-4">
               Norges ledende platform for å booke skjønnhetstjenester hjemme
@@ -54,7 +52,7 @@ export const Footer = () => {
           {/* Footer Links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
-              <h3 className="font-semibold mb-4">{category}</h3>
+              <h3 className="font-fraunces font-semibold mb-4">{category}</h3>
               <ul className="space-y-2">
                 {links.map((link) => (
                   <li key={link.name}>

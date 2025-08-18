@@ -39,9 +39,7 @@ export const Navbar = () => {
         <div className="flex items-center gap-6">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <span className="font-bold text-xl text-primary">
-              Nabostylisten
-            </span>
+            <h1 className="font-bold text-xl text-primary">Nabostylisten</h1>
           </Link>
 
           {/* Vertical Separator */}

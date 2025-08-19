@@ -89,12 +89,26 @@ export function ServiceImageCarousel({
   // Set preview mutation
   const setPreviewMutation = useMutation({
     mutationFn: setServiceImageAsPreview,
-    onSuccess: () => {
-      toast.success("Hovedbilde oppdatert!");
-      queryClient.invalidateQueries({
+    onSuccess: async () => {
+      // Invalidate all related queries
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: ["service-images", serviceId],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["services"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["service", serviceId],
+        }),
+      ]);
+
+      // Refetch to ensure we have the latest data
+      await queryClient.refetchQueries({
         queryKey: ["service-images", serviceId],
       });
-      queryClient.invalidateQueries({ queryKey: ["services"] });
+
+      toast.success("Hovedbilde oppdatert!");
     },
     onError: (error: Error) => {
       toast.error(`Feil ved oppdatering: ${error.message}`);
@@ -110,6 +124,7 @@ export function ServiceImageCarousel({
   const handleSetPreview = (e: React.MouseEvent, imageId: string) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("Setting preview for image:", imageId);
     setPreviewMutation.mutate(imageId);
   };
 
@@ -149,89 +164,100 @@ export function ServiceImageCarousel({
   return (
     <>
       <div className={className}>
-        <Carousel
-          opts={{
-            align: "start",
-            loop: true,
-          }}
-          className="w-full px-12"
+        <div
+          onMouseDown={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
         >
-          <CarouselContent className="-ml-2 md:-ml-4">
-            {images.map((image, index) => (
-              <CarouselItem
-                key={image.id}
-                className="pl-2 md:pl-4 basis-full md:basis-1/2"
-              >
-                <div className="relative group">
-                  <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
-                    <Image
-                      src={image.publicUrl}
-                      alt={`Tjenestebilde ${index + 1}`}
-                      fill
-                      className="object-cover transition-transform group-hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    />
+          <Carousel
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+            className="w-full px-12"
+          >
+            <CarouselContent className="-ml-2 md:-ml-4">
+              {images.map((image, index) => (
+                <CarouselItem
+                  key={image.id}
+                  className="pl-2 md:pl-4 basis-full md:basis-1/2"
+                >
+                  <div className="relative group">
+                    <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
+                      <Image
+                        src={image.publicUrl}
+                        alt={`Tjenestebilde ${index + 1}`}
+                        fill
+                        className="object-cover transition-transform group-hover:scale-105"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
 
-                    {/* Preview badge */}
-                    {image.is_preview_image && (
-                      <Badge
-                        variant="default"
-                        className="absolute top-2 left-2 bg-primary text-primary-foreground"
-                      >
-                        Hovedbilde
-                      </Badge>
-                    )}
+                      {/* Preview badge */}
+                      {image.is_preview_image && (
+                        <Badge
+                          variant="default"
+                          className="absolute top-2 left-2 bg-primary text-primary-foreground"
+                        >
+                          Hovedbilde
+                        </Badge>
+                      )}
 
-                    {/* Action buttons (only in edit mode) */}
-                    {isEditable && (
-                      <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          type="button"
-                          onClick={(e) => handleSetPreview(e, image.id)}
-                          disabled={
-                            image.is_preview_image ||
-                            setPreviewMutation.isPending
-                          }
-                          className="h-8 w-8 p-0 bg-white/90 hover:bg-white text-black"
-                          title={
-                            image.is_preview_image
-                              ? "Dette er hovedbildet"
-                              : "Sett som hovedbilde"
-                          }
-                        >
-                          {image.is_preview_image ? (
-                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          ) : (
-                            <StarOff className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          type="button"
-                          onClick={(e) => handleDeleteClick(e, image)}
-                          disabled={deleteMutation.isPending}
-                          className="h-8 w-8 p-0 bg-white/90 hover:bg-destructive/90 text-black hover:text-white"
-                          title="Slett bilde"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    )}
+                      {/* Action buttons (only in edit mode) */}
+                      {isEditable && (
+                        <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => handleSetPreview(e, image.id)}
+                            disabled={
+                              image.is_preview_image ||
+                              setPreviewMutation.isPending
+                            }
+                            className="h-8 w-8 p-0 bg-white/90 hover:bg-white text-black"
+                            title={
+                              image.is_preview_image
+                                ? "Dette er hovedbildet"
+                                : "Sett som hovedbilde"
+                            }
+                          >
+                            {image.is_preview_image ? (
+                              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            ) : (
+                              <StarOff className="w-4 h-4" />
+                            )}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            type="button"
+                            onClick={(e) => handleDeleteClick(e, image)}
+                            disabled={deleteMutation.isPending}
+                            className="h-8 w-8 p-0 bg-white/90 hover:bg-destructive/90 text-black hover:text-white"
+                            title="Slett bilde"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              </CarouselItem>
-            ))}
-          </CarouselContent>
-          {images.length > 2 && (
-            <>
-              <CarouselPrevious className="absolute top-1/2 left-2 -translate-y-1/2 size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md" />
-              <CarouselNext className="absolute top-1/2 right-2 -translate-y-1/2 size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md" />
-            </>
-          )}
-        </Carousel>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            {images.length > 2 && (
+              <>
+                <CarouselPrevious
+                  className="absolute top-1/2 left-2 -translate-y-1/2 size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md"
+                  type="button"
+                />
+                <CarouselNext
+                  className="absolute top-1/2 right-2 -translate-y-1/2 size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md"
+                  type="button"
+                />
+              </>
+            )}
+          </Carousel>
+        </div>
       </div>
 
       {/* Delete confirmation dialog */}

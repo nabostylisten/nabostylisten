@@ -545,11 +545,13 @@ export function ServiceForm({
                   stjernen for å sette hovedbilde, eller søppelbøtta for å
                   slette.
                 </FormDescription>
-                <ServiceImageCarousel
-                  serviceId={service.id}
-                  isEditable={true}
-                  className="w-full"
-                />
+                <div onSubmit={(e) => e.preventDefault()}>
+                  <ServiceImageCarousel
+                    serviceId={service.id}
+                    isEditable={true}
+                    className="w-full"
+                  />
+                </div>
               </div>
             )}
 

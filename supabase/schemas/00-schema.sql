@@ -492,8 +492,3 @@ $$;
 
 -- Spatial index for efficient geographic queries on addresses
 CREATE INDEX IF NOT EXISTS idx_addresses_location ON public.addresses USING gist (location);
-
--- Unique constraint to ensure only one preview image per service
-CREATE UNIQUE INDEX IF NOT EXISTS idx_media_service_preview_unique 
-ON public.media (service_id) 
-WHERE is_preview_image = true AND service_id IS NOT NULL;

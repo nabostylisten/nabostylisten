@@ -29,15 +29,18 @@ export const useUploadServiceImages = () => {
 
             const results = [];
 
-            // Check if this service has any existing images to determine if first upload should be preview
+            // Check if this service has any existing images and if any are already set as preview
             const { data: existingImages } = await supabase
                 .from("media")
-                .select("id")
+                .select("id, is_preview_image")
                 .eq("service_id", serviceId)
                 .eq("media_type", "service_image");
 
             const hasExistingImages = existingImages &&
                 existingImages.length > 0;
+            const hasExistingPreview = existingImages?.some((img) =>
+                img.is_preview_image
+            ) || false;
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
@@ -102,8 +105,9 @@ export const useUploadServiceImages = () => {
                     .from(storagePath.bucket)
                     .getPublicUrl(storagePath.path);
 
-                // Only set the first uploaded image as preview if no existing images
-                const shouldBePreview = !hasExistingImages && i === 0;
+                // Only set the first uploaded image as preview if no existing images and no existing preview
+                const shouldBePreview = !hasExistingImages &&
+                    !hasExistingPreview && i === 0;
 
                 // Create new media record
                 const { data: mediaData, error: mediaError } = await supabase

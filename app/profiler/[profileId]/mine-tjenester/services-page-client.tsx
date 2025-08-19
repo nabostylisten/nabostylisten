@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +46,7 @@ interface ServicesPageClientProps {
 }
 
 export function ServicesPageClient({ services }: ServicesPageClientProps) {
+  const queryClient = useQueryClient();
   const [serviceFormOpen, setServiceFormOpen] = React.useState(false);
   const [serviceFormMode, setServiceFormMode] = React.useState<
     "create" | "edit"
@@ -62,11 +63,23 @@ export function ServicesPageClient({ services }: ServicesPageClientProps) {
   const getPreviewImageUrl = (service: Service): string | null => {
     if (!service.media || service.media.length === 0) return null;
 
-    // Find preview image first
-    const previewImage = service.media.find((media) => media.is_preview_image);
-    const imageToUse = previewImage || service.media[0];
+    // Filter only service images and sort them: preview first, then by creation date
+    const serviceImages = service.media
+      .filter((media) => media.media_type === "service_image")
+      .sort((a, b) => {
+        // Preview images first
+        if (a.is_preview_image && !b.is_preview_image) return -1;
+        if (!a.is_preview_image && b.is_preview_image) return 1;
+        // Then by creation date (oldest first as fallback)
+        return (
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+      });
 
-    if (!imageToUse) return null;
+    if (serviceImages.length === 0) return null;
+
+    // Use the first image from sorted array (preview or oldest)
+    const imageToUse = serviceImages[0];
 
     const supabase = createClient();
     const { data } = supabase.storage
@@ -90,8 +103,8 @@ export function ServicesPageClient({ services }: ServicesPageClientProps) {
       toast.success("Tjeneste slettet!");
       setDeleteDialogOpen(false);
       setServiceToDelete(undefined);
-      // Refresh the page
-      window.location.reload();
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ["services"] });
     },
     onError: (error) => {
       toast.error(`Feil ved sletting: ${error.message}`);
@@ -122,8 +135,8 @@ export function ServicesPageClient({ services }: ServicesPageClientProps) {
   };
 
   const handleFormSuccess = () => {
-    // Refresh the page to show updated data
-    window.location.reload();
+    // Invalidate queries to refresh data
+    queryClient.invalidateQueries({ queryKey: ["services"] });
   };
 
   return (

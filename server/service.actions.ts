@@ -352,6 +352,8 @@ export async function setServiceImageAsPreview(imageId: string) {
             .eq("id", imageId)
             .single();
 
+        console.log({ imageData });
+
         if (imageError) {
             return { data: null, error: "Bildet ble ikke funnet" };
         }
@@ -364,26 +366,39 @@ export async function setServiceImageAsPreview(imageId: string) {
             };
         }
 
-        // First, unset any existing preview image for this service
-        if (imageData.service_id) {
-            const { error: unsetError } = await supabase
-                .from("media")
-                .update({ is_preview_image: false })
-                .eq("service_id", imageData.service_id)
-                .eq("is_preview_image", true);
+        console.log(imageData.service_id);
 
-            if (unsetError) {
-                console.error("Error unsetting preview:", unsetError);
-            }
+        // Use a transaction-like approach: first unset all, then set the new one
+        if (!imageData.service_id) {
+            return {
+                data: null,
+                error: "Kunne ikke finne tjeneste for bildet",
+            };
         }
 
-        // Set this image as preview
+        // Step 1: Unset ALL existing preview images for this service (not just the ones that are currently true)
+        const { error: unsetError } = await supabase
+            .from("media")
+            .update({ is_preview_image: false })
+            .eq("service_id", imageData.service_id)
+            .eq("media_type", "service_image");
+
+        if (unsetError) {
+            console.error("Error unsetting all previews:", unsetError);
+            return {
+                data: null,
+                error: "Kunne ikke oppdatere eksisterende hovedbilde",
+            };
+        }
+
+        // Step 2: Set this specific image as the new preview
         const { error: setError } = await supabase
             .from("media")
             .update({ is_preview_image: true })
             .eq("id", imageId);
 
         if (setError) {
+            console.error("Error setting new preview:", setError);
             return {
                 data: null,
                 error: "Kunne ikke sette bildet som hovedbilde",

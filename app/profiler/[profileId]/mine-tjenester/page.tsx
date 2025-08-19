@@ -33,7 +33,7 @@ export default async function MineTjenesterPage({
     redirect(`/profiler/${profileId}`);
   }
 
-  // Fetch user's services with category information
+  // Fetch user's services with category and media information
   const { data: services } = await supabase
     .from("services")
     .select(
@@ -45,6 +45,13 @@ export default async function MineTjenesterPage({
           name,
           description
         )
+      ),
+      media (
+        id,
+        file_path,
+        media_type,
+        is_preview_image,
+        created_at
       )
     `
     )

@@ -89,7 +89,11 @@ export function ServiceImageCarousel({
   // Set preview mutation
   const setPreviewMutation = useMutation({
     mutationFn: setServiceImageAsPreview,
-    onSuccess: async () => {
+    onSuccess: async (result) => {
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
       // Invalidate all related queries
       await Promise.all([
         queryClient.invalidateQueries({
@@ -124,7 +128,6 @@ export function ServiceImageCarousel({
   const handleSetPreview = (e: React.MouseEvent, imageId: string) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Setting preview for image:", imageId);
     setPreviewMutation.mutate(imageId);
   };
 
@@ -154,7 +157,7 @@ export function ServiceImageCarousel({
 
   if (!images || images.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center aspect-[4/5] rounded-lg border-2 border-dashed border-muted bg-muted/20 text-muted-foreground">
+      <div className="flex h-48 w-full flex-col items-center justify-center aspect-square rounded-lg border-2 border-dashed border-muted bg-muted/20 text-muted-foreground">
         <ImageIcon className="w-12 h-12 mb-2" />
         <span className="text-sm">Ingen bilder lagt til ennå</span>
       </div>

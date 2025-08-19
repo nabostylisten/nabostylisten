@@ -157,16 +157,14 @@ export function ServiceForm({
       // Upload images if any were selected
       if (uploadedFiles.length > 0 && data?.id) {
         try {
-          toast.info(
-            `Laster opp ${uploadedFiles.length} bilde(r) til Supabase...`
-          );
+          toast.info(`Laster opp ${uploadedFiles.length} bilde(r)...`);
           await uploadImagesMutation.mutateAsync({
             serviceId: data.id,
             files: uploadedFiles,
           });
         } catch (error) {
           console.error("Failed to upload images:", error);
-          toast.error("Kunne ikke laste opp bilder til Supabase");
+          toast.error("Kunne ikke laste opp bilder");
         }
       }
 
@@ -200,16 +198,14 @@ export function ServiceForm({
       // Upload images if any were selected
       if (uploadedFiles.length > 0 && service?.id) {
         try {
-          toast.info(
-            `Laster opp ${uploadedFiles.length} bilde(r) til Supabase...`
-          );
+          toast.info(`Laster opp ${uploadedFiles.length} bilde(r)...`);
           await uploadImagesMutation.mutateAsync({
             serviceId: service.id,
             files: uploadedFiles,
           });
         } catch (error) {
           console.error("Failed to upload images:", error);
-          toast.error("Kunne ikke laste opp bilder til Supabase");
+          toast.error("Kunne ikke laste opp bilder");
         }
       }
 

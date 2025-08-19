@@ -352,8 +352,6 @@ export async function setServiceImageAsPreview(imageId: string) {
             .eq("id", imageId)
             .single();
 
-        console.log({ imageData });
-
         if (imageError) {
             return { data: null, error: "Bildet ble ikke funnet" };
         }
@@ -366,8 +364,6 @@ export async function setServiceImageAsPreview(imageId: string) {
             };
         }
 
-        console.log(imageData.service_id);
-
         // Use a transaction-like approach: first unset all, then set the new one
         if (!imageData.service_id) {
             return {
@@ -376,7 +372,7 @@ export async function setServiceImageAsPreview(imageId: string) {
             };
         }
 
-        // Step 1: Unset ALL existing preview images for this service (not just the ones that are currently true)
+        // Step 1: Unset ALL existing preview images for this service
         const { error: unsetError } = await supabase
             .from("media")
             .update({ is_preview_image: false })

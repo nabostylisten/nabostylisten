@@ -289,6 +289,12 @@ CREATE POLICY "Users can insert their own media." ON public.media
 FOR INSERT TO authenticated
 WITH CHECK ( (select auth.uid()) = owner_id );
 
+-- Users can update their own media.
+CREATE POLICY "Users can update their own media." ON public.media
+FOR UPDATE TO authenticated
+USING ( (select auth.uid()) = owner_id )
+WITH CHECK ( (select auth.uid()) = owner_id );
+
 -- Users can delete their own media.
 CREATE POLICY "Users can delete their own media." ON public.media
 FOR DELETE TO authenticated

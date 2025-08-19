@@ -140,7 +140,7 @@ export const useUploadServiceImages = () => {
             // Invalidate service queries to refresh the UI
             queryClient.invalidateQueries({ queryKey: ["services"] });
             queryClient.invalidateQueries({ queryKey: ["service"] });
-            toast.success(`${data.length} bilde(r) lastet opp til Supabase!`);
+            toast.success(`${data.length} bilde(r) lastet opp!`);
         },
         onError: (error) => {
             toast.error("Feil ved opplasting av bilder: " + error.message);

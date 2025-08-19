@@ -35,6 +35,7 @@ import {
   DropzoneEmptyState,
 } from "@/components/ui/kibo-ui/dropzone";
 import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
+import { ServiceImageCarousel } from "@/components/service-image-carousel";
 import { useUploadServiceImages } from "@/hooks/use-upload-service-images";
 import {
   createService,
@@ -339,7 +340,7 @@ export function ServiceForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Ny tjeneste" : "Rediger tjeneste"}
@@ -534,6 +535,23 @@ export function ServiceForm({
                 </div>
               )}
             </div>
+
+            {/* Existing images section (only in edit mode) */}
+            {mode === "edit" && service?.id && (
+              <div className="space-y-4">
+                <FormLabel>Eksisterende bilder</FormLabel>
+                <FormDescription>
+                  Administrer eksisterende bilder for tjenesten. Klikk på
+                  stjernen for å sette hovedbilde, eller søppelbøtta for å
+                  slette.
+                </FormDescription>
+                <ServiceImageCarousel
+                  serviceId={service.id}
+                  isEditable={true}
+                  className="w-full"
+                />
+              </div>
+            )}
 
             <div className="space-y-4">
               <FormLabel>Hvor kan tjenesten utføres? *</FormLabel>

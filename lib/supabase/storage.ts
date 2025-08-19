@@ -56,12 +56,6 @@ export const storagePaths = {
         path: `${reviewId}/${filename}`,
     }),
 
-    // Portfolio images
-    portfolio: (stylistId: string, filename: string): StoragePath => ({
-        bucket: "portfolio",
-        path: `${stylistId}/${filename}`,
-    }),
-
     // Application attachments
     application: (applicationId: string, filename: string): StoragePath => ({
         bucket: "applications",

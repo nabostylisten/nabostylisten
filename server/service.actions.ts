@@ -29,6 +29,13 @@ export async function getServices(stylistId: string) {
           name,
           description
         )
+      ),
+      media (
+        id,
+        file_path,
+        media_type,
+        is_preview_image,
+        created_at
       )
     `)
         .eq("stylist_id", stylistId)
@@ -50,6 +57,13 @@ export async function getService(serviceId: string) {
           name,
           description
         )
+      ),
+      media (
+        id,
+        file_path,
+        media_type,
+        is_preview_image,
+        created_at
       )
     `)
         .eq("id", serviceId)
@@ -235,4 +249,196 @@ export async function getServiceCategories() {
         .order("name");
 
     return { data, error };
+}
+
+/**
+ * Delete a service image
+ */
+export async function deleteServiceImage(imageId: string) {
+    try {
+        const supabase = await createClient();
+
+        // Get the current user
+        const { data: { user }, error: userError } = await supabase.auth
+            .getUser();
+        if (userError || !user) {
+            return { data: null, error: "Du må være logget inn" };
+        }
+
+        // Get image details first
+        const { data: imageData, error: imageError } = await supabase
+            .from("media")
+            .select(`
+                id,
+                file_path,
+                service_id,
+                services!inner (
+                    stylist_id
+                )
+            `)
+            .eq("id", imageId)
+            .single();
+
+        if (imageError) {
+            return { data: null, error: "Bildet ble ikke funnet" };
+        }
+
+        // Check if user owns the service
+        if (imageData.services.stylist_id !== user.id) {
+            return {
+                data: null,
+                error: "Du har ikke tilgang til å slette dette bildet",
+            };
+        }
+
+        // Delete from storage
+        const { error: storageError } = await supabase.storage
+            .from("service-media")
+            .remove([imageData.file_path]);
+
+        if (storageError) {
+            console.error("Storage deletion error:", storageError);
+            // Continue with database deletion even if storage fails
+        }
+
+        // Delete from database
+        const { error: deleteError } = await supabase
+            .from("media")
+            .delete()
+            .eq("id", imageId);
+
+        if (deleteError) {
+            return {
+                data: null,
+                error: "Kunne ikke slette bildet fra databasen",
+            };
+        }
+
+        return { data: { success: true }, error: null };
+    } catch (error) {
+        return {
+            data: null,
+            error: error instanceof Error
+                ? error.message
+                : "En ukjent feil oppstod",
+        };
+    }
+}
+
+/**
+ * Set a service image as preview
+ */
+export async function setServiceImageAsPreview(imageId: string) {
+    try {
+        const supabase = await createClient();
+
+        // Get the current user
+        const { data: { user }, error: userError } = await supabase.auth
+            .getUser();
+        if (userError || !user) {
+            return { data: null, error: "Du må være logget inn" };
+        }
+
+        // Get image details first
+        const { data: imageData, error: imageError } = await supabase
+            .from("media")
+            .select(`
+                id,
+                service_id,
+                services!inner (
+                    stylist_id
+                )
+            `)
+            .eq("id", imageId)
+            .single();
+
+        if (imageError) {
+            return { data: null, error: "Bildet ble ikke funnet" };
+        }
+
+        // Check if user owns the service
+        if (imageData.services.stylist_id !== user.id) {
+            return {
+                data: null,
+                error: "Du har ikke tilgang til å endre dette bildet",
+            };
+        }
+
+        // First, unset any existing preview image for this service
+        if (imageData.service_id) {
+            const { error: unsetError } = await supabase
+                .from("media")
+                .update({ is_preview_image: false })
+                .eq("service_id", imageData.service_id)
+                .eq("is_preview_image", true);
+
+            if (unsetError) {
+                console.error("Error unsetting preview:", unsetError);
+            }
+        }
+
+        // Set this image as preview
+        const { error: setError } = await supabase
+            .from("media")
+            .update({ is_preview_image: true })
+            .eq("id", imageId);
+
+        if (setError) {
+            return {
+                data: null,
+                error: "Kunne ikke sette bildet som hovedbilde",
+            };
+        }
+
+        return { data: { success: true }, error: null };
+    } catch (error) {
+        return {
+            data: null,
+            error: error instanceof Error
+                ? error.message
+                : "En ukjent feil oppstod",
+        };
+    }
+}
+
+/**
+ * Get service images with preview first
+ */
+export async function getServiceImages(serviceId: string) {
+    try {
+        const supabase = await createClient();
+
+        const { data, error } = await supabase
+            .from("media")
+            .select("*")
+            .eq("service_id", serviceId)
+            .eq("media_type", "service_image")
+            .order("is_preview_image", { ascending: false })
+            .order("created_at", { ascending: true });
+
+        if (error) {
+            return { data: null, error: error.message };
+        }
+
+        // Generate public URLs for each image
+        const imagesWithUrls = data.map((image) => {
+            const { data: urlData } = supabase.storage
+                .from("service-media")
+                .getPublicUrl(image.file_path);
+
+            return {
+                ...image,
+                publicUrl: urlData.publicUrl,
+            };
+        });
+
+        return { data: imagesWithUrls, error: null };
+    } catch (error) {
+        return {
+            data: null,
+            error: error instanceof Error
+                ? error.message
+                : "En ukjent feil oppstod",
+        };
+    }
 }

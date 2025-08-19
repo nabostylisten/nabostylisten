@@ -419,6 +419,7 @@ export type Database = {
           created_at: string
           file_path: string
           id: string
+          is_preview_image: boolean
           media_type: Database["public"]["Enums"]["media_type"]
           owner_id: string | null
           review_id: string | null
@@ -430,6 +431,7 @@ export type Database = {
           created_at?: string
           file_path: string
           id?: string
+          is_preview_image?: boolean
           media_type: Database["public"]["Enums"]["media_type"]
           owner_id?: string | null
           review_id?: string | null
@@ -441,6 +443,7 @@ export type Database = {
           created_at?: string
           file_path?: string
           id?: string
+          is_preview_image?: boolean
           media_type?: Database["public"]["Enums"]["media_type"]
           owner_id?: string | null
           review_id?: string | null

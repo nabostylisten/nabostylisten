@@ -303,68 +303,6 @@ export async function uploadReviewMedia({
 }
 
 /**
- * Upload portfolio image (for stylist applications)
- */
-export async function uploadPortfolioImage({
-    stylistId,
-    file,
-}: {
-    stylistId: string;
-    file: File;
-}): Promise<FileUploadResult> {
-    try {
-        const supabase = await createClient();
-
-        // Validate file
-        const validation = validateFile(
-            file,
-            [...bucketConfigs.portfolio.allowedTypes],
-            bucketConfigs.portfolio.maxSize,
-        );
-        if (validation) {
-            return { data: null, error: validation };
-        }
-
-        // Generate unique filename
-        const filename = generateUniqueFilename(file.name);
-        const storagePath = storagePaths.portfolio(stylistId, filename);
-
-        // Upload file
-        const { data, error } = await supabase.storage
-            .from(storagePath.bucket)
-            .upload(storagePath.path, file, {
-                contentType: file.type,
-                upsert: true,
-            });
-
-        if (error) {
-            return { data: null, error: error.message };
-        }
-
-        // Get public URL
-        const { data: urlData } = supabase.storage
-            .from(storagePath.bucket)
-            .getPublicUrl(storagePath.path);
-
-        return {
-            data: {
-                path: storagePath.path,
-                fullPath: data.path,
-                publicUrl: urlData.publicUrl,
-            },
-            error: null,
-        };
-    } catch (error) {
-        return {
-            data: null,
-            error: error instanceof Error
-                ? error.message
-                : "Unknown error occurred",
-        };
-    }
-}
-
-/**
  * Upload application portfolio image
  */
 export async function uploadApplicationImage({

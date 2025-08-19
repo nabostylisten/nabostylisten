@@ -367,6 +367,9 @@ CREATE TABLE IF NOT EXISTS public.media (
     file_path text NOT NULL UNIQUE,
     media_type public.media_type NOT NULL,
 
+    -- For service images: mark which one is the preview/main image
+    is_preview_image boolean DEFAULT false NOT NULL,
+
     -- Foreign keys to link media to specific entities
     -- A media item can only be linked to one entity at a time
     service_id uuid REFERENCES public.services(id) ON DELETE CASCADE,
@@ -489,3 +492,8 @@ $$;
 
 -- Spatial index for efficient geographic queries on addresses
 CREATE INDEX IF NOT EXISTS idx_addresses_location ON public.addresses USING gist (location);
+
+-- Unique constraint to ensure only one preview image per service
+CREATE UNIQUE INDEX IF NOT EXISTS idx_media_service_preview_unique 
+ON public.media (service_id) 
+WHERE is_preview_image = true AND service_id IS NOT NULL;

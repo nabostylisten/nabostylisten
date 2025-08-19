@@ -89,16 +89,7 @@ const bucketConfigs: BucketConfig[] = [
         description: "Media files uploaded with reviews",
     },
 
-    // Stylist portfolio - public for showcasing work
-    {
-        name: "portfolio",
-        public: true,
-        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
-        fileSizeLimit: "15MB",
-        description: "Stylist portfolio and work examples",
-    },
-
-    // Application attachments - private for security
+    // Application attachments - public for easy viewing
     {
         name: "applications",
         public: true,

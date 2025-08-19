@@ -8,6 +8,7 @@ import {
     uploadFile,
     validateFile,
 } from "@/lib/supabase/storage";
+import { useAuth } from "./use-auth";
 
 interface UploadServiceImagesParams {
     serviceId: string;
@@ -16,14 +17,30 @@ interface UploadServiceImagesParams {
 
 export const useUploadServiceImages = () => {
     const queryClient = useQueryClient();
+    const { profile } = useAuth();
 
     const mutation = useMutation({
         mutationFn: async ({ serviceId, files }: UploadServiceImagesParams) => {
             const supabase = createClient();
 
+            if (!profile) {
+                throw new Error("Du må være logget inn for å opplaste bilder");
+            }
+
             const results = [];
 
-            for (const file of files) {
+            // Check if this service has any existing images to determine if first upload should be preview
+            const { data: existingImages } = await supabase
+                .from("media")
+                .select("id")
+                .eq("service_id", serviceId)
+                .eq("media_type", "service_image");
+
+            const hasExistingImages = existingImages &&
+                existingImages.length > 0;
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
                 // Validate original file type
                 const allowedTypes = [
                     ...bucketConfigs["service-media"].allowedTypes,
@@ -85,6 +102,9 @@ export const useUploadServiceImages = () => {
                     .from(storagePath.bucket)
                     .getPublicUrl(storagePath.path);
 
+                // Only set the first uploaded image as preview if no existing images
+                const shouldBePreview = !hasExistingImages && i === 0;
+
                 // Create new media record
                 const { data: mediaData, error: mediaError } = await supabase
                     .from("media")
@@ -92,6 +112,8 @@ export const useUploadServiceImages = () => {
                         service_id: serviceId,
                         file_path: storagePath.path,
                         media_type: "service_image",
+                        is_preview_image: shouldBePreview,
+                        owner_id: profile.id,
                     })
                     .select()
                     .single();

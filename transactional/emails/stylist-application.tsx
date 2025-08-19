@@ -126,10 +126,7 @@ export const StylistApplicationEmail = ({
             </Text>
 
             <Text style={detailLabel}>Porteføljebilder:</Text>
-            <Text style={detailValue}>
-              {portfolioImageCount} bilde{portfolioImageCount !== 1 ? "r" : ""}{" "}
-              lastet opp
-            </Text>
+            <Text style={detailValue}>Se søknad i admin-panel</Text>
           </Section>
 
           <Hr style={hr} />

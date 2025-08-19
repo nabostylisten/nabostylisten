@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,9 +17,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Edit, Trash2, Scissors } from "lucide-react";
+import { Plus, Edit, Trash2, Scissors, ImageIcon } from "lucide-react";
 import { ServiceForm } from "@/components/service-form";
 import { deleteService } from "@/server/service.actions";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 
 type Service = Database["public"]["Tables"]["services"]["Row"] & {
@@ -29,6 +31,13 @@ type Service = Database["public"]["Tables"]["services"]["Row"] & {
       description?: string | null;
     };
   }>;
+  media?: Array<{
+    id: string;
+    file_path: string;
+    media_type: Database["public"]["Enums"]["media_type"];
+    is_preview_image: boolean;
+    created_at: string;
+  }>;
 };
 
 interface ServicesPageClientProps {
@@ -37,7 +46,6 @@ interface ServicesPageClientProps {
 }
 
 export function ServicesPageClient({ services }: ServicesPageClientProps) {
-  console.log(services);
   const [serviceFormOpen, setServiceFormOpen] = React.useState(false);
   const [serviceFormMode, setServiceFormMode] = React.useState<
     "create" | "edit"
@@ -49,6 +57,24 @@ export function ServicesPageClient({ services }: ServicesPageClientProps) {
   const [serviceToDelete, setServiceToDelete] = React.useState<
     Service | undefined
   >();
+
+  // Helper function to get preview image URL
+  const getPreviewImageUrl = (service: Service): string | null => {
+    if (!service.media || service.media.length === 0) return null;
+
+    // Find preview image first
+    const previewImage = service.media.find((media) => media.is_preview_image);
+    const imageToUse = previewImage || service.media[0];
+
+    if (!imageToUse) return null;
+
+    const supabase = createClient();
+    const { data } = supabase.storage
+      .from("service-media")
+      .getPublicUrl(imageToUse.file_path);
+
+    return data.publicUrl;
+  };
 
   // Delete service mutation
   const deleteMutation = useMutation({
@@ -123,117 +149,138 @@ export function ServicesPageClient({ services }: ServicesPageClientProps) {
 
       {services && services.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-2">
-          {services.map((service) => (
-            <Card
-              key={service.id}
-              className="flex flex-col hover:shadow-lg transition-shadow duration-200"
-            >
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1 min-w-0">
-                    <CardTitle className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
-                      {service.title}
-                    </CardTitle>
-                    <div className="flex flex-col gap-2">
-                      <div>
-                        <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                          Kategorier
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {service.service_service_categories?.length ? (
-                            service.service_service_categories.map(
-                              (relation) => (
-                                <Badge
-                                  key={relation.service_categories.id}
-                                  variant="secondary"
-                                  className="text-xs font-medium"
-                                >
-                                  {relation.service_categories.name}
-                                </Badge>
+          {services.map((service) => {
+            const previewImageUrl = getPreviewImageUrl(service);
+
+            return (
+              <Card
+                key={service.id}
+                className="flex flex-col hover:shadow-lg transition-shadow duration-200"
+              >
+                {/* Service Image */}
+                <div className="relative aspect-[4/3] bg-muted rounded-t-lg overflow-hidden">
+                  {previewImageUrl ? (
+                    <Image
+                      src={previewImageUrl}
+                      alt={service.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-muted-foreground">
+                      <ImageIcon className="w-12 h-12" />
+                    </div>
+                  )}
+                </div>
+
+                <CardHeader className="pb-4">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1 min-w-0">
+                      <CardTitle className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
+                        {service.title}
+                      </CardTitle>
+                      <div className="flex flex-col gap-2">
+                        <div>
+                          <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                            Kategorier
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {service.service_service_categories?.length ? (
+                              service.service_service_categories.map(
+                                (relation) => (
+                                  <Badge
+                                    key={relation.service_categories.id}
+                                    variant="secondary"
+                                    className="text-xs font-medium"
+                                  >
+                                    {relation.service_categories.name}
+                                  </Badge>
+                                )
                               )
-                            )
-                          ) : (
-                            <Badge
-                              variant="secondary"
-                              className="text-xs font-medium"
-                            >
-                              Ukategorisert
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                      <div>
-                        <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                          Leveringssted
-                        </span>
-                        <div className="flex flex-wrap gap-2">
-                          {service.at_customer_place && (
-                            <Badge variant="outline" className="text-xs">
-                              Hjemme hos kunde
-                            </Badge>
-                          )}
-                          {service.at_stylist_place && (
-                            <Badge variant="outline" className="text-xs">
-                              På salong
-                            </Badge>
-                          )}
-                          {!service.at_customer_place &&
-                            !service.at_stylist_place && (
-                              <Badge variant="outline" className="text-xs">
-                                Ikke spesifisert
+                            ) : (
+                              <Badge
+                                variant="secondary"
+                                className="text-xs font-medium"
+                              >
+                                Ukategorisert
                               </Badge>
                             )}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                            Leveringssted
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {service.at_customer_place && (
+                              <Badge variant="outline" className="text-xs">
+                                Hjemme hos kunde
+                              </Badge>
+                            )}
+                            {service.at_stylist_place && (
+                              <Badge variant="outline" className="text-xs">
+                                På salong
+                              </Badge>
+                            )}
+                            {!service.at_customer_place &&
+                              !service.at_stylist_place && (
+                                <Badge variant="outline" className="text-xs">
+                                  Ikke spesifisert
+                                </Badge>
+                              )}
+                          </div>
                         </div>
                       </div>
                     </div>
+                    <div className="flex gap-1 ml-3 flex-shrink-0">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditService(service)}
+                        className="h-8 w-8 p-0 hover:bg-muted"
+                      >
+                        <Edit className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteService(service)}
+                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-1 ml-3 flex-shrink-0">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleEditService(service)}
-                      className="h-8 w-8 p-0 hover:bg-muted"
-                    >
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteService(service)}
-                      className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                </CardHeader>
+                <CardContent className="flex-1 flex flex-col justify-between pt-0 pb-4">
+                  {service.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-2">
+                      {service.description}
+                    </p>
+                  )}
+                  <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Pris
+                      </span>
+                      <span className="text-xl font-bold text-foreground">
+                        {service.price} kr
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-semibold text-muted-foreground">
+                        Varighet
+                      </span>
+                      <span className="text-sm text-muted-foreground">
+                        {service.duration_minutes} minutter
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 flex flex-col justify-between pt-0 pb-4">
-                {service.description && (
-                  <p className="text-sm text-muted-foreground line-clamp-3 leading-relaxed mb-2">
-                    {service.description}
-                  </p>
-                )}
-                <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-muted-foreground">
-                      Pris
-                    </span>
-                    <span className="text-xl font-bold text-foreground">
-                      {service.price} kr
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-muted-foreground">
-                      Varighet
-                    </span>
-                    <span className="text-sm text-muted-foreground">
-                      {service.duration_minutes} minutter
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       ) : (
         <Card>

@@ -22,7 +22,12 @@ interface RecurringExceptionDialogProps {
   recurringTitle: string;
   seriesId: string;
   onCancelInstance: (seriesId: string, originalStartTime: Date) => void;
-  onRescheduleInstance: (seriesId: string, originalStartTime: Date, newStartTime: Date, newEndTime: Date) => void;
+  onRescheduleInstance: (
+    seriesId: string,
+    originalStartTime: Date,
+    newStartTime: Date,
+    newEndTime: Date
+  ) => void;
   onEditSeries: (seriesId: string) => void;
 }
 
@@ -78,7 +83,8 @@ export function RecurringExceptionDialog({
           <DialogHeader>
             <DialogTitle>Flytt denne forekomsten</DialogTitle>
             <DialogDescription>
-              Flytt "{recurringTitle}" for {format(selectedDate, "PPP", { locale: nb })}
+              Flytt "{recurringTitle}" for{" "}
+              {format(selectedDate, "PPP", { locale: nb })}
             </DialogDescription>
           </DialogHeader>
 
@@ -102,9 +108,7 @@ export function RecurringExceptionDialog({
             <Button variant="outline" onClick={() => setShowReschedule(false)}>
               Tilbake
             </Button>
-            <Button onClick={handleRescheduleSubmit}>
-              Flytt forekomst
-            </Button>
+            <Button onClick={handleRescheduleSubmit}>Flytt forekomst</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -117,7 +121,9 @@ export function RecurringExceptionDialog({
         <DialogHeader>
           <DialogTitle>Administrer gjentakende utilgjengelighet</DialogTitle>
           <DialogDescription>
-            "{recurringTitle}" - {format(selectedDate, "PPP", { locale: nb })} kl. {selectedHour.toString().padStart(2, "0")}:00
+            <span className="font-semibold">{recurringTitle}</span> -{" "}
+            {format(selectedDate, "PPP", { locale: nb })} kl.{" "}
+            {selectedHour.toString().padStart(2, "0")}:00
           </DialogDescription>
         </DialogHeader>
 
@@ -135,7 +141,8 @@ export function RecurringExceptionDialog({
               <div className="space-y-1">
                 <div className="font-medium">Avlys kun denne forekomsten</div>
                 <div className="text-xs text-muted-foreground">
-                  Gjør denne tiden tilgjengelig, men behold den gjentakende serien
+                  Gjør denne tiden tilgjengelig, men behold den gjentakende
+                  serien
                 </div>
               </div>
             </Button>

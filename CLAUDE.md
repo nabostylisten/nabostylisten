@@ -353,3 +353,6 @@ All new features and significant functionality changes must be documented in the
 - Chat messages between customers and stylists
 - Booking status updates
 - Availability changes
+
+- when running seed script, first run the seed script and then afterwards reset the database
+- After making changes to the database, before running seed script again, we must run seed:sync to sync snaplet to the database

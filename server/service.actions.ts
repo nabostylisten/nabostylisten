@@ -272,7 +272,7 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
         .select(
             `
             *,
-            service_service_categories!inner (
+            service_service_categories (
                 service_categories (
                     id,
                     name,
@@ -312,13 +312,32 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
     // Apply search filter
     if (search) {
         query = query.or(
-            `title.ilike.%${search}%,description.ilike.%${search}%,profiles.full_name.ilike.%${search}%`,
+            `title.ilike.%${search}%,description.ilike.%${search}%`,
         );
     }
 
     // Apply category filter
     if (categoryId) {
-        query = query.eq("service_service_categories.category_id", categoryId);
+        // Get service IDs that belong to this category
+        const { data: serviceIds } = await supabase
+            .from("service_service_categories")
+            .select("service_id")
+            .eq("category_id", categoryId);
+        
+        if (serviceIds && serviceIds.length > 0) {
+            const ids = serviceIds.map(item => item.service_id);
+            query = query.in("id", ids);
+        } else {
+            // No services in this category, return empty result
+            return {
+                data: [],
+                error: null,
+                count: 0,
+                totalPages: 0,
+                currentPage: page,
+                hasMore: false,
+            };
+        }
     }
 
     // Apply price filters
@@ -372,7 +391,10 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
         ...service,
         media: service.media?.map((media) => ({
             ...media,
-            publicUrl: getPublicUrl(supabase, "service-media", media.file_path),
+            // Use file_path as URL if it's already a full URL (Unsplash), otherwise use Supabase storage
+            publicUrl: media.file_path.startsWith('http') 
+                ? media.file_path 
+                : getPublicUrl(supabase, "service-media", media.file_path),
         })),
     }));
 
@@ -442,7 +464,10 @@ export async function getPublicService(serviceId: string) {
         ...data,
         media: data.media?.map((media) => ({
             ...media,
-            publicUrl: getPublicUrl(supabase, "service-media", media.file_path),
+            // Use file_path as URL if it's already a full URL (Unsplash), otherwise use Supabase storage
+            publicUrl: media.file_path.startsWith('http') 
+                ? media.file_path 
+                : getPublicUrl(supabase, "service-media", media.file_path),
         })),
     };
 
@@ -457,8 +482,6 @@ export async function getServiceCategoriesWithCounts() {
         .from("service_categories")
         .select("*")
         .order("name");
-
-    console.log(categories);
 
     if (categoryError || !categories) {
         return { data: null, error: categoryError };
@@ -479,8 +502,6 @@ export async function getServiceCategoriesWithCounts() {
             };
         }),
     );
-
-    console.log({ categoriesWithCounts });
 
     return { data: categoriesWithCounts, error: null };
 }

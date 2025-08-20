@@ -3,7 +3,18 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
-      new URL("https://rbkpzpaarsaoorgfyfvh.supabase.co/storage/**"),
+      {
+        protocol: "https",
+        hostname: "rbkpzpaarsaoorgfyfvh.supabase.co",
+        port: "",
+        pathname: "/storage/**",
+      },
+      {
+        protocol: "https",
+        hostname: "images.unsplash.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

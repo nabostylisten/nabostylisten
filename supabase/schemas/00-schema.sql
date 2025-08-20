@@ -364,7 +364,7 @@ CREATE TABLE IF NOT EXISTS public.media (
     owner_id uuid REFERENCES public.profiles(id) ON DELETE CASCADE, -- Nullable for application images
 
     -- The path to the file in Supabase Storage. e.g., 'public/services/service_uuid/image_uuid.jpg'
-    file_path text NOT NULL UNIQUE,
+    file_path text NOT NULL,
     media_type public.media_type NOT NULL,
 
     -- For service images: mark which one is the preview/main image

@@ -218,3 +218,20 @@ export function filtersToSearchParams(
     page: filters.page === 1 ? undefined : filters.page?.toString(),
   };
 }
+
+// Unsplash API Types (minimal for seed script)
+export interface UnsplashPhoto {
+  urls: {
+    regular: string;
+    thumb: string;
+  };
+  alt_description?: string | null;
+  user: {
+    name: string;
+    links: {
+      html: string;
+    };
+  };
+}
+
+export type UnsplashRandomArrayResponse = UnsplashPhoto[];

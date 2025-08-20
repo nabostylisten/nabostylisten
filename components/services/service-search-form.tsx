@@ -146,17 +146,15 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
             <Search className="w-4 h-4" />
             {isPending ? "Søker..." : "Søk"}
           </Button>
-          {hasActiveFilters && (
-            <Button
-              variant="outline"
-              onClick={handleClearFilters}
-              disabled={isPending}
-              className="sm:w-auto"
-            >
-              <Filter className="w-4 h-4 mr-2" />
-              Nullstill
-            </Button>
-          )}
+          <Button
+            variant="outline"
+            onClick={handleClearFilters}
+            disabled={isPending}
+            className="sm:w-auto"
+          >
+            <Filter className="w-4 h-4 mr-2" />
+            {hasActiveFilters ? "Nullstill filtre" : "Alle tjenester"}
+          </Button>
         </div>
 
         {/* Active Filters Display */}

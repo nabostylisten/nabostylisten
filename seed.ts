@@ -1,4 +1,64 @@
 import { createSeedClient } from "@snaplet/seed";
+import type { DatabaseTables } from "./types/index";
+
+// Service category types
+type ServiceCategoryKey = "hair" | "nails" | "makeup" | "browsLashes" | "wedding";
+
+// Curated images organized by main category
+const categoryImages: Record<ServiceCategoryKey, string[]> = {
+  hair: [
+    "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800", // hair styling
+    "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800", // hair cut
+    "https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=800", // hair color
+    "https://images.unsplash.com/photo-1559599101-f09722fb4948?w=800", // hair treatment
+    "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800", // salon
+  ],
+  
+  nails: [
+    "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800", // nail art
+    "https://images.unsplash.com/photo-1610992015732-2449b76344bc?w=800", // manicure
+    "https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=800", // gel nails
+    "https://images.unsplash.com/photo-1563401289-e8010d13da76?w=800", // nail polish
+    "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=800", // nail salon
+  ],
+  
+  makeup: [
+    "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800", // makeup artist
+    "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800", // makeup brushes
+    "https://images.unsplash.com/photo-1522338140262-f46f5913618c?w=800", // makeup application
+    "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800", // cosmetics
+    "https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=800", // makeup palette
+  ],
+  
+  browsLashes: [
+    "https://images.unsplash.com/photo-1614807536394-cd67bd4a634b?w=800", // close-up eyes
+    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800", // eyelashes
+    "https://images.unsplash.com/photo-1571171637578-41bc2dd41cd2?w=800", // hair close-up
+    "https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=800", // woman's face with eyeliner
+    "https://images.unsplash.com/photo-1577565177023-d0f29c354b69?w=800", // eyeglasses
+  ],
+  
+  wedding: [
+    "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=800", // bride and groom at altar
+    "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800", // bride and groom silhouettes
+    "https://images.unsplash.com/photo-1522673607200-164d1b6ce2d2?w=800", // wedding party selfie
+    "https://images.unsplash.com/photo-1571115764595-644a1f56a55c?w=800", // wedding details
+    "https://images.unsplash.com/photo-1594736797933-d0f71d2d7222?w=800", // bride with flower in hair
+    "https://images.unsplash.com/photo-1627916607164-7b20241db935?w=800", // hair styling
+  ],
+};
+
+function getRandomImagesForCategory(categoryKey: ServiceCategoryKey, count: number = 3): string[] {
+  const images = categoryImages[categoryKey];
+  const selectedImages: string[] = [];
+  
+  for (let i = 0; i < count; i++) {
+    const randomIndex = Math.floor(Math.random() * images.length);
+    selectedImages.push(images[randomIndex]);
+  }
+  
+  return selectedImages;
+}
 
 /**
  * If we console log, then remember to prefix the console log with an SQL comment.
@@ -241,131 +301,337 @@ async function main() {
     },
   ]);
 
-  // Create services for each stylist
-  const { services } = await seed.services([
-    // Maria's services
+  // Service templates for generating randomized services
+  const serviceTemplates: Array<{
+    title: string;
+    description: string;
+    category: ServiceCategoryKey;
+    categoryIndex: number; // For linking to main categories array
+    duration: number[];
+  }> = [
+    // Hair Services
     {
-      stylist_id: stylistUsers[0].id,
       title: "Dameklipp",
-      description:
-        "Profesjonell klipp med vask og føn. Konsultasjon inkludert.",
-      price: 650,
-      currency: "NOK",
-      duration_minutes: 60,
-      is_published: true,
-      at_customer_place: true,
-      at_stylist_place: true,
+      description: "Profesjonell klipp med vask og føn. Konsultasjon inkludert.",
+      category: "hair",
+      categoryIndex: 0,
+      duration: [45, 60, 75],
     },
     {
-      stylist_id: stylistUsers[0].id,
+      title: "Herreklipp",
+      description: "Moderne herreklipp med styling. Inkluderer vask og føn.",
+      category: "hair",
+      categoryIndex: 0,
+      duration: [30, 45, 60],
+    },
+    {
       title: "Balayage farge",
       description: "Moderne fargeteknikk for naturlig solkysset hår",
-      price: 2500,
-      currency: "NOK",
-      duration_minutes: 180,
-      is_published: true,
-      at_customer_place: false,
-      at_stylist_place: true,
+      category: "hair",
+      categoryIndex: 0,
+      duration: [120, 150, 180],
     },
     {
-      stylist_id: stylistUsers[0].id,
-      title: "Brudefrisyre",
-      description: "Eksklusiv styling for din store dag. Prøvetime inkludert.",
-      price: 1800,
-      currency: "NOK",
-      duration_minutes: 120,
-      is_published: true,
-      at_customer_place: true,
-      at_stylist_place: true,
-    },
-    // Emma's services
-    {
-      stylist_id: stylistUsers[1].id,
-      title: "Festmakeup",
-      description: "Glamorøs makeup perfekt for fest og spesielle anledninger",
-      price: 800,
-      currency: "NOK",
-      duration_minutes: 60,
-      is_published: true,
-      at_customer_place: true,
-      at_stylist_place: false,
+      title: "Highlights",
+      description: "Striper som gir dimensjon og glans til håret",
+      category: "hair",
+      categoryIndex: 0,
+      duration: [90, 120, 150],
     },
     {
-      stylist_id: stylistUsers[1].id,
+      title: "Hårfarge",
+      description: "Permanent hårfarge i ønsket nyanse",
+      category: "hair",
+      categoryIndex: 0,
+      duration: [90, 120, 150],
+    },
+    {
+      title: "Føn og styling",
+      description: "Profesjonell føn med styling for spesielle anledninger",
+      category: "hair",
+      categoryIndex: 0,
+      duration: [30, 45, 60],
+    },
+    {
+      title: "Permanent",
+      description: "Permanent for krøller og volum",
+      category: "hair",
+      categoryIndex: 0,
+      duration: [120, 150, 180],
+    },
+    {
+      title: "Hårbehandling",
+      description: "Intensive behandling for skadet hår",
+      category: "hair",
+      categoryIndex: 0,
+      duration: [45, 60, 90],
+    },
+
+    // Nail Services
+    {
+      title: "Gellack manikyr",
+      description: "Holdbar gellakk manikyr som varer i uker",
+      category: "nails",
+      categoryIndex: 1,
+      duration: [60, 75, 90],
+    },
+    {
       title: "Gellack med design",
       description: "Holdbar gellack med kreativt negledesign",
-      price: 550,
-      currency: "NOK",
-      duration_minutes: 90,
-      is_published: true,
-      at_customer_place: true,
-      at_stylist_place: false,
+      category: "nails",
+      categoryIndex: 1,
+      duration: [75, 90, 105],
     },
     {
-      stylist_id: stylistUsers[1].id,
-      title: "Brudemakeup inkl. prøvetime",
-      description:
-        "Perfekt brudemakeup med prøvetime for å finne din drømmelook",
-      price: 2200,
-      currency: "NOK",
-      duration_minutes: 150,
-      is_published: true,
-      at_customer_place: true,
-      at_stylist_place: false,
+      title: "Franske negler",
+      description: "Klassisk fransk manikyr for elegant look",
+      category: "nails",
+      categoryIndex: 1,
+      duration: [45, 60, 75],
     },
-    // Sophia's services
     {
-      stylist_id: stylistUsers[2].id,
+      title: "Akryl negler",
+      description: "Forsterkning og forlengelse med akryl",
+      category: "nails",
+      categoryIndex: 1,
+      duration: [90, 120, 150],
+    },
+    {
+      title: "Pedikyr",
+      description: "Komplett pedikyr med neglepleje",
+      category: "nails",
+      categoryIndex: 1,
+      duration: [60, 75, 90],
+    },
+    {
+      title: "Negleforlengelse",
+      description: "Forlengelse av negler for ønsket lengde",
+      category: "nails",
+      categoryIndex: 1,
+      duration: [90, 120, 150],
+    },
+    {
+      title: "Shellac behandling",
+      description: "Langtidsholdbar neglelakk behandling",
+      category: "nails",
+      categoryIndex: 1,
+      duration: [45, 60, 75],
+    },
+
+    // Makeup Services
+    {
+      title: "Festmakeup",
+      description: "Glamorøs makeup perfekt for fest og spesielle anledninger",
+      category: "makeup",
+      categoryIndex: 2,
+      duration: [45, 60, 75],
+    },
+    {
+      title: "Dagsmakeup",
+      description: "Naturlig makeup for hverdagen",
+      category: "makeup",
+      categoryIndex: 2,
+      duration: [30, 45, 60],
+    },
+    {
+      title: "Brude makeup",
+      description: "Perfekt makeup for din store dag",
+      category: "makeup",
+      categoryIndex: 2,
+      duration: [60, 90, 120],
+    },
+    {
+      title: "Foto makeup",
+      description: "Makeup optimalisert for fotografering",
+      category: "makeup",
+      categoryIndex: 2,
+      duration: [45, 60, 75],
+    },
+    {
+      title: "Makeup kurs",
+      description: "Lær å sminke deg selv som en proff",
+      category: "makeup",
+      categoryIndex: 2,
+      duration: [90, 120, 150],
+    },
+    {
+      title: "Kontur makeup",
+      description: "Avansert konturering for skulpturerte fasader",
+      category: "makeup",
+      categoryIndex: 2,
+      duration: [60, 75, 90],
+    },
+
+    // Brows & Lashes Services
+    {
       title: "Klassiske vippeextensions",
       description: "Naturlige vippeextensions for en elegant look",
-      price: 900,
-      currency: "NOK",
-      duration_minutes: 90,
-      is_published: true,
-      at_customer_place: false,
-      at_stylist_place: true,
+      category: "browsLashes",
+      categoryIndex: 3,
+      duration: [90, 120, 150],
     },
     {
-      stylist_id: stylistUsers[2].id,
       title: "Volum vippeextensions",
       description: "Fyldige volum-vipper for dramatisk effekt",
-      price: 1200,
-      currency: "NOK",
-      duration_minutes: 120,
-      is_published: true,
-      at_customer_place: false,
-      at_stylist_place: true,
+      category: "browsLashes",
+      categoryIndex: 3,
+      duration: [120, 150, 180],
     },
     {
-      stylist_id: stylistUsers[2].id,
-      title: "Brynslaminering og farging",
-      description: "Få perfekte bryn med laminering og farging",
-      price: 650,
-      currency: "NOK",
-      duration_minutes: 60,
-      is_published: true,
-      at_customer_place: false,
-      at_stylist_place: true,
+      title: "Brynslaminering",
+      description: "Laminering og forming av bryn for perfekt form",
+      category: "browsLashes",
+      categoryIndex: 3,
+      duration: [45, 60, 75],
     },
-  ]);
+    {
+      title: "Brynsfarge",
+      description: "Farging av bryn for definert look",
+      category: "browsLashes",
+      categoryIndex: 3,
+      duration: [30, 45, 60],
+    },
+    {
+      title: "Brynspluking",
+      description: "Profesjonell forming av bryn",
+      category: "browsLashes",
+      categoryIndex: 3,
+      duration: [30, 45, 60],
+    },
+    {
+      title: "Vippelift",
+      description: "Permanent krøll av naturlige vipper",
+      category: "browsLashes",
+      categoryIndex: 3,
+      duration: [60, 75, 90],
+    },
+    {
+      title: "Hybrid vipper",
+      description: "Kombinasjon av klassiske og volum vipper",
+      category: "browsLashes",
+      categoryIndex: 3,
+      duration: [105, 120, 135],
+    },
+
+    // Wedding Services
+    {
+      title: "Brudefrisyre",
+      description: "Eksklusiv styling for din store dag. Prøvetime inkludert.",
+      category: "wedding",
+      categoryIndex: 4,
+      duration: [90, 120, 150],
+    },
+    {
+      title: "Brudemakeup komplett",
+      description: "Komplett brudemakeup med prøvetime",
+      category: "wedding",
+      categoryIndex: 4,
+      duration: [120, 150, 180],
+    },
+    {
+      title: "Brudepakke",
+      description: "Komplett pakke med makeup og hår for bruden",
+      category: "wedding",
+      categoryIndex: 4,
+      duration: [180, 210, 240],
+    },
+    {
+      title: "Brudesminke prøve",
+      description: "Prøvetime for brudemakeup",
+      category: "wedding",
+      categoryIndex: 4,
+      duration: [75, 90, 120],
+    },
+    {
+      title: "Bryllupsgjester styling",
+      description: "Makeup og hår for bryllupsgjester",
+      category: "wedding",
+      categoryIndex: 4,
+      duration: [60, 75, 90],
+    },
+  ];
+
+  // Generate 50+ randomized services
+  const servicesToCreate = [];
+  const serviceCategoryLinks: { service_id: string; category_id: string }[] =
+    [];
+
+  for (let i = 0; i < 55; i++) {
+    const template =
+      serviceTemplates[Math.floor(Math.random() * serviceTemplates.length)];
+    const stylist =
+      stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
+    const basePrice = 800 + Math.floor(Math.random() * 2200); // 800-3000 NOK
+    const duration =
+      template.duration[Math.floor(Math.random() * template.duration.length)];
+
+    // Add some variation to titles to avoid duplicates
+    const variation = i > serviceTemplates.length
+      ? ` ${Math.floor(i / serviceTemplates.length) + 1}`
+      : "";
+
+    const service: DatabaseTables["services"]["Insert"] = {
+      stylist_id: stylist.id,
+      title: template.title + variation,
+      description: template.description,
+      price: basePrice,
+      currency: "NOK",
+      duration_minutes: duration,
+      is_published: Math.random() > 0.1, // 90% published
+      at_customer_place: Math.random() > 0.3, // 70% offer home service
+      at_stylist_place: Math.random() > 0.2, // 80% offer at salon
+    };
+
+    servicesToCreate.push(service);
+  }
+
+  const { services } = await seed.services(servicesToCreate);
+
+  // Create service-category relationships
+  services.forEach((service, index) => {
+    const template = serviceTemplates[index % serviceTemplates.length];
+    const serviceId = service.id;
+    const categoryId = mainCategories[template.categoryIndex].id;
+
+    if (serviceId && categoryId) {
+      serviceCategoryLinks.push({
+        service_id: serviceId,
+        category_id: categoryId,
+      });
+    }
+  });
 
   // Link services to categories
-  await seed.service_service_categories([
-    // Maria's services (Hair and Wedding)
-    { service_id: services[0].id, category_id: mainCategories[0].id }, // Dameklipp -> Hår
-    { service_id: services[1].id, category_id: mainCategories[0].id }, // Balayage -> Hår
-    { service_id: services[2].id, category_id: mainCategories[4].id }, // Brudefrisyre -> Bryllup
+  await seed.service_service_categories(serviceCategoryLinks);
 
-    // Emma's services (Makeup, Nails, Wedding)
-    { service_id: services[3].id, category_id: mainCategories[2].id }, // Festmakeup -> Makeup
-    { service_id: services[4].id, category_id: mainCategories[1].id }, // Gellack -> Negler
-    { service_id: services[5].id, category_id: mainCategories[4].id }, // Brudemakeup -> Bryllup
+  console.log("-- Creating service images from curated collection...");
 
-    // Sophia's services (Brows & Lashes)
-    { service_id: services[6].id, category_id: mainCategories[3].id }, // Klassiske vipper -> Bryn & Vipper
-    { service_id: services[7].id, category_id: mainCategories[3].id }, // Volum vipper -> Bryn & Vipper
-    { service_id: services[8].id, category_id: mainCategories[3].id }, // Brynslaminering -> Bryn & Vipper
-  ]);
+  // Add images to services using hardcoded curated images
+  for (let i = 0; i < services.length; i++) {
+    const service = services[i];
+    const template = serviceTemplates[i % serviceTemplates.length];
+
+    // Get 3-5 random images from the appropriate category
+    const imageCount = Math.floor(Math.random() * 3) + 3; // 3-5 images
+    const images = getRandomImagesForCategory(template.category, imageCount);
+
+    console.log(
+      `-- Using ${images.length} curated images for service: ${service.title}`,
+    );
+
+    // Create media entries for each image
+    const mediaData: DatabaseTables["media"]["Insert"][] = images.map((
+      imageUrl,
+      index: number,
+    ) => ({
+      service_id: service.id,
+      file_path: imageUrl,
+      media_type: "service_image",
+      is_preview_image: index === 0, // First image is preview
+    }));
+
+    await seed.media(mediaData);
+  }
 
   // Create availability rules for stylists
   await seed.stylist_availability_rules([

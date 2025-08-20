@@ -9,6 +9,13 @@ import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 // Export the type so it can be used elsewhere
 export type ServiceWithRelations = {
   id: string;
@@ -63,7 +70,8 @@ interface ServiceCardProps {
 }
 
 export function ServiceCard({ service }: ServiceCardProps) {
-  const previewImage = service.media?.find((m) => m.is_preview_image);
+  const serviceImages =
+    service.media?.filter((m) => m.media_type === "service_image") || [];
   const primaryAddress = service.profiles?.addresses?.find(
     (addr) => addr.is_primary
   );
@@ -95,79 +103,107 @@ export function ServiceCard({ service }: ServiceCardProps) {
   };
 
   return (
-    <Link href={`/tjenester/${service.id}`}>
-      <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
-        <div className="aspect-video bg-muted rounded-t-xl relative overflow-hidden">
-          {previewImage?.publicUrl ? (
-            <Image
-              src={previewImage.publicUrl}
-              alt={service.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-              <span className="text-muted-foreground text-sm">Ingen bilde</span>
-            </div>
-          )}
-        </div>
-        <CardHeader>
-          <div className="flex justify-between items-start gap-2">
-            <CardTitle className="text-xl line-clamp-1">
-              {service.title}
-            </CardTitle>
-            <Badge variant="secondary" className="shrink-0">
-              Fra {formatPrice(service.price)}
-            </Badge>
-          </div>
-          <CardDescription className="line-clamp-2">
-            {service.description || "Ingen beskrivelse tilgjengelig"}
-          </CardDescription>
-          {categories.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {categories.slice(0, 2).map((category) => (
-                <Badge key={category.id} variant="outline" className="text-xs">
-                  {category.name}
-                </Badge>
+    <Card className="hover:shadow-lg transition-shadow h-full">
+      <div className="aspect-video bg-muted rounded-t-xl relative overflow-hidden">
+        {serviceImages.length > 0 ? (
+          <Carousel
+            className="w-full h-full"
+            opts={{
+              align: "start",
+              loop: true,
+            }}
+          >
+            <CarouselContent>
+              {serviceImages.map((image) => (
+                <CarouselItem key={image.id}>
+                  <div className="aspect-video relative">
+                    <Image
+                      src={image.publicUrl || image.file_path}
+                      alt={service.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    />
+                  </div>
+                </CarouselItem>
               ))}
-              {categories.length > 2 && (
-                <Badge variant="outline" className="text-xs">
-                  +{categories.length - 2}
-                </Badge>
-              )}
+            </CarouselContent>
+            {serviceImages.length > 1 && (
+              <>
+                <CarouselPrevious className="left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-0 shadow-md" />
+                <CarouselNext className="right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-0 shadow-md" />
+              </>
+            )}
+          </Carousel>
+        ) : (
+          <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+            <span className="text-muted-foreground text-sm">Ingen bilde</span>
+          </div>
+        )}
+      </div>
+      <Link href={`/tjenester/${service.id}`}>
+        <div className="cursor-pointer">
+          <CardHeader>
+            <div className="flex justify-between items-start gap-2">
+              <CardTitle className="text-xl line-clamp-1">
+                {service.title}
+              </CardTitle>
+              <Badge variant="secondary" className="shrink-0">
+                Fra {formatPrice(service.price)}
+              </Badge>
             </div>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="w-4 h-4" />
-              <span>{formatDuration(service.duration_minutes)}</span>
-            </div>
-            {primaryAddress && (
-              <div className="flex items-center gap-1 text-muted-foreground">
-                <MapPin className="w-4 h-4" />
-                <span className="line-clamp-1">{primaryAddress.city}</span>
+            <CardDescription className="line-clamp-2">
+              {service.description || "Ingen beskrivelse tilgjengelig"}
+            </CardDescription>
+            {categories.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {categories.slice(0, 2).map((category) => (
+                  <Badge
+                    key={category.id}
+                    variant="outline"
+                    className="text-xs"
+                  >
+                    {category.name}
+                  </Badge>
+                ))}
+                {categories.length > 2 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{categories.length - 2}
+                  </Badge>
+                )}
               </div>
             )}
-          </div>
-          {service.profiles?.full_name && (
-            <div className="mt-2 text-sm text-muted-foreground">
-              av {service.profiles.full_name}
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <Clock className="w-4 h-4" />
+                <span>{formatDuration(service.duration_minutes)}</span>
+              </div>
+              {primaryAddress && (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                  <MapPin className="w-4 h-4" />
+                  <span className="line-clamp-1">{primaryAddress.city}</span>
+                </div>
+              )}
             </div>
-          )}
-          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
-            {service.at_customer_place && service.at_stylist_place ? (
-              <span>Hjemme eller hos stylist</span>
-            ) : service.at_customer_place ? (
-              <span>Hjemme hos deg</span>
-            ) : (
-              <span>Hos stylist</span>
+            {service.profiles?.full_name && (
+              <div className="mt-2 text-sm text-muted-foreground">
+                av {service.profiles.full_name}
+              </div>
             )}
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
+            <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
+              {service.at_customer_place && service.at_stylist_place ? (
+                <span>Hjemme eller hos stylist</span>
+              ) : service.at_customer_place ? (
+                <span>Hjemme hos deg</span>
+              ) : (
+                <span>Hos stylist</span>
+              )}
+            </div>
+          </CardContent>
+        </div>
+      </Link>
+    </Card>
   );
 }

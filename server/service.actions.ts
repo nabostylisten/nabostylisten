@@ -3,6 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import type { Database } from "@/types/database.types";
+import { getPublicUrl } from "@/lib/supabase/storage";
+import type { ServiceFilters } from "@/types";
 
 type ServiceInsert = Database["public"]["Tables"]["services"]["Insert"];
 type ServiceUpdate = Database["public"]["Tables"]["services"]["Update"];
@@ -249,6 +251,238 @@ export async function getServiceCategories() {
         .order("name");
 
     return { data, error };
+}
+
+export async function getPublicServices(filters: ServiceFilters = {}) {
+    const supabase = await createClient();
+
+    const {
+        search,
+        categoryId,
+        location,
+        minPrice,
+        maxPrice,
+        sortBy = "newest",
+        page = 1,
+        limit = 12,
+    } = filters;
+
+    let query = supabase
+        .from("services")
+        .select(
+            `
+            *,
+            service_service_categories!inner (
+                service_categories (
+                    id,
+                    name,
+                    description,
+                    parent_category_id
+                )
+            ),
+            media (
+                id,
+                file_path,
+                media_type,
+                is_preview_image,
+                created_at
+            ),
+            profiles!inner (
+                id,
+                full_name,
+                stylist_details (
+                    bio,
+                    can_travel,
+                    has_own_place,
+                    travel_distance_km
+                ),
+                addresses (
+                    id,
+                    city,
+                    postal_code,
+                    street_address,
+                    is_primary
+                )
+            )
+        `,
+            { count: "exact" },
+        )
+        .eq("is_published", true);
+
+    // Apply search filter
+    if (search) {
+        query = query.or(
+            `title.ilike.%${search}%,description.ilike.%${search}%,profiles.full_name.ilike.%${search}%`,
+        );
+    }
+
+    // Apply category filter
+    if (categoryId) {
+        query = query.eq("service_service_categories.category_id", categoryId);
+    }
+
+    // Apply price filters
+    if (minPrice !== undefined) {
+        query = query.gte("price", minPrice * 100); // Convert to øre
+    }
+    if (maxPrice !== undefined) {
+        query = query.lte("price", maxPrice * 100); // Convert to øre
+    }
+
+    // Apply location filter (if provided, filter by city)
+    if (location) {
+        query = query.eq("profiles.addresses.city", location);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+        case "price_asc":
+            query = query.order("price", { ascending: true });
+            break;
+        case "price_desc":
+            query = query.order("price", { ascending: false });
+            break;
+        case "newest":
+            query = query.order("created_at", { ascending: false });
+            break;
+        default:
+            query = query.order("created_at", { ascending: false });
+    }
+
+    // Apply pagination
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error || !data) {
+        return {
+            data,
+            error,
+            count,
+            totalPages: count ? Math.ceil(count / limit) : 0,
+            currentPage: page,
+            hasMore: count ? page * limit < count : false,
+        };
+    }
+
+    // Add public URLs for media
+    const servicesWithUrls = data.map((service) => ({
+        ...service,
+        media: service.media?.map((media) => ({
+            ...media,
+            publicUrl: getPublicUrl(supabase, "service-media", media.file_path),
+        })),
+    }));
+
+    return {
+        data: servicesWithUrls,
+        error,
+        count,
+        totalPages: count ? Math.ceil(count / limit) : 0,
+        currentPage: page,
+        hasMore: count ? page * limit < count : false,
+    };
+}
+
+export async function getPublicService(serviceId: string) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("services")
+        .select(`
+            *,
+            service_service_categories!inner (
+                service_categories (
+                    id,
+                    name,
+                    description,
+                    parent_category_id
+                )
+            ),
+            media (
+                id,
+                file_path,
+                media_type,
+                is_preview_image,
+                created_at
+            ),
+            profiles!inner (
+                id,
+                full_name,
+                stylist_details (
+                    bio,
+                    can_travel,
+                    has_own_place,
+                    travel_distance_km,
+                    instagram_profile,
+                    facebook_profile,
+                    tiktok_profile
+                ),
+                addresses (
+                    id,
+                    city,
+                    postal_code,
+                    street_address,
+                    is_primary
+                )
+            )
+        `)
+        .eq("id", serviceId)
+        .eq("is_published", true)
+        .single();
+
+    if (error || !data) {
+        return { data, error };
+    }
+
+    // Add public URLs for media
+    const serviceWithUrls = {
+        ...data,
+        media: data.media?.map((media) => ({
+            ...media,
+            publicUrl: getPublicUrl(supabase, "service-media", media.file_path),
+        })),
+    };
+
+    return { data: serviceWithUrls, error };
+}
+
+export async function getServiceCategoriesWithCounts() {
+    const supabase = await createClient();
+
+    // Get all categories
+    const { data: categories, error: categoryError } = await supabase
+        .from("service_categories")
+        .select("*")
+        .order("name");
+
+    console.log(categories);
+
+    if (categoryError || !categories) {
+        return { data: null, error: categoryError };
+    }
+
+    // Get service counts for each category
+    const categoriesWithCounts = await Promise.all(
+        categories.map(async (category) => {
+            const { count } = await supabase
+                .from("service_service_categories")
+                .select("services!inner(id)", { count: "exact" })
+                .eq("category_id", category.id)
+                .eq("services.is_published", true);
+
+            return {
+                ...category,
+                service_count: count || 0,
+            };
+        }),
+    );
+
+    console.log({ categoriesWithCounts });
+
+    return { data: categoriesWithCounts, error: null };
 }
 
 /**

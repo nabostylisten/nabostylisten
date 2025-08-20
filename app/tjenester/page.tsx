@@ -1,57 +1,117 @@
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Search, MapPin, Star, Filter } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Filter } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
+import {
+  getPublicServices,
+  getServiceCategoriesWithCounts,
+} from "@/server/service.actions";
+import {
+  ServiceCard,
+  type ServiceWithRelations,
+} from "@/components/services/service-card";
+import { ServicesGridSkeleton } from "@/components/services/services-grid-skeleton";
+import { ServiceSearchForm } from "@/components/services/service-search-form";
+import type { ServiceSearchParams } from "@/types";
+import { searchParamsToFilters } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export default function TjenesterPage() {
-  const categories = [
-    { name: "Hår", count: 245, href: "/services/hair" },
-    { name: "Negler", count: 189, href: "/services/nails" },
-    { name: "Sminke", count: 156, href: "/services/makeup" },
-    { name: "Vipper & Bryn", count: 134, href: "/services/lashes-brows" },
-    { name: "Bryllup", count: 89, href: "/services/wedding" },
-  ];
+interface TjenesterPageProps {
+  searchParams: Promise<ServiceSearchParams>;
+}
 
-  const featuredServices = [
-    {
-      id: "1",
-      title: "Klipp og farge",
-      description: "Profesjonell hårklipp og fargelegging hjemme hos deg",
-      price: "Fra 850 kr",
-      rating: 4.9,
-      reviews: 127,
-      location: "Oslo sentrum",
-      image: "/placeholder-service.jpg",
-    },
-    {
-      id: "2",
-      title: "Gelélakk manikyr",
-      description: "Langtidsholdbar neglelakk som varer i 2-3 uker",
-      price: "Fra 450 kr",
-      rating: 4.8,
-      reviews: 93,
-      location: "Grünerløkka",
-      image: "/placeholder-service.jpg",
-    },
-    {
-      id: "3",
-      title: "Bryllupssminke",
-      description: "Profesjonell sminke for din store dag",
-      price: "Fra 1200 kr",
-      rating: 5.0,
-      reviews: 64,
-      location: "Frogner",
-      image: "/placeholder-service.jpg",
-    },
-  ];
+async function SearchFormWrapper() {
+  const { data: categories, error } = await getServiceCategoriesWithCounts();
+
+  if (error || !categories) {
+    return <ServiceSearchForm categories={[]} />;
+  }
+
+  return <ServiceSearchForm categories={categories} />;
+}
+
+async function CategoriesSection() {
+  const { data: categories, error } = await getServiceCategoriesWithCounts();
+
+  if (error || !categories) {
+    return (
+      <div className="text-center text-muted-foreground">
+        Kunne ikke laste kategorier
+      </div>
+    );
+  }
+
+  // Filter to only show main categories (no parent_category_id) with services
+  const mainCategories = categories
+    .filter((cat) => !cat.parent_category_id && cat.service_count > 0)
+    .slice(0, 5);
+
+  console.log(mainCategories);
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {mainCategories.map((category) => (
+        <Link key={category.id} href={`/tjenester?category=${category.id}`}>
+          <Card className="hover:shadow-md transition-shadow cursor-pointer">
+            <CardContent className="p-6 text-center">
+              <h3 className="font-semibold text-lg mb-2">{category.name}</h3>
+              <p className="text-sm text-muted-foreground">
+                {category.service_count} tjenester
+              </p>
+            </CardContent>
+          </Card>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+async function FeaturedServices({
+  searchParams,
+}: {
+  searchParams: ServiceSearchParams;
+}) {
+  const filters = searchParamsToFilters(searchParams);
+
+  const { data: services, error } = await getPublicServices({
+    ...filters,
+    limit: 6,
+  });
+
+  if (error) {
+    return (
+      <div className="text-center text-muted-foreground py-12">
+        Kunne ikke laste tjenester. Prøv igjen senere.
+      </div>
+    );
+  }
+
+  if (!services || services.length === 0) {
+    return (
+      <div className="text-center text-muted-foreground py-12">
+        <h3 className="text-lg font-medium mb-2">Ingen tjenester funnet</h3>
+        <p>Prøv å justere søkekriteriene dine eller kom tilbake senere.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+      {services.map((service) => (
+        <ServiceCard
+          key={service.id}
+          service={service as ServiceWithRelations}
+        />
+      ))}
+    </div>
+  );
+}
+
+export default async function TjenesterPage({
+  searchParams,
+}: TjenesterPageProps) {
+  const resolvedSearchParams = await searchParams;
 
   return (
     <div className="min-h-screen pt-20 pb-12">
@@ -70,95 +130,70 @@ export default function TjenesterPage() {
 
         {/* Search Section */}
         <div className="max-w-4xl mx-auto mb-16">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1 relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Søk etter tjeneste eller behandling..."
-                    className="pl-10"
-                  />
-                </div>
-                <div className="flex-1 relative">
-                  <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Hvor?" className="pl-10" />
-                </div>
-                <Button size="default" className="md:w-auto flex gap-2">
-                  <Search className="w-4 h-4" />
-                  Søk
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <Suspense
+            fallback={
+              <Card>
+                <CardContent className="p-6">
+                  <div className="animate-pulse space-y-4">
+                    <div className="flex gap-4">
+                      <div className="flex-1 h-10 bg-muted rounded"></div>
+                      <div className="flex-1 h-10 bg-muted rounded"></div>
+                    </div>
+                    <div className="flex gap-4">
+                      <div className="flex-1 h-10 bg-muted rounded"></div>
+                      <div className="flex-1 h-10 bg-muted rounded"></div>
+                    </div>
+                    <div className="h-10 bg-muted rounded"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            }
+          >
+            <SearchFormWrapper />
+          </Suspense>
         </div>
-
         {/* Categories Section */}
         <div className="py-16">
           <h2 className="text-3xl font-bold text-center mb-12">
             Populære kategorier
           </h2>
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-            {categories.map((category) => (
-              <Link key={category.name} href={category.href}>
-                <Card className="hover:shadow-md transition-shadow cursor-pointer">
-                  <CardContent className="p-6 text-center">
-                    <h3 className="font-semibold text-lg mb-2">
-                      {category.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      {category.count} tjenester
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <Suspense
+            fallback={
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Card key={i} className="animate-pulse">
+                    <CardContent className="p-6 text-center">
+                      <div className="h-6 bg-muted rounded mb-2"></div>
+                      <div className="h-4 bg-muted rounded w-2/3 mx-auto"></div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            }
+          >
+            <CategoriesSection />
+          </Suspense>
         </div>
-
         {/* Featured Services */}
         <div className="py-16">
           <div className="flex justify-between items-center mb-12">
-            <h2 className="text-3xl font-bold">Utvalgte tjenester</h2>
+            <h2 className="text-3xl font-bold">
+              {resolvedSearchParams.search ||
+              resolvedSearchParams.category ||
+              resolvedSearchParams.location
+                ? "Søkeresultater"
+                : "Utvalgte tjenester"}
+            </h2>
             <Button variant="outline">
               <Filter className="w-4 h-4 mr-2" />
               Filtre
             </Button>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredServices.map((service) => (
-              <Link key={service.id} href={`/tjenester/${service.id}`}>
-                <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                  <div className="aspect-video bg-muted rounded-t-lg"></div>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-xl">{service.title}</CardTitle>
-                      <Badge variant="secondary">{service.price}</Badge>
-                    </div>
-                    <CardDescription>{service.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">{service.rating}</span>
-                        <span className="text-sm text-muted-foreground">
-                          ({service.reviews})
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        {service.location}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <Suspense fallback={<ServicesGridSkeleton count={6} />}>
+            <FeaturedServices searchParams={resolvedSearchParams} />
+          </Suspense>
         </div>
-
         {/* CTA Section */}
         <div className="py-16 text-center">
           <div className="bg-primary/5 rounded-lg p-12">

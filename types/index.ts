@@ -161,3 +161,60 @@ export interface ClassNames {
   tabs?: TabsClassNames;
   views?: ViewClassNames;
 }
+
+// Public services listing with search and filtering
+export interface ServiceFilters {
+  search?: string;
+  categoryId?: string;
+  location?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: "price_asc" | "price_desc" | "rating_desc" | "newest";
+  page?: number;
+  limit?: number;
+}
+
+// URL search parameters (as they appear in the URL)
+export interface ServiceSearchParams {
+  search?: string;
+  category?: string;
+  location?: string;
+  minPrice?: string;
+  maxPrice?: string;
+  sort?: string;
+  page?: string;
+}
+
+// Utility function to convert URL search params to ServiceFilters
+export function searchParamsToFilters(
+  searchParams: ServiceSearchParams,
+): ServiceFilters {
+  return {
+    search: searchParams.search,
+    categoryId: searchParams.category,
+    location: searchParams.location,
+    minPrice: searchParams.minPrice
+      ? parseInt(searchParams.minPrice)
+      : undefined,
+    maxPrice: searchParams.maxPrice
+      ? parseInt(searchParams.maxPrice)
+      : undefined,
+    sortBy: searchParams.sort as ServiceFilters["sortBy"] || "newest",
+    page: searchParams.page ? parseInt(searchParams.page) : 1,
+  };
+}
+
+// Utility function to convert ServiceFilters back to URL search params
+export function filtersToSearchParams(
+  filters: ServiceFilters,
+): ServiceSearchParams {
+  return {
+    search: filters.search,
+    category: filters.categoryId,
+    location: filters.location,
+    minPrice: filters.minPrice?.toString(),
+    maxPrice: filters.maxPrice?.toString(),
+    sort: filters.sortBy === "newest" ? undefined : filters.sortBy,
+    page: filters.page === 1 ? undefined : filters.page?.toString(),
+  };
+}

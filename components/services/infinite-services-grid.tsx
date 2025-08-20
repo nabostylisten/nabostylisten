@@ -6,7 +6,6 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { ServiceCard, type ServiceWithRelations } from "./service-card";
 import { ServicesGridSkeleton } from "./services-grid-skeleton";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
-import { Card, CardContent } from "@/components/ui/card";
 import { fetchInfiniteServices } from "@/server/infinite-services.actions";
 import type { ServiceFilters } from "@/types";
 
@@ -14,14 +13,21 @@ interface InfiniteServicesGridProps {
   filters?: ServiceFilters;
 }
 
+// Row height configuration based on measured card heights and spacing
+const ROW_HEIGHT_CONFIG = {
+  1: { cardHeight: 459, spacing: 10 }, // Small screens (1 column)
+  2: { cardHeight: 445, spacing: 10 }, // Medium screens (2 columns)
+  3: { cardHeight: 443, spacing: 60 }, // Large screens (3+ columns)
+} as const;
+
 // Helper function to calculate grid columns based on window width
 // Matches Tailwind CSS breakpoints: sm (640px), md (768px), lg (1024px)
 function getColumnsCount(): number {
-  if (typeof window === 'undefined') return 3; // SSR fallback
-  
+  if (typeof window === "undefined") return 3; // SSR fallback
+
   const width = window.innerWidth;
   if (width >= 1024) return 3; // lg and up: 3 columns
-  if (width >= 768) return 2;  // md: 2 columns
+  if (width >= 768) return 2; // md: 2 columns
   return 1; // sm and below: 1 column
 }
 
@@ -34,7 +40,9 @@ function chunkArray<T>(array: T[], chunkSize: number): T[][] {
   return chunks;
 }
 
-export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps) {
+export function InfiniteServicesGrid({
+  filters = {},
+}: InfiniteServicesGridProps) {
   const [columnsCount, setColumnsCount] = useState(3); // Default to 3 columns
   const parentRef = useRef<HTMLDivElement>(null);
 
@@ -48,21 +56,21 @@ export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps
     isFetchingNextPage,
     status,
   } = useInfiniteQuery({
-    queryKey: ['infinite-services', filters],
-    queryFn: ({ pageParam = 0 }) => 
+    queryKey: ["infinite-services", filters],
+    queryFn: ({ pageParam = 0 }) =>
       fetchInfiniteServices(filters, 12, pageParam),
     getNextPageParam: (lastPage) => lastPage.nextOffset,
     initialPageParam: 0,
   });
 
   // Flatten all pages into a single array of services
-  const allServices: ServiceWithRelations[] = data 
+  const allServices: ServiceWithRelations[] = data
     ? data.pages.flatMap((page) => page.services)
     : [];
-  
+
   // Group services into rows based on responsive columns
   const serviceRows = chunkArray(allServices, columnsCount);
-  
+
   // Add a loader row if we have more data to fetch
   if (hasNextPage) {
     serviceRows.push([]); // Empty row for loader
@@ -76,20 +84,32 @@ export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps
 
     // Set initial value
     updateColumns();
-    
+
     // Listen to window resize
-    window.addEventListener('resize', updateColumns);
-    return () => window.removeEventListener('resize', updateColumns);
+    window.addEventListener("resize", updateColumns);
+    return () => window.removeEventListener("resize", updateColumns);
   }, []);
 
   // Debug log to check column count
-  console.log('Current columns:', columnsCount, 'Window width:', typeof window !== 'undefined' ? window.innerWidth : 'SSR');
+  console.log(
+    "Current columns:",
+    columnsCount,
+    "Window width:",
+    typeof window !== "undefined" ? window.innerWidth : "SSR"
+  );
+
+  // Calculate row height based on screen size using config
+  const getRowHeight = () => {
+    const config =
+      ROW_HEIGHT_CONFIG[columnsCount as keyof typeof ROW_HEIGHT_CONFIG];
+    return config.cardHeight + config.spacing;
+  };
 
   // TanStack Virtual for row virtualization
   const rowVirtualizer = useVirtualizer({
     count: serviceRows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 480, // Increased height to account for more spacing
+    estimateSize: getRowHeight,
     overscan: 2,
   });
 
@@ -104,7 +124,7 @@ export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps
       hasNextPage &&
       !isFetchingNextPage
     ) {
-      console.log('Fetching next page via virtualizer...');
+      console.log("Fetching next page via virtualizer...");
       fetchNextPage();
     }
   }, [
@@ -115,15 +135,15 @@ export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps
     rowVirtualizer.getVirtualItems(),
   ]);
 
-  if (status === 'pending') {
+  if (status === "pending") {
     return <ServicesGridSkeleton count={12} />;
   }
 
-  if (status === 'error') {
+  if (status === "error") {
     return (
       <div className="text-center text-muted-foreground py-12">
         <p>Kunne ikke laste tjenester: {(error as Error)?.message}</p>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
@@ -143,93 +163,83 @@ export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps
   }
 
   return (
-    <div className="w-full">
-      <Card className="border-2 shadow-lg">
-        <CardContent className="p-6">
-          <div className="mb-4">
-            <h3 className="text-lg font-medium text-muted-foreground">
-              {allServices.length > 0 
-                ? `${allServices.length} tjenester funnet`
-                : 'Søker etter tjenester...'
-              }
-            </h3>
-            <p className="text-sm text-muted-foreground">
-              Bla gjennom tjenester nedenfor
-            </p>
-          </div>
-          
-          {/* Virtualized scrollable container */}
-          <div
-            ref={parentRef}
-            className="max-h-[70vh] overflow-auto w-full rounded-lg border bg-card"
-            style={{
-              contain: 'layout style paint',
-            }}
-          >
-            <div
-              style={{
-                height: `${rowVirtualizer.getTotalSize()}px`,
-                width: '100%',
-                position: 'relative',
-              }}
-            >
-              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                const row = serviceRows[virtualRow.index];
-                const isLoaderRow = !row || row.length === 0;
+    <div className="w-full space-y-8">
+      {/* Virtualized container that grows with content */}
+      <div
+        ref={parentRef}
+        className="w-full"
+        style={{
+          contain: "layout style paint",
+        }}
+      >
+        <div
+          style={{
+            height: `${rowVirtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+            const row = serviceRows[virtualRow.index];
+            const isLoaderRow = !row || row.length === 0;
 
-                return (
-                  <div
-                    key={virtualRow.index}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      width: '100%',
-                      height: `${virtualRow.size}px`,
-                      transform: `translateY(${virtualRow.start}px)`,
-                    }}
-                  >
-                    {isLoaderRow ? (
-                      <div className="flex justify-center items-center h-full py-12">
-                        {hasNextPage ? (
-                          <div className="flex items-center gap-2">
-                            <Spinner variant="circle" className="w-4 h-4" />
-                            <span>Laster flere tjenester...</span>
-                          </div>
-                        ) : (
-                          <p className="text-muted-foreground">
-                            Du har sett alle tilgjengelige tjenester
-                          </p>
-                        )}
+            return (
+              <div
+                key={virtualRow.index}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: `${virtualRow.size}px`,
+                  transform: `translateY(${virtualRow.start}px)`,
+                }}
+              >
+                {isLoaderRow ? (
+                  <div className="flex justify-center items-center h-full py-8">
+                    {hasNextPage ? (
+                      <div className="flex items-center gap-2">
+                        <Spinner variant="circle" className="w-4 h-4" />
+                        <span>Laster flere tjenester...</span>
                       </div>
                     ) : (
-                      <div 
-                        className="grid gap-6 p-4 pb-8"
-                        style={{
-                          gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
-                        }}
-                      >
-                        {row.map((service) => (
-                          <ServiceCard key={service.id} service={service} />
-                        ))}
-                      </div>
+                      <p className="text-muted-foreground">
+                        Du har sett alle tilgjengelige tjenester
+                      </p>
                     )}
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                ) : (
+                  <div
+                    className={`grid ${
+                      columnsCount === 1
+                        ? "gap-4 pb-4" // Small screens: less spacing
+                        : columnsCount === 2
+                          ? "gap-4 pb-5" // Medium screens: moderate spacing
+                          : "gap-4 pb-12" // Large screens: more spacing
+                    }`}
+                    style={{
+                      gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+                    }}
+                  >
+                    {row.map((service) => (
+                      <ServiceCard key={service.id} service={service} />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
-          {/* Background fetching indicator */}
-          {isFetching && !isFetchingNextPage && (
-            <div className="text-center py-4 mt-4 border-t">
-              <span className="text-sm text-muted-foreground">
-                Oppdaterer i bakgrunnen...
-              </span>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+      {/* Background fetching indicator */}
+      {isFetching && !isFetchingNextPage && (
+        <div className="text-center py-4">
+          <span className="text-sm text-muted-foreground">
+            Oppdaterer i bakgrunnen...
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -101,15 +101,59 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 - Bi-weekly training sessions
 - Monthly administrative time
 
-### 5. Exception Handling
+### 5. Recurring Pattern Exception Management
 
-**Purpose**: Handle conflicts and special cases in recurring patterns.
+**Purpose**: Handle conflicts and modifications to specific instances of recurring patterns while maintaining the overall series.
 
-**Technical Foundation** (stored for future use):
+**Features**:
 
-- Override specific instances of recurring patterns
-- Reschedule or cancel individual occurrences
-- Maintain pattern integrity while allowing flexibility
+- **Cancel Individual Instances**: Remove specific occurrences without affecting the entire series
+- **Reschedule Instances**: Move specific occurrences to different times/dates
+- **Smart Detection**: System automatically identifies whether unavailability is one-off or recurring
+- **Flexible Modification**: Change individual instances without losing the recurring pattern
+
+**How It Works**:
+
+1. **Instance Detection**: When clicking a red (unavailable) slot, system determines if it's part of a recurring series
+2. **Smart Options**: For recurring instances, user gets three choices:
+   - Cancel only this instance (makes this occurrence available)
+   - Reschedule only this instance (move to different time)
+   - Edit the entire recurring series
+3. **Exception Storage**: Individual modifications stored as exceptions to the recurring rule
+4. **Pattern Preservation**: Original recurring pattern remains intact with documented exceptions
+
+**Use Cases**:
+
+- Skip lunch break on a specific day for urgent appointments
+- Move a weekly meeting to accommodate special events
+- Cancel recurring unavailability during vacation periods
+- Reschedule regular commitments for one-time conflicts
+
+### 6. Recurring Series Management
+
+**Purpose**: Comprehensive editing and management of entire recurring unavailability series.
+
+**Features**:
+
+- **Edit Series Data**: Modify title, time range, recurrence pattern, or date range
+- **Delete Entire Series**: Remove complete recurring pattern with all exceptions
+- **Pre-populated Forms**: Edit dialog shows current series configuration
+- **Exception Cleanup**: Deleting series automatically removes all related exceptions
+
+**Edit Options**:
+
+- **Title/Description**: Change the name or purpose description
+- **Time Range**: Adjust start and end times for all instances
+- **Recurrence Pattern**: Change frequency (daily, weekly, specific days, etc.)
+- **Date Range**: Modify when the series starts or ends
+- **Complete Removal**: Delete the entire series with confirmation
+
+**Business Logic**:
+
+- Editing a series preserves existing exceptions unless they conflict with new times
+- Major pattern changes may invalidate existing exceptions
+- Users receive warnings if changes will affect existing exceptions
+- All changes apply immediately to future instances
 
 ## User Workflows
 
@@ -145,8 +189,48 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 
 ### Managing Existing Unavailability
 
-- **View**: All unavailability shows as red slots with "Unavailable" badges
-- **Future Enhancement**: Click on unavailable slots to edit/remove (planned)
+**One-Off Unavailability**:
+
+1. **Click**: Red slot containing one-off unavailability
+2. **Options**: Two main actions available:
+   - "Make Available" - Removes the unavailability entirely
+   - "Remove as Work Day" - Removes the entire day from work schedule
+3. **Immediate Update**: Changes reflect instantly in calendar
+
+**Recurring Unavailability**:
+
+1. **Click**: Red slot that's part of recurring series
+2. **Smart Recognition**: System detects this is recurring and shows series name
+3. **Management Options**: Three sophisticated choices:
+   - **Cancel This Instance**: "Cancel only this occurrence" - removes single instance
+   - **Reschedule This Instance**: "Move only this occurrence" - reschedule to different time
+   - **Edit Entire Series**: "Edit whole series" - modify or delete complete recurring pattern
+
+### Managing Recurring Exceptions
+
+**Canceling Single Instances**:
+
+1. **Select**: Click recurring unavailability slot
+2. **Choose**: "Cancel only this instance"
+3. **Result**: Specific occurrence becomes available, series continues normally
+4. **Visual**: Slot turns green, tooltip shows this instance was canceled
+
+**Rescheduling Single Instances**:
+
+1. **Select**: Click recurring unavailability slot
+2. **Choose**: "Move only this instance"
+3. **Set New Time**: Use date/time pickers for new schedule
+4. **Result**: Original time becomes available, new time becomes unavailable
+5. **Visual**: Original slot turns green, new slot shows rescheduled occurrence
+
+**Editing Complete Series**:
+
+1. **Select**: Click any recurring unavailability slot
+2. **Choose**: "Edit whole series"
+3. **Edit Form**: Pre-populated form with current series configuration
+4. **Modify**: Change title, times, pattern, or date range
+5. **Options**: Save changes or delete entire series
+6. **Confirmation**: Delete requires explicit confirmation due to data impact
 
 ## Integration Points
 
@@ -159,9 +243,13 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 3. **Time Slot Generation**: Creates available 30-minute slots based on:
    - Work schedule (baseline availability)
    - Minus one-off unavailability
-   - Minus recurring pattern instances
+   - Minus recurring pattern instances (with exceptions processed)
    - Minus existing confirmed bookings
-4. **Customer Choice**: Only available slots shown to customer
+4. **Exception Processing**: For recurring patterns:
+   - Canceled instances become available again
+   - Rescheduled instances show unavailable at new times
+   - Original pattern continues normally for non-excepted instances
+5. **Customer Choice**: Only available slots shown to customer
 
 **Database Integration**:
 
@@ -183,19 +271,43 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 
 **Main Components**:
 
-- `AvailabilityScheduler` (`components/availability-scheduler.tsx`)
+- `AvailabilityScheduler` (`components/availability-scheduler/availability-scheduler.tsx`)
 
   - Primary scheduler interface
   - Handles work schedule and unavailability management
-  - Integrates all sub-features
+  - Integrates all sub-features and dialogs
+  - Smart detection of recurring vs one-off unavailability
 
-- `RecurringUnavailabilityDialog` (`components/recurring-unavailability-dialog.tsx`)
+- `RecurringUnavailabilityDialog` (`components/availability-scheduler/recurring-unavailability-dialog.tsx`)
 
   - Dedicated dialog for recurring pattern creation
   - Form validation and pattern configuration
-  - RRULE generation
+  - RRULE generation and date range selection
 
-- `AvailabilitySchedulerSkeleton` (`components/skeletons/availability-scheduler-skeleton.tsx`)
+- `ManageUnavailableDialog` (`components/availability-scheduler/manage-unavailable-dialog.tsx`)
+
+  - Context-aware dialog for managing clicked unavailability
+  - Automatically detects one-off vs recurring unavailability
+  - Routes to appropriate management options
+
+- `RecurringExceptionDialog` (`components/availability-scheduler/recurring-exception-dialog.tsx`)
+
+  - Specialized dialog for managing recurring pattern instances
+  - Three-option workflow: cancel, reschedule, or edit series
+  - Includes reschedule mode with date/time pickers
+
+- `EditRecurringSeriesDialog` (`components/availability-scheduler/edit-recurring-series-dialog.tsx`)
+
+  - Complete recurring series management
+  - Pre-populated form with existing series data
+  - Edit all series properties or delete with confirmation
+
+- `AddUnavailabilityDialog` (`components/availability-scheduler/add-unavailability-dialog.tsx`)
+
+  - Simple dialog for creating one-off unavailability
+  - Date/time range selection with validation
+
+- `AvailabilitySchedulerSkeleton` (`components/availability-scheduler/availability-scheduler-skeleton.tsx`)
   - Loading state that mirrors actual calendar layout
   - Improved perceived performance
 
@@ -208,14 +320,33 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 
 **Server Actions** (`server/availability.actions.ts`):
 
+**Basic Availability**:
+
 - `getAvailabilityRules()` - Fetch work schedule
 - `updateAvailabilityRules()` - Update work schedule
-- `getUnavailability()` - Fetch one-off unavailability
+- `getUnavailability()` - Fetch one-off unavailability (1 month past to 3 months future)
 - `addUnavailability()` - Create unavailability entries
 - `removeUnavailability()` - Delete unavailability
+
+**Recurring Patterns**:
+
 - `getRecurringUnavailability()` - Fetch recurring patterns
+- `getRecurringUnavailabilityWithExceptions()` - Fetch patterns with their exceptions
 - `addRecurringUnavailability()` - Create recurring patterns
-- `getAvailableTimeSlots()` - Calculate available booking times
+- `getRecurringUnavailabilityById()` - Fetch single recurring series by ID
+- `updateRecurringUnavailability()` - Update existing recurring series
+- `removeRecurringUnavailability()` - Delete series and all related exceptions
+
+**Exception Management**:
+
+- `getRecurringExceptions()` - Fetch exceptions for specific series or all
+- `addRecurringException()` - Create exception (cancel or reschedule instance)
+- `removeRecurringException()` - Delete specific exception
+- `updateRecurringException()` - Modify existing exception
+
+**Booking Integration**:
+
+- `getAvailableTimeSlots()` - Calculate available booking times with full exception processing
 
 ### Database Schema
 
@@ -242,7 +373,10 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 4. **`recurring_unavailability_exceptions`**
    - Purpose: Handle exceptions to recurring patterns
    - Key Fields: `series_id`, `original_start_time`, `new_start_time`, `new_end_time`
-   - Future Use: Override specific instances of recurring patterns
+   - Logic:
+     - If `new_start_time`/`new_end_time` are null = canceled instance
+     - If `new_start_time`/`new_end_time` have values = rescheduled instance
+   - Active Use: Fully implemented exception system for flexible recurring pattern management
 
 ## Business Rules & Validation
 
@@ -255,17 +389,51 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 
 ### Unavailability Rules
 
+**One-Off Unavailability**:
+
 - Can only mark available time slots as unavailable
 - End time must be after start time
 - Cannot create overlapping unavailability periods
-- Recurring patterns override one-off unavailability if conflicts exist
+- Can be removed individually without affecting other patterns
+
+**Recurring Pattern Rules**:
+
+- Title is required for all recurring patterns
+- Start time must be before end time
+- Series start date required, end date optional
+- RRULE pattern must be valid iCalendar format
+- Recurring patterns take precedence over work schedule
+
+**Exception Management Rules**:
+
+- Exceptions can only be created for existing recurring instances
+- Canceled exceptions (null new times) make original time available
+- Rescheduled exceptions require both new start and end times
+- Exception times must follow same validation as regular unavailability
+- Deleting a series automatically removes all related exceptions
 
 ### Display Rules
+
+**Basic Color Coding**:
 
 - Always show all 24 hours for each day
 - Green = Available (work day + work hours + not unavailable)
 - Red = Unavailable (any type of unavailability)
 - Gray = Not available (non-work day or outside work hours)
+
+**Enhanced Tooltips**:
+
+- One-off unavailability: Shows reason or "Utilgjengelig"
+- Recurring patterns: Shows series title (e.g., "Lunch Break")
+- Canceled instances: Shows original pattern was canceled for this occurrence
+- Rescheduled instances: Shows "Pattern Name (Moved to HH:MM)" in Norwegian
+- Hover for details on any red slot
+
+**Visual Indicators**:
+
+- All unavailable slots show "Opptatt" badge
+- Context-sensitive tooltips provide specific information
+- Smart recognition of underlying unavailability type
 
 ### Customer Booking Rules
 
@@ -284,10 +452,25 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 
 ### Interaction Design
 
-- **Click to Add**: Single click on available slots to add unavailability
+**Smart Click Handling**:
+
+- **Green Slots**: Single click to add one-off unavailability
+- **Red Slots (One-off)**: Click to manage (remove or change work day)
+- **Red Slots (Recurring)**: Click to access advanced management options
+- **Gray Slots**: Click to add work day for non-work days
+
+**Advanced Dialog Flow**:
+
+- **Context-Aware Dialogs**: System automatically detects slot type
+- **Progressive Options**: From simple to advanced based on content type
+- **Confirmation Steps**: Destructive actions require explicit confirmation
+
+**Enhanced Navigation**:
+
 - **Scroll Areas**: Long dropdown lists (hours) use scroll areas to prevent UI overflow
 - **Modal Dialogs**: Clean, centered dialogs for complex forms
 - **Week Navigation**: Intuitive previous/next week navigation
+- **Date Picker**: Quick jump to specific dates or weeks
 
 ### Accessibility
 
@@ -312,13 +495,21 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 
 ## Future Enhancements
 
-### Planned Features
+### Recently Implemented ✅
 
-1. **Edit Unavailability**: Click existing unavailable slots to edit/remove
-2. **Bulk Operations**: Select multiple slots for batch unavailability
-3. **Template Patterns**: Save and reuse common recurring patterns
-4. **Availability Import**: Import from external calendar systems
-5. **Advanced RRULE Support**: More complex recurring patterns
+1. **Edit Unavailability**: ✅ **COMPLETED** - Click existing unavailable slots to edit/remove
+2. **Recurring Exception Management**: ✅ **COMPLETED** - Cancel or reschedule individual recurring instances
+3. **Series Management**: ✅ **COMPLETED** - Edit or delete entire recurring series
+4. **Smart Context Detection**: ✅ **COMPLETED** - System automatically detects unavailability type
+5. **Enhanced Tooltips**: ✅ **COMPLETED** - Descriptive information for all unavailability types
+
+### Future Enhancements
+
+1. **Bulk Operations**: Select multiple slots for batch unavailability management
+2. **Template Patterns**: Save and reuse common recurring patterns
+3. **Availability Import**: Import from external calendar systems (Google Calendar, Outlook)
+4. **Advanced RRULE Support**: More complex recurring patterns (monthly by day, yearly patterns)
+5. **Drag and Drop**: Drag unavailability blocks to different times
 
 ### Integration Opportunities
 
@@ -355,12 +546,21 @@ The Stylist Availability Scheduler is a comprehensive weekly calendar management
 1. **No Available Slots**: Check work schedule configuration
 2. **Recurring Pattern Not Showing**: Verify RRULE and date ranges
 3. **Calendar Not Loading**: Network connectivity or permission issues
+4. **Exception Not Working**: Ensure the recurring pattern exists and times match exactly
+5. **Series Edit Not Saving**: Check that all required fields are filled and times are valid
+6. **Deleted Series Still Showing**: Refresh page - series deletion includes cleanup delay
 
 ### User Training Points
+
+**Basic Setup**:
 
 1. **Work Schedule First**: Always set up basic work schedule before adding unavailability
 2. **Recurring vs One-off**: Understand when to use each type
 3. **Date Ranges**: Pay attention to start/end dates for recurring patterns
 4. **Visual Feedback**: Trust the color coding for slot availability
+
+**Advanced Features**: 5. **Exception Management**: Learn the three options for recurring patterns (cancel, reschedule, edit series) 6. **Smart Clicking**: Understand that red slots behave differently based on content type 7. **Confirmation Patterns**: Destructive actions (like delete series) require explicit confirmation 8. **Tooltip Information**: Hover over red slots to understand why they're unavailable
+
+**Best Practices**: 9. **Exception vs Edit**: Use exceptions for temporary changes, series editing for permanent changes 10. **Testing Changes**: Verify availability changes by viewing from customer perspective
 
 This comprehensive availability management system ensures stylists have full control over their schedules while providing customers with accurate, real-time booking options.

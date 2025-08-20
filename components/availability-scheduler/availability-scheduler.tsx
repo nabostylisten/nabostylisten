@@ -23,6 +23,7 @@ import {
   Plus,
   X,
   Repeat,
+  HelpCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -49,6 +50,7 @@ import { AddUnavailabilityDialog } from "@/components/availability-scheduler/add
 import { AddWorkDayDialog } from "@/components/availability-scheduler/add-work-day-dialog";
 import { ManageUnavailableDialog } from "@/components/availability-scheduler/manage-unavailable-dialog";
 import { EditRecurringSeriesDialog } from "@/components/availability-scheduler/edit-recurring-series-dialog";
+import { HelpDialog } from "@/components/availability-scheduler/help-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -121,6 +123,7 @@ export function AvailabilityScheduler({
   const [selectedRedCell, setSelectedRedCell] = useState<{ date: Date; hour: number } | null>(null);
   const [showEditSeries, setShowEditSeries] = useState(false);
   const [editingSeries, setEditingSeries] = useState<RecurringUnavailability | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
 
   // Work schedule state
   const [workDays, setWorkDays] = useState<DayOfWeek[]>([]);
@@ -757,6 +760,14 @@ export function AvailabilityScheduler({
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setShowHelp(true)}
+              >
+                <HelpCircle className="w-4 h-4 mr-2" />
+                Hjelp
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={() => setShowRecurringDialog(true)}
               >
                 <Repeat className="w-4 h-4 mr-2" />
@@ -1083,6 +1094,12 @@ export function AvailabilityScheduler({
         series={editingSeries}
         onUpdate={handleUpdateRecurring}
         onDelete={handleDeleteRecurring}
+      />
+
+      {/* Help dialog */}
+      <HelpDialog
+        open={showHelp}
+        onOpenChange={setShowHelp}
       />
     </div>
   );

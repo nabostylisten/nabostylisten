@@ -251,15 +251,29 @@ export function AvailabilityScheduler({
 
   // Handle removing unavailability  
   const handleRemoveUnavailability = useCallback(() => {
-    if (!selectedRedCell) return;
+    if (!selectedRedCell || !unavailability?.data) return;
     
-    // Find the specific unavailability to remove
-    // For now, this is a placeholder - would need actual implementation
-    // to find and remove the specific unavailability entry
-    toast.success("Utilgjengelighet fjernet");
+    const slotStart = new Date(selectedRedCell.date);
+    slotStart.setHours(selectedRedCell.hour, 0, 0, 0);
+    const slotEnd = new Date(selectedRedCell.date);
+    slotEnd.setHours(selectedRedCell.hour + 1, 0, 0, 0);
+    
+    // Find the specific unavailability entry that overlaps with this time slot
+    const unavailabilityToRemove = unavailability.data.find((u) => {
+      const unavailStart = new Date(u.start_time);
+      const unavailEnd = new Date(u.end_time);
+      return slotStart < unavailEnd && slotEnd > unavailStart;
+    });
+    
+    if (unavailabilityToRemove) {
+      removeUnavailabilityMutation.mutate(unavailabilityToRemove.id);
+    } else {
+      toast.error("Kunne ikke finne utilgjengelighet å fjerne");
+    }
+    
     setShowManageUnavailable(false);
     setSelectedRedCell(null);
-  }, [selectedRedCell]);
+  }, [selectedRedCell, unavailability, removeUnavailabilityMutation]);
 
   // Handle canceling a recurring instance
   const handleCancelRecurringInstance = useCallback(

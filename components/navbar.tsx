@@ -13,7 +13,7 @@ import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, X, LogOut } from "lucide-react";
+import { Menu, X, LogOut, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -21,11 +21,16 @@ import { Spinner } from "./ui/kibo-ui/spinner";
 import { getSidebarItems } from "./profile-sidebar";
 import { adminSidebarItems } from "./admin-sidebar";
 import { isAdmin } from "@/lib/permissions";
+import { CartHoverCard } from "@/components/cart/cart-hover-card";
+import { useCartStore } from "@/stores/cart.store";
 
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
+  const { getTotalItems } = useCartStore();
+
+  const totalItems = getTotalItems();
 
   const handleSignOut = async () => {
     await signOut();
@@ -66,7 +71,22 @@ export const Navbar = () => {
               </Button>
             )}
 
-          <Separator orientation="vertical" className="h-6" />
+          {/* Cart Icon - only show if user has items */}
+          {totalItems > 0 && (
+            <>
+              <CartHoverCard>
+                <Button variant="ghost" size="sm" className="relative" asChild>
+                  <Link href="/handlekurv">
+                    <ShoppingCart className="w-5 h-5" />
+                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium min-w-5">
+                      {totalItems}
+                    </span>
+                  </Link>
+                </Button>
+              </CartHoverCard>
+              <Separator orientation="vertical" className="h-6" />
+            </>
+          )}
 
           {/* Theme Switcher */}
           <ThemeSwitcher />

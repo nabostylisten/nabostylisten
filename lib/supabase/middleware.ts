@@ -14,6 +14,7 @@ const publicRoutes = [
   "/privacy",
   "/terms-of-service",
   "/faq",
+  "/handlekurv", // Allow viewing cart without authentication
 ];
 
 // Define route patterns for dynamic public routes

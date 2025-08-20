@@ -7,6 +7,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Clock } from "lucide-react";
+import { AddToCartButton } from "@/components/cart/add-to-cart-button";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -149,7 +151,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 {service.title}
               </CardTitle>
               <Badge variant="secondary" className="shrink-0">
-                Fra {formatPrice(service.price)}
+                Fra {service.price},-
               </Badge>
             </div>
             <CardDescription className="line-clamp-2">
@@ -204,6 +206,24 @@ export function ServiceCard({ service }: ServiceCardProps) {
           </CardContent>
         </div>
       </Link>
+
+      {/* Add to Cart Button - positioned outside the Link to prevent nested links */}
+      {service.profiles && (
+        <div className="p-6 pt-0">
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm" className="flex-1">
+              <Link href={`/tjenester/${service.id}`}>Se detaljer</Link>
+            </Button>
+            <AddToCartButton
+              service={service}
+              stylist={service.profiles}
+              size="sm"
+              className="flex-1"
+              showIcon={false}
+            />
+          </div>
+        </div>
+      )}
     </Card>
   );
 }

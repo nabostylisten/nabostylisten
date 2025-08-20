@@ -18,7 +18,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { AuthDialog } from "@/components/auth-dialog";
+import { createClient } from "@/lib/supabase/client";
+import type { User } from "@supabase/supabase-js";
 
 export default function CartPage() {
   const router = useRouter();
@@ -33,10 +36,35 @@ export default function CartPage() {
   } = useCartStore();
   
   const [removeServiceId, setRemoveServiceId] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
   const currentStylist = getCurrentStylist();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+      setIsCheckingAuth(false);
+    };
+
+    checkAuth();
+
+    const supabase = createClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user ?? null);
+      if (event === 'SIGNED_IN' && session?.user) {
+        setShowAuthDialog(false);
+        router.push('/bestilling');
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   if (totalItems === 0) {
     return (
@@ -75,6 +103,14 @@ export default function CartPage() {
 
   const handleClearCart = () => {
     clearCart();
+  };
+
+  const handleProceedToBooking = () => {
+    if (user) {
+      router.push('/bestilling');
+    } else {
+      setShowAuthDialog(true);
+    }
   };
 
   return (
@@ -230,17 +266,28 @@ export default function CartPage() {
                 </div>
                 
                 <div className="space-y-2 pt-4">
-                  <Button className="w-full" disabled>
-                    Fortsett til booking
+                  <Button 
+                    className="w-full" 
+                    disabled={isCheckingAuth}
+                    onClick={handleProceedToBooking}
+                  >
+                    {isCheckingAuth ? "Laster..." : "Fortsett til booking"}
                   </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Booking-funksjonalitet kommer snart
-                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
+
+        <AuthDialog 
+          open={showAuthDialog} 
+          onOpenChange={setShowAuthDialog}
+          redirectTo="/bestilling"
+          labels={{
+            loginDescription: "Logg inn for å fortsette til booking",
+            signupDescription: "Opprett en konto for å fortsette til booking",
+          }}
+        />
       </div>
     </div>
   );

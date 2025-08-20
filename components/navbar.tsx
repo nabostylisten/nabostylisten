@@ -11,6 +11,7 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ThemeSwitcher } from "@/components/theme-switcher";
+import { AuthDialog } from "@/components/auth-dialog";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
 import { Menu, X, LogOut, ShoppingCart } from "lucide-react";
@@ -26,6 +27,8 @@ import { useCartStore } from "@/stores/cart.store";
 
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
+  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
   const { getTotalItems } = useCartStore();
@@ -35,6 +38,16 @@ export const Navbar = () => {
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
+  };
+
+  const handleLoginClick = () => {
+    setAuthMode("login");
+    setShowAuthDialog(true);
+  };
+
+  const handleSignUpClick = () => {
+    setAuthMode("signup");
+    setShowAuthDialog(true);
   };
 
   return (
@@ -150,8 +163,8 @@ export const Navbar = () => {
               ) : (
                 // Unauthenticated User Buttons
                 <div className="hidden md:flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild>
-                    <Link href="/auth/login">Logg inn</Link>
+                  <Button variant="outline" size="sm" onClick={handleLoginClick}>
+                    Logg inn
                   </Button>
                   <Button size="sm" asChild>
                     <Link href="/bli-stylist">Bli stylist</Link>
@@ -196,10 +209,16 @@ export const Navbar = () => {
             {/* Mobile Auth Buttons */}
             {!loading && !user && (
               <div className="pt-4 border-t space-y-2">
-                <Button variant="outline" size="sm" className="w-full" asChild>
-                  <Link href="/auth/login" onClick={() => setOpen(false)}>
-                    Logg inn
-                  </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full" 
+                  onClick={() => {
+                    setOpen(false);
+                    handleLoginClick();
+                  }}
+                >
+                  Logg inn
                 </Button>
                 <Button size="sm" className="w-full" asChild>
                   <Link href="/bli-stylist" onClick={() => setOpen(false)}>
@@ -214,6 +233,12 @@ export const Navbar = () => {
           </div>
         </div>
       )}
+
+      <AuthDialog
+        open={showAuthDialog}
+        onOpenChange={setShowAuthDialog}
+        initialMode={authMode}
+      />
     </header>
   );
 };

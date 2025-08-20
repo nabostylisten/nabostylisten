@@ -70,9 +70,20 @@ The shopping cart system enables customers to collect services from stylists bef
 
 **Authentication Required For**:
 
-- Proceeding to booking/checkout
+- Proceeding to booking/checkout (`/bestilling`)
 - Accessing booking history
 - Managing profile settings
+
+**Authentication Flow**:
+
+- When clicking "Fortsett til booking" in cart:
+  - If authenticated: Direct redirect to `/bestilling`
+  - If not authenticated: Modal dialog with login/signup options
+- Authentication dialog supports both:
+  - Email OTP login for existing users
+  - Account creation with email verification
+- After successful authentication, automatic redirect to booking page
+- Redirect URLs preserved through authentication process
 
 ## User Workflows
 
@@ -122,13 +133,36 @@ The shopping cart system enables customers to collect services from stylists bef
    - Remove individual items
    - Clear entire cart option
    - Order summary with total
-   - Proceed to booking (requires login)
+   - Proceed to booking button (handles authentication)
 
 ### Empty Cart State
 
 - Friendly message indicating empty cart
 - Direct link to browse services
 - No cart icon shown in navbar
+
+### Proceeding to Booking
+
+1. **Authenticated User Flow**:
+   - User clicks "Fortsett til booking"
+   - Immediate redirect to `/bestilling`
+   - Cart contents preserved and displayed
+   - Ready for calendar selection
+
+2. **Unauthenticated User Flow**:
+   - User clicks "Fortsett til booking"
+   - Authentication dialog appears
+   - User chooses login or signup
+   - Email verification process
+   - Automatic redirect to `/bestilling` after verification
+   - Cart contents preserved throughout process
+
+3. **Authentication Dialog Features**:
+   - Toggle between login and signup modes
+   - Email OTP for secure login
+   - Account creation with full profile setup
+   - Clear messaging about booking continuation
+   - Proper redirect URL handling
 
 ## Validation Rules
 
@@ -160,15 +194,33 @@ The shopping cart system enables customers to collect services from stylists bef
 
 ### With Authentication System
 
-- Seamless transition to login when needed
-- Cart persists through login process
-- No data loss during authentication
+**Unified Authentication Integration**:
 
-### With Booking System (Future)
+- Modal-based authentication dialog for minimal cart disruption
+- Booking-specific messaging: "Logg inn for å fortsette til booking"
+- Cart state fully preserved through authentication process
+- Support for both existing user login and new user registration
+- Email OTP authentication eliminates password friction
+- Automatic profile creation for new users with metadata
+- Seamless redirect to booking page after successful authentication
 
-- Cart items become booking line items
-- Total price carries to payment
+**Authentication Flow**:
+
+1. User clicks "Fortsett til booking" with items in cart
+2. If unauthenticated: AuthDialog opens with booking context
+3. User completes email OTP flow (login or signup)
+4. Cart contents preserved throughout process
+5. Automatic redirect to `/bestilling` after verification
+6. Booking process continues with authenticated user context
+
+### With Booking System
+
+- Cart items transfer to booking summary
+- Total price calculation carries forward
 - Service durations used for scheduling
+- Stylist information preserved for booking
+- Real-time validation of cart contents at booking stage
+- Seamless transition from cart to calendar selection
 
 ## Success Metrics
 

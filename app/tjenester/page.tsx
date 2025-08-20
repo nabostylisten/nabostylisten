@@ -3,19 +3,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Filter } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
-import {
-  getPublicServices,
-  getServiceCategoriesWithCounts,
-} from "@/server/service.actions";
-import {
-  ServiceCard,
-  type ServiceWithRelations,
-} from "@/components/services/service-card";
+import { getServiceCategoriesWithCounts } from "@/server/service.actions";
 import { ServicesGridSkeleton } from "@/components/services/services-grid-skeleton";
 import { ServiceSearchForm } from "@/components/services/service-search-form";
+import { InfiniteServicesGrid } from "@/components/services/infinite-services-grid";
 import type { ServiceSearchParams } from "@/types";
 import { searchParamsToFilters } from "@/types";
-import { Skeleton } from "@/components/ui/skeleton";
 
 interface TjenesterPageProps {
   searchParams: Promise<ServiceSearchParams>;
@@ -67,45 +60,14 @@ async function CategoriesSection() {
   );
 }
 
-async function FeaturedServices({
+function ServicesWithFilters({
   searchParams,
 }: {
   searchParams: ServiceSearchParams;
 }) {
   const filters = searchParamsToFilters(searchParams);
 
-  const { data: services, error } = await getPublicServices({
-    ...filters,
-    limit: 6,
-  });
-
-  if (error) {
-    return (
-      <div className="text-center text-muted-foreground py-12">
-        Kunne ikke laste tjenester. Prøv igjen senere.
-      </div>
-    );
-  }
-
-  if (!services || services.length === 0) {
-    return (
-      <div className="text-center text-muted-foreground py-12">
-        <h3 className="text-lg font-medium mb-2">Ingen tjenester funnet</h3>
-        <p>Prøv å justere søkekriteriene dine eller kom tilbake senere.</p>
-      </div>
-    );
-  }
-
-  return (
-    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {services.map((service) => (
-        <ServiceCard
-          key={service.id}
-          service={service as ServiceWithRelations}
-        />
-      ))}
-    </div>
-  );
+  return <InfiniteServicesGrid filters={filters} />;
 }
 
 export default async function TjenesterPage({
@@ -190,8 +152,8 @@ export default async function TjenesterPage({
             </Button>
           </div>
 
-          <Suspense fallback={<ServicesGridSkeleton count={6} />}>
-            <FeaturedServices searchParams={resolvedSearchParams} />
+          <Suspense fallback={<ServicesGridSkeleton count={12} />}>
+            <ServicesWithFilters searchParams={resolvedSearchParams} />
           </Suspense>
         </div>
         {/* CTA Section */}

@@ -376,7 +376,7 @@ export function AvailabilityScheduler({
           {/* Weekly calendar view */}
           <div className="border rounded-lg overflow-hidden">
             <div className="grid grid-cols-8 bg-muted">
-              <div className="p-2 border-r">
+              <div className="p-2 border-r pt-4">
                 <Clock className="w-4 h-4 mx-auto" />
               </div>
               {weekDays.map((day, index) => (
@@ -414,7 +414,7 @@ export function AvailabilityScheduler({
                           !isWorkDay && "bg-gray-50",
                           isWorkDay &&
                             !isUnavailable &&
-                            "bg-green-50 hover:bg-green-100",
+                            "bg-green-100 hover:bg-green-300",
                           isUnavailable && "bg-red-50 hover:bg-red-100"
                         )}
                         onClick={() => {

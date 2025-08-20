@@ -24,25 +24,25 @@ import { nb } from "date-fns/locale";
 const { Stepper } = defineStepper(
   {
     id: "time-selection",
-    title: "Velg tidspunkt",
+    title: "1. Velg tidspunkt",
     description: "Finn ledig tid hos stylisten",
     icon: <Calendar className="w-4 h-4" />,
   },
   {
     id: "location-details",
-    title: "Lokasjon og detaljer",
+    title: "2. Lokasjon",
     description: "Hvor skal tjenesten utføres",
     icon: <MapPin className="w-4 h-4" />,
   },
   {
     id: "message-discount",
-    title: "Melding og rabatt",
+    title: "3. Melding og rabatt",
     description: "Tilleggsinfo og rabattkoder",
     icon: <MessageSquare className="w-4 h-4" />,
   },
   {
     id: "payment",
-    title: "Betaling",
+    title: "4. Betaling",
     description: "Fullfør bookingen",
     icon: <CreditCard className="w-4 h-4" />,
   }
@@ -103,6 +103,28 @@ export function BookingStepper({
     }
   };
 
+  const isStepAccessible = (stepId: string) => {
+    switch (stepId) {
+      case "time-selection":
+        return true; // First step is always accessible
+      case "location-details":
+        return canProceedFromStep("time-selection");
+      case "message-discount":
+        return (
+          canProceedFromStep("time-selection") &&
+          canProceedFromStep("location-details")
+        );
+      case "payment":
+        return (
+          canProceedFromStep("time-selection") &&
+          canProceedFromStep("location-details") &&
+          canProceedFromStep("message-discount")
+        );
+      default:
+        return false;
+    }
+  };
+
   return (
     <div className="w-full">
       {/* Selected time display - moved above stepper */}
@@ -136,11 +158,20 @@ export function BookingStepper({
                 <Stepper.Step
                   key={step.id}
                   of={step.id}
-                  onClick={() => methods.goTo(step.id)}
+                  onClick={() => {
+                    if (isStepAccessible(step.id)) {
+                      methods.goTo(step.id);
+                    }
+                  }}
                   icon={step.icon}
+                  disabled={!isStepAccessible(step.id)}
                 >
-                  <Stepper.Title>{step.title}</Stepper.Title>
-                  <Stepper.Description>{step.description}</Stepper.Description>
+                  <Stepper.Title className="text-xs">
+                    {step.title}
+                  </Stepper.Title>
+                  <Stepper.Description className="text-xs">
+                    {step.description}
+                  </Stepper.Description>
                   {isMobile &&
                     methods.when(step.id, () => (
                       <div className="mt-4">{renderStepContent(step.id)}</div>
@@ -317,7 +348,7 @@ export function BookingStepper({
               <CardContent>
                 <div className="space-y-4">
                   <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                    <h4 className="font-medium">Booking sammendrag:</h4>
+                    <h4 className="font-medium">Sammendrag</h4>
                     {bookingData.startTime && (
                       <p className="text-sm">
                         <strong>Tid:</strong>{" "}

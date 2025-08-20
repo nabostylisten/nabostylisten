@@ -11,21 +11,16 @@ import { BookingStepper } from "@/components/booking";
 
 export default function BookingPage() {
   const router = useRouter();
-  const { 
-    items, 
-    getTotalItems, 
-    getTotalPrice,
-    getCurrentStylist 
-  } = useCartStore();
-  
-  
+  const { items, getTotalItems, getTotalPrice, getCurrentStylist } =
+    useCartStore();
+
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
   const currentStylist = getCurrentStylist();
-  
+
   // Calculate total service duration
   const totalDurationMinutes = items.reduce((total, item) => {
-    return total + (item.service.duration_minutes * item.quantity);
+    return total + item.service.duration_minutes * item.quantity;
   }, 0);
 
   // Handle booking completion
@@ -43,7 +38,7 @@ export default function BookingPage() {
 
   useEffect(() => {
     if (totalItems === 0) {
-      router.push('/handlekurv');
+      router.push("/handlekurv");
     }
   }, [totalItems, router]);
 
@@ -85,7 +80,10 @@ export default function BookingPage() {
 
                 <div className="space-y-3">
                   {items.map((item) => (
-                    <div key={item.service.id} className="flex justify-between items-start py-2">
+                    <div
+                      key={item.service.id}
+                      className="flex justify-between items-start py-2"
+                    >
                       <div className="flex-1">
                         <h4 className="font-medium">{item.service.title}</h4>
                         <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
@@ -100,18 +98,20 @@ export default function BookingPage() {
                       </div>
                       <div className="text-right">
                         <p className="font-semibold">
-                          {(item.service.price * item.quantity).toFixed(2)} {item.service.currency}
+                          {(item.service.price * item.quantity).toFixed(2)}{" "}
+                          {item.service.currency}
                         </p>
                       </div>
                     </div>
                   ))}
                 </div>
-                
+
                 <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 text-sm">
                   <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
                     <Clock className="w-4 h-4" />
                     <span className="font-medium">
-                      Total varighet: {Math.floor(totalDurationMinutes / 60)}t {totalDurationMinutes % 60}min
+                      Total varighet: {Math.floor(totalDurationMinutes / 60)}t{" "}
+                      {totalDurationMinutes % 60}min
                     </span>
                   </div>
                 </div>
@@ -139,35 +139,27 @@ export default function BookingPage() {
               <CardContent className="space-y-4">
                 <div className="space-y-2">
                   {items.map((item) => (
-                    <div key={item.service.id} className="flex justify-between text-sm">
+                    <div
+                      key={item.service.id}
+                      className="flex justify-between text-sm"
+                    >
                       <span>
                         {item.service.title}
                         {item.quantity > 1 && ` x${item.quantity}`}
                       </span>
                       <span>
-                        {(item.service.price * item.quantity).toFixed(2)} {item.service.currency}
+                        {(item.service.price * item.quantity).toFixed(2)}{" "}
+                        {item.service.currency}
                       </span>
                     </div>
                   ))}
                 </div>
-                
+
                 <Separator />
-                
+
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
                   <span>{totalPrice.toFixed(2)} NOK</span>
-                </div>
-                
-                <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 text-sm">
-                  <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                    Booking prosess
-                  </p>
-                  <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
-                    <li>• Velg ønsket tidspunkt</li>
-                    <li>• Bestem lokasjon for tjenesten</li>
-                    <li>• Legg til melding og rabattkode</li>
-                    <li>• Fullfør betaling</li>
-                  </ul>
                 </div>
               </CardContent>
             </Card>

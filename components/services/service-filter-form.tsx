@@ -33,9 +33,10 @@ interface ServiceFilterFormProps {
     id: string;
     full_name: string | null;
   }>;
+  mode?: "redirect" | "update"; // redirect to /tjenester or update current URL
 }
 
-export function ServiceFilterForm({ categories = [], stylists = [] }: ServiceFilterFormProps) {
+export function ServiceFilterForm({ categories = [], stylists = [], mode = "update" }: ServiceFilterFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -65,7 +66,12 @@ export function ServiceFilterForm({ categories = [], stylists = [] }: ServiceFil
       if (sortBy !== "newest" && sortBy) params.set("sort", sortBy);
 
       const queryString = params.toString();
-      router.push(queryString ? `/tjenester?${queryString}` : "/tjenester");
+      
+      if (mode === "redirect") {
+        router.push(queryString ? `/tjenester?${queryString}` : "/tjenester");
+      } else {
+        router.push(queryString ? `?${queryString}` : "/tjenester");
+      }
     });
   };
 
@@ -76,7 +82,12 @@ export function ServiceFilterForm({ categories = [], stylists = [] }: ServiceFil
       setSelectedCategory("all");
       setSelectedStylists([]);
       setSortBy("newest");
-      router.push("/tjenester");
+      
+      if (mode === "redirect") {
+        router.push("/tjenester");
+      } else {
+        router.push("/tjenester");
+      }
     });
   };
 
@@ -255,15 +266,17 @@ export function ServiceFilterForm({ categories = [], stylists = [] }: ServiceFil
             <Search className="w-4 h-4" />
             {isPending ? "Søker..." : "Søk"}
           </Button>
-          <Button
-            variant="outline"
-            onClick={handleClearFilters}
-            disabled={isPending}
-            className="sm:w-auto"
-          >
-            <Filter className="w-4 h-4 mr-2" />
-            {hasActiveFilters ? "Nullstill filtre" : "Alle tjenester"}
-          </Button>
+          {mode === "update" && hasActiveFilters && (
+            <Button
+              variant="outline"
+              onClick={handleClearFilters}
+              disabled={isPending}
+              className="sm:w-auto"
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Nullstill filtre
+            </Button>
+          )}
         </div>
 
         {/* Active Filters Display */}

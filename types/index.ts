@@ -167,6 +167,7 @@ export interface ServiceFilters {
   search?: string;
   categoryId?: string;
   location?: string;
+  stylistIds?: string[];
   minPrice?: number;
   maxPrice?: number;
   sortBy?: "price_asc" | "price_desc" | "rating_desc" | "newest";
@@ -179,6 +180,7 @@ export interface ServiceSearchParams {
   search?: string;
   category?: string;
   location?: string;
+  stylists?: string;
   minPrice?: string;
   maxPrice?: string;
   sort?: string;
@@ -193,6 +195,7 @@ export function searchParamsToFilters(
     search: searchParams.search,
     categoryId: searchParams.category,
     location: searchParams.location,
+    stylistIds: searchParams.stylists ? searchParams.stylists.split(',') : undefined,
     minPrice: searchParams.minPrice
       ? parseInt(searchParams.minPrice)
       : undefined,
@@ -212,6 +215,7 @@ export function filtersToSearchParams(
     search: filters.search,
     category: filters.categoryId,
     location: filters.location,
+    stylists: filters.stylistIds?.length ? filters.stylistIds.join(',') : undefined,
     minPrice: filters.minPrice?.toString(),
     maxPrice: filters.maxPrice?.toString(),
     sort: filters.sortBy === "newest" ? undefined : filters.sortBy,

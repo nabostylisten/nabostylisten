@@ -4,8 +4,9 @@ import { Filter } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { getServiceCategoriesWithCounts } from "@/server/service.actions";
+import { getStylists } from "@/server/profile.actions";
 import { ServicesGridSkeleton } from "@/components/services/services-grid-skeleton";
-import { ServiceSearchForm } from "@/components/services/service-search-form";
+import { ServiceFilterForm } from "@/components/services/service-filter-form";
 import { InfiniteServicesGrid } from "@/components/services/infinite-services-grid";
 import type { ServiceSearchParams } from "@/types";
 import { searchParamsToFilters } from "@/types";
@@ -15,13 +16,15 @@ interface TjenesterPageProps {
 }
 
 async function SearchFormWrapper() {
-  const { data: categories, error } = await getServiceCategoriesWithCounts();
+  const [categoriesResult, stylistsResult] = await Promise.all([
+    getServiceCategoriesWithCounts(),
+    getStylists(),
+  ]);
 
-  if (error || !categories) {
-    return <ServiceSearchForm categories={[]} />;
-  }
+  const categories = categoriesResult.error ? [] : categoriesResult.data || [];
+  const stylists = stylistsResult.error ? [] : stylistsResult.data || [];
 
-  return <ServiceSearchForm categories={categories} />;
+  return <ServiceFilterForm categories={categories} stylists={stylists} />;
 }
 
 async function CategoriesSection() {

@@ -13,17 +13,29 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { X, Users } from "lucide-react";
 import type { ServiceFilters } from "@/types";
 
-interface ServiceSearchFormProps {
+interface ServiceFilterFormProps {
   categories?: Array<{
     id: string;
     name: string;
     service_count: number;
   }>;
+  stylists?: Array<{
+    id: string;
+    full_name: string | null;
+  }>;
 }
 
-export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
+export function ServiceFilterForm({ categories = [], stylists = [] }: ServiceFilterFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -32,6 +44,9 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
   const [location, setLocation] = useState(searchParams.get("location") || "");
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("category") || "all"
+  );
+  const [selectedStylists, setSelectedStylists] = useState<string[]>(
+    searchParams.get("stylists") ? searchParams.get("stylists")!.split(',') : []
   );
   const [sortBy, setSortBy] = useState<ServiceFilters["sortBy"]>(
     (searchParams.get("sort") as ServiceFilters["sortBy"]) || "newest"
@@ -45,6 +60,8 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
       if (location.trim()) params.set("location", location.trim());
       if (selectedCategory && selectedCategory !== "all")
         params.set("category", selectedCategory);
+      if (selectedStylists.length > 0)
+        params.set("stylists", selectedStylists.join(','));
       if (sortBy !== "newest" && sortBy) params.set("sort", sortBy);
 
       const queryString = params.toString();
@@ -57,6 +74,7 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
       setSearch("");
       setLocation("");
       setSelectedCategory("all");
+      setSelectedStylists([]);
       setSortBy("newest");
       router.push("/tjenester");
     });
@@ -66,6 +84,7 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
     search ||
     location ||
     (selectedCategory && selectedCategory !== "all") ||
+    selectedStylists.length > 0 ||
     sortBy !== "newest";
 
   return (
@@ -76,7 +95,7 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Søk etter tjeneste eller stylist..."
+              placeholder="Søk etter tjeneste eller kategori..."
               className="pl-10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -118,6 +137,69 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
             </Select>
           </div>
           <div className="flex-1">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <Users className="mr-2 h-4 w-4" />
+                  {selectedStylists.length === 0
+                    ? "Velg stylister..."
+                    : `${selectedStylists.length} stylist${selectedStylists.length > 1 ? 'er' : ''} valgt`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4">
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Filtrer etter stylister</h4>
+                  <div className="max-h-48 overflow-y-auto space-y-2">
+                    {stylists
+                      .filter((stylist) => stylist.full_name)
+                      .map((stylist) => {
+                        const isSelected = selectedStylists.includes(stylist.id);
+                        return (
+                          <div
+                            key={stylist.id}
+                            className="flex items-center space-x-2"
+                          >
+                            <Checkbox
+                              id={stylist.id}
+                              checked={isSelected}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedStylists([...selectedStylists, stylist.id]);
+                                } else {
+                                  setSelectedStylists(
+                                    selectedStylists.filter((id) => id !== stylist.id)
+                                  );
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={stylist.id}
+                              className="text-sm cursor-pointer"
+                            >
+                              {stylist.full_name}
+                            </label>
+                          </div>
+                        );
+                      })}
+                  </div>
+                  {selectedStylists.length > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedStylists([])}
+                      className="w-full mt-2"
+                    >
+                      Fjern alle
+                    </Button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div className="flex-1">
             <Select
               value={sortBy}
               onValueChange={(value) =>
@@ -135,6 +217,33 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
             </Select>
           </div>
         </div>
+
+        {/* Selected Stylists Display */}
+        {selectedStylists.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            <span className="text-sm text-muted-foreground">Valgte stylister:</span>
+            {selectedStylists.map((stylistId) => {
+              const stylist = stylists.find((s) => s.id === stylistId);
+              return (
+                <Badge
+                  key={stylistId}
+                  variant="secondary"
+                  className="flex items-center gap-1"
+                >
+                  {stylist?.full_name || 'Ukjent'}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() =>
+                      setSelectedStylists(
+                        selectedStylists.filter((id) => id !== stylistId)
+                      )
+                    }
+                  />
+                </Badge>
+              );
+            })}
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2">
@@ -173,6 +282,11 @@ export function ServiceSearchForm({ categories = [] }: ServiceSearchFormProps) {
                     - {categories.find((c) => c.id === selectedCategory)?.name}
                   </span>
                 )}
+              {selectedStylists.length > 0 && (
+                <span className="ml-1 font-medium">
+                  - {selectedStylists.length} stylist{selectedStylists.length > 1 ? 'er' : ''}
+                </span>
+              )}
               {sortBy !== "newest" && (
                 <span className="ml-1 font-medium">
                   -{" "}

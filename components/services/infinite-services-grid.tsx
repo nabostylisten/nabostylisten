@@ -235,9 +235,7 @@ export function InfiniteServicesGrid({
       {/* Background fetching indicator */}
       {isFetching && !isFetchingNextPage && (
         <div className="text-center py-4">
-          <span className="text-sm text-muted-foreground">
-            Oppdaterer i bakgrunnen...
-          </span>
+          <span className="text-sm text-muted-foreground">Oppdaterer...</span>
         </div>
       )}
     </div>

@@ -23,6 +23,7 @@ export async function fetchInfiniteServices(
     search,
     categoryId,
     location,
+    stylistIds,
     minPrice,
     maxPrice,
     sortBy = "newest",
@@ -70,7 +71,7 @@ export async function fetchInfiniteServices(
     )
     .eq("is_published", true);
 
-  // Apply search filter
+  // Apply search filter - focus only on service title and categories
   if (search) {
     query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
   }
@@ -94,6 +95,11 @@ export async function fetchInfiniteServices(
         totalCount: 0,
       };
     }
+  }
+
+  // Apply stylist filter
+  if (stylistIds && stylistIds.length > 0) {
+    query = query.in("stylist_id", stylistIds);
   }
 
   // Apply price filters

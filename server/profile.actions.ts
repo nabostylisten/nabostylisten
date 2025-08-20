@@ -131,3 +131,37 @@ export async function checkProfileExists(userId: string) {
         };
     }
 }
+
+export async function getStylists() {
+    try {
+        const supabase = await createClient();
+
+        const { data: stylists, error } = await supabase
+            .from("profiles")
+            .select(`
+                id,
+                full_name,
+                stylist_details (
+                    bio,
+                    can_travel,
+                    has_own_place
+                ),
+                addresses (
+                    city
+                )
+            `)
+            .eq("role", "stylist")
+            .order("full_name");
+
+        if (error) {
+            return { error: error.message, data: null };
+        }
+
+        return { error: null, data: stylists };
+    } catch (error) {
+        return {
+            error: error instanceof Error ? error.message : "An error occurred",
+            data: null,
+        };
+    }
+}

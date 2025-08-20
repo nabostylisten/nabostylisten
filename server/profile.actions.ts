@@ -165,3 +165,140 @@ export async function getStylists() {
         };
     }
 }
+
+export type StylistProfileData = Awaited<ReturnType<typeof getStylistProfileWithServices>>["data"];
+
+export async function getStylistProfileWithServices(profileId: string) {
+    try {
+        const supabase = await createClient();
+
+        // Get stylist profile with details
+        const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select(`
+                *,
+                stylist_details (
+                    *
+                ),
+                addresses (
+                    *
+                ),
+                media!media_owner_id_fkey (
+                    id,
+                    file_path,
+                    media_type
+                )
+            `)
+            .eq("id", profileId)
+            .eq("role", "stylist")
+            .single();
+
+        if (profileError || !profile) {
+            return { error: profileError?.message || "Stylist not found", data: null };
+        }
+
+        // Get stylist's services with categories and media
+        const { data: services, error: servicesError } = await supabase
+            .from("services")
+            .select(`
+                *,
+                service_service_categories (
+                    service_categories (
+                        id,
+                        name,
+                        description
+                    )
+                ),
+                media (
+                    id,
+                    file_path,
+                    media_type,
+                    is_preview_image
+                )
+            `)
+            .eq("stylist_id", profileId)
+            .eq("is_published", true)
+            .order("created_at", { ascending: false });
+
+        if (servicesError) {
+            return { error: servicesError.message, data: null };
+        }
+
+        // Get reviews for the stylist
+        const { data: reviews, error: reviewsError } = await supabase
+            .from("reviews")
+            .select(`
+                *,
+                profiles!reviews_customer_id_fkey (
+                    id,
+                    full_name
+                ),
+                bookings (
+                    booking_services (
+                        services (
+                            title
+                        )
+                    )
+                )
+            `)
+            .eq("stylist_id", profileId)
+            .order("created_at", { ascending: false })
+            .limit(10);
+
+        if (reviewsError) {
+            // Don't fail if reviews can't be fetched
+            console.error("Error fetching reviews:", reviewsError);
+        }
+
+        // Calculate average rating
+        const avgRating = reviews?.length 
+            ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length 
+            : null;
+
+        // Get public URLs for media
+        if (services) {
+            for (const service of services) {
+                if (service.media) {
+                    for (const media of service.media) {
+                        const { data: { publicUrl } } = supabase.storage
+                            .from("media")
+                            .getPublicUrl(media.file_path);
+                        media.publicUrl = publicUrl;
+                    }
+                }
+            }
+        }
+
+        // Get avatar URL
+        let avatarUrl = null;
+        const avatar = profile.media?.find((m: any) => m.media_type === "avatar");
+        if (avatar) {
+            const { data: { publicUrl } } = supabase.storage
+                .from("media")
+                .getPublicUrl(avatar.file_path);
+            avatarUrl = publicUrl;
+        }
+
+        return {
+            error: null,
+            data: {
+                profile: {
+                    ...profile,
+                    avatarUrl,
+                },
+                services: services || [],
+                reviews: reviews || [],
+                stats: {
+                    totalReviews: reviews?.length || 0,
+                    averageRating: avgRating,
+                    totalServices: services?.length || 0,
+                }
+            }
+        };
+    } catch (error) {
+        return {
+            error: error instanceof Error ? error.message : "An error occurred",
+            data: null,
+        };
+    }
+}

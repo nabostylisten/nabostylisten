@@ -151,7 +151,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 {service.title}
               </CardTitle>
               <Badge variant="secondary" className="shrink-0">
-                Fra {service.price},-
+                Fra {service.price} {service.currency}
               </Badge>
             </div>
             <CardDescription className="line-clamp-2">

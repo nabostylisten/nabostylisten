@@ -414,6 +414,8 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
     };
 }
 
+export type PublicServiceData = Awaited<ReturnType<typeof getPublicService>>["data"];
+
 export async function getPublicService(serviceId: string) {
     const supabase = await createClient();
 

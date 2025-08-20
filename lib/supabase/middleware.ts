@@ -20,8 +20,7 @@ const publicRoutes = [
 // Define route patterns for dynamic public routes
 const publicRoutePatterns = [
   /^\/auth(\/.*)?$/, // /auth and all sub-routes
-  /^\/tjenester\/[^/]+$/, // /tjenester/[tjenesteId]
-  /^\/stylister\/[^/]+$/, // /stylister/[profilId]
+  /^\/tjenester\/[^/]+$/, // /tjenester/[id]
   /^\/profiler\/[^/]+$/, // /profiler/[profileId]
 ];
 

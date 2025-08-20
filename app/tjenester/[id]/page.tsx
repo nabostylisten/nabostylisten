@@ -14,15 +14,14 @@ import {
   Star,
   Clock,
   CheckCircle,
-  Calendar,
   User,
-  Heart,
 } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getPublicService } from "@/server/service.actions";
 import { ServiceDetailSkeleton } from "@/components/services/service-detail-skeleton";
+import { ServiceDetailSidebar } from "@/components/services/service-detail-sidebar";
 import Image from "next/image";
 
 interface PageProps {
@@ -46,15 +45,6 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
     service.service_service_categories?.map((ssc) => ssc.service_categories) ||
     [];
   const stylistDetails = service.profiles?.stylist_details;
-
-  // Format price from øre to NOK
-  const formatPrice = (priceInOre: number) => {
-    return new Intl.NumberFormat("no-NO", {
-      style: "currency",
-      currency: "NOK",
-      minimumFractionDigits: 0,
-    }).format(priceInOre / 100);
-  };
 
   // Format duration
   const formatDuration = (minutes: number) => {
@@ -117,7 +107,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
               </div>
               <div className="flex flex-wrap items-center gap-4 mb-4">
                 <Badge variant="secondary" className="text-lg px-3 py-1">
-                  Fra {formatPrice(service.price)}
+                  Fra {service.price} {service.currency}
                 </Badge>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="w-4 h-4" />
@@ -186,8 +176,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                   </div>
                   <Button variant="outline" asChild>
                     <Link
-                      href={`/stylister/${service.profiles?.id}`}
-                      target="_blank"
+                      href={`/profiler/${service.profiles?.id}`}
                     >
                       <User className="w-4 h-4 mr-2" />
                       Se profil
@@ -282,41 +271,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
 
           {/* Booking Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24">
-              <CardHeader>
-                <CardTitle className="text-2xl">
-                  Fra {formatPrice(service.price)}
-                </CardTitle>
-                <CardDescription>Per behandling</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="text-sm text-muted-foreground mb-4">
-                  <p>Varighet: {formatDuration(service.duration_minutes)}</p>
-                  <p className="mt-1">
-                    Tilgjengelig:{" "}
-                    {service.at_customer_place && service.at_stylist_place
-                      ? "Hjemme eller hos stylist"
-                      : service.at_customer_place
-                        ? "Hjemme hos deg"
-                        : "Hos stylist"}
-                  </p>
-                </div>
-                <Button size="lg" className="w-full">
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Book nå
-                </Button>
-                <Button variant="outline" size="lg" className="w-full">
-                  <Heart className="w-4 h-4 mr-2" />
-                  Lagre
-                </Button>
-                <Separator />
-                <div className="text-center text-sm text-muted-foreground">
-                  <p>✓ Gratis avbestilling frem til 24 timer før</p>
-                  <p>✓ Sikker betaling</p>
-                  <p>✓ Kvalitetsgaranti</p>
-                </div>
-              </CardContent>
-            </Card>
+            <ServiceDetailSidebar service={service} />
           </div>
         </div>
       </div>

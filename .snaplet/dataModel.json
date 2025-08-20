@@ -6448,6 +6448,34 @@
           "maxLength": null
         },
         {
+          "id": "public.services.includes",
+          "name": "includes",
+          "columnName": "includes",
+          "type": "text[]",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.services.requirements",
+          "name": "requirements",
+          "columnName": "requirements",
+          "type": "text[]",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "profiles",
           "type": "profiles",
           "isRequired": true,

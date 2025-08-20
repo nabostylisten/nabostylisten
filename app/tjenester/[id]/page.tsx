@@ -23,7 +23,6 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { getPublicService } from "@/server/service.actions";
 import { ServiceDetailSkeleton } from "@/components/services/service-detail-skeleton";
-import { type ServiceWithRelations } from "@/components/services/service-card";
 import Image from "next/image";
 
 interface PageProps {
@@ -39,11 +38,14 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
     notFound();
   }
 
-  const typedService = service as ServiceWithRelations;
-  const previewImage = typedService.media?.find((m) => m.is_preview_image);
-  const primaryAddress = typedService.profiles?.addresses?.find((addr) => addr.is_primary);
-  const categories = typedService.service_service_categories?.map((ssc) => ssc.service_categories) || [];
-  const stylistDetails = typedService.profiles?.stylist_details;
+  const previewImage = service.media?.find((m) => m.is_preview_image);
+  const primaryAddress = service.profiles?.addresses?.find(
+    (addr) => addr.is_primary
+  );
+  const categories =
+    service.service_service_categories?.map((ssc) => ssc.service_categories) ||
+    [];
+  const stylistDetails = service.profiles?.stylist_details;
 
   // Format price from øre to NOK
   const formatPrice = (priceInOre: number) => {
@@ -62,37 +64,30 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     if (remainingMinutes === 0) {
-      return `${hours} ${hours === 1 ? 'time' : 'timer'}`;
+      return `${hours} ${hours === 1 ? "time" : "timer"}`;
     }
     return `${hours}t ${remainingMinutes}min`;
   };
 
-  const mockIncludes = [
-    "Konsultasjon og fargeråd",
-    "Klipp og styling",
-    "Profesjonelle produkter",
-    "Oppfølging etter behandling",
-  ];
-
-  const mockRequirements = [
-    "Tilgang til vask og strøm",
-    "God belysning",
-    "Plass til arbeid",
-  ];
+  // Get actual includes and requirements from service data
+  const serviceIncludes = service.includes || [];
+  const serviceRequirements = service.requirements || [];
 
   const mockReviews = [
     {
       id: "1",
       author: "Sara K.",
       rating: 5,
-      comment: "Fantastisk resultat! Super profesjonell og gjorde en utrolig jobb.",
+      comment:
+        "Fantastisk resultat! Super profesjonell og gjorde en utrolig jobb.",
       date: "2 dager siden",
     },
     {
       id: "2",
       author: "Maria H.",
       rating: 5,
-      comment: "Så fornøyd med resultatet! Kommer definitivt til å booke igjen.",
+      comment:
+        "Så fornøyd med resultatet! Kommer definitivt til å booke igjen.",
       date: "1 uke siden",
     },
   ];
@@ -109,7 +104,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                 {previewImage?.publicUrl ? (
                   <Image
                     src={previewImage.publicUrl}
-                    alt={typedService.title}
+                    alt={service.title}
                     fill
                     className="object-cover"
                     sizes="(max-width: 1024px) 100vw, 66vw"
@@ -122,7 +117,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
               </div>
               <div className="flex flex-wrap items-center gap-4 mb-4">
                 <Badge variant="secondary" className="text-lg px-3 py-1">
-                  Fra {formatPrice(typedService.price)}
+                  Fra {formatPrice(service.price)}
                 </Badge>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <MapPin className="w-4 h-4" />
@@ -130,10 +125,10 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock className="w-4 h-4" />
-                  {formatDuration(typedService.duration_minutes)}
+                  {formatDuration(service.duration_minutes)}
                 </div>
               </div>
-              
+
               {categories.length > 0 && (
                 <div className="flex flex-wrap gap-2 mb-4">
                   {categories.map((category) => (
@@ -143,12 +138,12 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                   ))}
                 </div>
               )}
-              
+
               <h1 className="text-3xl lg:text-4xl font-bold mb-4">
-                {typedService.title}
+                {service.title}
               </h1>
               <p className="text-lg text-muted-foreground leading-relaxed">
-                {typedService.description || "Ingen beskrivelse tilgjengelig"}
+                {service.description || "Ingen beskrivelse tilgjengelig"}
               </p>
             </div>
 
@@ -161,7 +156,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                 <div className="flex items-center gap-4">
                   <Avatar className="w-16 h-16">
                     <AvatarFallback>
-                      {typedService.profiles?.full_name
+                      {service.profiles?.full_name
                         ?.split(" ")
                         .map((n) => n[0])
                         .join("") || "?"}
@@ -169,7 +164,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                   </Avatar>
                   <div className="flex-1">
                     <h3 className="font-semibold text-lg">
-                      {typedService.profiles?.full_name || "Ukjent stylist"}
+                      {service.profiles?.full_name || "Ukjent stylist"}
                     </h3>
                     {stylistDetails?.bio && (
                       <p className="text-sm text-muted-foreground mt-1">
@@ -190,7 +185,10 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                     </div>
                   </div>
                   <Button variant="outline" asChild>
-                    <Link href={`/stylister/${typedService.profiles?.id}`}>
+                    <Link
+                      href={`/stylister/${service.profiles?.id}`}
+                      target="_blank"
+                    >
                       <User className="w-4 h-4 mr-2" />
                       Se profil
                     </Link>
@@ -200,22 +198,24 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
             </Card>
 
             {/* What's Included */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Hva er inkludert</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {mockIncludes.map((item, index) => (
-                  <div key={index} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
+            {serviceIncludes.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Hva er inkludert</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {serviceIncludes.map((item: string, index: number) => (
+                    <div key={index} className="flex items-center gap-3">
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>{item}</span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Requirements */}
-            {(typedService.at_customer_place) && (
+            {service.at_customer_place && serviceRequirements.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Krav hjemme hos deg</CardTitle>
@@ -224,12 +224,14 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  {mockRequirements.map((requirement, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <CheckCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                      <span>{requirement}</span>
-                    </div>
-                  ))}
+                  {serviceRequirements.map(
+                    (requirement: string, index: number) => (
+                      <div key={index} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                        <span>{requirement}</span>
+                      </div>
+                    )
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -282,20 +284,21 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
           <div className="lg:col-span-1">
             <Card className="sticky top-24">
               <CardHeader>
-                <CardTitle className="text-2xl">Fra {formatPrice(typedService.price)}</CardTitle>
+                <CardTitle className="text-2xl">
+                  Fra {formatPrice(service.price)}
+                </CardTitle>
                 <CardDescription>Per behandling</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-sm text-muted-foreground mb-4">
-                  <p>Varighet: {formatDuration(typedService.duration_minutes)}</p>
+                  <p>Varighet: {formatDuration(service.duration_minutes)}</p>
                   <p className="mt-1">
-                    Tilgjengelig: {" "}
-                    {typedService.at_customer_place && typedService.at_stylist_place 
+                    Tilgjengelig:{" "}
+                    {service.at_customer_place && service.at_stylist_place
                       ? "Hjemme eller hos stylist"
-                      : typedService.at_customer_place 
-                        ? "Hjemme hos deg" 
-                        : "Hos stylist"
-                    }
+                      : service.at_customer_place
+                        ? "Hjemme hos deg"
+                        : "Hos stylist"}
                   </p>
                 </div>
                 <Button size="lg" className="w-full">

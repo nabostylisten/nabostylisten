@@ -551,6 +551,100 @@ async function main() {
     },
   ];
 
+  // Mock includes and requirements data organized by category
+  const categoryIncludes: Record<ServiceCategoryKey, string[]> = {
+    hair: [
+      "Konsultasjon og fargeråd",
+      "Klipp og styling",
+      "Profesjonelle produkter",
+      "Oppfølging etter behandling",
+      "Vask og balsam",
+      "Føn og styling",
+      "Hjemmepleieprodukter"
+    ],
+    nails: [
+      "Base coat og top coat",
+      "Neglelakk av høy kvalitet",
+      "Neglefil og buffer",
+      "Cuticle behandling",
+      "Håndkrem og negleolje",
+      "UV-lampe behandling",
+      "Neglebånd massage"
+    ],
+    makeup: [
+      "Makeup konsultasjon",
+      "Profesjonelle produkter",
+      "Sminke fjerner",
+      "Fargeanalyse",
+      "Styling tips",
+      "Touchup produkter",
+      "Foto-ready finish"
+    ],
+    browsLashes: [
+      "Konsultasjon og fargetest",
+      "Øyebryn forming og farge",
+      "Aftercare produkter",
+      "Oppfølging instruksjoner",
+      "Allergi test",
+      "Profesjonelle produkter",
+      "Touch-up etter 2 uker"
+    ],
+    wedding: [
+      "Prøvetime inkludert",
+      "Brudemakeup og hår",
+      "Touchup under dagen",
+      "Profesjonelle produkter",
+      "Styling konsultasjon",
+      "Foto dokumentasjon",
+      "Brudeparti styling tilbud"
+    ]
+  };
+
+  const categoryRequirements: Record<ServiceCategoryKey, string[]> = {
+    hair: [
+      "Tilgang til vask og strøm",
+      "God belysning",
+      "Plass til arbeid (2x2 meter)",
+      "Stol med ryggstø",
+      "Håndkle tilgjengelig"
+    ],
+    nails: [
+      "Godt ventilert rom",
+      "Bord eller fast overflate",
+      "God belysning",
+      "Tilgang til strøm",
+      "Stol med armstø"
+    ],
+    makeup: [
+      "God naturlig belysning",
+      "Speil i full størrelse",
+      "Stol med god ryggstø",
+      "Ren arbeidsplass",
+      "Tilgang til vann"
+    ],
+    browsLashes: [
+      "Godt belyst rom",
+      "Komfortabel liggestol/seng",
+      "Tilgang til strøm",
+      "Ren og støvfri miljø",
+      "Rolig omgivelser"
+    ],
+    wedding: [
+      "Rolig og privat område",
+      "God belysning (fortrinnsvis naturlig)",
+      "Speil i full størrelse",
+      "Strømtilgang",
+      "Plass til utstyr og produkter",
+      "Mulighet for å henge kjoler"
+    ]
+  };
+
+  function getRandomItemsFromArray<T>(array: T[], min: number = 3, max: number = 5): T[] {
+    const count = Math.floor(Math.random() * (max - min + 1)) + min;
+    const shuffled = array.sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, count);
+  }
+
   // Generate 50+ randomized services
   const servicesToCreate = [];
   const serviceCategoryLinks: { service_id: string; category_id: string }[] =
@@ -570,6 +664,11 @@ async function main() {
       ? ` ${Math.floor(i / serviceTemplates.length) + 1}`
       : "";
 
+    // Get random includes and requirements for this category
+    const includes = getRandomItemsFromArray(categoryIncludes[template.category], 3, 6);
+    const requirements = getRandomItemsFromArray(categoryRequirements[template.category], 2, 4);
+    const offerHomeService = Math.random() > 0.3; // 70% offer home service
+
     const service: DatabaseTables["services"]["Insert"] = {
       stylist_id: stylist.id,
       title: template.title + variation,
@@ -578,8 +677,10 @@ async function main() {
       currency: "NOK",
       duration_minutes: duration,
       is_published: Math.random() > 0.1, // 90% published
-      at_customer_place: Math.random() > 0.3, // 70% offer home service
+      at_customer_place: offerHomeService,
       at_stylist_place: Math.random() > 0.2, // 80% offer at salon
+      includes: includes,
+      requirements: offerHomeService ? requirements : undefined, // Only add requirements if home service is offered
     };
 
     servicesToCreate.push(service);

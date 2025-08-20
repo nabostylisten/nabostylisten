@@ -737,8 +737,10 @@ export type Database = {
           description: string | null
           duration_minutes: number
           id: string
+          includes: string[] | null
           is_published: boolean
           price: number
+          requirements: string[] | null
           stylist_id: string
           title: string
           updated_at: string
@@ -751,8 +753,10 @@ export type Database = {
           description?: string | null
           duration_minutes: number
           id?: string
+          includes?: string[] | null
           is_published?: boolean
           price: number
+          requirements?: string[] | null
           stylist_id: string
           title: string
           updated_at?: string
@@ -765,8 +769,10 @@ export type Database = {
           description?: string | null
           duration_minutes?: number
           id?: string
+          includes?: string[] | null
           is_published?: boolean
           price?: number
+          requirements?: string[] | null
           stylist_id?: string
           title?: string
           updated_at?: string

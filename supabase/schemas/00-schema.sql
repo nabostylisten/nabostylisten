@@ -159,7 +159,11 @@ CREATE TABLE IF NOT EXISTS public.services (
 
     -- Location options
     at_customer_place boolean DEFAULT false NOT NULL,
-    at_stylist_place boolean DEFAULT true NOT NULL
+    at_stylist_place boolean DEFAULT true NOT NULL,
+
+    -- Service details
+    includes text[], -- What's included in the service (nullable)
+    requirements text[] -- Requirements for home services (nullable)
 );
 
 -- Junction table to link services to multiple categories

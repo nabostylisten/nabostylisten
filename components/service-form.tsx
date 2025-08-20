@@ -30,6 +30,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { Plus, X } from "lucide-react";
+import {
   Dropzone,
   DropzoneContent,
   DropzoneEmptyState,
@@ -53,6 +65,8 @@ type Service = Database["public"]["Tables"]["services"]["Row"] & {
       description?: string | null;
     };
   }>;
+  includes?: string[] | null;
+  requirements?: string[] | null;
 };
 
 // Create a form schema based on the database schema but with some modifications
@@ -81,6 +95,8 @@ const serviceFormSchema = servicesInsertSchema
       .max(480, "Varighet kan ikke være mer enn 8 timer"),
     at_customer_place: z.boolean().optional(),
     at_stylist_place: z.boolean().optional(),
+    includes: z.array(z.string().min(1)).optional(),
+    requirements: z.array(z.string().min(1)).optional(),
   })
   .refine((data) => data.at_customer_place || data.at_stylist_place, {
     message: "Du må velge minst ett sted hvor tjenesten kan utføres",
@@ -106,6 +122,16 @@ export function ServiceForm({
 }: ServiceFormProps) {
   const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
   const [fileProcessing, setFileProcessing] = React.useState(false);
+  
+  // State for includes and requirements management
+  const [newInclude, setNewInclude] = React.useState("");
+  const [newRequirement, setNewRequirement] = React.useState("");
+  const [deleteIncludeIndex, setDeleteIncludeIndex] = React.useState<number | null>(null);
+  const [deleteRequirementIndex, setDeleteRequirementIndex] = React.useState<number | null>(null);
+  const [editIncludeIndex, setEditIncludeIndex] = React.useState<number | null>(null);
+  const [editRequirementIndex, setEditRequirementIndex] = React.useState<number | null>(null);
+  const [editIncludeValue, setEditIncludeValue] = React.useState("");
+  const [editRequirementValue, setEditRequirementValue] = React.useState("");
 
   const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
@@ -120,6 +146,8 @@ export function ServiceForm({
         ) || [],
       at_customer_place: service?.at_customer_place || false,
       at_stylist_place: service?.at_stylist_place || true,
+      includes: service?.includes || [],
+      requirements: service?.requirements || [],
     },
   });
 
@@ -319,6 +347,8 @@ export function ServiceForm({
           ) || [],
         at_customer_place: service.at_customer_place,
         at_stylist_place: service.at_stylist_place,
+        includes: service.includes || [],
+        requirements: service.requirements || [],
       });
     } else if (mode === "create") {
       form.reset({
@@ -329,10 +359,90 @@ export function ServiceForm({
         category_ids: [],
         at_customer_place: false,
         at_stylist_place: true,
+        includes: [],
+        requirements: [],
       });
     }
     setUploadedFiles([]);
   }, [service, mode, form]);
+
+  // Helper functions for managing includes and requirements
+  const addInclude = () => {
+    if (newInclude.trim()) {
+      const currentIncludes = form.getValues().includes || [];
+      form.setValue("includes", [...currentIncludes, newInclude.trim()]);
+      setNewInclude("");
+    }
+  };
+
+  const addRequirement = () => {
+    if (newRequirement.trim()) {
+      const currentRequirements = form.getValues().requirements || [];
+      form.setValue("requirements", [...currentRequirements, newRequirement.trim()]);
+      setNewRequirement("");
+    }
+  };
+
+  const deleteInclude = (index: number) => {
+    const currentIncludes = form.getValues().includes || [];
+    if (index >= 0 && index < currentIncludes.length) {
+      const updatedIncludes = currentIncludes.filter((_, i) => i !== index);
+      form.setValue("includes", updatedIncludes);
+    }
+    setDeleteIncludeIndex(null);
+  };
+
+  const deleteRequirement = (index: number) => {
+    const currentRequirements = form.getValues().requirements || [];
+    if (index >= 0 && index < currentRequirements.length) {
+      const updatedRequirements = currentRequirements.filter((_, i) => i !== index);
+      form.setValue("requirements", updatedRequirements);
+    }
+    setDeleteRequirementIndex(null);
+  };
+
+  const startEditInclude = (index: number, value: string) => {
+    setEditIncludeIndex(index);
+    setEditIncludeValue(value);
+  };
+
+  const startEditRequirement = (index: number, value: string) => {
+    setEditRequirementIndex(index);
+    setEditRequirementValue(value);
+  };
+
+  const saveEditInclude = () => {
+    if (editIncludeIndex !== null && editIncludeValue.trim()) {
+      const currentIncludes = form.getValues().includes || [];
+      if (editIncludeIndex < currentIncludes.length) {
+        const updatedIncludes = [...currentIncludes];
+        updatedIncludes[editIncludeIndex] = editIncludeValue.trim();
+        form.setValue("includes", updatedIncludes);
+      }
+      setEditIncludeIndex(null);
+      setEditIncludeValue("");
+    }
+  };
+
+  const saveEditRequirement = () => {
+    if (editRequirementIndex !== null && editRequirementValue.trim()) {
+      const currentRequirements = form.getValues().requirements || [];
+      if (editRequirementIndex < currentRequirements.length) {
+        const updatedRequirements = [...currentRequirements];
+        updatedRequirements[editRequirementIndex] = editRequirementValue.trim();
+        form.setValue("requirements", updatedRequirements);
+      }
+      setEditRequirementIndex(null);
+      setEditRequirementValue("");
+    }
+  };
+
+  const cancelEdit = () => {
+    setEditIncludeIndex(null);
+    setEditRequirementIndex(null);
+    setEditIncludeValue("");
+    setEditRequirementValue("");
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -459,6 +569,186 @@ export function ServiceForm({
                 </FormItem>
               )}
             />
+
+            {/* Includes Section */}
+            <div className="space-y-4">
+              <FormLabel>Hva er inkludert i tjenesten</FormLabel>
+              <FormDescription>
+                Legg til hva kunder får inkludert når de bestiller denne tjenesten
+              </FormDescription>
+              
+              {/* Add new include */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="F.eks. Konsultasjon og fargeråd"
+                  value={newInclude}
+                  onChange={(e) => setNewInclude(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addInclude();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addInclude}
+                  disabled={!newInclude.trim()}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Display current includes */}
+              {(form.watch("includes")?.length ?? 0) > 0 && (
+                <div className="space-y-2">
+                  {form.watch("includes")?.map((include: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      {editIncludeIndex === index ? (
+                        <>
+                          <Input
+                            value={editIncludeValue}
+                            onChange={(e) => setEditIncludeValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                saveEditInclude();
+                              } else if (e.key === "Escape") {
+                                cancelEdit();
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={saveEditInclude}
+                            disabled={!editIncludeValue.trim()}
+                          >
+                            Lagre
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={cancelEdit}
+                          >
+                            Avbryt
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Badge variant="secondary" className="flex-1 justify-start cursor-pointer"
+                            onClick={() => startEditInclude(index, include)}
+                          >
+                            {include}
+                          </Badge>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setDeleteIncludeIndex(index)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Requirements Section */}
+            <div className="space-y-4">
+              <FormLabel>Krav for hjemmetjeneste</FormLabel>
+              <FormDescription>
+                Legg til krav som må være oppfylt når tjenesten utføres hjemme hos kunden
+              </FormDescription>
+              
+              {/* Add new requirement */}
+              <div className="flex gap-2">
+                <Input
+                  placeholder="F.eks. Tilgang til vask og strøm"
+                  value={newRequirement}
+                  onChange={(e) => setNewRequirement(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addRequirement();
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={addRequirement}
+                  disabled={!newRequirement.trim()}
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Display current requirements */}
+              {(form.watch("requirements")?.length ?? 0) > 0 && (
+                <div className="space-y-2">
+                  {form.watch("requirements")?.map((requirement: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
+                      {editRequirementIndex === index ? (
+                        <>
+                          <Input
+                            value={editRequirementValue}
+                            onChange={(e) => setEditRequirementValue(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                saveEditRequirement();
+                              } else if (e.key === "Escape") {
+                                cancelEdit();
+                              }
+                            }}
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={saveEditRequirement}
+                            disabled={!editRequirementValue.trim()}
+                          >
+                            Lagre
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={cancelEdit}
+                          >
+                            Avbryt
+                          </Button>
+                        </>
+                      ) : (
+                        <>
+                          <Badge variant="secondary" className="flex-1 justify-start cursor-pointer"
+                            onClick={() => startEditRequirement(index, requirement)}
+                          >
+                            {requirement}
+                          </Badge>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => setDeleteRequirementIndex(index)}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
             <div className="space-y-4">
               <FormLabel>Bilder av tjenesten</FormLabel>
@@ -613,6 +903,60 @@ export function ServiceForm({
             </DialogFooter>
           </form>
         </Form>
+
+        {/* Delete Include Confirmation Dialog */}
+        <AlertDialog open={deleteIncludeIndex !== null} onOpenChange={() => setDeleteIncludeIndex(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Slett inkludert element</AlertDialogTitle>
+              <AlertDialogDescription>
+                Er du sikker på at du vil slette dette elementet? Denne handlingen kan ikke angres.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteIncludeIndex(null)}>
+                Avbryt
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => {
+                  if (deleteIncludeIndex !== null) {
+                    deleteInclude(deleteIncludeIndex);
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Slett
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Requirement Confirmation Dialog */}
+        <AlertDialog open={deleteRequirementIndex !== null} onOpenChange={() => setDeleteRequirementIndex(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Slett krav</AlertDialogTitle>
+              <AlertDialogDescription>
+                Er du sikker på at du vil slette dette kravet? Denne handlingen kan ikke angres.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setDeleteRequirementIndex(null)}>
+                Avbryt
+              </AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => {
+                  if (deleteRequirementIndex !== null) {
+                    deleteRequirement(deleteRequirementIndex);
+                  }
+                }}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Slett
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </DialogContent>
     </Dialog>
   );

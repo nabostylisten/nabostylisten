@@ -51,8 +51,9 @@ export async function updateAvailabilityRules(
 export async function getUnavailability(stylistId: string) {
   const supabase = await createClient();
 
-  // Get unavailability for the next 3 months
+  // Get unavailability from 1 month ago to 3 months ahead
   const startDate = new Date();
+  startDate.setMonth(startDate.getMonth() - 1);
   const endDate = new Date();
   endDate.setMonth(endDate.getMonth() + 3);
 
@@ -104,6 +105,43 @@ export async function getRecurringUnavailability(stylistId: string) {
     .order("series_start_date");
 }
 
+export async function getRecurringUnavailabilityWithExceptions(stylistId: string) {
+  const supabase = await createClient();
+
+  // Get all recurring unavailability for the stylist
+  const { data: recurring, error: recurringError } = await supabase
+    .from("stylist_recurring_unavailability")
+    .select("*")
+    .eq("stylist_id", stylistId)
+    .order("series_start_date");
+
+  if (recurringError || !recurring) {
+    return { data: null, error: recurringError };
+  }
+
+  // Get all exceptions for these series
+  const seriesIds = recurring.map(r => r.id);
+  const { data: exceptions, error: exceptionsError } = seriesIds.length > 0 
+    ? await supabase
+        .from("recurring_unavailability_exceptions")
+        .select("*")
+        .in("series_id", seriesIds)
+        .order("original_start_time")
+    : { data: [], error: null };
+
+  if (exceptionsError) {
+    return { data: null, error: exceptionsError };
+  }
+
+  // Combine the data
+  const recurringWithExceptions = recurring.map(series => ({
+    ...series,
+    exceptions: exceptions?.filter(ex => ex.series_id === series.id) || []
+  }));
+
+  return { data: recurringWithExceptions, error: null };
+}
+
 export async function addRecurringUnavailability(
   stylistId: string,
   data: {
@@ -141,6 +179,21 @@ export async function removeRecurringUnavailability(id: string) {
     .eq("id", id);
 }
 
+export async function getRecurringExceptions(seriesId?: string) {
+  const supabase = await createClient();
+  
+  let query = supabase
+    .from("recurring_unavailability_exceptions")
+    .select("*")
+    .order("original_start_time");
+    
+  if (seriesId) {
+    query = query.eq("series_id", seriesId);
+  }
+  
+  return await query;
+}
+
 export async function addRecurringException(
   seriesId: string,
   originalStartTime: Date,
@@ -157,6 +210,33 @@ export async function addRecurringException(
       new_start_time: newStartTime?.toISOString() || null,
       new_end_time: newEndTime?.toISOString() || null,
     })
+    .select()
+    .single();
+}
+
+export async function removeRecurringException(id: string) {
+  const supabase = await createClient();
+
+  return await supabase
+    .from("recurring_unavailability_exceptions")
+    .delete()
+    .eq("id", id);
+}
+
+export async function updateRecurringException(
+  id: string,
+  newStartTime?: Date,
+  newEndTime?: Date,
+) {
+  const supabase = await createClient();
+
+  return await supabase
+    .from("recurring_unavailability_exceptions")
+    .update({
+      new_start_time: newStartTime?.toISOString() || null,
+      new_end_time: newEndTime?.toISOString() || null,
+    })
+    .eq("id", id)
     .select()
     .single();
 }

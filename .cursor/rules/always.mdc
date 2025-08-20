@@ -314,3 +314,31 @@ nabostylisten/
 - Chat messages between customers and stylists
 - Booking status updates
 - Availability changes
+
+## Documentation Standards
+
+### Feature Documentation Requirements
+
+All new features must include comprehensive documentation:
+
+**Business Documentation** (`docs/business/[feature-name].md`):
+
+- Overview and core purpose
+- User workflows and access permissions
+- Functionality descriptions with use cases
+- Integration points and business rules
+- Success metrics and support guidelines
+
+**Technical Documentation** (inline code comments + README updates):
+
+- Component architecture and patterns
+- Database schema changes
+- API endpoints and server actions
+- Integration requirements
+
+### Documentation Process
+
+1. **Planning Phase**: Create business documentation outline
+2. **Development Phase**: Maintain technical documentation inline
+3. **Review Phase**: Ensure documentation completeness before feature completion
+4. **Maintenance**: Update documentation with feature changes

@@ -192,7 +192,11 @@ nabostylisten/
 │   ├── ui/               # shadcn/ui components
 │   │   └── kibo-ui/      # Kibo UI components
 │   ├── schedule/         # Mina scheduler components
+│   ├── skeletons/        # Loading state components
 │   └── [feature]/        # Feature-specific components
+├── docs/                 # Project documentation
+│   ├── business/         # Business feature documentation
+│   └── technical/        # Technical implementation docs
 ├── hooks/                # Custom React hooks
 ├── lib/                  # External service configurations
 │   └── supabase/         # Supabase client configuration
@@ -284,6 +288,45 @@ nabostylisten/
 - Create migrations: `bun supabase:db:diff <migration_name>`
 - Apply migrations: `bun supabase:migrate:up`
 - Push to production: `bun supabase:db:push`
+
+### Documentation Standards
+
+All new features and significant functionality changes must be documented in the `docs/` directory:
+
+#### Business Documentation (`docs/business/`)
+
+- **Purpose**: Document features from a business/user perspective
+- **Audience**: Product managers, stakeholders, customer support
+- **Content**:
+  - Feature overview and business purpose
+  - User workflows and use cases
+  - Business rules and validation logic
+  - Integration points with other features
+  - Success metrics and KPIs
+  - Future enhancement opportunities
+- **Format**: Comprehensive markdown files with clear structure
+- **Examples**: User journeys, feature specifications, business logic explanations
+
+#### Technical Documentation (`docs/technical/`)
+
+- **Purpose**: Document implementation details and architecture decisions
+- **Audience**: Developers, DevOps, technical stakeholders
+- **Content**:
+  - API documentation and schemas
+  - Database design and relationships
+  - Architecture patterns and decisions
+  - Performance considerations
+  - Security implementations
+  - Deployment procedures
+- **Format**: Technical specifications, code examples, diagrams
+- **Examples**: API references, database schemas, system architecture
+
+#### Documentation Requirements
+
+- **When to Document**: Create documentation for all new features, significant refactors, or complex business logic
+- **Update Policy**: Keep documentation current with code changes
+- **Review Process**: Documentation should be reviewed alongside code changes
+- **Naming Convention**: Use kebab-case for file names, descriptive titles
 
 ### Code Quality
 

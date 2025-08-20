@@ -291,42 +291,6 @@ export function ServiceFilterForm({
             </Button>
           )}
         </div>
-
-        {/* Active Filters Display */}
-        {hasActiveFilters && (
-          <div className="pt-2 border-t">
-            <div className="text-sm text-muted-foreground">
-              Aktive filtre:
-              {search && <span className="ml-1 font-medium">"{search}"</span>}
-              {location && (
-                <span className="ml-1 font-medium">i {location}</span>
-              )}
-              {selectedCategory &&
-                selectedCategory !== "all" &&
-                categories.find((c) => c.id === selectedCategory) && (
-                  <span className="ml-1 font-medium">
-                    - {categories.find((c) => c.id === selectedCategory)?.name}
-                  </span>
-                )}
-              {selectedStylists.length > 0 && (
-                <span className="ml-1 font-medium">
-                  - {selectedStylists.length} stylist
-                  {selectedStylists.length > 1 ? "er" : ""}
-                </span>
-              )}
-              {sortBy !== "newest" && (
-                <span className="ml-1 font-medium">
-                  -{" "}
-                  {sortBy === "price_asc"
-                    ? "Lavest pris"
-                    : sortBy === "price_desc"
-                      ? "Høyest pris"
-                      : sortBy}
-                </span>
-              )}
-            </div>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

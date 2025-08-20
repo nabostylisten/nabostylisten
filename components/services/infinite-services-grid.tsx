@@ -1,257 +1,139 @@
 "use client";
 
-import { useEffect, useRef, useMemo, useCallback } from "react";
-import { useInfiniteQuery } from "@/hooks/use-infinite-query";
-import type { SupabaseQueryHandler } from "@/hooks/use-infinite-query";
+import { useEffect, useRef, useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ServiceCard, type ServiceWithRelations } from "./service-card";
 import { ServicesGridSkeleton } from "./services-grid-skeleton";
-import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
-import { createClient } from "@/lib/supabase/client";
-import { getPublicUrl } from "@/lib/supabase/storage";
+import { Card, CardContent } from "@/components/ui/card";
+import { fetchInfiniteServices } from "@/server/infinite-services.actions";
 import type { ServiceFilters } from "@/types";
 
 interface InfiniteServicesGridProps {
   filters?: ServiceFilters;
 }
 
-export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps) {
-  const supabase = createClient();
-  const loadMoreRef = useRef<HTMLDivElement>(null);
-  const lastFetchTimeRef = useRef<number>(0);
-  const isUnmountedRef = useRef(false);
-
-  // Create the query handler that applies filters, joins, and sorting
-  const createQueryHandler: SupabaseQueryHandler<"services"> = (query) => {
-    // Apply filters first, then select
-    let modifiedQuery = query.eq("is_published", true);
-
-    // Apply search filter
-    if (filters.search) {
-      modifiedQuery = modifiedQuery.or(
-        `title.ilike.%${filters.search}%,description.ilike.%${filters.search}%`
-      );
-    }
-
-    // Apply price filters
-    if (filters.minPrice !== undefined) {
-      modifiedQuery = modifiedQuery.gte("price", filters.minPrice * 100);
-    }
-    if (filters.maxPrice !== undefined) {
-      modifiedQuery = modifiedQuery.lte("price", filters.maxPrice * 100);
-    }
-
-    // Apply sorting
-    switch (filters.sortBy) {
-      case "price_asc":
-        modifiedQuery = modifiedQuery.order("price", { ascending: true });
-        break;
-      case "price_desc":
-        modifiedQuery = modifiedQuery.order("price", { ascending: false });
-        break;
-      case "newest":
-      default:
-        modifiedQuery = modifiedQuery.order("created_at", { ascending: false });
-        break;
-    }
-
-    return modifiedQuery;
-  };
-
-  const {
-    data: services,
-    isLoading,
-    isFetching,
-    hasMore,
-    fetchNextPage,
-    error,
-    isSuccess,
-    count,
-  } = useInfiniteQuery<ServiceWithRelations, "services">({
-    tableName: "services",
-    pageSize: 12,
-    columns: `
-      *,
-      service_service_categories (
-        service_categories (
-          id,
-          name,
-          description,
-          parent_category_id
-        )
-      ),
-      media (
-        id,
-        file_path,
-        media_type,
-        is_preview_image,
-        created_at
-      ),
-      profiles!inner (
-        id,
-        full_name,
-        stylist_details (
-          bio,
-          can_travel,
-          has_own_place,
-          travel_distance_km
-        ),
-        addresses (
-          id,
-          city,
-          postal_code,
-          street_address,
-          is_primary
-        )
-      )
-    `,
-    trailingQuery: createQueryHandler,
-  });
-
-  // Apply category filter on client side since it requires a separate query
-  const filteredServices = services.filter((service) => {
-    if (!filters.categoryId) return true;
-    
-    return service.service_service_categories?.some(
-      (ssc) => ssc.service_categories.id === filters.categoryId
-    );
-  });
-
-  // Transform services to add public URLs
-  const servicesWithUrls = filteredServices.map((service) => ({
-    ...service,
-    media: service.media?.map((media) => ({
-      ...media,
-      publicUrl: media.file_path.startsWith('http') 
-        ? media.file_path 
-        : getPublicUrl(supabase, "service-media", media.file_path),
-    })),
-  }));
-
-  // More robust hasMore calculation
-  const actuallyHasMore = useMemo(() => {
-    if (!isSuccess || !count) return hasMore;
-    
-    // If we have the same number or more services than the total count, we're done
-    if (servicesWithUrls.length >= count) return false;
-    
-    // If the hook says no more, trust it
-    if (!hasMore) return false;
-    
-    return true;
-  }, [servicesWithUrls.length, count, hasMore, isSuccess]);
-
-  // Create a stable fetch function with debouncing
-  const fetchNextPageStable = useCallback(async () => {
-    if (isUnmountedRef.current) return;
-    
-    const now = Date.now();
-    const timeSinceLastFetch = now - lastFetchTimeRef.current;
-    
-    // Minimum 500ms between fetch attempts
-    if (timeSinceLastFetch < 500) {
-      console.log('Fetch debounced - too soon since last fetch');
-      return;
-    }
-    
-    if (!actuallyHasMore || isFetching) {
-      console.log('Fetch skipped - no more data or already fetching');
-      return;
-    }
-    
-    console.log('Fetching next page...');
-    lastFetchTimeRef.current = now;
-    
-    try {
-      await fetchNextPage();
-    } catch (error) {
-      console.error('Error fetching next page:', error);
-    }
-  }, [actuallyHasMore, isFetching, fetchNextPage]);
+// Helper function to calculate grid columns based on window width
+// Matches Tailwind CSS breakpoints: sm (640px), md (768px), lg (1024px)
+function getColumnsCount(): number {
+  if (typeof window === 'undefined') return 3; // SSR fallback
   
-  // Debug logging
-  console.log('Infinite Query State:', {
-    servicesCount: services.length,
-    filteredCount: filteredServices.length,
-    withUrlsCount: servicesWithUrls.length,
-    totalCount: count,
-    hasMore,
-    actuallyHasMore,
+  const width = window.innerWidth;
+  if (width >= 1024) return 3; // lg and up: 3 columns
+  if (width >= 768) return 2;  // md: 2 columns
+  return 1; // sm and below: 1 column
+}
+
+// Helper function to chunk array into rows based on columns
+function chunkArray<T>(array: T[], chunkSize: number): T[][] {
+  const chunks = [];
+  for (let i = 0; i < array.length; i += chunkSize) {
+    chunks.push(array.slice(i, i + chunkSize));
+  }
+  return chunks;
+}
+
+export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps) {
+  const [columnsCount, setColumnsCount] = useState(3); // Default to 3 columns
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  // TanStack Query for infinite data fetching
+  const {
+    data,
+    error,
+    fetchNextPage,
+    hasNextPage,
     isFetching,
-    isSuccess,
+    isFetchingNextPage,
+    status,
+  } = useInfiniteQuery({
+    queryKey: ['infinite-services', filters],
+    queryFn: ({ pageParam = 0 }) => 
+      fetchInfiniteServices(filters, 12, pageParam),
+    getNextPageParam: (lastPage) => lastPage.nextOffset,
+    initialPageParam: 0,
   });
 
-  // Cleanup on unmount
+  // Flatten all pages into a single array of services
+  const allServices: ServiceWithRelations[] = data 
+    ? data.pages.flatMap((page) => page.services)
+    : [];
+  
+  // Group services into rows based on responsive columns
+  const serviceRows = chunkArray(allServices, columnsCount);
+  
+  // Add a loader row if we have more data to fetch
+  if (hasNextPage) {
+    serviceRows.push([]); // Empty row for loader
+  }
+
+  // Update columns count on window resize
   useEffect(() => {
-    isUnmountedRef.current = false;
-    return () => {
-      isUnmountedRef.current = true;
+    const updateColumns = () => {
+      setColumnsCount(getColumnsCount());
     };
+
+    // Set initial value
+    updateColumns();
+    
+    // Listen to window resize
+    window.addEventListener('resize', updateColumns);
+    return () => window.removeEventListener('resize', updateColumns);
   }, []);
 
-  // Intersection Observer for infinite scroll
+  // Debug log to check column count
+  console.log('Current columns:', columnsCount, 'Window width:', typeof window !== 'undefined' ? window.innerWidth : 'SSR');
+
+  // TanStack Virtual for row virtualization
+  const rowVirtualizer = useVirtualizer({
+    count: serviceRows.length,
+    getScrollElement: () => parentRef.current,
+    estimateSize: () => 480, // Increased height to account for more spacing
+    overscan: 2,
+  });
+
+  // Effect to trigger fetching next page when we reach the end
   useEffect(() => {
-    console.log('Setting up intersection observer:', { hasMore: actuallyHasMore, isFetching });
-    
-    if (!actuallyHasMore) {
-      console.log('Skipping observer setup - no more data');
-      return;
+    const [lastItem] = [...rowVirtualizer.getVirtualItems()].reverse();
+
+    if (!lastItem) return;
+
+    if (
+      lastItem.index >= serviceRows.length - 2 && // Trigger before the last row
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      console.log('Fetching next page via virtualizer...');
+      fetchNextPage();
     }
+  }, [
+    hasNextPage,
+    fetchNextPage,
+    serviceRows.length,
+    isFetchingNextPage,
+    rowVirtualizer.getVirtualItems(),
+  ]);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        console.log('Observer triggered:', { 
-          isIntersecting: entry.isIntersecting, 
-          actuallyHasMore, 
-          isFetching 
-        });
-        
-        if (entry.isIntersecting) {
-          fetchNextPageStable();
-        }
-      },
-      { 
-        threshold: 0.1,
-        rootMargin: '50px' // Reduced margin to be less aggressive
-      }
-    );
-
-    const currentRef = loadMoreRef.current;
-    if (currentRef) {
-      console.log('Observing sentinel element');
-      observer.observe(currentRef);
-    }
-
-    return () => {
-      if (currentRef) {
-        console.log('Unobserving sentinel element');
-        observer.unobserve(currentRef);
-      }
-      observer.disconnect();
-    };
-  }, [actuallyHasMore, fetchNextPageStable]);
-
-  if (isLoading) {
+  if (status === 'pending') {
     return <ServicesGridSkeleton count={12} />;
   }
 
-  if (error) {
+  if (status === 'error') {
     return (
       <div className="text-center text-muted-foreground py-12">
-        <p>Kunne ikke laste tjenester. Prøv igjen senere.</p>
-        <Button 
-          variant="outline" 
+        <p>Kunne ikke laste tjenester: {(error as Error)?.message}</p>
+        <button 
           onClick={() => window.location.reload()}
-          className="mt-4"
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
         >
           Prøv igjen
-        </Button>
+        </button>
       </div>
     );
   }
 
-  if (isSuccess && servicesWithUrls.length === 0) {
+  if (allServices.length === 0) {
     return (
       <div className="text-center text-muted-foreground py-12">
         <h3 className="text-lg font-medium mb-2">Ingen tjenester funnet</h3>
@@ -261,39 +143,93 @@ export function InfiniteServicesGrid({ filters = {} }: InfiniteServicesGridProps
   }
 
   return (
-    <div className="space-y-8">
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {servicesWithUrls.map((service) => (
-          <ServiceCard key={service.id} service={service} />
-        ))}
-      </div>
-
-      {/* Load more trigger */}
-      <div className="flex justify-center py-8">
-        {isFetching && (
-          <div className="flex items-center gap-2">
-            <Spinner variant="circle" className="w-4 h-4" />
-            <span>Laster flere tjenester...</span>
+    <div className="w-full">
+      <Card className="border-2 shadow-lg">
+        <CardContent className="p-6">
+          <div className="mb-4">
+            <h3 className="text-lg font-medium text-muted-foreground">
+              {allServices.length > 0 
+                ? `${allServices.length} tjenester funnet`
+                : 'Søker etter tjenester...'
+              }
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Bla gjennom tjenester nedenfor
+            </p>
           </div>
-        )}
-        
-        {!isFetching && actuallyHasMore && (
-          <Button 
-            variant="outline" 
-            onClick={fetchNextPageStable}
-            disabled={isFetching}
+          
+          {/* Virtualized scrollable container */}
+          <div
+            ref={parentRef}
+            className="max-h-[70vh] overflow-auto w-full rounded-lg border bg-card"
+            style={{
+              contain: 'layout style paint',
+            }}
           >
-            Last flere tjenester
-          </Button>
-        )}
-        
-        {!actuallyHasMore && servicesWithUrls.length > 0 && (
-          <p className="text-muted-foreground">Du har sett alle tilgjengelige tjenester</p>
-        )}
-      </div>
-      
-      {/* Intersection observer sentinel - only render when there's more data */}
-      {actuallyHasMore && <div ref={loadMoreRef} style={{ height: '1px' }} />}
+            <div
+              style={{
+                height: `${rowVirtualizer.getTotalSize()}px`,
+                width: '100%',
+                position: 'relative',
+              }}
+            >
+              {rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                const row = serviceRows[virtualRow.index];
+                const isLoaderRow = !row || row.length === 0;
+
+                return (
+                  <div
+                    key={virtualRow.index}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      width: '100%',
+                      height: `${virtualRow.size}px`,
+                      transform: `translateY(${virtualRow.start}px)`,
+                    }}
+                  >
+                    {isLoaderRow ? (
+                      <div className="flex justify-center items-center h-full py-12">
+                        {hasNextPage ? (
+                          <div className="flex items-center gap-2">
+                            <Spinner variant="circle" className="w-4 h-4" />
+                            <span>Laster flere tjenester...</span>
+                          </div>
+                        ) : (
+                          <p className="text-muted-foreground">
+                            Du har sett alle tilgjengelige tjenester
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div 
+                        className="grid gap-6 p-4 pb-8"
+                        style={{
+                          gridTemplateColumns: `repeat(${columnsCount}, 1fr)`,
+                        }}
+                      >
+                        {row.map((service) => (
+                          <ServiceCard key={service.id} service={service} />
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Background fetching indicator */}
+          {isFetching && !isFetchingNextPage && (
+            <div className="text-center py-4 mt-4 border-t">
+              <span className="text-sm text-muted-foreground">
+                Oppdaterer i bakgrunnen...
+              </span>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

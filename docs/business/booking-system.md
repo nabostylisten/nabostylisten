@@ -115,20 +115,46 @@ The booking system enables authenticated customers to convert their shopping car
   - Total price calculation
   - Total appointment duration
 
-#### Phase 2: Time Selection (Work in Progress)
+#### Phase 2: Time Selection (Implemented)
 
-- **Calendar Interface** (Planned):
+- **Calendar Interface**:
 
   - Weekly view of stylist availability
-  - Available time slots highlighted
+  - Available time slots highlighted in green
   - Blocked/unavailable times grayed out
-  - Time slot selection with duration preview
+  - Time slot selection with duration validation
   - Automatic end-time calculation
+  - Visual feedback for selected time slots
 
-- **Current Implementation**:
-  - Work-in-progress message
-  - Explanation of upcoming features
-  - Preview of planned functionality
+- **Business Logic for Time Selection**:
+
+  - **Duration Calculation**: Service duration rounded up to nearest hour
+    - Example: 90-minute service requires 2 full hours (120 minutes)
+    - Example: 45-minute service requires 1 full hour (60 minutes)
+    - Example: 150-minute service requires 3 full hours (180 minutes)
+
+  - **Availability Validation**: 
+    - Must have consecutive available hours for entire service duration
+    - Cannot select if stylist unavailable during any part of service window
+    - Only work hours are available for selection (as defined by stylist)
+
+  - **Visual States**:
+    - **Green**: Available and can be booked
+    - **Yellow**: Available but insufficient consecutive time for service
+    - **Gray**: Stylist not working or unavailable
+    - **Blue (pulsing)**: Currently selected time slot
+
+  - **Selection Rules**:
+    - Click on green time slot to select start time
+    - System automatically calculates end time based on service duration
+    - Selected time slots show blue color with pulsing animation
+    - Cannot select insufficient time slots (yellow) or unavailable slots (gray)
+
+- **Navigation Features**:
+  - Previous/Next week navigation
+  - "Today" button to return to current week
+  - Calendar picker for jumping to specific dates
+  - Week and month display in header
 
 #### Phase 3: Location and Details (Future)
 
@@ -257,13 +283,22 @@ The booking system enables authenticated customers to convert their shopping car
    - Stylist information display
    - Order summary sidebar
 
+### ✅ Recently Completed
+
+1. **Booking Calendar System**:
+   - Weekly calendar view for customers
+   - Service duration-aware time slot selection
+   - Visual availability status indicators
+   - Integration with stylist availability rules
+   - Real-time unavailability checking
+   - Duration-based validation logic
+
 ### 🚧 Work in Progress
 
-1. **Calendar Availability System**:
-   - Integration with Mina Scheduler
-   - Stylist availability management
-   - Real-time slot booking
-   - Time conflict resolution
+1. **Booking Flow Integration**:
+   - Integration of BookingScheduler into main booking page
+   - Cart-to-calendar data flow
+   - Selected time persistence during booking process
 
 ### 📋 Planned Features
 
@@ -296,11 +331,17 @@ The booking system enables authenticated customers to convert their shopping car
 
 ### Appointment Scheduling Rules
 
-- Selected time slot must be available
-- Appointment duration = sum of all service durations
-- Buffer time applied between appointments
-- No double-booking prevention
-- Holiday/vacation period respect
+- Selected time slot must be available across entire service duration
+- Appointment duration = sum of all service durations, rounded up to nearest hour
+- Service duration rounding ensures full hour slot availability:
+  - Services ≤ 60 minutes: require 1 hour slot
+  - Services 61-120 minutes: require 2 hour slots
+  - Services 121-180 minutes: require 3 hour slots
+- Consecutive availability validation prevents partial booking
+- Only stylist work hours are available for selection
+- Unavailable periods (one-off and recurring) are excluded
+- Real-time availability checking prevents double-booking
+- Holiday/vacation period respect via unavailability system
 
 ### Payment Rules
 

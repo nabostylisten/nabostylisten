@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/stores/cart.store";
-import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import { ArrowLeft, Clock, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { BookingStepper } from "@/components/booking";
 
 export default function BookingPage() {
   const router = useRouter();
@@ -17,9 +18,28 @@ export default function BookingPage() {
     getCurrentStylist 
   } = useCartStore();
   
+  
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
   const currentStylist = getCurrentStylist();
+  
+  // Calculate total service duration
+  const totalDurationMinutes = items.reduce((total, item) => {
+    return total + (item.service.duration_minutes * item.quantity);
+  }, 0);
+
+  // Handle booking completion
+  const handleBookingComplete = (bookingData: {
+    startTime?: Date;
+    endTime?: Date;
+    location: "stylist" | "customer";
+    customerAddress?: string;
+    messageToStylist?: string;
+    discountCode?: string;
+  }) => {
+    console.log("Booking completed:", bookingData);
+    // TODO: Process booking data and redirect to payment/confirmation
+  };
 
   useEffect(() => {
     if (totalItems === 0) {
@@ -86,37 +106,28 @@ export default function BookingPage() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-
-            {/* Availability Selection */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Calendar className="w-5 h-5" />
-                  Velg tid
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-12">
-                  <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <h3 className="text-lg font-semibold mb-2">Arbeid pågår</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Vi jobber med å implementere kalenderbooking-funksjonaliteten. 
-                    Snart vil du kunne velge ledig tid direkte fra stylistens kalender.
-                  </p>
-                  <div className="bg-muted rounded-lg p-4 text-sm">
-                    <p className="font-medium mb-2">Kommende funksjoner:</p>
-                    <ul className="text-left space-y-1 text-muted-foreground">
-                      <li>• Sanntids tilgjengelighet</li>
-                      <li>• Kalendervisning med ledige tider</li>
-                      <li>• Automatisk bekreftelse</li>
-                      <li>• Påminnelser via e-post og SMS</li>
-                    </ul>
+                
+                <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 text-sm">
+                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-medium">
+                      Total varighet: {Math.floor(totalDurationMinutes / 60)}t {totalDurationMinutes % 60}min
+                    </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Booking Stepper */}
+            {currentStylist && (
+              <BookingStepper
+                stylistId={currentStylist.id}
+                serviceDurationMinutes={totalDurationMinutes}
+                stylistCanTravel={true} // TODO: Get from stylist details
+                stylistHasOwnPlace={true} // TODO: Get from stylist details
+                onComplete={handleBookingComplete}
+              />
+            )}
           </div>
 
           {/* Order Summary */}
@@ -147,24 +158,15 @@ export default function BookingPage() {
                   <span>{totalPrice.toFixed(2)} NOK</span>
                 </div>
                 
-                <div className="space-y-3 pt-4">
-                  <Button className="w-full" disabled>
-                    Fortsett til betaling
-                  </Button>
-                  <p className="text-xs text-muted-foreground text-center">
-                    Betalingsfunksjonalitet kommer når kalenderbooking er klar
-                  </p>
-                </div>
-
                 <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 text-sm">
                   <p className="font-medium text-blue-900 dark:text-blue-100 mb-1">
-                    Hvordan det fungerer
+                    Booking prosess
                   </p>
                   <ul className="text-blue-700 dark:text-blue-300 space-y-1 text-xs">
-                    <li>1. Velg ønsket tidspunkt</li>
-                    <li>2. Bekreft booking og betal</li>
-                    <li>3. Motta bekreftelse på e-post</li>
-                    <li>4. Chat med stylist ved behov</li>
+                    <li>• Velg ønsket tidspunkt</li>
+                    <li>• Bestem lokasjon for tjenesten</li>
+                    <li>• Legg til melding og rabattkode</li>
+                    <li>• Fullfør betaling</li>
                   </ul>
                 </div>
               </CardContent>

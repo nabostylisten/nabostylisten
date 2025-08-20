@@ -115,7 +115,11 @@ The booking system enables authenticated customers to convert their shopping car
   - Total price calculation
   - Total appointment duration
 
-#### Phase 2: Time Selection (Implemented)
+#### Phase 2-5: 4-Step Booking Process (Implemented)
+
+The booking process is now implemented as a guided 4-step stepper system that prevents user overwhelm and ensures complete information collection:
+
+**Step 1: Time Selection** ✅
 
 - **Calendar Interface**:
 
@@ -124,67 +128,91 @@ The booking system enables authenticated customers to convert their shopping car
   - Blocked/unavailable times grayed out
   - Time slot selection with duration validation
   - Automatic end-time calculation
-  - Visual feedback for selected time slots
+  - Visual feedback for selected time slots (blue pulsing)
 
 - **Business Logic for Time Selection**:
 
   - **Duration Calculation**: Service duration rounded up to nearest hour
+
     - Example: 90-minute service requires 2 full hours (120 minutes)
     - Example: 45-minute service requires 1 full hour (60 minutes)
     - Example: 150-minute service requires 3 full hours (180 minutes)
 
-  - **Availability Validation**: 
+  - **Availability Validation**:
+
     - Must have consecutive available hours for entire service duration
     - Cannot select if stylist unavailable during any part of service window
     - Only work hours are available for selection (as defined by stylist)
 
   - **Visual States**:
     - **Green**: Available and can be booked
-    - **Yellow**: Available but insufficient consecutive time for service
     - **Gray**: Stylist not working or unavailable
     - **Blue (pulsing)**: Currently selected time slot
 
-  - **Selection Rules**:
-    - Click on green time slot to select start time
-    - System automatically calculates end time based on service duration
-    - Selected time slots show blue color with pulsing animation
-    - Cannot select insufficient time slots (yellow) or unavailable slots (gray)
-
 - **Navigation Features**:
+
   - Previous/Next week navigation
   - "Today" button to return to current week
   - Calendar picker for jumping to specific dates
   - Week and month display in header
 
-#### Phase 3: Location and Details (Future)
+- **Help System**:
+  - Contextual help dialog explaining calendar usage
+  - Color coding explanations
+  - Step-by-step booking instructions
+  - Navigation tips for calendar interface
 
-- **Service Location Selection**:
+**Step 2: Location Selection** ✅
 
-  - Stylist's location option
-  - Customer's address option
-  - Address input with Mapbox integration
-  - Travel cost calculations (if applicable)
+- **Service Location Options**:
 
-- **Special Requests**:
-  - Text field for customer notes
-  - Specific requirements or preferences
-  - Accessibility needs
-  - Stylist communication
+  - Radio button selection between stylist and customer location
+  - Dynamic options based on stylist capabilities (travel/own place)
+  - Conditional address input for customer location
+  - Form validation ensures location is selected
 
-#### Phase 4: Payment and Confirmation (Future)
+- **Address Collection**:
+  - Textarea input for customer address when "hjemme hos meg" selected
+  - Required field validation for customer location choice
+  - Future integration planned with Mapbox for address validation
 
-- **Payment Processing**:
+**Step 3: Message and Discount** ✅
 
+- **Communication with Stylist**:
+
+  - Optional textarea for customer messages to stylist
+  - Placeholder text guides users on what information to include
+  - Support for special requests, allergies, preferences
+
+- **Discount Code System**:
+  - Input field for discount codes
+  - Optional field that doesn't block progression
+  - Prepared for future integration with discount validation system
+
+**Step 4: Payment and Confirmation** ✅
+
+- **Booking Summary**:
+
+  - Complete review of all booking details
+  - Selected time display with Norwegian formatting
+  - Location confirmation
+  - Message and discount code review
+  - Terms and conditions acceptance
+
+- **Payment Processing** (Future Integration):
   - Stripe integration for secure payment
   - Authorization (not capture) initially
   - Full capture 24 hours before appointment
   - Payment method storage for future bookings
 
-- **Booking Confirmation**:
-  - Email confirmation to customer and stylist
-  - Calendar event generation
-  - Booking reference number
-  - Cancellation policy reminder
+**Stepper System Features** ✅
+
+- **Progressive Disclosure**: Each step only accessible after completing previous requirements
+- **Step Validation**: Cannot proceed without completing required fields in current step
+- **Responsive Design**: Different layouts for mobile (vertical) and desktop (horizontal)
+- **Visual Progress**: Numbered steps with clear titles and descriptions
+- **Navigation Controls**: Back/Next buttons with context-aware labels
+- **Accessibility**: Proper step state management and keyboard navigation support
 
 ## Integration Points
 
@@ -217,7 +245,7 @@ The booking system enables authenticated customers to convert their shopping car
 **Authentication Workflows**:
 
 1. **Authenticated Access**: Direct access to booking page with cart summary
-2. **Unauthenticated Access**: 
+2. **Unauthenticated Access**:
    - Middleware redirect to login with return URL
    - Or cart-triggered auth dialog with booking context
 3. **New User Flow**: Email + profile data → OTP → profile creation → booking access
@@ -277,47 +305,60 @@ The booking system enables authenticated customers to convert their shopping car
    - Total price calculation
    - Empty cart handling
 
-3. **Basic UI Structure**:
-   - Responsive booking page layout
-   - Cart summary card with service details
-   - Stylist information display
-   - Order summary sidebar
+3. **Complete 4-Step Booking Flow** ⭐ **NEW**:
 
-### ✅ Recently Completed
+   - **Step 1 - Time Selection**: Interactive calendar with availability validation
+   - **Step 2 - Location**: Dynamic location selection with address input
+   - **Step 3 - Message & Discount**: Optional customer communication and promo codes
+   - **Step 4 - Payment Summary**: Complete booking review and confirmation
 
-1. **Booking Calendar System**:
-   - Weekly calendar view for customers
-   - Service duration-aware time slot selection
-   - Visual availability status indicators
-   - Integration with stylist availability rules
-   - Real-time unavailability checking
-   - Duration-based validation logic
+4. **Responsive Stepper System** ⭐ **NEW**:
 
-### 🚧 Work in Progress
+   - Progressive step validation (cannot skip ahead without completing requirements)
+   - Mobile-first responsive design (vertical on mobile, horizontal on desktop)
+   - Numbered steps with clear progress indicators
+   - Context-aware navigation controls
 
-1. **Booking Flow Integration**:
-   - Integration of BookingScheduler into main booking page
-   - Cart-to-calendar data flow
-   - Selected time persistence during booking process
+5. **Enhanced Booking Calendar**:
+
+   - Weekly calendar view with service duration integration
+   - Visual availability indicators (green/gray/blue states)
+   - Duration-aware slot validation
+   - Help dialog with comprehensive booking guidance
+   - Navigation controls (prev/next week, today, calendar picker)
+
+6. **Form Validation & UX**:
+
+   - Real-time step validation prevents incomplete bookings
+   - Required field enforcement for critical data
+   - Optional field support for non-essential information
+   - Clear visual feedback for form completion status
+
+7. **Booking Data Management**:
+   - Complete booking data collection across all steps
+   - State persistence during step navigation
+   - Data validation before final submission
+   - Integration ready for payment processing
 
 ### 📋 Planned Features
 
-1. **Location Selection**:
-
-   - Address input with Mapbox
-   - Travel cost calculation
-   - Location preference handling
-
-2. **Payment Integration**:
+1. **Payment Integration**:
 
    - Stripe Checkout session creation
    - Payment authorization flow
    - Booking confirmation process
 
+2. **Enhanced Location Features**:
+
+   - Mapbox address validation and autocomplete
+   - Travel cost calculation
+   - Distance-based service area validation
+
 3. **Communication Setup**:
-   - Chat channel creation
-   - Email confirmations
-   - Notification preferences
+   - Chat channel creation between customer and stylist
+   - Email confirmations for both parties
+   - SMS reminder notifications
+   - Calendar event generation
 
 ## Business Rules & Validation
 
@@ -342,6 +383,31 @@ The booking system enables authenticated customers to convert their shopping car
 - Unavailable periods (one-off and recurring) are excluded
 - Real-time availability checking prevents double-booking
 - Holiday/vacation period respect via unavailability system
+
+### Step Progression Rules ⭐ **NEW**
+
+- **Step 1 (Time Selection)**: Must select valid time slot before proceeding
+
+  - Time slot selection required
+  - Duration validation must pass
+  - End time automatically calculated
+
+- **Step 2 (Location)**: Must choose service location before proceeding
+
+  - Location selection (stylist/customer) required
+  - If customer location chosen, address input becomes required
+  - Dynamic validation based on stylist capabilities
+
+- **Step 3 (Message & Discount)**: Optional fields, no blocking validation
+
+  - Message to stylist is optional
+  - Discount code is optional
+  - Step can be completed without any input
+
+- **Step 4 (Payment)**: All previous steps must be completed
+  - Cannot access until Steps 1-3 are valid
+  - Shows comprehensive booking summary
+  - Ready for payment processing integration
 
 ### Payment Rules
 

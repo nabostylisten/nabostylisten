@@ -3,7 +3,8 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Filter } from "lucide-react";
+import { AddressInput } from "@/components/ui/address-input";
+import { Search, Filter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
@@ -36,7 +37,11 @@ interface ServiceFilterFormProps {
   mode?: "redirect" | "update"; // redirect to /tjenester or update current URL
 }
 
-export function ServiceFilterForm({ categories = [], stylists = [], mode = "update" }: ServiceFilterFormProps) {
+export function ServiceFilterForm({
+  categories = [],
+  stylists = [],
+  mode = "update",
+}: ServiceFilterFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -47,7 +52,7 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
     searchParams.get("category") || "all"
   );
   const [selectedStylists, setSelectedStylists] = useState<string[]>(
-    searchParams.get("stylists") ? searchParams.get("stylists")!.split(',') : []
+    searchParams.get("stylists") ? searchParams.get("stylists")!.split(",") : []
   );
   const [sortBy, setSortBy] = useState<ServiceFilters["sortBy"]>(
     (searchParams.get("sort") as ServiceFilters["sortBy"]) || "newest"
@@ -62,11 +67,11 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
       if (selectedCategory && selectedCategory !== "all")
         params.set("category", selectedCategory);
       if (selectedStylists.length > 0)
-        params.set("stylists", selectedStylists.join(','));
+        params.set("stylists", selectedStylists.join(","));
       if (sortBy !== "newest" && sortBy) params.set("sort", sortBy);
 
       const queryString = params.toString();
-      
+
       if (mode === "redirect") {
         router.push(queryString ? `/tjenester?${queryString}` : "/tjenester");
       } else {
@@ -82,7 +87,7 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
       setSelectedCategory("all");
       setSelectedStylists([]);
       setSortBy("newest");
-      
+
       if (mode === "redirect") {
         router.push("/tjenester");
       } else {
@@ -113,13 +118,10 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
-          <div className="flex-1 relative">
-            <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Hvor? (f.eks Oslo, Bergen)"
-              className="pl-10"
+          <div className="flex-1">
+            <AddressInput
               value={location}
-              onChange={(e) => setLocation(e.target.value)}
+              onChange={setLocation}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
@@ -157,17 +159,21 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
                   <Users className="mr-2 h-4 w-4" />
                   {selectedStylists.length === 0
                     ? "Velg stylister..."
-                    : `${selectedStylists.length} stylist${selectedStylists.length > 1 ? 'er' : ''} valgt`}
+                    : `${selectedStylists.length} stylist${selectedStylists.length > 1 ? "er" : ""} valgt`}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-80 p-4">
                 <div className="space-y-2">
-                  <h4 className="text-sm font-medium">Filtrer etter stylister</h4>
+                  <h4 className="text-sm font-medium">
+                    Filtrer etter stylister
+                  </h4>
                   <div className="max-h-48 overflow-y-auto space-y-2">
                     {stylists
                       .filter((stylist) => stylist.full_name)
                       .map((stylist) => {
-                        const isSelected = selectedStylists.includes(stylist.id);
+                        const isSelected = selectedStylists.includes(
+                          stylist.id
+                        );
                         return (
                           <div
                             key={stylist.id}
@@ -178,10 +184,15 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
                               checked={isSelected}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  setSelectedStylists([...selectedStylists, stylist.id]);
+                                  setSelectedStylists([
+                                    ...selectedStylists,
+                                    stylist.id,
+                                  ]);
                                 } else {
                                   setSelectedStylists(
-                                    selectedStylists.filter((id) => id !== stylist.id)
+                                    selectedStylists.filter(
+                                      (id) => id !== stylist.id
+                                    )
                                   );
                                 }
                               }}
@@ -232,7 +243,9 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
         {/* Selected Stylists Display */}
         {selectedStylists.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-muted-foreground">Valgte stylister:</span>
+            <span className="text-sm text-muted-foreground">
+              Valgte stylister:
+            </span>
             {selectedStylists.map((stylistId) => {
               const stylist = stylists.find((s) => s.id === stylistId);
               return (
@@ -241,7 +254,7 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
                   variant="secondary"
                   className="flex items-center gap-1"
                 >
-                  {stylist?.full_name || 'Ukjent'}
+                  {stylist?.full_name || "Ukjent"}
                   <X
                     className="h-3 w-3 cursor-pointer"
                     onClick={() =>
@@ -297,7 +310,8 @@ export function ServiceFilterForm({ categories = [], stylists = [], mode = "upda
                 )}
               {selectedStylists.length > 0 && (
                 <span className="ml-1 font-medium">
-                  - {selectedStylists.length} stylist{selectedStylists.length > 1 ? 'er' : ''}
+                  - {selectedStylists.length} stylist
+                  {selectedStylists.length > 1 ? "er" : ""}
                 </span>
               )}
               {sortBy !== "newest" && (

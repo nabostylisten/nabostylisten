@@ -173,10 +173,55 @@ export async function addRecurringUnavailability(
 export async function removeRecurringUnavailability(id: string) {
   const supabase = await createClient();
 
+  // First, remove all exceptions for this series
+  await supabase
+    .from("recurring_unavailability_exceptions")
+    .delete()
+    .eq("series_id", id);
+
+  // Then remove the series itself
   return await supabase
     .from("stylist_recurring_unavailability")
     .delete()
     .eq("id", id);
+}
+
+export async function getRecurringUnavailabilityById(id: string) {
+  const supabase = await createClient();
+
+  return await supabase
+    .from("stylist_recurring_unavailability")
+    .select("*")
+    .eq("id", id)
+    .single();
+}
+
+export async function updateRecurringUnavailability(
+  id: string,
+  data: {
+    title: string;
+    startTime: string;
+    endTime: string;
+    rrule: string;
+    startDate: Date;
+    endDate?: Date;
+  },
+) {
+  const supabase = await createClient();
+
+  return await supabase
+    .from("stylist_recurring_unavailability")
+    .update({
+      title: data.title,
+      start_time: `${data.startTime}:00`,
+      end_time: `${data.endTime}:00`,
+      rrule: data.rrule,
+      series_start_date: data.startDate.toISOString().split("T")[0],
+      series_end_date: data.endDate?.toISOString().split("T")[0] || null,
+    })
+    .eq("id", id)
+    .select()
+    .single();
 }
 
 export async function getRecurringExceptions(seriesId?: string) {

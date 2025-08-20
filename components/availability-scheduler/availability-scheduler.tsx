@@ -48,6 +48,7 @@ import { RecurringUnavailabilityDialog } from "@/components/availability-schedul
 import { AddUnavailabilityDialog } from "@/components/availability-scheduler/add-unavailability-dialog";
 import { AddWorkDayDialog } from "@/components/availability-scheduler/add-work-day-dialog";
 import { ManageUnavailableDialog } from "@/components/availability-scheduler/manage-unavailable-dialog";
+import { EditRecurringSeriesDialog } from "@/components/availability-scheduler/edit-recurring-series-dialog";
 import {
   Tooltip,
   TooltipContent,
@@ -68,6 +69,8 @@ import {
   removeRecurringUnavailability,
   addRecurringException,
   removeRecurringException,
+  getRecurringUnavailabilityById,
+  updateRecurringUnavailability,
 } from "@/server/availability.actions";
 
 type DayOfWeek = Database["public"]["Enums"]["day_of_week"];
@@ -116,6 +119,8 @@ export function AvailabilityScheduler({
   const [selectedGrayCell, setSelectedGrayCell] = useState<Date | null>(null);
   const [showManageUnavailable, setShowManageUnavailable] = useState(false);
   const [selectedRedCell, setSelectedRedCell] = useState<{ date: Date; hour: number } | null>(null);
+  const [showEditSeries, setShowEditSeries] = useState(false);
+  const [editingSeries, setEditingSeries] = useState<RecurringUnavailability | null>(null);
 
   // Work schedule state
   const [workDays, setWorkDays] = useState<DayOfWeek[]>([]);
@@ -219,6 +224,46 @@ export function AvailabilityScheduler({
       toast.error("Kunne ikke legge til gjentakende utilgjengelighet"),
   });
 
+  // Update recurring unavailability mutation
+  const updateRecurringMutation = useMutation({
+    mutationFn: ({ id, data }: {
+      id: string;
+      data: {
+        title: string;
+        startTime: string;
+        endTime: string;
+        rrule: string;
+        startDate: Date;
+        endDate?: Date;
+      };
+    }) => updateRecurringUnavailability(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["recurring-unavailability", stylistId],
+      });
+      toast.success("Gjentakende utilgjengelighet oppdatert");
+      setShowEditSeries(false);
+      setEditingSeries(null);
+    },
+    onError: () =>
+      toast.error("Kunne ikke oppdatere gjentakende utilgjengelighet"),
+  });
+
+  // Delete recurring unavailability mutation
+  const deleteRecurringMutation = useMutation({
+    mutationFn: (id: string) => removeRecurringUnavailability(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["recurring-unavailability", stylistId],
+      });
+      toast.success("Gjentakende utilgjengelighet slettet");
+      setShowEditSeries(false);
+      setEditingSeries(null);
+    },
+    onError: () =>
+      toast.error("Kunne ikke slette gjentakende utilgjengelighet"),
+  });
+
   // Handle adding work day
   const handleAddWorkDay = useCallback(
     (dayOfWeek: DayOfWeek) => {
@@ -310,10 +355,18 @@ export function AvailabilityScheduler({
   );
 
   // Handle editing recurring series
-  const handleEditRecurringSeries = useCallback((seriesId: string) => {
-    // For now, just show a message - this could open the recurring dialog
-    // with the existing series data pre-filled
-    toast.info("Funksjon for å redigere serie kommer snart");
+  const handleEditRecurringSeries = useCallback(async (seriesId: string) => {
+    try {
+      const { data: series, error } = await getRecurringUnavailabilityById(seriesId);
+      if (error || !series) {
+        toast.error("Kunne ikke hente seriedata");
+        return;
+      }
+      setEditingSeries(series);
+      setShowEditSeries(true);
+    } catch (error) {
+      toast.error("Kunne ikke hente seriedata");
+    }
   }, []);
 
   // Get recurring info for a specific slot
@@ -671,6 +724,21 @@ export function AvailabilityScheduler({
     addRecurringMutation.mutate(data);
   };
 
+  const handleUpdateRecurring = (id: string, data: {
+    title: string;
+    startTime: string;
+    endTime: string;
+    rrule: string;
+    startDate: Date;
+    endDate?: Date;
+  }) => {
+    updateRecurringMutation.mutate({ id, data });
+  };
+
+  const handleDeleteRecurring = (id: string) => {
+    deleteRecurringMutation.mutate(id);
+  };
+
   if (rulesLoading || unavailabilityLoading) {
     return <AvailabilitySchedulerSkeleton />;
   }
@@ -1006,6 +1074,15 @@ export function AvailabilityScheduler({
         open={showRecurringDialog}
         onOpenChange={setShowRecurringDialog}
         onSubmit={handleAddRecurring}
+      />
+
+      {/* Edit recurring series dialog */}
+      <EditRecurringSeriesDialog
+        open={showEditSeries}
+        onOpenChange={setShowEditSeries}
+        series={editingSeries}
+        onUpdate={handleUpdateRecurring}
+        onDelete={handleDeleteRecurring}
       />
     </div>
   );

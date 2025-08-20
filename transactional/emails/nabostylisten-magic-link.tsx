@@ -4,168 +4,234 @@ import {
   Head,
   Heading,
   Html,
-  Img,
   Link,
   Preview,
   Text,
 } from "@react-email/components";
 
-interface NabostylistenMagicLinkEmailProps {
-  confirmationUrl?: string;
+interface NabostylistenOtpEmailProps {
   token?: string;
   siteUrl?: string;
   email?: string;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "";
-
-export const NabostylistenMagicLinkEmail = ({
-  confirmationUrl = "{{ .ConfirmationURL }}",
+export const NabostylistenOtpEmail = ({
   token = "{{ .Token }}",
   siteUrl = "{{ .SiteURL }}",
   email = "{{ .Email }}",
-}: NabostylistenMagicLinkEmailProps) => (
+}: NabostylistenOtpEmailProps) => (
   <Html>
     <Head />
-    <Preview>Logg inn på Nabostylisten</Preview>
+    <Preview>Din innloggingskode til Nabostylisten</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Logg inn på Nabostylisten</Heading>
-        <Text style={text}>Hei {email ? `${email}` : "der"}!</Text>
-        <Text style={text}>
-          Klikk på lenken nedenfor for å logge inn på Nabostylisten:
-        </Text>
-        <Link
-          href={confirmationUrl}
-          target="_blank"
-          style={{
-            ...link,
-            display: "block",
-            marginBottom: "16px",
-            padding: "12px 24px",
-            backgroundColor: "#2563eb",
-            color: "#ffffff",
-            textDecoration: "none",
-            borderRadius: "6px",
-            textAlign: "center" as const,
-          }}
-        >
-          Logg inn med magisk lenke
-        </Link>
-        <Text style={{ ...text, marginBottom: "14px" }}>
-          Eller kopier og lim inn denne midlertidige innloggingskoden:
-        </Text>
-        <code style={code}>{token}</code>
-        <Text
-          style={{
-            ...text,
-            color: "#6b7280",
-            marginTop: "14px",
-            marginBottom: "16px",
-          }}
-        >
-          Hvis du ikke forsøkte å logge inn, kan du trygt ignorere denne
-          e-posten.
-        </Text>
-        <Text
-          style={{
-            ...text,
-            color: "#6b7280",
-            marginTop: "12px",
-            marginBottom: "32px",
-          }}
-        >
-          Denne lenken utløper om 1 time av sikkerhetsmessige årsaker.
-        </Text>
-        <Text style={footer}>
-          <Link
-            href={siteUrl}
-            target="_blank"
-            style={{ ...link, color: "#6b7280" }}
-          >
-            Nabostylisten
-          </Link>
-          <br />
-          Din plattform for å finne og bestille stylisttjenester i Norge.
-          <br />
-        </Text>
+        <div style={headerSection}>
+          <Heading style={h1}>🎨 Nabostylisten</Heading>
+          <Text style={subtitle}>Din plattform for stylisttjenester</Text>
+        </div>
+        
+        <div style={contentSection}>
+          <Heading style={h2}>Din innloggingskode</Heading>
+          <Text style={text}>
+            Hei{email ? ` ${email}` : ""}!
+          </Text>
+          <Text style={text}>
+            Her er din 6-sifrede innloggingskode:
+          </Text>
+          
+          <div style={codeContainer}>
+            <code style={code}>{token}</code>
+          </div>
+          
+          <Text style={instructionText}>
+            Skriv inn denne koden på innloggingssiden for å fullføre påloggingen.
+          </Text>
+          
+          <Text style={securityText}>
+            Av sikkerhetsmessige årsaker utløper denne koden om <strong>1 time</strong>.
+          </Text>
+          
+          <Text style={warningText}>
+            Hvis du ikke forsøkte å logge inn på Nabostylisten, kan du trygt ignorere denne e-posten.
+          </Text>
+        </div>
+        
+        <div style={footerSection}>
+          <Text style={footer}>
+            <Link
+              href={siteUrl}
+              target="_blank"
+              style={footerLink}
+            >
+              Nabostylisten.no
+            </Link>
+            <br />
+            <span style={footerTagline}>
+              Book din neste stylistopplevelse i dag ✨
+            </span>
+          </Text>
+        </div>
       </Container>
     </Body>
   </Html>
 );
 
-NabostylistenMagicLinkEmail.PreviewProps = {
-  confirmationUrl: "https://nabostylisten.no/auth/callback?token=example-token",
+NabostylistenOtpEmail.PreviewProps = {
   token: "123456",
   siteUrl: "https://nabostylisten.no",
   email: "ola.nordmann@example.com",
-} as NabostylistenMagicLinkEmailProps;
+} as NabostylistenOtpEmailProps;
 
-export default NabostylistenMagicLinkEmail;
+export default NabostylistenOtpEmail;
+
+// Branded colors based on globals.css light theme
+const colors = {
+  background: "#fcf9fc", // --background: 253.3333 100% 98.2353%
+  foreground: "#4a3350", // --foreground: 254.0625 37.2093% 33.7255%
+  primary: "#8b7eb8", // --primary: 260 28.9157% 67.451%
+  primaryForeground: "#ffffff",
+  secondary: "#fae7d8", // --secondary: 16.1538 86.6667% 94.1176%
+  secondaryForeground: "#a3522f", // --secondary-foreground: 18.5185 65.8537% 48.2353%
+  accent: "#e8f5e8", // --accent: 106.9565 74.1935% 93.9216%
+  accentForeground: "#3d5a3e", // --accent-foreground: 106.8 28.7356% 34.1176%
+  muted: "#f5f2f7", // --muted: 253.3333 24.3243% 92.7451%
+  mutedForeground: "#6b5b73", // --muted-foreground: 255.3488 18.2979% 46.0784%
+  border: "#f5f2f7", // --border: 253.3333 24.3243% 92.7451%
+};
+
+const fontFamily = "Inter, ui-sans-serif, sans-serif, system-ui";
 
 const main = {
-  backgroundColor: "#ffffff",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
+  backgroundColor: colors.background,
+  fontFamily,
+  padding: "20px 0",
 };
 
 const container = {
-  paddingLeft: "12px",
-  paddingRight: "12px",
+  paddingLeft: "20px",
+  paddingRight: "20px",
   margin: "0 auto",
   maxWidth: "580px",
+  backgroundColor: "#ffffff",
+  borderRadius: "16px",
+  border: `1px solid ${colors.border}`,
+  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
+};
+
+const headerSection = {
+  textAlign: "center" as const,
+  padding: "40px 20px 20px",
+  borderBottom: `1px solid ${colors.border}`,
+};
+
+const contentSection = {
+  padding: "32px 20px",
+};
+
+const footerSection = {
+  padding: "20px",
+  textAlign: "center" as const,
+  borderTop: `1px solid ${colors.border}`,
+  backgroundColor: colors.muted,
+  borderRadius: "0 0 16px 16px",
 };
 
 const h1 = {
-  color: "#1f2937",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
-  fontSize: "24px",
+  color: colors.primary,
+  fontFamily,
+  fontSize: "32px",
   fontWeight: "bold",
-  margin: "40px 0 20px",
-  padding: "0",
+  margin: "0 0 8px 0",
+  textAlign: "center" as const,
 };
 
-const link = {
-  color: "#2563eb",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
-  fontSize: "14px",
-  textDecoration: "underline",
+const h2 = {
+  color: colors.foreground,
+  fontFamily,
+  fontSize: "24px",
+  fontWeight: "600",
+  margin: "0 0 20px 0",
+  textAlign: "center" as const,
+};
+
+const subtitle = {
+  color: colors.mutedForeground,
+  fontFamily,
+  fontSize: "16px",
+  margin: "0",
+  textAlign: "center" as const,
 };
 
 const text = {
-  color: "#374151",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
-  fontSize: "14px",
+  color: colors.foreground,
+  fontFamily,
+  fontSize: "16px",
   lineHeight: "24px",
   margin: "16px 0",
 };
 
-const footer = {
-  color: "#6b7280",
-  fontFamily:
-    "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif",
-  fontSize: "12px",
-  lineHeight: "22px",
+const instructionText = {
+  ...text,
+  textAlign: "center" as const,
+  fontSize: "14px",
+  marginTop: "20px",
+};
+
+const securityText = {
+  ...text,
+  color: colors.mutedForeground,
+  fontSize: "14px",
+  textAlign: "center" as const,
+  marginTop: "24px",
+};
+
+const warningText = {
+  ...text,
+  color: colors.mutedForeground,
+  fontSize: "13px",
+  textAlign: "center" as const,
+  fontStyle: "italic",
   marginTop: "32px",
-  marginBottom: "24px",
+};
+
+const codeContainer = {
+  textAlign: "center" as const,
+  margin: "32px 0",
 };
 
 const code = {
   display: "inline-block",
-  padding: "16px 4.5%",
-  width: "90.5%",
-  backgroundColor: "#f9fafb",
-  borderRadius: "6px",
-  border: "1px solid #e5e7eb",
-  color: "#1f2937",
-  fontFamily: "monospace",
-  fontSize: "20px",
+  padding: "20px 32px",
+  backgroundColor: colors.accent,
+  borderRadius: "16px",
+  border: `2px solid ${colors.primary}`,
+  color: colors.primary,
+  fontFamily: "Roboto Mono, monospace",
+  fontSize: "28px",
   fontWeight: "bold",
-  letterSpacing: "4px",
+  letterSpacing: "8px",
   textAlign: "center" as const,
+  minWidth: "180px",
+};
+
+const footer = {
+  color: colors.mutedForeground,
+  fontFamily,
+  fontSize: "14px",
+  lineHeight: "20px",
+  margin: "0",
+};
+
+const footerLink = {
+  color: colors.primary,
+  fontFamily,
+  fontSize: "16px",
+  fontWeight: "600",
+  textDecoration: "none",
+};
+
+const footerTagline = {
+  color: colors.mutedForeground,
+  fontSize: "12px",
+  fontStyle: "italic",
 };

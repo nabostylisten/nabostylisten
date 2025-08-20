@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { checkUserExists } from "@/server/auth.actions";
 
 export type AuthMode = "login" | "signup";
 export type AuthStep = "email" | "code";
@@ -117,7 +118,20 @@ export function useAuthForm({
 
         if (error) throw error;
       } else {
-        // For login: Use signInWithOtp for existing users only
+        // For login: First check if user exists
+        const userCheck = await checkUserExists(email);
+        
+        if (userCheck.error) {
+          throw new Error(userCheck.error);
+        }
+        
+        if (!userCheck.exists) {
+          setError("Ingen bruker funnet med denne e-posten. Vennligst registrer deg først.");
+          setIsLoading(false);
+          return;
+        }
+        
+        // User exists, proceed with OTP login
         const { error } = await supabase.auth.signInWithOtp({
           email,
           options: {

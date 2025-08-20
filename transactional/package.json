@@ -5,7 +5,7 @@
   "scripts": {
     "build": "email build",
     "dev": "email dev -p 3001",
-    "export": "email export --outDir ../../supabase/templates"
+    "export": "email export"
   },
   "dependencies": {
     "@react-email/components": "0.4.0",

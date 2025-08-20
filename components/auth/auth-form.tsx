@@ -92,7 +92,7 @@ export function AuthForm({
           </p>
           <p className="font-medium">{email}</p>
           <p className="text-sm text-muted-foreground">
-            Skriv inn koden eller klikk på lenken i e-posten
+            Skriv inn koden i e-posten
           </p>
         </div>
 
@@ -106,13 +106,17 @@ export function AuthForm({
               required
               maxLength={6}
               value={otpCode}
-              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+              onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
               className="text-center text-lg tracking-widest"
               autoComplete="one-time-code"
             />
           </div>
 
-          {error && <p className="text-sm text-red-500">{error}</p>}
+          {error && (
+            <div className="rounded-lg bg-red-50 p-4 dark:bg-red-950">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
 
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Bekrefter..." : "Bekreft kode"}
@@ -199,7 +203,28 @@ export function AuthForm({
           </div>
         )}
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && (
+          <div className="rounded-lg bg-red-50 p-4 dark:bg-red-950">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            {error.includes("Ingen bruker funnet") && (
+              <div className="mt-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newMode = "signup";
+                    handleModeSwitch(newMode);
+                    onModeChange?.(newMode);
+                  }}
+                  className="w-full border-red-200 text-red-700 hover:bg-red-100 dark:border-red-800 dark:text-red-300 dark:hover:bg-red-900"
+                >
+                  Registrer deg i stedet
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         <Button type="submit" className="w-full" disabled={isLoading}>
           {isLoading
@@ -218,32 +243,20 @@ export function AuthForm({
         <Separator className="flex-1" />
       </div>
 
-      <div className="space-y-2">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => setStep("code")}
-          className="w-full"
-        >
-          Har du allerede mottatt en kode?
-        </Button>
-
-        <Button
-          type="button"
-          variant="ghost"
-          onClick={() => {
-            const newMode = mode === "login" ? "signup" : "login";
-            handleModeSwitch(newMode);
-            onModeChange?.(newMode);
-          }}
-          className="w-full"
-          size="sm"
-        >
-          {mode === "login"
-            ? finalLabels.switchToSignup
-            : finalLabels.switchToLogin}
-        </Button>
-      </div>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => {
+          const newMode = mode === "login" ? "signup" : "login";
+          handleModeSwitch(newMode);
+          onModeChange?.(newMode);
+        }}
+        className="w-full"
+      >
+        {mode === "login"
+          ? finalLabels.switchToSignup
+          : finalLabels.switchToLogin}
+      </Button>
     </div>
   );
 }

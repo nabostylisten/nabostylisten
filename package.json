@@ -17,6 +17,7 @@
     "supabase:db:types:zod": "supazod -i types/database.types.ts -o schemas/database.schema.ts -s public,stripe",
     "remove:public:prefix": "tsx scripts/remove-public-prefix.ts",
     "supabase:stripe:generate-sync-migrations": "bun run scripts/supabase/stripe-sync-engine.ts",
+    "supabase:emails:export": "sh scripts/export-email-templates.sh",
     "supabase:functions:deploy": "supabase functions deploy",
     "supabase:load:secrets": "sh supabase secrets set --env-file ./supabase/.env",
     "gen:types": "bun run supabase:db:types && bun run supabase:db:types:zod && bun run remove:public:prefix",

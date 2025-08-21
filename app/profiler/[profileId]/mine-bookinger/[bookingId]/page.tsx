@@ -1,14 +1,14 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
-import { MyBookingsPageContent } from "@/components/my-bookings/my-bookings-page-content";
+import { BookingDetailsContent } from "@/components/my-bookings/booking-details-content";
 
-export default async function MineBookingerPage({
+export default async function BookingDetailsPage({
   params,
 }: {
-  params: Promise<{ profileId: string }>;
+  params: Promise<{ profileId: string; bookingId: string }>;
 }) {
-  const { profileId } = await params;
+  const { profileId, bookingId } = await params;
   const supabase = await createClient();
 
   // Get current user session
@@ -30,7 +30,7 @@ export default async function MineBookingerPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <MyBookingsPageContent userId={profileId} />
+      <BookingDetailsContent bookingId={bookingId} userId={profileId} />
     </ProfileLayout>
   );
 }

@@ -6,13 +6,16 @@ import { Separator } from "@/components/ui/separator";
 import { useCartStore } from "@/stores/cart.store";
 import { ArrowLeft, Clock, User } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { BookingStepper } from "@/components/booking";
+import { createBookingWithServices } from "@/server/booking.actions";
+import { toast } from "sonner";
 
 export default function BookingPage() {
   const router = useRouter();
-  const { items, getTotalItems, getTotalPrice, getCurrentStylist } =
+  const { items, getTotalItems, getTotalPrice, getCurrentStylist, clearCart } =
     useCartStore();
+  const [isProcessingBooking, setIsProcessingBooking] = useState(false);
 
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
@@ -24,7 +27,7 @@ export default function BookingPage() {
   }, 0);
 
   // Handle booking completion
-  const handleBookingComplete = (bookingData: {
+  const handleBookingComplete = async (bookingData: {
     startTime?: Date;
     endTime?: Date;
     location: "stylist" | "customer";
@@ -32,8 +35,71 @@ export default function BookingPage() {
     messageToStylist?: string;
     discountCode?: string;
   }) => {
-    console.log("Booking completed:", bookingData);
-    // TODO: Process booking data and redirect to payment/confirmation
+    if (!bookingData.startTime || !bookingData.endTime || !currentStylist) {
+      toast.error("Manglende booking informasjon");
+      return;
+    }
+
+    setIsProcessingBooking(true);
+
+    try {
+      // Extract service IDs from cart items
+      const serviceIds = items.map(item => item.service.id);
+
+      // Prepare address data if customer location is selected
+      let customerAddressData = undefined;
+      if (bookingData.location === "customer" && bookingData.customerAddress) {
+        // Parse the address string (for now, we assume it's a full address)
+        // TODO: Integrate with Mapbox address autocomplete to get structured address
+        const addressParts = bookingData.customerAddress.split(',').map(part => part.trim());
+        customerAddressData = {
+          streetAddress: addressParts[0] || bookingData.customerAddress,
+          city: addressParts[1] || "Oslo", // Default to Oslo for now
+          postalCode: addressParts[2] || "0000",
+          country: "Norge",
+          entryInstructions: "", // Could be added as a separate field in the form
+        };
+      }
+
+      // Create the booking
+      const result = await createBookingWithServices({
+        serviceIds,
+        stylistId: currentStylist.id,
+        startTime: bookingData.startTime,
+        endTime: bookingData.endTime,
+        location: bookingData.location,
+        customerAddress: customerAddressData,
+        messageToStylist: bookingData.messageToStylist,
+        discountCode: bookingData.discountCode,
+        totalPrice,
+        totalDurationMinutes,
+      });
+
+      if (result.error) {
+        toast.error(result.error);
+        return;
+      }
+
+      if (result.data) {
+        // Clear the cart after successful booking
+        clearCart();
+        
+        // TODO: Redirect to Stripe checkout or payment confirmation page
+        // For now, redirect to a success page or bookings list
+        toast.success("Booking opprettet! Videresender til betaling...");
+        
+        // TODO: Implement Stripe Elements or redirect to Stripe Checkout
+        // router.push(`/checkout/${result.data.booking.id}?payment_intent=${result.data.stripePaymentIntentId}`);
+        
+        // Redirect to user's bookings page
+        router.push(`/profiler/${result.data.booking.customer_id}/mine-bookinger`);
+      }
+    } catch (error) {
+      console.error("Error creating booking:", error);
+      toast.error("En feil oppstod ved opprettelse av booking");
+    } finally {
+      setIsProcessingBooking(false);
+    }
   };
 
   useEffect(() => {
@@ -126,6 +192,7 @@ export default function BookingPage() {
                 stylistCanTravel={true} // TODO: Get from stylist details
                 stylistHasOwnPlace={true} // TODO: Get from stylist details
                 onComplete={handleBookingComplete}
+                isProcessing={isProcessingBooking}
               />
             )}
           </div>

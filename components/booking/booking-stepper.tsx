@@ -63,6 +63,7 @@ interface BookingStepperProps {
   stylistCanTravel: boolean;
   stylistHasOwnPlace: boolean;
   onComplete: (bookingData: BookingData) => void;
+  isProcessing?: boolean;
 }
 
 export function BookingStepper({
@@ -71,6 +72,7 @@ export function BookingStepper({
   stylistCanTravel,
   stylistHasOwnPlace,
   onComplete,
+  isProcessing = false,
 }: BookingStepperProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
   const [bookingData, setBookingData] = useState<BookingData>({
@@ -192,7 +194,7 @@ export function BookingStepper({
               <Button
                 variant="outline"
                 onClick={methods.prev}
-                disabled={methods.isFirst}
+                disabled={methods.isFirst || isProcessing}
               >
                 Tilbake
               </Button>
@@ -204,9 +206,9 @@ export function BookingStepper({
                     methods.next();
                   }
                 }}
-                disabled={!canProceedFromStep(methods.current.id)}
+                disabled={!canProceedFromStep(methods.current.id) || isProcessing}
               >
-                {methods.isLast ? "Fullfør booking" : "Neste"}
+                {isProcessing ? "Behandler..." : methods.isLast ? "Fullfør booking" : "Neste"}
               </Button>
             </Stepper.Controls>
           </>

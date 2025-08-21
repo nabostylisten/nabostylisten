@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import {
     bookingsInsertSchema,
     bookingsUpdateSchema,
+    addressesInsertSchema,
+    discountsInsertSchema,
 } from "@/schemas/database.schema";
 import { DatabaseTables } from "@/types";
 
@@ -51,4 +53,528 @@ export async function deleteBooking(
 ) {
     const supabase = await createClient();
     return await supabase.from("bookings").delete().eq("id", id);
+}
+
+interface BookingFilters {
+    search?: string;
+    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+    dateRange?: 'upcoming' | 'completed' | 'all';
+    sortBy?: 'date_asc' | 'date_desc' | 'newest' | 'price_asc' | 'price_desc';
+}
+
+export async function getUserBookings(userId: string, filters: BookingFilters = {}) {
+    const supabase = await createClient();
+    
+    // Get current user to verify access
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError || user.id !== userId) {
+        return { error: "Unauthorized access", data: null };
+    }
+    
+    let query = supabase
+        .from("bookings")
+        .select(`
+            *,
+            stylist:profiles!bookings_stylist_id_fkey(
+                id,
+                full_name,
+                email,
+                role
+            ),
+            addresses(
+                street_address,
+                city,
+                postal_code,
+                entry_instructions
+            ),
+            discounts(
+                code,
+                discount_percentage,
+                discount_amount
+            ),
+            booking_services(
+                services(
+                    id,
+                    title,
+                    description,
+                    price,
+                    currency,
+                    duration_minutes
+                )
+            ),
+            chats(id)
+        `)
+        .eq("customer_id", userId);
+    
+    // Apply search filter
+    if (filters.search?.trim()) {
+        // Search in service titles, stylist names, or booking messages
+        query = query.or(`
+            message_to_stylist.ilike.%${filters.search}%,
+            booking_services.service.title.ilike.%${filters.search}%,
+            stylist.full_name.ilike.%${filters.search}%
+        `);
+    }
+    
+    // Apply status filter
+    if (filters.status) {
+        query = query.eq("status", filters.status);
+    }
+    
+    // Apply date range filter
+    if (filters.dateRange) {
+        const now = new Date().toISOString();
+        if (filters.dateRange === 'upcoming') {
+            query = query.gt("start_time", now);
+        } else if (filters.dateRange === 'completed') {
+            query = query.lt("start_time", now);
+        }
+    }
+    
+    // Apply sorting
+    switch (filters.sortBy) {
+        case 'date_asc':
+            query = query.order("start_time", { ascending: true });
+            break;
+        case 'date_desc':
+            query = query.order("start_time", { ascending: false });
+            break;
+        case 'price_asc':
+            query = query.order("total_price", { ascending: true });
+            break;
+        case 'price_desc':
+            query = query.order("total_price", { ascending: false });
+            break;
+        default:
+        case 'newest':
+            query = query.order("created_at", { ascending: false });
+            break;
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) {
+        return { error: error.message, data: null };
+    }
+    
+    return { data, error: null };
+}
+
+export async function getBookingDetails(bookingId: string) {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+            *,
+            customer:profiles!bookings_customer_id_fkey(
+                id,
+                full_name,
+                email,
+                phone_number
+            ),
+            stylist:profiles!bookings_stylist_id_fkey(
+                id,
+                full_name,
+                email,
+                phone_number,
+                stylist_details(
+                    bio,
+                    instagram_profile,
+                    facebook_profile
+                )
+            ),
+            address:addresses(
+                nickname,
+                street_address,
+                city,
+                postal_code,
+                country,
+                entry_instructions
+            ),
+            discount:discounts(
+                code,
+                description,
+                discount_percentage,
+                discount_amount
+            ),
+            booking_services(
+                service:services(
+                    id,
+                    title,
+                    description,
+                    price,
+                    currency,
+                    duration_minutes,
+                    includes,
+                    requirements,
+                    at_customer_place,
+                    at_stylist_place
+                )
+            ),
+            chats(
+                id,
+                chat_messages(
+                    id,
+                    content,
+                    created_at,
+                    sender_id,
+                    is_read
+                )
+            ),
+            payments(
+                total_amount,
+                platform_fee,
+                stylist_payout_amount,
+                currency,
+                status,
+                succeeded_at,
+                payout_completed_at
+            )
+        `)
+        .eq("id", bookingId)
+        .single();
+    
+    if (error) {
+        return { error: error.message, data: null };
+    }
+    
+    // Check if user has access to this booking
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || (data.customer_id !== user.id && data.stylist_id !== user.id)) {
+        return { error: "Unauthorized access", data: null };
+    }
+    
+    return { data, error: null };
+}
+
+interface CreateBookingWithServicesInput {
+    // Service details
+    serviceIds: string[];
+    stylistId: string;
+    
+    // Timing
+    startTime: Date;
+    endTime: Date;
+    
+    // Location
+    location: "stylist" | "customer";
+    customerAddress?: {
+        streetAddress: string;
+        city: string;
+        postalCode: string;
+        country: string;
+        entryInstructions?: string;
+    };
+    
+    // Additional details
+    messageToStylist?: string;
+    discountCode?: string;
+    
+    // Calculated totals
+    totalPrice: number;
+    totalDurationMinutes: number;
+}
+
+export async function createBookingWithServices(input: CreateBookingWithServicesInput) {
+    const supabase = await createClient();
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+    
+    // Start a transaction-like operation
+    try {
+        // 1. Handle discount validation if provided
+        let discountId: string | null = null;
+        let discountAmount = 0;
+        
+        if (input.discountCode) {
+            const { data: discount, error: discountError } = await supabase
+                .from("discounts")
+                .select("*")
+                .eq("code", input.discountCode)
+                .eq("is_active", true)
+                .single();
+            
+            if (discountError || !discount) {
+                return { error: "Invalid discount code", data: null };
+            }
+            
+            // Check if discount is still valid
+            const now = new Date();
+            const validFrom = new Date(discount.valid_from);
+            const expiresAt = discount.expires_at ? new Date(discount.expires_at) : null;
+            
+            if (now < validFrom || (expiresAt && now > expiresAt)) {
+                return { error: "Discount code expired", data: null };
+            }
+            
+            // Check usage limits
+            if (discount.max_uses && discount.current_uses >= discount.max_uses) {
+                return { error: "Discount code usage limit reached", data: null };
+            }
+            
+            // Check minimum order amount
+            if (discount.minimum_order_amount && (input.totalPrice * 100) < discount.minimum_order_amount) {
+                return { error: "Order amount below minimum for discount", data: null };
+            }
+            
+            // Calculate discount amount
+            if (discount.discount_percentage) {
+                discountAmount = (input.totalPrice * discount.discount_percentage) / 100;
+            } else if (discount.discount_amount) {
+                discountAmount = discount.discount_amount / 100; // Convert from øre to NOK
+            }
+            
+            discountId = discount.id;
+            
+            // Update discount usage count
+            await supabase
+                .from("discounts")
+                .update({ current_uses: discount.current_uses + 1 })
+                .eq("id", discount.id);
+        }
+        
+        // 2. Create address if customer location is selected
+        let addressId: string | null = null;
+        
+        if (input.location === "customer" && input.customerAddress) {
+            const { data: address, error: addressError } = await supabase
+                .from("addresses")
+                .insert({
+                    user_id: user.id,
+                    street_address: input.customerAddress.streetAddress,
+                    city: input.customerAddress.city,
+                    postal_code: input.customerAddress.postalCode,
+                    country: input.customerAddress.country,
+                    entry_instructions: input.customerAddress.entryInstructions,
+                    nickname: "Booking Address",
+                    is_primary: false,
+                    // TODO: Add location coordinates when Mapbox integration is complete
+                    // location: ...
+                })
+                .select()
+                .single();
+            
+            if (addressError || !address) {
+                return { error: "Failed to create address", data: null };
+            }
+            
+            addressId = address.id;
+        }
+        
+        // 3. Calculate final price after discount
+        const finalPrice = Math.max(0, input.totalPrice - discountAmount);
+        
+        // TODO: Create Stripe PaymentIntent here
+        // const paymentIntent = await stripe.paymentIntents.create({
+        //     amount: Math.round(finalPrice * 100), // Convert to øre/cents
+        //     currency: 'nok',
+        //     metadata: {
+        //         customerId: user.id,
+        //         stylistId: input.stylistId,
+        //         serviceIds: input.serviceIds.join(','),
+        //     },
+        //     // Setup for automatic capture 24 hours before appointment
+        //     capture_method: 'manual',
+        // });
+        const stripePaymentIntentId = `pi_temp_${Date.now()}`; // TODO: Replace with actual Stripe PaymentIntent ID
+        
+        // 4. Create the booking
+        const bookingData: DatabaseTables["bookings"]["Insert"] = {
+            customer_id: user.id,
+            stylist_id: input.stylistId,
+            start_time: input.startTime.toISOString(),
+            end_time: input.endTime.toISOString(),
+            message_to_stylist: input.messageToStylist,
+            status: "pending",
+            address_id: addressId,
+            discount_id: discountId,
+            discount_applied: discountAmount,
+            total_price: finalPrice,
+            total_duration_minutes: input.totalDurationMinutes,
+            stripe_payment_intent_id: stripePaymentIntentId,
+        };
+        
+        const { data: booking, error: bookingError } = await supabase
+            .from("bookings")
+            .insert(bookingData)
+            .select()
+            .single();
+        
+        if (bookingError || !booking) {
+            // TODO: Cancel Stripe PaymentIntent if booking creation fails
+            // await stripe.paymentIntents.cancel(stripePaymentIntentId);
+            return { error: "Failed to create booking", data: null };
+        }
+        
+        // 5. Link services to the booking
+        const bookingServices = input.serviceIds.map(serviceId => ({
+            booking_id: booking.id,
+            service_id: serviceId,
+        }));
+        
+        const { error: servicesError } = await supabase
+            .from("booking_services")
+            .insert(bookingServices);
+        
+        if (servicesError) {
+            // Rollback: delete the booking
+            await supabase.from("bookings").delete().eq("id", booking.id);
+            // TODO: Cancel Stripe PaymentIntent
+            // await stripe.paymentIntents.cancel(stripePaymentIntentId);
+            return { error: "Failed to link services to booking", data: null };
+        }
+        
+        // 6. Create a chat for the booking
+        const { error: chatError } = await supabase
+            .from("chats")
+            .insert({
+                booking_id: booking.id,
+            });
+        
+        if (chatError) {
+            // Chat creation failure is not critical, log but don't fail the booking
+            console.error("Failed to create chat for booking:", chatError);
+        }
+        
+        // TODO: Create payment record for tracking
+        // const { error: paymentError } = await supabase
+        //     .from("payments")
+        //     .insert({
+        //         booking_id: booking.id,
+        //         payment_intent_id: stripePaymentIntentId,
+        //         total_amount: Math.round(finalPrice * 100), // In øre
+        //         platform_fee: Math.round(finalPrice * 0.1 * 100), // 10% platform fee in øre - TODO: Configure this
+        //         stylist_payout_amount: Math.round(finalPrice * 0.9 * 100), // 90% to stylist in øre
+        //         currency: 'NOK',
+        //         status: 'pending',
+        //     });
+        
+        // TODO: Send confirmation email to customer
+        // await sendBookingConfirmationEmail({
+        //     to: user.email,
+        //     bookingId: booking.id,
+        //     startTime: input.startTime,
+        //     endTime: input.endTime,
+        //     stylistName: ...,
+        //     services: ...,
+        //     totalPrice: finalPrice,
+        // });
+        
+        // TODO: Send notification email to stylist
+        // await sendNewBookingNotificationEmail({
+        //     to: stylistEmail,
+        //     bookingId: booking.id,
+        //     customerName: user.name,
+        //     startTime: input.startTime,
+        //     endTime: input.endTime,
+        //     services: ...,
+        // });
+        
+        return { 
+            data: {
+                booking,
+                stripePaymentIntentId, // TODO: Return client secret for Stripe payment confirmation
+            },
+            error: null 
+        };
+        
+    } catch (error) {
+        console.error("Error creating booking:", error);
+        return { error: "An unexpected error occurred", data: null };
+    }
+}
+
+export async function confirmBookingPayment(bookingId: string, paymentIntentId: string) {
+    // TODO: Implement Stripe payment confirmation
+    // 1. Confirm payment with Stripe
+    // 2. Update booking status to 'confirmed'
+    // 3. Update payment record status
+    // 4. Send confirmation emails
+    
+    const supabase = await createClient();
+    
+    // For now, just update booking status
+    const { data, error } = await supabase
+        .from("bookings")
+        .update({ status: "confirmed" })
+        .eq("id", bookingId)
+        .select()
+        .single();
+    
+    if (error) {
+        return { error: "Failed to confirm booking", data: null };
+    }
+    
+    return { data, error: null };
+}
+
+export async function cancelBooking(bookingId: string, reason?: string) {
+    const supabase = await createClient();
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+    
+    // Get booking details
+    const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("id", bookingId)
+        .single();
+    
+    if (bookingError || !booking) {
+        return { error: "Booking not found", data: null };
+    }
+    
+    // Check if user is authorized to cancel (customer or stylist)
+    if (booking.customer_id !== user.id && booking.stylist_id !== user.id) {
+        return { error: "Not authorized to cancel this booking", data: null };
+    }
+    
+    // Check if booking can be cancelled (24+ hours before appointment for refund)
+    const startTime = new Date(booking.start_time);
+    const now = new Date();
+    const hoursUntilAppointment = (startTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+    const eligibleForRefund = hoursUntilAppointment >= 24;
+    
+    // TODO: Handle Stripe refund if eligible
+    // if (eligibleForRefund && booking.stripe_payment_intent_id) {
+    //     const refund = await stripe.refunds.create({
+    //         payment_intent: booking.stripe_payment_intent_id,
+    //     });
+    // }
+    
+    // Update booking status
+    const { data, error } = await supabase
+        .from("bookings")
+        .update({ 
+            status: "cancelled",
+            cancelled_at: new Date().toISOString(),
+            cancellation_reason: reason,
+        })
+        .eq("id", bookingId)
+        .select()
+        .single();
+    
+    if (error) {
+        return { error: "Failed to cancel booking", data: null };
+    }
+    
+    // TODO: Send cancellation emails to both parties
+    // await sendCancellationEmail(...);
+    
+    return { 
+        data: {
+            booking: data,
+            eligibleForRefund,
+        }, 
+        error: null 
+    };
 }

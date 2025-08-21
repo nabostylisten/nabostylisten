@@ -79,7 +79,7 @@ export function BookingStatusDialog({
 
       const statusText =
         form.getValues("status") === "confirmed" ? "bekreftet" : "avlyst";
-      toast.success(`Booking ${statusText} successfully`);
+      toast.success(`Booking ${statusText}`);
 
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["user-bookings"] });

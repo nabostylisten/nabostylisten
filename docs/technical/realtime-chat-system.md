@@ -57,6 +57,7 @@ interface RealtimeChatProps {
   username: string; // Display name for current user
   onMessage?: (messages: ChatMessage[]) => void; // Callback for message persistence
   messages?: ChatMessage[]; // Initial messages from database
+  onReadStatusChange?: (data: { chat_id: string; message_id: string; is_read: boolean }) => void; // Callback for read status changes
 }
 ```
 
@@ -67,6 +68,8 @@ interface RealtimeChatProps {
 - Handles message sending and receiving
 - Auto-scrolls to bottom on new messages
 - Shows connection status
+- Processes read status change notifications
+- Triggers UI updates when message read status changes
 
 ### 2. useRealtimeChat Hook
 
@@ -78,6 +81,7 @@ Custom hook that manages Supabase Broadcast connection and message state.
 interface UseRealtimeChatProps {
   roomName: string;
   username: string;
+  onReadStatusChange?: (data: { chat_id: string; message_id: string; is_read: boolean }) => void;
 }
 
 interface ChatMessage {
@@ -94,13 +98,16 @@ interface ChatMessage {
 - Listens for broadcast messages on the specified room
 - Sends messages via broadcast channel
 - Manages connection state and local message array
+- Listens for read status change broadcasts
+- Triggers callbacks when read status changes occur
 
 **Connection Flow**:
 
 1. Creates channel with unique room name
 2. Subscribes to 'message' broadcast events
-3. Updates connection status on subscription success
-4. Cleans up channel on component unmount
+3. Subscribes to 'chat_message_read_status' broadcast events
+4. Updates connection status on subscription success
+5. Cleans up channel on component unmount
 
 ### 3. ChatMessageItem Component
 
@@ -175,6 +182,13 @@ await channel.send({
 channel.on("broadcast", { event: "message" }, (payload) => {
   setMessages((current) => [...current, payload.payload as ChatMessage]);
 });
+
+// Subscribe to read status change events
+channel.on("broadcast", { event: "chat_message_read_status" }, (payload) => {
+  if (onReadStatusChange && payload.payload) {
+    onReadStatusChange(payload.payload);
+  }
+});
 ```
 
 ### Connection Management
@@ -230,6 +244,8 @@ export async function createChatMessage({
 
 ### Read Status Management
 
+The system automatically marks messages as read when a user enters a chat and provides real-time updates to all participants.
+
 ```sql
 -- Mark messages as read when user enters chat
 UPDATE chat_messages
@@ -238,6 +254,13 @@ WHERE chat_id = $1
   AND is_read = false
   AND sender_id != $2; -- Don't mark user's own messages
 ```
+
+**Automatic Mark-as-Read Flow**:
+1. User enters chat page → `markChatMessagesAsRead()` server action called
+2. Database updates `is_read = true` for relevant messages
+3. Database trigger detects read status change
+4. Realtime broadcast sent to all chat participants
+5. React Query caches invalidated for immediate UI updates
 
 ### Unread Count Calculation
 
@@ -250,7 +273,7 @@ const unreadCount = chat_messages.filter(
 
 ### Real-time Read Status Updates
 
-The system uses Supabase's realtime broadcast to notify clients when message read status changes:
+The system uses Supabase's realtime broadcast to provide instant read status updates across all connected clients. This ensures that unread counts and chat indicators are always synchronized in real-time.
 
 ```sql
 -- Database trigger broadcasts read status changes
@@ -277,22 +300,50 @@ $$ LANGUAGE plpgsql;
 ```
 
 ```typescript
-// Client-side real-time listening
+// Client-side real-time listening in BookingChatContent
 const handleReadStatusChange = useCallback(
   (data: { chat_id: string; message_id: string; is_read: boolean }) => {
-    // Invalidate queries to refresh unread counts
-    queryClient.invalidateQueries(["unread-messages", currentUserId]);
-    queryClient.invalidateQueries(["chats", currentUserId]);
+    // Invalidate queries to refresh unread counts across the application
+    queryClient.invalidateQueries({ queryKey: ["unread-messages", currentUserId] });
+    queryClient.invalidateQueries({ queryKey: ["chats", currentUserId] });
   },
   [queryClient, currentUserId]
 );
+
+// Integration with RealtimeChat component
+<RealtimeChat
+  roomName={`booking-${bookingId}`}
+  username={currentUserName}
+  messages={convertedMessages}
+  onMessage={handleMessage}
+  onReadStatusChange={handleReadStatusChange}
+/>
 ```
+
+**End-to-End Read Status Flow**:
+1. **User A** enters chat → Messages marked as read in database
+2. **Database trigger** broadcasts read status change to `booking-${bookingId}` room
+3. **User B** (other participant) receives broadcast via WebSocket
+4. **React Query caches** invalidated for User B
+5. **UI updates** instantly show updated unread counts in navbar and chat overview
+6. **No page refresh** required - all updates happen in real-time
 
 ### UI Indicators
 
-- **Navbar**: Red badge with count on chat icon
-- **Chat Overview**: Highlighted cards with unread counts
-- **Chat Cards**: Visual emphasis and "Lest" separator
+The system provides multiple visual indicators that update in real-time:
+
+- **Navbar**: 
+  - Chat icon with animated ping notification only appears when unread count > 0
+  - Displays "9+" for counts over 9
+  - Automatically disappears when all messages are read
+- **Chat Overview Page**: 
+  - Unread chats sorted to top with visual emphasis
+  - Individual unread badges showing count per chat
+  - "Lest" (Read) separator dividing read and unread chats
+- **Chat Cards**: 
+  - Enhanced styling for unread conversations
+  - Real-time badge updates as messages are read/received
+  - Ping animation for active unread indicators
 
 ## Security Considerations
 
@@ -453,4 +504,28 @@ if (DEBUG_CHAT) {
 - **Compression**: Optimize message payloads
 - **Caching**: Intelligent message caching strategies
 
-This real-time chat system provides a robust foundation for customer-stylist communication while maintaining security, performance, and user experience standards.
+## Summary
+
+This real-time chat system provides a comprehensive solution for customer-stylist communication with the following key achievements:
+
+### ✅ **Core Features Implemented**
+- **Real-time messaging** with instant delivery via Supabase Broadcast
+- **Message persistence** with proper authorization and validation
+- **Automatic read status tracking** with real-time synchronization
+- **Unread count management** with live UI updates
+- **Booking-based chat isolation** ensuring security and privacy
+
+### ✅ **Technical Achievements**
+- **Zero-refresh updates** - all status changes happen in real-time
+- **Optimistic UI updates** for instant user feedback
+- **Proper cache invalidation** preventing stale data issues
+- **Connection resilience** with simplified realtime policies
+- **Database-level security** with comprehensive RLS policies
+
+### ✅ **User Experience**
+- **Intuitive notifications** with conditional chat icon visibility
+- **Visual read/unread separation** in chat overview
+- **Responsive design** across all chat components
+- **Seamless integration** with existing booking workflows
+
+The system successfully balances real-time performance, security, and user experience while providing a solid foundation for future enhancements like file sharing, message reactions, and advanced notification features.

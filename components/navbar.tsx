@@ -89,7 +89,7 @@ export const Navbar = () => {
           {/* Cart Icon - always visible */}
           <>
             <CartHoverCard>
-              <Button variant="ghost" size="sm" className="relative" asChild>
+              <Button variant="outline" size="sm" className="relative" asChild>
                 <Link href="/handlekurv">
                   <ShoppingCart className="w-5 h-5" />
                   {totalItems > 0 && (
@@ -103,11 +103,14 @@ export const Navbar = () => {
 
             {/* Chat Icon - only for authenticated users with unread messages */}
             {user && unreadCount > 0 && (
-              <Button variant="ghost" size="sm" className="relative" asChild>
+              <Button variant="outline" size="sm" className="relative" asChild>
                 <Link href={`/profiler/${user.id}/chat`}>
                   <MessageCircle className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium min-w-5">
-                    {unreadCount > 9 ? '9+' : unreadCount}
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                    <span className="relative inline-flex h-4 w-4 rounded-full bg-primary text-primary-foreground text-xs items-center justify-center font-medium">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
                   </span>
                 </Link>
               </Button>
@@ -178,7 +181,11 @@ export const Navbar = () => {
               ) : (
                 // Unauthenticated User Buttons
                 <div className="hidden md:flex items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleLoginClick}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleLoginClick}
+                  >
                     Logg inn
                   </Button>
                   <Button size="sm" asChild>
@@ -224,10 +231,10 @@ export const Navbar = () => {
             {/* Mobile Auth Buttons */}
             {!loading && !user && (
               <div className="pt-4 border-t space-y-2">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full" 
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full"
                   onClick={() => {
                     setOpen(false);
                     handleLoginClick();

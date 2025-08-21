@@ -1,6 +1,7 @@
 import { createSeedClient } from "@snaplet/seed";
 import type { DatabaseTables } from "./types/index";
 import { addDays, addHours, addMinutes, subDays } from "date-fns";
+import { Database } from "./types/database.types";
 
 // Service category types
 type ServiceCategoryKey =
@@ -162,69 +163,108 @@ async function main() {
     },
   ]);
 
-  // Create users - profiles will be created automatically by trigger
-  await seed.users([
+  type AuthUser = {
+    email: string;
+    full_name: string;
+    role: Database["public"]["Enums"]["user_role"];
+    phone_number: string;
+  };
+
+  // Define test users
+  const testUsers: AuthUser[] = [
     {
       email: "admin@nabostylisten.no",
-      email_confirmed_at: new Date(),
-      raw_user_meta_data: {
-        full_name: "Admin User",
-        role: "admin",
-        phone_number: "+4712345678",
-      },
+      full_name: "Admin User",
+      role: "admin",
+      phone_number: "+4712345678",
     },
-  ]);
-
-  const { users: stylistUsers } = await seed.users([
     {
       email: "maria.hansen@example.com",
-      email_confirmed_at: new Date(),
-      raw_user_meta_data: {
-        full_name: "Maria Hansen",
-        role: "stylist",
-        phone_number: "+4790123456",
-      },
+      full_name: "Maria Hansen",
+      role: "stylist",
+      phone_number: "+4790123456",
     },
     {
       email: "emma.nilsen@example.com",
-      email_confirmed_at: new Date(),
-      raw_user_meta_data: {
-        full_name: "Emma Nilsen",
-        role: "stylist",
-        phone_number: "+4791234567",
-      },
+      full_name: "Emma Nilsen",
+      role: "stylist",
+      phone_number: "+4791234567",
     },
     {
       email: "sophia.larsen@example.com",
-      email_confirmed_at: new Date(),
-      raw_user_meta_data: {
-        full_name: "Sophia Larsen",
-        role: "stylist",
-        phone_number: "+4792345678",
-      },
+      full_name: "Sophia Larsen",
+      role: "stylist",
+      phone_number: "+4792345678",
     },
-  ]);
-
-  const { users: customerUsers } = await seed.users([
     {
       email: "kari.nordmann@example.com",
-      email_confirmed_at: new Date(),
-      raw_user_meta_data: {
-        full_name: "Kari Nordmann",
-        role: "customer",
-        phone_number: "+4793456789",
-      },
+      full_name: "Kari Nordmann",
+      role: "customer",
+      phone_number: "+4793456789",
     },
     {
       email: "ole.hansen@example.com",
-      email_confirmed_at: new Date(),
-      raw_user_meta_data: {
-        full_name: "Ole Hansen",
-        role: "customer",
-        phone_number: "+4794567890",
-      },
+      full_name: "Ole Hansen",
+      role: "customer",
+      phone_number: "+4794567890",
     },
-  ]);
+  ];
+
+  // Helper function to create auth user with common fields
+  function createAuthUser(user: AuthUser) {
+    const encryptedPassword =
+      "$2a$10$lzw8ZqDNq.pUUZI3/l0VoOLkKqr2bm4l8p0qGLXF2bYzKxHQl6W7K"; // password123
+    const now = new Date();
+    const createdAt = subDays(now, 30); // Created 30 days ago
+    const invitedAt = subDays(createdAt, 1); // Invited 1 day before creation
+    const confirmationSentAt = addMinutes(invitedAt, 5); // Confirmation sent 5 minutes after invite
+    const confirmedAt = addHours(confirmationSentAt, 2); // Confirmed 2 hours after confirmation sent
+    const lastSignInAt = subDays(now, 1); // Last signed in yesterday
+
+    return {
+      email: user.email,
+      created_at: createdAt,
+      updated_at: lastSignInAt, // Updated when last signed in
+      invited_at: invitedAt,
+      confirmation_sent_at: confirmationSentAt,
+      email_confirmed_at: confirmedAt,
+      last_sign_in_at: lastSignInAt,
+      encrypted_password: encryptedPassword,
+      banned_until: null,
+      aud: "authenticated" as const,
+      role: "authenticated" as const,
+      raw_app_meta_data: {
+        provider: "email",
+        providers: ["email"],
+      },
+      raw_user_meta_data: {
+        full_name: user.full_name,
+        role: user.role,
+        phone_number: user.phone_number,
+      },
+    };
+  }
+
+  // Create users with proper auth setup - profiles will be created automatically by trigger
+  const { users: allUsers } = await seed.users(testUsers.map(createAuthUser));
+
+  // Create email identities for all users
+  await seed.identities(
+    allUsers.map((user) => ({
+      user_id: user.id,
+      provider_id: user.id,
+      provider: "email",
+      identity_data: {
+        sub: user.id,
+        email: user.email,
+      },
+      last_sign_in_at: new Date(),
+    })),
+  );
+
+  // Get user references for seeding related data
+  const stylistUsers = allUsers.slice(1, 4); // Maria, Emma, Sophia
+  const customerUsers = allUsers.slice(4, 6); // Kari, Ole
 
   // Create stylist details (profiles will exist due to trigger)
   await seed.stylist_details([

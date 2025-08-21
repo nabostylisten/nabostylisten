@@ -25,15 +25,15 @@ type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
   stylist: {
     id: string;
     full_name: string | null;
-    email: string;
+    email: string | null;
     role: string;
   } | null;
-  addresses: Array<{
+  addresses: {
     street_address: string;
     city: string;
     postal_code: string;
-    entry_instructions?: string | null;
-  }> | null;
+    entry_instructions: string | null;
+  } | null;
   discounts: {
     code: string;
     discount_percentage: number | null;
@@ -49,7 +49,7 @@ type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
       duration_minutes: number;
     } | null;
   }>;
-  chats: { id: string }[] | null;
+  chats: { id: string } | null;
 };
 
 interface BookingCardProps {
@@ -63,7 +63,7 @@ export function BookingCard({ booking }: BookingCardProps) {
   const endTime = new Date(booking.end_time);
   const services =
     booking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
-  const hasChat = booking.chats && booking.chats.length > 0;
+  const hasChat = booking.chats && booking.chats.id;
 
   // Status styling
   const getStatusBadge = (status: string) => {

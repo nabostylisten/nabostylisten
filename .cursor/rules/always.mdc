@@ -79,6 +79,13 @@ Nabostylisten is a Norwegian marketplace platform connecting customers with prof
 - Use Zod schemas from `schemas/database.schema.ts` for validation
 - Prefer to **infer** types from database instead of typing it. Example: `type Booking = DatabaseTables["bookings"]["Update"]` or `z.infer<typeof BookingStatusSchema>`
 
+### Shared Filter Types Rule
+
+- **Filter Type Location**: When client-side filters are saved in URL parameters AND used in server actions, store the shared filter types in `types/index.ts` (runtime-agnostic location)
+- **Type Consistency**: Both client components and server actions must import from the same centralized type definition
+- **Utility Functions**: Include URL parameter conversion utilities alongside the filter types
+- **Examples**: `BookingFilters`, `ServiceFilters` with corresponding `searchParamsTo[FilterName]` and `[filterName]ToSearchParams` functions
+
 ### Naming Conventions
 
 - Use camelCase for variables and functions

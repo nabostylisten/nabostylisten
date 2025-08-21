@@ -1091,14 +1091,17 @@ async function main() {
     },
   ]);
 
-  // Create diverse bookings for testing
-  const { bookings } = await seed.bookings([
+  // Create more bookings for pagination testing
+  const allBookingsToCreate: DatabaseTables["bookings"]["Insert"][] = [];
+  
+  // Add the original 6 specific bookings
+  const specificBookings: DatabaseTables["bookings"]["Insert"][] = [
     // 1. Upcoming confirmed booking with discount - Kari Nordmann
     {
       customer_id: customerUsers[0].id, // Kari Nordmann
       stylist_id: stylistUsers[0].id, // Maria Hansen
-      start_time: addDays(new Date(), 7), // Next week
-      end_time: addMinutes(addDays(new Date(), 7), 90), // 90 minutes later
+      start_time: addDays(new Date(), 7).toISOString(), // Next week
+      end_time: addMinutes(addDays(new Date(), 7), 90).toISOString(), // 90 minutes later
       message_to_stylist:
         "Håper du kan hjelpe meg med en fin balayage som passer til hudfarge!",
       status: "confirmed",
@@ -1114,8 +1117,8 @@ async function main() {
     {
       customer_id: customerUsers[0].id, // Kari Nordmann
       stylist_id: stylistUsers[1].id, // Emma Nilsen
-      start_time: addDays(new Date(), 3), // In 3 days
-      end_time: addMinutes(addDays(new Date(), 3), 60), // 60 minutes later
+      start_time: addDays(new Date(), 3).toISOString(), // In 3 days
+      end_time: addMinutes(addDays(new Date(), 3), 60).toISOString(), // 60 minutes later
       message_to_stylist: "Første gang jeg skal ha festmakeup, er litt nervøs!",
       status: "pending",
       address_id: customerAddresses[0].id, // At customer's sommerhus
@@ -1130,8 +1133,8 @@ async function main() {
     {
       customer_id: customerUsers[0].id, // Kari Nordmann
       stylist_id: stylistUsers[2].id, // Sophia Larsen
-      start_time: subDays(new Date(), 30), // 30 days ago
-      end_time: addMinutes(subDays(new Date(), 30), 120), // 120 minutes later
+      start_time: subDays(new Date(), 30).toISOString(), // 30 days ago
+      end_time: addMinutes(subDays(new Date(), 30), 120).toISOString(), // 120 minutes later
       message_to_stylist:
         "Trenger klassiske vipper for bryllupet til min søster",
       status: "completed",
@@ -1147,11 +1150,11 @@ async function main() {
     {
       customer_id: customerUsers[0].id, // Kari Nordmann
       stylist_id: stylistUsers[0].id, // Maria Hansen
-      start_time: subDays(new Date(), 7), // 7 days ago
-      end_time: addMinutes(subDays(new Date(), 7), 45), // 45 minutes later
+      start_time: subDays(new Date(), 7).toISOString(), // 7 days ago
+      end_time: addMinutes(subDays(new Date(), 7), 45).toISOString(), // 45 minutes later
       message_to_stylist: "Bare et enkelt klipp, takk!",
       status: "cancelled",
-      cancelled_at: subDays(new Date(), 8), // Cancelled day before
+      cancelled_at: subDays(new Date(), 8).toISOString(), // Cancelled day before
       cancellation_reason: "Måtte reise på jobb uventet",
       address_id: null,
       discount_id: null,
@@ -1165,8 +1168,8 @@ async function main() {
     {
       customer_id: customerUsers[1].id, // Ole Hansen
       stylist_id: stylistUsers[1].id, // Emma Nilsen
-      start_time: addDays(new Date(), 14), // In 2 weeks
-      end_time: addMinutes(addDays(new Date(), 14), 180), // 3 hours later
+      start_time: addDays(new Date(), 14).toISOString(), // In 2 weeks
+      end_time: addMinutes(addDays(new Date(), 14), 180).toISOString(), // 3 hours later
       message_to_stylist:
         "Dette er til bryllupet mitt! Ønsker både makeup og hår til forloveden min. Vi møtes hjemme hos oss.",
       status: "confirmed",
@@ -1182,8 +1185,8 @@ async function main() {
     {
       customer_id: customerUsers[1].id, // Ole Hansen
       stylist_id: stylistUsers[2].id, // Sophia Larsen
-      start_time: subDays(new Date(), 45), // 45 days ago
-      end_time: addMinutes(subDays(new Date(), 45), 75), // 75 minutes later
+      start_time: subDays(new Date(), 45).toISOString(), // 45 days ago
+      end_time: addMinutes(subDays(new Date(), 45), 75).toISOString(), // 75 minutes later
       message_to_stylist: "Både brynslaminering og forming, takk!",
       status: "completed",
       address_id: null,
@@ -1193,12 +1196,61 @@ async function main() {
       total_duration_minutes: 75,
       stripe_payment_intent_id: "pi_test_multiple_services_006",
     },
-  ]);
+  ];
+
+  allBookingsToCreate.push(...specificBookings);
+  
+  // Generate additional bookings for pagination testing
+  const statuses: Array<Database["public"]["Enums"]["booking_status"]> = ['confirmed', 'completed', 'pending', 'cancelled'];
+  const messages = [
+    "Gleder meg til timen!",
+    "Første gang hos dere, er spent!",
+    "Håper dere kan hjelpe meg med en fin look",
+    "Trenger en quick fix før fest",
+    "Vanlig trim og styling, takk",
+    "Vil gjerne prøve noe nytt",
+    "Samme som sist, det var perfekt",
+    "Kan vi gjøre dette litt raskere denne gangen?",
+  ];
+
+  // Create 20 additional bookings to test pagination (total will be 26)
+  for (let i = 0; i < 20; i++) {
+    const customer = customerUsers[Math.floor(Math.random() * customerUsers.length)];
+    const stylist = stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
+    const status = statuses[Math.floor(Math.random() * statuses.length)];
+    const isUpcoming = Math.random() > 0.5;
+    const baseDate = isUpcoming ? addDays(new Date(), Math.floor(Math.random() * 30)) : subDays(new Date(), Math.floor(Math.random() * 60));
+    const duration = 60 + (Math.floor(Math.random() * 3) * 30); // 60, 90, or 120 minutes
+    const price = 800 + Math.floor(Math.random() * 1500); // 800-2300 NOK
+    
+    const bookingData: DatabaseTables["bookings"]["Insert"] = {
+      customer_id: customer.id,
+      stylist_id: stylist.id,
+      start_time: baseDate.toISOString(),
+      end_time: addMinutes(baseDate, duration).toISOString(),
+      message_to_stylist: messages[Math.floor(Math.random() * messages.length)],
+      status: status,
+      address_id: Math.random() > 0.7 ? customerAddresses[0].id : null, // 30% at customer's place
+      discount_id: null,
+      discount_applied: 0,
+      total_price: price,
+      total_duration_minutes: duration,
+      stripe_payment_intent_id: `pi_test_generated_${i + 7}`, // Starting from 7
+      ...(status === 'cancelled' && {
+        cancelled_at: subDays(baseDate, 1).toISOString(),
+        cancellation_reason: "Endret planer"
+      })
+    };
+    
+    allBookingsToCreate.push(bookingData);
+  }
+
+  const { bookings } = await seed.bookings(allBookingsToCreate);
 
   console.log("-- Linking services to bookings...");
 
-  // Link services to bookings
-  await seed.booking_services([
+  // Link services to bookings - first the specific ones, then random services for the generated bookings
+  const bookingServiceLinks = [
     // Booking 1: Balayage service
     { booking_id: bookings[0].id, service_id: services[2].id }, // Balayage service
 
@@ -1218,7 +1270,26 @@ async function main() {
     // Booking 6: Bryn services - multiple
     { booking_id: bookings[5].id, service_id: services[31].id }, // Brynslaminering
     { booking_id: bookings[5].id, service_id: services[33].id }, // Brynspluking
-  ]);
+  ];
+
+  // Link random services to the generated bookings (starting from index 6)
+  for (let i = 6; i < bookings.length; i++) {
+    const booking = bookings[i];
+    // Pick 1-2 random services
+    const numServices = Math.random() > 0.7 ? 2 : 1;
+    
+    for (let j = 0; j < numServices; j++) {
+      const randomService = services[Math.floor(Math.random() * services.length)];
+      if (randomService && booking) {
+        bookingServiceLinks.push({
+          booking_id: booking.id,
+          service_id: randomService.id
+        });
+      }
+    }
+  }
+
+  await seed.booking_services(bookingServiceLinks);
 
   console.log("-- Creating chats for some bookings...");
 

@@ -239,3 +239,48 @@ export interface UnsplashPhoto {
 }
 
 export type UnsplashRandomArrayResponse = UnsplashPhoto[];
+
+// Booking filters for user bookings page
+export interface BookingFilters {
+  search?: string;
+  status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  dateRange?: 'upcoming' | 'completed' | 'all';
+  sortBy?: 'date_asc' | 'date_desc' | 'newest' | 'price_asc' | 'price_desc';
+  page?: number;
+  limit?: number;
+}
+
+// URL search parameters for bookings (as they appear in the URL)
+export interface BookingSearchParams {
+  search?: string;
+  status?: string;
+  sort?: string;
+}
+
+// Utility function to convert URL search params to BookingFilters (excluding dateRange and pagination)
+export function searchParamsToBookingFilters(
+  searchParams: BookingSearchParams,
+  dateRange?: 'upcoming' | 'completed' | 'all',
+  page?: number,
+  limit?: number,
+): BookingFilters {
+  return {
+    search: searchParams.search,
+    status: searchParams.status as BookingFilters["status"],
+    dateRange,
+    sortBy: searchParams.sort as BookingFilters["sortBy"] || "date_desc",
+    page: page || 1,
+    limit: limit || 4,
+  };
+}
+
+// Utility function to convert BookingFilters back to URL search params
+export function bookingFiltersToSearchParams(
+  filters: BookingFilters,
+): BookingSearchParams {
+  return {
+    search: filters.search,
+    status: filters.status,
+    sort: filters.sortBy === "date_desc" ? undefined : filters.sortBy,
+  };
+}

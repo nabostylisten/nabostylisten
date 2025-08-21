@@ -14,12 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-
-interface BookingFilters {
-  search?: string;
-  status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  sortBy?: 'date_asc' | 'date_desc' | 'newest' | 'price_asc' | 'price_desc';
-}
+import type { BookingFilters } from "@/types";
 
 export function MyBookingsFilter() {
   const router = useRouter();

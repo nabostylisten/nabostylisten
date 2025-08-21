@@ -7,7 +7,7 @@ import {
     addressesInsertSchema,
     discountsInsertSchema,
 } from "@/schemas/database.schema";
-import { DatabaseTables } from "@/types";
+import type { DatabaseTables, BookingFilters } from "@/types";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -55,12 +55,6 @@ export async function deleteBooking(
     return await supabase.from("bookings").delete().eq("id", id);
 }
 
-interface BookingFilters {
-    search?: string;
-    status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-    dateRange?: 'upcoming' | 'completed' | 'all';
-    sortBy?: 'date_asc' | 'date_desc' | 'newest' | 'price_asc' | 'price_desc';
-}
 
 export async function getUserBookings(userId: string, filters: BookingFilters = {}) {
     const supabase = await createClient();
@@ -68,8 +62,13 @@ export async function getUserBookings(userId: string, filters: BookingFilters = 
     // Get current user to verify access
     const { data: { user }, error: userError } = await supabase.auth.getUser();
     if (!user || userError || user.id !== userId) {
-        return { error: "Unauthorized access", data: null };
+        return { error: "Unauthorized access", data: null, total: 0, totalPages: 0 };
     }
+    
+    const page = filters.page || 1;
+    const limit = filters.limit || 4;
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
     
     let query = supabase
         .from("bookings")
@@ -151,13 +150,52 @@ export async function getUserBookings(userId: string, filters: BookingFilters = 
             break;
     }
     
-    const { data, error } = await query;
+    // Get total count for pagination
+    const countQuery = supabase
+        .from("bookings")
+        .select("*", { count: 'exact', head: true })
+        .eq("customer_id", userId);
     
-    if (error) {
-        return { error: error.message, data: null };
+    // Apply the same filters for counting
+    if (filters.search?.trim()) {
+        countQuery.or(`
+            message_to_stylist.ilike.%${filters.search}%,
+            booking_services.service.title.ilike.%${filters.search}%,
+            stylist.full_name.ilike.%${filters.search}%
+        `);
     }
     
-    return { data, error: null };
+    if (filters.status) {
+        countQuery.eq("status", filters.status);
+    }
+    
+    if (filters.dateRange) {
+        const now = new Date().toISOString();
+        if (filters.dateRange === 'upcoming') {
+            countQuery.gt("start_time", now);
+        } else if (filters.dateRange === 'completed') {
+            countQuery.lt("start_time", now);
+        }
+    }
+    
+    // Execute queries
+    const [{ data, error }, { count, error: countError }] = await Promise.all([
+        query.range(from, to),
+        countQuery
+    ]);
+    
+    if (error) {
+        return { error: error.message, data: null, total: 0, totalPages: 0 };
+    }
+    
+    if (countError) {
+        return { error: countError.message, data: null, total: 0, totalPages: 0 };
+    }
+    
+    const total = count || 0;
+    const totalPages = Math.ceil(total / limit);
+    
+    return { data, error: null, total, totalPages, currentPage: page };
 }
 
 export async function getBookingDetails(bookingId: string) {

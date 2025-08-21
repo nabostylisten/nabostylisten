@@ -1,27 +1,49 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getUserBookings } from "@/server/booking.actions";
 import { BookingCard } from "./booking-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarX, Search } from "lucide-react";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useState, useEffect } from "react";
+import { searchParamsToBookingFilters } from "@/types";
 
 interface MyBookingsListProps {
   userId: string;
-  dateRange: 'upcoming' | 'completed' | 'all';
+  dateRange: "upcoming" | "completed" | "all";
 }
 
 export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
   const searchParams = useSearchParams();
-  
-  const filters = {
-    search: searchParams.get("search") || undefined,
-    status: (searchParams.get("status") as any) || undefined,
+  const router = useRouter();
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filters = searchParamsToBookingFilters(
+    {
+      search: searchParams.get("search") || undefined,
+      status: searchParams.get("status") || undefined,
+      sort: searchParams.get("sort") || undefined,
+    },
     dateRange,
-    sortBy: (searchParams.get("sort") as any) || "date_desc",
-  };
+    currentPage,
+    4
+  );
+
+  // Reset page to 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filters.search, filters.status, dateRange, filters.sortBy]);
 
   const {
     data: bookingsResponse,
@@ -78,7 +100,173 @@ export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
   }
 
   const bookings = bookingsResponse?.data || [];
+  const total = bookingsResponse?.total || 0;
+  const totalPages = bookingsResponse?.totalPages || 0;
   const hasSearch = filters.search?.trim();
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const renderPaginationItems = () => {
+    const items = [];
+    const showEllipsis = totalPages > 7;
+
+    if (!showEllipsis) {
+      // Show all pages if 7 or fewer
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(
+          <PaginationItem key={i}>
+            <PaginationLink
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(i);
+              }}
+              isActive={currentPage === i}
+            >
+              {i}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    } else {
+      // Show ellipsis for many pages
+      if (currentPage <= 4) {
+        // Show 1,2,3,4,5...last
+        for (let i = 1; i <= 5; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(i);
+                }}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(totalPages);
+              }}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      } else if (currentPage >= totalPages - 3) {
+        // Show first...second-to-last,last-1,last
+        items.push(
+          <PaginationItem key={1}>
+            <PaginationLink
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(1);
+              }}
+              isActive={currentPage === 1}
+            >
+              1
+            </PaginationLink>
+          </PaginationItem>
+        );
+        items.push(
+          <PaginationItem key="ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(i);
+                }}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+      } else {
+        // Show first...current-1,current,current+1...last
+        items.push(
+          <PaginationItem key={1}>
+            <PaginationLink
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(1);
+              }}
+              isActive={currentPage === 1}
+            >
+              1
+            </PaginationLink>
+          </PaginationItem>
+        );
+        items.push(
+          <PaginationItem key="ellipsis-start">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          items.push(
+            <PaginationItem key={i}>
+              <PaginationLink
+                href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  handlePageChange(i);
+                }}
+                isActive={currentPage === i}
+              >
+                {i}
+              </PaginationLink>
+            </PaginationItem>
+          );
+        }
+        items.push(
+          <PaginationItem key="ellipsis-end">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+        items.push(
+          <PaginationItem key={totalPages}>
+            <PaginationLink
+              href="#"
+              onClick={(e) => {
+                e.preventDefault();
+                handlePageChange(totalPages);
+              }}
+              isActive={currentPage === totalPages}
+            >
+              {totalPages}
+            </PaginationLink>
+          </PaginationItem>
+        );
+      }
+    }
+
+    return items;
+  };
 
   if (bookings.length === 0) {
     return (
@@ -89,23 +277,22 @@ export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
               <Search className="w-12 h-12 mx-auto text-muted-foreground" />
               <h3 className="text-lg font-medium">Ingen treff</h3>
               <p className="text-muted-foreground">
-                Vi fant ingen bookinger som matcher søket ditt "{filters.search}".
+                Vi fant ingen bookinger som matcher søket ditt "{filters.search}
+                ".
               </p>
             </div>
           ) : (
             <div className="space-y-3">
               <CalendarX className="w-12 h-12 mx-auto text-muted-foreground" />
               <h3 className="text-lg font-medium">
-                {dateRange === 'upcoming' 
-                  ? 'Ingen kommende bookinger' 
-                  : 'Ingen tidligere bookinger'
-                }
+                {dateRange === "upcoming"
+                  ? "Ingen kommende bookinger"
+                  : "Ingen tidligere bookinger"}
               </h3>
               <p className="text-muted-foreground">
-                {dateRange === 'upcoming' 
-                  ? 'Du har ingen bookinger som er planlagt.' 
-                  : 'Du har ingen bookinger som er fullført eller avlyst.'
-                }
+                {dateRange === "upcoming"
+                  ? "Du har ingen bookinger som er planlagt."
+                  : "Du har ingen bookinger som er fullført eller avlyst."}
               </p>
             </div>
           )}
@@ -115,13 +302,54 @@ export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {bookings.map((booking) => (
-        <BookingCard
-          key={booking.id}
-          booking={booking}
-        />
-      ))}
+    <div className="space-y-6">
+      {/* Bookings List */}
+      <div className="space-y-4">
+        {bookings.map((booking) => (
+          <BookingCard key={booking.id} booking={booking} />
+        ))}
+      </div>
+
+      {/* Pagination - only show if more than 4 bookings total */}
+      {total > 4 && (
+        <div className="flex justify-center">
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                      handlePageChange(currentPage - 1);
+                    }
+                  }}
+                  className={
+                    currentPage <= 1 ? "pointer-events-none opacity-50" : ""
+                  }
+                />
+              </PaginationItem>
+              {renderPaginationItems()}
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                      handlePageChange(currentPage + 1);
+                    }
+                  }}
+                  className={
+                    currentPage >= totalPages
+                      ? "pointer-events-none opacity-50"
+                      : ""
+                  }
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }

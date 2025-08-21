@@ -84,22 +84,22 @@ export const Navbar = () => {
               </Button>
             )}
 
-          {/* Cart Icon - only show if user has items */}
-          {totalItems > 0 && (
-            <>
-              <CartHoverCard>
-                <Button variant="ghost" size="sm" className="relative" asChild>
-                  <Link href="/handlekurv">
-                    <ShoppingCart className="w-5 h-5" />
+          {/* Cart Icon - always visible */}
+          <>
+            <CartHoverCard>
+              <Button variant="ghost" size="sm" className="relative" asChild>
+                <Link href="/handlekurv">
+                  <ShoppingCart className="w-5 h-5" />
+                  {totalItems > 0 && (
                     <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium min-w-5">
                       {totalItems}
                     </span>
-                  </Link>
-                </Button>
-              </CartHoverCard>
-              <Separator orientation="vertical" className="h-6" />
-            </>
-          )}
+                  )}
+                </Link>
+              </Button>
+            </CartHoverCard>
+            <Separator orientation="vertical" className="h-6" />
+          </>
 
           {/* Theme Switcher */}
           <ThemeSwitcher />

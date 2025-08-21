@@ -34,10 +34,6 @@ export const CartHoverCard = ({ children }: CartHoverCardProps) => {
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
 
-  if (totalItems === 0) {
-    return null;
-  }
-
   const handleRemoveFromCart = (serviceId: string) => {
     removeFromCart(serviceId);
     setRemoveServiceId(null);
@@ -51,14 +47,30 @@ export const CartHoverCard = ({ children }: CartHoverCardProps) => {
           <div className="flex items-center gap-2">
             <ShoppingCart className="w-4 h-4" />
             <h4 className="font-semibold">Handlekurv</h4>
-            <span className="text-sm text-muted-foreground">
-              ({totalItems} {totalItems === 1 ? "tjeneste" : "tjenester"})
-            </span>
+            {totalItems > 0 && (
+              <span className="text-sm text-muted-foreground">
+                ({totalItems} {totalItems === 1 ? "tjeneste" : "tjenester"})
+              </span>
+            )}
           </div>
 
-          <div className="space-y-3 max-h-60 overflow-y-auto">
-            {items.map((item) => (
-              <div key={item.service.id} className="pb-3 border-b last:border-b-0">
+          {totalItems === 0 ? (
+            <div className="text-center py-6">
+              <ShoppingCart className="w-12 h-12 mx-auto mb-3 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground mb-4">
+                Handlekurven din er tom
+              </p>
+              <Button asChild size="sm">
+                <Link href="/tjenester">
+                  Utforsk tjenester
+                </Link>
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {items.map((item) => (
+                  <div key={item.service.id} className="pb-3 border-b last:border-b-0">
                 <div className="flex items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <h5 className="font-medium text-sm truncate">{item.service.title}</h5>
@@ -142,8 +154,8 @@ export const CartHoverCard = ({ children }: CartHoverCardProps) => {
                     </AlertDialogContent>
                   </AlertDialog>
                 </div>
-              </div>
-            ))}
+                  </div>
+                ))}
           </div>
 
           <div className="pt-3 border-t">
@@ -160,6 +172,8 @@ export const CartHoverCard = ({ children }: CartHoverCardProps) => {
               </Link>
             </Button>
           </div>
+            </>
+          )}
         </div>
       </HoverCardContent>
     </HoverCard>

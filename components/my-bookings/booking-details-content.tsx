@@ -38,6 +38,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { BookingStatusDialog } from "./booking-status-dialog";
+import { BookingDetailsSkeleton } from "./booking-details-skeleton";
 
 interface BookingDetailsContentProps {
   bookingId: string;
@@ -64,20 +65,7 @@ export function BookingDetailsContent({
   });
 
   if (isLoading) {
-    return (
-      <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="max-w-4xl mx-auto w-full">
-          <div className="flex items-center justify-center py-12">
-            <div className="text-center">
-              <Loader2 className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
-              <p className="text-muted-foreground">
-                Laster booking detaljer...
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+    return <BookingDetailsSkeleton />;
   }
 
   if (error || !bookingResponse?.data) {
@@ -456,32 +444,33 @@ export function BookingDetailsContent({
         </Card>
 
         {/* Chat Link */}
-        {booking.chats && Array.isArray(booking.chats) && booking.chats.length > 0 && (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquare className="w-5 h-5" />
-                Chat
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Du kan chatte med stylisten om denne bookingen.
-                </p>
-                <Button variant="outline" asChild>
-                  <Link href={`/chat/${booking.chats[0].id}`}>
-                    <MessageSquare className="w-4 h-4 mr-2" />
-                    Åpne chat
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
+        {booking.chats &&
+          Array.isArray(booking.chats) &&
+          booking.chats.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquare className="w-5 h-5" />
+                  Chat
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    Du kan chatte med stylisten om denne bookingen.
+                  </p>
+                  <Button variant="outline" asChild>
+                    <Link href={`/chat/${booking.chats[0].id}`}>
+                      <MessageSquare className="w-4 h-4 mr-2" />
+                      Åpne chat
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
       </div>
-      
+
       {/* Status Dialog for Stylists */}
       {userRole === "stylist" && (
         <BookingStatusDialog

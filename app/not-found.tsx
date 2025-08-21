@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -7,8 +10,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
+  const router = useRouter();
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
@@ -24,6 +29,14 @@ export default function NotFound() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+              className="w-full flex gap-2"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              Gå tilbake
+            </Button>
             <Button asChild className="w-full">
               <Link href="/">Gå til hovedsiden</Link>
             </Button>

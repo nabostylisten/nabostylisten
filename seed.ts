@@ -55,6 +55,13 @@ const categoryImages: Record<ServiceCategoryKey, string[]> = {
   ],
 };
 
+type SeedPassword = "demo-password";
+
+const seedPasswordToEncrypted: Record<SeedPassword, string> = {
+  "demo-password":
+    "$2a$10$JEpaf.puIXxfqjkPaNCLle3a0yB4x2XbnTUH7L5SoK7J45bpeykla",
+};
+
 function getRandomImagesForCategory(
   categoryKey: ServiceCategoryKey,
   count: number = 3,
@@ -210,25 +217,48 @@ async function main() {
     },
   ];
 
+  const generateToken = () => {
+    return Math.random().toString(36).substring(2, 15) +
+      Math.random().toString(36).substring(2, 15);
+  };
+
   // Helper function to create auth user with common fields
   function createAuthUser(user: AuthUser) {
-    const encryptedPassword =
-      "$2a$10$lzw8ZqDNq.pUUZI3/l0VoOLkKqr2bm4l8p0qGLXF2bYzKxHQl6W7K"; // password123
+    const encryptedPassword = seedPasswordToEncrypted["demo-password"];
     const now = new Date();
     const createdAt = subDays(now, 30); // Created 30 days ago
-    const invitedAt = subDays(createdAt, 1); // Invited 1 day before creation
-    const confirmationSentAt = addMinutes(invitedAt, 5); // Confirmation sent 5 minutes after invite
-    const confirmedAt = addHours(confirmationSentAt, 2); // Confirmed 2 hours after confirmation sent
+    const confirmedAt = addMinutes(createdAt, 5); // Confirmed 5 minutes after creation
     const lastSignInAt = subDays(now, 1); // Last signed in yesterday
 
     return {
       email: user.email,
+      instance_id: "00000000-0000-0000-0000-000000000000",
       created_at: createdAt,
-      updated_at: lastSignInAt, // Updated when last signed in
-      invited_at: invitedAt,
-      confirmation_sent_at: confirmationSentAt,
+      updated_at: lastSignInAt,
+      invited_at: null,
+      confirmation_token: generateToken(),
+      confirmation_sent_at: null,
+      recovery_token: generateToken(),
+      recovery_sent_at: createdAt, // Set to creation time
+      email_change_token_new: generateToken(),
+      email_change: generateToken(),
+      email_change_sent_at: null,
       email_confirmed_at: confirmedAt,
+      confirmed_at: confirmedAt,
       last_sign_in_at: lastSignInAt,
+      phone: null,
+      phone_confirmed_at: null,
+      phone_change: generateToken(),
+      phone_change_token: generateToken(),
+      phone_change_sent_at: null,
+      email_change_token_current: generateToken(),
+      email_change_confirm_status: 0,
+      reauthentication_token: generateToken(),
+      reauthentication_sent_at: null,
+      is_sso_user: false,
+      deleted_at: null, // CRITICAL: User is NOT deleted
+      is_anonymous: false,
+      is_super_admin: null, // Not super admin
       encrypted_password: encryptedPassword,
       banned_until: null,
       aud: "authenticated" as const,
@@ -238,9 +268,13 @@ async function main() {
         providers: ["email"],
       },
       raw_user_meta_data: {
+        sub: "", // Will be set by Supabase
+        email: user.email,
         full_name: user.full_name,
         role: user.role,
         phone_number: user.phone_number,
+        email_verified: true,
+        phone_verified: false,
       },
     };
   }

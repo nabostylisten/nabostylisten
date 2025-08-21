@@ -1,18 +1,20 @@
 import { AuthCard } from "@/components/auth";
 
 interface PageProps {
-  searchParams: {
+  searchParams: Promise<{
     redirectTo?: string;
-  };
+  }>;
 }
 
-export default function Page({ searchParams }: PageProps) {
+export default async function Page({ searchParams }: PageProps) {
+  const { redirectTo } = await searchParams;
+  
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
         <AuthCard
           initialMode="login"
-          redirectTo={searchParams.redirectTo}
+          redirectTo={redirectTo}
         />
       </div>
     </div>

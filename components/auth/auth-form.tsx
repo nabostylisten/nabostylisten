@@ -1,9 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Eye, EyeOff } from "lucide-react";
 import { useAuthForm, type AuthMode } from "./use-auth-form";
 
 interface AuthFormProps {
@@ -32,12 +34,14 @@ export function AuthForm({
   onModeChange,
   labels = {},
 }: AuthFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
   const {
     mode,
     step,
     email,
     fullName,
     phoneNumber,
+    password,
     otpCode,
     error,
     isLoading,
@@ -45,6 +49,7 @@ export function AuthForm({
     setEmail,
     setFullName,
     setPhoneNumber,
+    setPassword,
     setOtpCode,
     setStep,
     setIsSuccess,
@@ -165,12 +170,19 @@ export function AuthForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode === "signup" && (
           <div className="grid gap-2">
-            <Label htmlFor="full-name">Fullt navn</Label>
+            <Label htmlFor="full-name" className="flex items-center gap-2">
+              Fullt navn
+              {process.env.NODE_ENV === "development" && password && (
+                <span className="text-xs text-muted-foreground">
+                  (valgfritt i utvikling)
+                </span>
+              )}
+            </Label>
             <Input
               id="full-name"
               type="text"
               placeholder="Ola Nordmann"
-              required
+              required={!(process.env.NODE_ENV === "development" && password)}
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -189,14 +201,82 @@ export function AuthForm({
           />
         </div>
 
+        {/* Development-only password field for testing */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="grid gap-2">
+            <Label htmlFor="password" className="flex items-center gap-2">
+              Passord
+              <span className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded">
+                Kun utvikling
+              </span>
+            </Label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder={
+                    mode === "login"
+                      ? "Passord for test-brukere"
+                      : "Velg et passord"
+                  }
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="pr-10"
+                  required={mode === "signup"}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <Eye className="h-4 w-4 text-muted-foreground" />
+                  )}
+                  <span className="sr-only">
+                    {showPassword ? "Hide password" : "Show password"}
+                  </span>
+                </Button>
+              </div>
+              {mode === "login" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPassword("demo-password")}
+                  className="whitespace-nowrap"
+                >
+                  Fyll inn
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {mode === "login"
+                ? "For test-brukere: kari.nordmann@example.com, ole.hansen@example.com, etc."
+                : "Dette vil opprette en bruker med kjent passord for testing"}
+            </p>
+          </div>
+        )}
+
         {mode === "signup" && (
           <div className="grid gap-2">
-            <Label htmlFor="phone-number">Telefonnummer</Label>
+            <Label htmlFor="phone-number" className="flex items-center gap-2">
+              Telefonnummer
+              {process.env.NODE_ENV === "development" && password && (
+                <span className="text-xs text-muted-foreground">
+                  (valgfritt i utvikling)
+                </span>
+              )}
+            </Label>
             <Input
               id="phone-number"
               type="tel"
               placeholder="+47 123 45 678"
-              required
+              required={!(process.env.NODE_ENV === "development" && password)}
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />

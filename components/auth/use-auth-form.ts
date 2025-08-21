@@ -24,6 +24,7 @@ export function useAuthForm({
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [password, setPassword] = useState("");
   const [otpCode, setOtpCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,6 +35,7 @@ export function useAuthForm({
     setEmail("");
     setFullName("");
     setPhoneNumber("");
+    setPassword("");
     setOtpCode("");
     setStep("email");
     setError(null);
@@ -77,7 +79,9 @@ export function useAuthForm({
         router.push(redirectTo || "/");
       }
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Ugyldig kode. Prøv på nytt.");
+      setError(
+        error instanceof Error ? error.message : "Ugyldig kode. Prøv på nytt.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -91,10 +95,22 @@ export function useAuthForm({
     setIsSuccess(false);
 
     // For signup mode, validate required fields
-    if (mode === "signup" && (!fullName.trim() || !phoneNumber.trim())) {
-      setError("Alle feltene er påkrevd");
-      setIsLoading(false);
-      return;
+    if (mode === "signup") {
+      if (process.env.NODE_ENV === "development" && password.trim()) {
+        // In development with password, only email and password are required
+        if (!password.trim()) {
+          setError("Passord er påkrevd");
+          setIsLoading(false);
+          return;
+        }
+      } else {
+        // Normal signup requires full name and phone number
+        if (!fullName.trim() || !phoneNumber.trim()) {
+          setError("Alle feltene er påkrevd");
+          setIsLoading(false);
+          return;
+        }
+      }
     }
 
     try {
@@ -103,34 +119,101 @@ export function useAuthForm({
       }`;
 
       if (mode === "signup") {
-        // For signup: Use signInWithOtp with shouldCreateUser: true to create new users
-        const { error } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            emailRedirectTo,
-            shouldCreateUser: true,
-            data: {
-              full_name: fullName.trim(),
-              phone_number: phoneNumber.trim(),
+        // Development-only: Create user with email and password
+        if (process.env.NODE_ENV === "development" && password.trim()) {
+          const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+              emailRedirectTo,
+              data: {
+                full_name: fullName.trim() || "Development User",
+                phone_number: phoneNumber.trim() || "+47 000 00 000",
+              },
             },
-          },
-        });
+          });
 
-        if (error) throw error;
+          if (error) {
+            setError(error.message || "Kunne ikke opprette bruker");
+            setIsLoading(false);
+            return;
+          }
+
+          // In development, sign up should auto-confirm, so we can try to sign in immediately
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+
+          if (!signInError) {
+            setIsSuccess(true);
+            if (onSuccess) {
+              onSuccess();
+            } else {
+              router.push(redirectTo || "/");
+            }
+            return;
+          }
+        } else {
+          // For normal signup: Use signInWithOtp with shouldCreateUser: true to create new users
+          const { error } = await supabase.auth.signInWithOtp({
+            email,
+            options: {
+              emailRedirectTo,
+              shouldCreateUser: true,
+              data: {
+                full_name: fullName.trim(),
+                phone_number: phoneNumber.trim(),
+              },
+            },
+          });
+
+          if (error) throw error;
+        }
       } else {
-        // For login: First check if user exists
+        // For login: Try password authentication first (development only)
+        if (process.env.NODE_ENV === "development" && password.trim()) {
+          console.log("Trying password authentication");
+          const { error: passwordError } = await supabase.auth
+            .signInWithPassword({
+              email,
+              password,
+            });
+
+          if (!passwordError) {
+            // Password login succeeded
+            setIsSuccess(true);
+            if (onSuccess) {
+              onSuccess();
+            } else {
+              router.push(redirectTo || "/");
+            }
+            return;
+          } else {
+            // Show password error only in development
+            setError(
+              passwordError.message || "Feil passord. Prøv på nytt."
+            );
+            setIsLoading(false);
+            return;
+          }
+        }
+
+        // Check if user exists for OTP fallback
         const userCheck = await checkUserExists(email);
-        
+
         if (userCheck.error) {
           throw new Error(userCheck.error);
         }
-        
+
         if (!userCheck.exists) {
-          setError("Ingen bruker funnet med denne e-posten. Vennligst registrer deg først.");
+          setError(
+            "Ingen bruker funnet med denne e-posten. Vennligst registrer deg først.",
+          );
           setIsLoading(false);
           return;
         }
-        
+
         // User exists, proceed with OTP login
         const { error } = await supabase.auth.signInWithOtp({
           email,
@@ -143,8 +226,14 @@ export function useAuthForm({
         if (error) throw error;
       }
 
-      // Transition to code input step
-      setStep("code");
+      // Only transition to code step if not using password auth or password failed
+      // For signup with password in development, we already handled success/failure above
+      if (
+        (process.env.NODE_ENV !== "development" || !password.trim()) &&
+        !(mode === "signup" && process.env.NODE_ENV === "development" && password.trim())
+      ) {
+        setStep("code");
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : "En feil oppstod");
     } finally {
@@ -159,6 +248,7 @@ export function useAuthForm({
     email,
     fullName,
     phoneNumber,
+    password,
     otpCode,
     error,
     isLoading,
@@ -170,6 +260,7 @@ export function useAuthForm({
     setEmail,
     setFullName,
     setPhoneNumber,
+    setPassword,
     setOtpCode,
     setError,
     setIsLoading,

@@ -30,22 +30,28 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
+  Settings,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
+import { BookingStatusDialog } from "./booking-status-dialog";
 
 interface BookingDetailsContentProps {
   bookingId: string;
   userId: string;
+  userRole?: "customer" | "stylist";
 }
 
 export function BookingDetailsContent({
   bookingId,
   userId,
+  userRole = "customer",
 }: BookingDetailsContentProps) {
   const router = useRouter();
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
 
   const {
     data: bookingResponse,
@@ -191,6 +197,17 @@ export function BookingDetailsContent({
               <div className="flex items-center gap-2">
                 {statusInfo.icon}
                 {statusInfo.badge}
+                {/* Stylist actions for pending bookings */}
+                {userRole === "stylist" && booking.status === "pending" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsStatusDialogOpen(true)}
+                  >
+                    <Settings className="w-4 h-4 mr-2" />
+                    Administrer
+                  </Button>
+                )}
               </div>
             </div>
           </CardHeader>
@@ -463,30 +480,19 @@ export function BookingDetailsContent({
           </Card>
         )}
 
-        {/* Actions */}
-        {isUpcoming && booking.status !== "cancelled" && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Handlinger</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2">
-                {/* TODO: Add cancel booking functionality */}
-                <Button variant="outline" disabled>
-                  Avlys booking
-                </Button>
-                {/* TODO: Add reschedule functionality */}
-                <Button variant="outline" disabled>
-                  Endre tidspunkt
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Disse funksjonene kommer snart
-              </p>
-            </CardContent>
-          </Card>
-        )}
       </div>
+      
+      {/* Status Dialog for Stylists */}
+      {userRole === "stylist" && (
+        <BookingStatusDialog
+          bookingId={booking.id}
+          currentStatus={booking.status}
+          customerName={booking.customer?.full_name || "Kunde"}
+          serviceName={services.length > 0 ? services[0].title : "Booking"}
+          isOpen={isStatusDialogOpen}
+          onOpenChange={setIsStatusDialogOpen}
+        />
+      )}
     </div>
   );
 }

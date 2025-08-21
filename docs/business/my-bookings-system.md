@@ -81,9 +81,9 @@ The My Bookings system is a comprehensive booking management interface that serv
 
 **Customer Actions**:
 
-- View comprehensive booking details
+- View comprehensive booking details at `/bookinger/[bookingId]`
 - Access booking history and receipts
-- Navigate to individual booking detail pages
+- Navigate to individual booking detail pages with unified access control
 
 **Stylist Actions**:
 
@@ -91,6 +91,7 @@ The My Bookings system is a comprehensive booking management interface that serv
 - **Booking Cancellation**: Decline or cancel bookings with reason communication
 - **Status Management**: Update booking status through intuitive dialog interface
 - **Customer Communication**: Send messages related to booking status changes
+- **Unified Detail Access**: View detailed booking information at `/bookinger/[bookingId]` with role-appropriate access
 
 ### 5. Pagination and Performance
 
@@ -143,12 +144,32 @@ The My Bookings system is a comprehensive booking management interface that serv
 - Automatic customer notifications for booking confirmations
 - Cancellation notifications with optional stylist messages
 - Status update emails through transactional email system
+- Email links direct to unified booking detail page `/bookinger/[bookingId]`
 
 **Message Customization**:
 
 - Stylists can add personal messages when confirming bookings
 - Cancellation reasons can be communicated to customers
 - Professional tone maintained through template suggestions
+
+### 6. Unified Booking Detail Access
+
+**Route Structure**: All booking details are accessible through the simplified route `/bookinger/[bookingId]`
+
+**Access Control System**:
+
+- **Customer Access**: Can view bookings where they are the customer
+- **Stylist Access**: Can view bookings where they are the assigned stylist
+- **Admin Access**: Can view all bookings regardless of role
+- **Security**: Server-side access validation prevents unauthorized viewing
+- **User Experience**: Single URL structure eliminates navigation complexity
+
+**Implementation Benefits**:
+
+- **Simplified URLs**: Easy to share and bookmark booking details
+- **Unified Email Links**: All email notifications use consistent routing
+- **Role-Based UI**: Interface adapts based on user's relationship to the booking
+- **Access Transparency**: Clear error handling for unauthorized access attempts
 
 ## Data Architecture and Integration
 

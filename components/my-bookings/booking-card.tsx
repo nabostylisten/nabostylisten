@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Calendar,
@@ -14,14 +14,15 @@ import {
   Home,
   Building2,
   Settings,
+  ChevronRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Database } from "@/types/database.types";
 import { BookingStatusDialog } from "./booking-status-dialog";
+import { cn } from "@/lib/utils";
 
 // Type for the booking with all related data
 type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
@@ -57,11 +58,13 @@ type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
 
 interface BookingCardProps {
   booking: BookingWithDetails;
-  userRole?: 'customer' | 'stylist';
+  userRole?: "customer" | "stylist";
 }
 
-export function BookingCard({ booking, userRole = 'customer' }: BookingCardProps) {
-  const router = useRouter();
+export function BookingCard({
+  booking,
+  userRole = "customer",
+}: BookingCardProps) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
 
   const startTime = new Date(booking.start_time);
@@ -103,12 +106,6 @@ export function BookingCard({ booking, userRole = 'customer' }: BookingCardProps
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
-  };
-
-  const handleViewDetails = () => {
-    router.push(
-      `/profiler/${booking.customer_id}/mine-bookinger/${booking.id}`
-    );
   };
 
   return (
@@ -231,9 +228,9 @@ export function BookingCard({ booking, userRole = 'customer' }: BookingCardProps
             </div>
             <div className="flex gap-2">
               {/* Stylist-specific actions for pending bookings */}
-              {userRole === 'stylist' && booking.status === 'pending' && (
-                <Button 
-                  variant="outline" 
+              {userRole === "stylist" && booking.status === "pending" && (
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={() => setIsStatusDialogOpen(true)}
                 >
@@ -241,21 +238,30 @@ export function BookingCard({ booking, userRole = 'customer' }: BookingCardProps
                   Administrer
                 </Button>
               )}
-              <Button variant="outline" onClick={handleViewDetails}>
-                <MoreHorizontal className="w-4 h-4 mr-2" />
+              <Link
+                href={`/bookinger/${booking.id}`}
+                className={cn(
+                  buttonVariants({
+                    variant: "outline",
+                    size: "sm",
+                  }),
+                  "flex items-center gap-2"
+                )}
+              >
                 Se detaljer
-              </Button>
+                <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </div>
       </CardContent>
 
       {/* Status Dialog for Stylists */}
-      {userRole === 'stylist' && (
+      {userRole === "stylist" && (
         <BookingStatusDialog
           bookingId={booking.id}
           currentStatus={booking.status}
-          customerName="Kunde" 
+          customerName="Kunde"
           serviceName={services[0]?.title || "Booking"}
           isOpen={isStatusDialogOpen}
           onOpenChange={setIsStatusDialogOpen}

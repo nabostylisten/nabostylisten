@@ -278,11 +278,13 @@ The booking process is now implemented as a guided 4-step stepper system that pr
 - Refund processing for cancellations
 - Payment method management
 
-### With Communication System (Future)
+### With Communication System
 
 **Booking-Related Communication**:
 
-- Confirmation emails via Resend
+- Confirmation emails via Resend with unified detail links (`/bookinger/[bookingId]`)
+- Status update emails for both customers and stylists
+- Branded email templates for booking confirmations and cancellations
 - SMS reminders (if implemented)
 - In-app chat channel creation
 - Stylist notification system
@@ -340,6 +342,13 @@ The booking process is now implemented as a guided 4-step stepper system that pr
    - Data validation before final submission
    - Integration ready for payment processing
 
+8. **Post-Booking Management** ⭐ **NEW**:
+   - Unified booking detail access at `/bookinger/[bookingId]`
+   - Role-based access control (customer, stylist, admin)
+   - Status management for stylists (confirm/cancel with messages)
+   - Automated email notifications for status changes
+   - Simplified URL structure for email links and sharing
+
 ### 📋 Planned Features
 
 1. **Payment Integration**:
@@ -354,11 +363,12 @@ The booking process is now implemented as a guided 4-step stepper system that pr
    - Travel cost calculation
    - Distance-based service area validation
 
-3. **Communication Setup**:
+3. **Enhanced Communication**:
    - Chat channel creation between customer and stylist
-   - Email confirmations for both parties
+   - Advanced email customization options
    - SMS reminder notifications
    - Calendar event generation
+   - Push notifications for mobile app
 
 ## Business Rules & Validation
 

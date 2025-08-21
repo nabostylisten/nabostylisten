@@ -161,10 +161,16 @@ export function BookingDetailsContent({
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="max-w-4xl mx-auto w-full space-y-6">
         {/* Header */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center justify-between">
           <Button variant="ghost" onClick={() => router.back()}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Tilbake til bookinger
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/bookinger/${booking.id}/chat`}>
+              <MessageSquare className="w-4 h-4 mr-2" />
+              Åpne chat
+            </Link>
           </Button>
         </div>
 
@@ -443,28 +449,6 @@ export function BookingDetailsContent({
           </CardContent>
         </Card>
 
-        {/* Chat Link */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <MessageSquare className="w-5 h-5" />
-              Chat
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Du kan chatte med {userRole === "customer" ? "stylisten" : "kunden"} om denne bookingen.
-              </p>
-              <Button variant="outline" asChild>
-                <Link href={`/bookinger/${booking.id}/chat`}>
-                  <MessageSquare className="w-4 h-4 mr-2" />
-                  Åpne chat
-                </Link>
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
       </div>
 
       {/* Status Dialog for Stylists */}

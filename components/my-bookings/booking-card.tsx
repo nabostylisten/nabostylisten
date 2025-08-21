@@ -3,16 +3,16 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
   MoreHorizontal,
   MessageSquare,
   CreditCard,
   Home,
-  Building2
+  Building2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -61,27 +61,49 @@ export function BookingCard({ booking }: BookingCardProps) {
 
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
-  const services = booking.booking_services?.map(bs => bs.services).filter(Boolean) || [];
+  const services =
+    booking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
   const hasChat = booking.chats && booking.chats.length > 0;
 
   // Status styling
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'pending':
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-200">Venter</Badge>;
-      case 'confirmed':
-        return <Badge variant="outline" className="text-green-600 border-green-200">Bekreftet</Badge>;
-      case 'cancelled':
-        return <Badge variant="outline" className="text-red-600 border-red-200">Avlyst</Badge>;
-      case 'completed':
-        return <Badge variant="outline" className="text-blue-600 border-blue-200">Fullført</Badge>;
+      case "pending":
+        return (
+          <Badge
+            variant="outline"
+            className="text-yellow-600 border-yellow-200"
+          >
+            Venter
+          </Badge>
+        );
+      case "confirmed":
+        return (
+          <Badge variant="outline" className="text-green-600 border-green-200">
+            Bekreftet
+          </Badge>
+        );
+      case "cancelled":
+        return (
+          <Badge variant="outline" className="text-red-600 border-red-200">
+            Avlyst
+          </Badge>
+        );
+      case "completed":
+        return (
+          <Badge variant="outline" className="text-blue-600 border-blue-200">
+            Fullført
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
   };
 
   const handleViewDetails = () => {
-    router.push(`/profiler/${booking.customer_id}/mine-bookinger/${booking.id}`);
+    router.push(
+      `/profiler/${booking.customer_id}/mine-bookinger/${booking.id}`
+    );
   };
 
   return (
@@ -93,7 +115,7 @@ export function BookingCard({ booking }: BookingCardProps) {
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <h3 className="font-semibold text-lg">
-                  {services.length > 0 ? services[0].title : "Booking"}
+                  {services.length > 0 ? services[0]?.title : "Booking"}
                   {services.length > 1 && ` +${services.length - 1} til`}
                 </h3>
                 {hasChat && (
@@ -102,7 +124,9 @@ export function BookingCard({ booking }: BookingCardProps) {
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <User className="w-4 h-4" />
-                <span className="text-sm">{booking.stylist?.full_name || "Ukjent stylist"}</span>
+                <span className="text-sm">
+                  {booking.stylist?.full_name || "Ukjent stylist"}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -114,12 +138,14 @@ export function BookingCard({ booking }: BookingCardProps) {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span>{format(startTime, "EEEE d. MMMM yyyy", { locale: nb })}</span>
+              <span>
+                {format(startTime, "EEEE d. MMMM yyyy", { locale: nb })}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
               <span>
-                {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")} 
+                {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
                 <span className="text-muted-foreground ml-1">
                   ({booking.total_duration_minutes} min)
                 </span>
@@ -152,14 +178,17 @@ export function BookingCard({ booking }: BookingCardProps) {
             <div className="text-sm">
               <div className="font-medium mb-2">Tjenester:</div>
               <div className="grid gap-1">
-                {services.map((service) => (
-                  <div key={service.id} className="flex justify-between">
-                    <span>{service.title}</span>
-                    <span className="text-muted-foreground">
-                      {service.price} {service.currency}
-                    </span>
-                  </div>
-                ))}
+                {services.map((service) => {
+                  if (!service) return null;
+                  return (
+                    <div key={service.id} className="flex justify-between">
+                      <span>{service.title}</span>
+                      <span className="text-muted-foreground">
+                        {service.price} {service.currency}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -168,7 +197,9 @@ export function BookingCard({ booking }: BookingCardProps) {
           {booking.message_to_stylist && (
             <div className="text-sm bg-muted/50 p-3 rounded-lg">
               <div className="font-medium mb-1">Melding til stylist:</div>
-              <div className="text-muted-foreground">{booking.message_to_stylist}</div>
+              <div className="text-muted-foreground">
+                {booking.message_to_stylist}
+              </div>
             </div>
           )}
 
@@ -176,7 +207,9 @@ export function BookingCard({ booking }: BookingCardProps) {
           {booking.discount_id && booking.discount_applied > 0 && (
             <div className="flex items-center gap-2 text-sm text-green-600">
               <CreditCard className="w-4 h-4" />
-              <span>Rabatt anvendt: -{booking.discount_applied.toFixed(2)} NOK</span>
+              <span>
+                Rabatt anvendt: -{booking.discount_applied.toFixed(2)} NOK
+              </span>
             </div>
           )}
 
@@ -186,7 +219,8 @@ export function BookingCard({ booking }: BookingCardProps) {
               {booking.total_price.toFixed(2)} NOK
               {booking.discount_applied > 0 && (
                 <span className="text-sm text-muted-foreground ml-2 line-through">
-                  {(booking.total_price + booking.discount_applied).toFixed(2)} NOK
+                  {(booking.total_price + booking.discount_applied).toFixed(2)}{" "}
+                  NOK
                 </span>
               )}
             </div>

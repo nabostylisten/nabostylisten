@@ -14,21 +14,39 @@ The authentication system provides a unified, secure, and user-friendly way to h
 
 ## Core Business Rules
 
-### 1. Email OTP Only Authentication
+### 1. Email OTP Authentication (Production) + Development Password Authentication
 
-**Rule**: All authentication uses email-based one-time passwords, no traditional passwords.
+**Production Rule**: All authentication uses email-based one-time passwords, no traditional passwords.
 
-**Benefits**:
+**Production Benefits**:
 
 - Enhanced security (no password reuse, brute force attacks)
 - Improved user experience (no forgotten passwords)
 - Verified email addresses by default
 - Mobile-friendly authentication flow
 
-**Implementation**:
+**Production Implementation**:
 
 - Login: Email → OTP (Magic Link or 6-digit Code) → Authenticated
 - Signup: Email + Profile Data → OTP (Magic Link or 6-digit Code) → Profile Created + Authenticated
+
+**Development Enhancement**: 
+
+**Development Rule**: Password authentication available only in development environment for testing purposes.
+
+**Development Benefits**:
+
+- Faster testing with seeded users and known credentials
+- No email delivery dependency during development
+- Immediate authentication for development workflows
+- Ability to test complete user flows without OTP delays
+
+**Development Implementation**:
+
+- Login: Email + Password → Immediate Authentication (with OTP fallback)
+- Signup: Email + Password + Optional Profile Data → User Creation + Immediate Authentication
+- Environment-gated feature (completely disabled in production)
+- Visual indicators showing development-only features
 
 ### 2. Unified Authentication Flow
 
@@ -120,7 +138,38 @@ The authentication system provides a unified, secure, and user-friendly way to h
    - Redirected to intended destination or dashboard
    - Profile fully populated with registration data
 
+**Development Signup Enhancement:**
+
+**Development Flow (Additional):**
+
+1. **Simplified User Creation**:
+
+   - Password field becomes available and required
+   - Full name and phone number become optional (marked as "valgfritt i utvikling")
+   - Auto-fill defaults applied for missing profile data
+
+2. **Streamlined Process**:
+
+   - Email + Password + Optional Profile Data → Direct User Creation
+   - Uses `supabase.auth.signUp()` with immediate email confirmation
+   - Automatic sign-in attempt after successful user creation
+   - No email verification step required
+
+3. **Profile Data Handling**:
+
+   - Provided data: Used as-is for profile creation
+   - Missing full name: Defaults to "Development User"
+   - Missing phone: Defaults to "+47 000 00 000"
+   - Development users clearly identifiable in database
+
+4. **Immediate Access**:
+   - User created and authenticated in single step
+   - Immediate redirect to intended destination
+   - Profile accessible immediately for testing workflows
+
 ### Login (Existing Users)
+
+**Production Flow:**
 
 1. **Initiation**:
 
@@ -143,6 +192,27 @@ The authentication system provides a unified, secure, and user-friendly way to h
 4. **Completion**:
    - User logged in with existing profile
    - Redirected to intended destination
+
+**Development Flow (Additional):**
+
+1. **Password Authentication Option**:
+
+   - Email address + password fields available
+   - Clear visual indicator: "Kun utvikling" (Development only)
+   - Auto-fill button available for quick testing ("Fyll inn" → "demo-password")
+   - Password visibility toggle for ease of use
+
+2. **Immediate Authentication**:
+
+   - Direct authentication without email verification
+   - Immediate success and redirect
+   - Falls back to OTP if password authentication fails
+
+3. **Error Handling**:
+
+   - Development-specific password error messages
+   - Clear distinction between password and OTP authentication failures
+   - Graceful fallback to production OTP flow
 
 ### Mode Switching
 
@@ -243,9 +313,11 @@ components/auth/
 
 **Business Logic**:
 
-- Form validation
+- Form validation (with development context awareness)
 - OTP request handling (signInWithOtp)
 - OTP verification handling (verifyOtp)
+- **Development**: Password authentication (signInWithPassword, signUp)
+- **Development**: Environment-specific validation and error handling
 - Success/error processing
 - Redirect management
 - Step transition management
@@ -501,6 +573,91 @@ AuthForm (Core)
 3. Clear format requirements
 4. Magic link fallback option
 5. Step navigation assistance
+
+## Development Features & Testing
+
+### Development-Only Authentication System
+
+**Purpose**: Enable rapid development and testing of authentication-dependent features without email delivery dependencies.
+
+**Security Model**:
+
+- **Environment Gating**: Password authentication completely disabled in production (`process.env.NODE_ENV !== "development"`)
+- **Visual Indicators**: All development features clearly marked with "Kun utvikling" badges
+- **Fallback Architecture**: Production OTP system remains fully functional in development
+
+### Development User Management
+
+**Seeded User Integration**:
+
+- Seeded users from database scripts can be authenticated using known passwords
+- Development users identifiable by default profile data
+- Compatible with existing seed data workflows
+- Preserves database referential integrity
+
+**Testing User Creation**:
+
+- Create users with known credentials for consistent testing
+- Minimal profile data requirements for faster test setup
+- Automatic profile population with development defaults
+- Immediate availability for testing complex user workflows
+
+### Development UX Features
+
+**Password Management**:
+
+- **Visibility Toggle**: Eye/eye-off icons for password field visibility
+- **Auto-fill Button**: Quick "demo-password" insertion for testing
+- **Clear Labeling**: Contextual placeholders ("Velg et passord" vs "Passord for test-brukere")
+
+**Form Adaptations**:
+
+- **Optional Fields**: Profile fields become optional when using password authentication
+- **Dynamic Validation**: Form validation adapts to development vs production context
+- **Error Messaging**: Development-specific error handling and messaging
+
+**Visual Design**:
+
+- **Development Badges**: Orange badges clearly indicate development-only features
+- **Contextual Help**: Inline guidance for development features
+- **State Management**: Proper loading states and success feedback
+
+### Testing Scenarios Enabled
+
+**User Authentication Testing**:
+
+1. **New User Creation**: Test complete signup → profile creation → authentication flow
+2. **Existing User Login**: Test login with known credentials from seeded data
+3. **Error Handling**: Test password authentication failure scenarios
+4. **Profile Integration**: Test authenticated user access to protected features
+
+**Booking System Integration**:
+
+1. **Cart → Auth → Booking**: Test complete purchase flow with authenticated users
+2. **Profile Access**: Test booking creation with user profile data
+3. **Session Management**: Test authentication persistence across booking steps
+4. **Error Recovery**: Test authentication failure during booking process
+
+**User Experience Testing**:
+
+1. **Mode Switching**: Test login ↔ signup transitions with password fields
+2. **Form Validation**: Test development-specific validation rules
+3. **Responsive Design**: Test password field layouts across devices
+4. **Accessibility**: Test password visibility controls and keyboard navigation
+
+### Development Security Considerations
+
+**Production Safety**:
+
+- **Build-Time Exclusion**: Development features excluded from production builds
+- **Environment Validation**: Runtime checks prevent accidental exposure
+- **Code Splitting**: Development authentication logic isolated from production
+
+**Development Security**:
+
+- **Local Only**: Password authentication only available on local development servers
+- **Temporary Data**: Development users clearly marked for easy cleanup
+- **No Production Secrets**: No production credentials exposed in development code
 
 ## Future Enhancement Opportunities
 

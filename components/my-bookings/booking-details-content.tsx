@@ -444,31 +444,27 @@ export function BookingDetailsContent({
         </Card>
 
         {/* Chat Link */}
-        {booking.chats &&
-          Array.isArray(booking.chats) &&
-          booking.chats.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5" />
-                  Chat
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Du kan chatte med stylisten om denne bookingen.
-                  </p>
-                  <Button variant="outline" asChild>
-                    <Link href={`/chat/${booking.chats[0].id}`}>
-                      <MessageSquare className="w-4 h-4 mr-2" />
-                      Åpne chat
-                    </Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <MessageSquare className="w-5 h-5" />
+              Chat
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Du kan chatte med {userRole === "customer" ? "stylisten" : "kunden"} om denne bookingen.
+              </p>
+              <Button variant="outline" asChild>
+                <Link href={`/bookinger/${booking.id}/chat`}>
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Åpne chat
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Status Dialog for Stylists */}

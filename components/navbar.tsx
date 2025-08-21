@@ -14,7 +14,7 @@ import { ThemeSwitcher } from "@/components/theme-switcher";
 import { AuthDialog } from "@/components/auth-dialog";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, X, LogOut, ShoppingCart } from "lucide-react";
+import { Menu, X, LogOut, ShoppingCart, MessageCircle } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,6 +24,7 @@ import { adminSidebarItems } from "./admin-sidebar";
 import { isAdmin } from "@/lib/permissions";
 import { CartHoverCard } from "@/components/cart/cart-hover-card";
 import { useCartStore } from "@/stores/cart.store";
+import { useUnreadMessages } from "@/hooks/use-unread-messages";
 
 export const Navbar = () => {
   const [isOpen, setOpen] = useState(false);
@@ -32,6 +33,7 @@ export const Navbar = () => {
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
   const { getTotalItems } = useCartStore();
+  const { unreadCount } = useUnreadMessages();
 
   const totalItems = getTotalItems();
 
@@ -98,6 +100,19 @@ export const Navbar = () => {
                 </Link>
               </Button>
             </CartHoverCard>
+
+            {/* Chat Icon - only for authenticated users with unread messages */}
+            {user && unreadCount > 0 && (
+              <Button variant="ghost" size="sm" className="relative" asChild>
+                <Link href={`/profiler/${user.id}/chat`}>
+                  <MessageCircle className="w-5 h-5" />
+                  <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium min-w-5">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                </Link>
+              </Button>
+            )}
+
             <Separator orientation="vertical" className="h-6" />
           </>
 

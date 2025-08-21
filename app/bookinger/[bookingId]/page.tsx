@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { BookingDetailsContent } from "@/components/my-bookings/booking-details-content";
+import { ProfileLayout } from "@/components/profile-layout";
 
 export default async function BookingDetailsPage({
   params,
@@ -62,14 +63,14 @@ export default async function BookingDetailsPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto py-8">
+    <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
+      <div className="flex flex-1 flex-col gap-4 p-4">
         <BookingDetailsContent
           bookingId={bookingId}
           userId={user.id}
           userRole={userRoleForBooking}
         />
       </div>
-    </div>
+    </ProfileLayout>
   );
 }

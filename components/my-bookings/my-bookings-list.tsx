@@ -21,10 +21,11 @@ import { searchParamsToBookingFilters } from "@/types";
 
 interface MyBookingsListProps {
   userId: string;
-  dateRange: "upcoming" | "completed" | "all";
+  dateRange: "upcoming" | "completed" | "all" | "to_be_confirmed" | "planned";
+  userRole?: 'customer' | 'stylist';
 }
 
-export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
+export function MyBookingsList({ userId, dateRange, userRole = 'customer' }: MyBookingsListProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,8 +51,8 @@ export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["user-bookings", userId, filters],
-    queryFn: () => getUserBookings(userId, filters),
+    queryKey: ["user-bookings", userId, filters, userRole],
+    queryFn: () => getUserBookings(userId, filters, userRole),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -285,14 +286,18 @@ export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
             <div className="space-y-3">
               <CalendarX className="w-12 h-12 mx-auto text-muted-foreground" />
               <h3 className="text-lg font-medium">
-                {dateRange === "upcoming"
-                  ? "Ingen kommende bookinger"
-                  : "Ingen tidligere bookinger"}
+                {dateRange === "upcoming" && "Ingen kommende bookinger"}
+                {dateRange === "completed" && "Ingen tidligere bookinger"}
+                {dateRange === "to_be_confirmed" && "Ingen forespørsler"}
+                {dateRange === "planned" && "Ingen planlagte bookinger"}
+                {dateRange === "all" && "Ingen bookinger"}
               </h3>
               <p className="text-muted-foreground">
-                {dateRange === "upcoming"
-                  ? "Du har ingen bookinger som er planlagt."
-                  : "Du har ingen bookinger som er fullført eller avlyst."}
+                {dateRange === "upcoming" && "Du har ingen bookinger som er planlagt."}
+                {dateRange === "completed" && "Du har ingen bookinger som er fullført eller avlyst."}
+                {dateRange === "to_be_confirmed" && "Du har ingen forespørsler som venter på godkjenning."}
+                {dateRange === "planned" && "Du har ingen godkjente bookinger som skal gjennomføres."}
+                {dateRange === "all" && "Du har ingen bookinger ennå."}
               </p>
             </div>
           )}
@@ -306,7 +311,7 @@ export function MyBookingsList({ userId, dateRange }: MyBookingsListProps) {
       {/* Bookings List */}
       <div className="space-y-4">
         {bookings.map((booking) => (
-          <BookingCard key={booking.id} booking={booking} />
+          <BookingCard key={booking.id} booking={booking} userRole={userRole} />
         ))}
       </div>
 

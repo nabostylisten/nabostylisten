@@ -244,7 +244,7 @@ export type UnsplashRandomArrayResponse = UnsplashPhoto[];
 export interface BookingFilters {
   search?: string;
   status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  dateRange?: 'upcoming' | 'completed' | 'all';
+  dateRange?: 'upcoming' | 'completed' | 'all' | 'to_be_confirmed' | 'planned';
   sortBy?: 'date_asc' | 'date_desc' | 'newest' | 'price_asc' | 'price_desc';
   page?: number;
   limit?: number;
@@ -260,7 +260,7 @@ export interface BookingSearchParams {
 // Utility function to convert URL search params to BookingFilters (excluding dateRange and pagination)
 export function searchParamsToBookingFilters(
   searchParams: BookingSearchParams,
-  dateRange?: 'upcoming' | 'completed' | 'all',
+  dateRange?: 'upcoming' | 'completed' | 'all' | 'to_be_confirmed' | 'planned',
   page?: number,
   limit?: number,
 ): BookingFilters {

@@ -13,12 +13,15 @@ import {
   CreditCard,
   Home,
   Building2,
+  Settings,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type { Database } from "@/types/database.types";
+import { BookingStatusDialog } from "./booking-status-dialog";
 
 // Type for the booking with all related data
 type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
@@ -54,10 +57,12 @@ type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
 
 interface BookingCardProps {
   booking: BookingWithDetails;
+  userRole?: 'customer' | 'stylist';
 }
 
-export function BookingCard({ booking }: BookingCardProps) {
+export function BookingCard({ booking, userRole = 'customer' }: BookingCardProps) {
   const router = useRouter();
+  const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
 
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
@@ -224,13 +229,38 @@ export function BookingCard({ booking }: BookingCardProps) {
                 </span>
               )}
             </div>
-            <Button variant="outline" onClick={handleViewDetails}>
-              <MoreHorizontal className="w-4 h-4 mr-2" />
-              Se detaljer
-            </Button>
+            <div className="flex gap-2">
+              {/* Stylist-specific actions for pending bookings */}
+              {userRole === 'stylist' && booking.status === 'pending' && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setIsStatusDialogOpen(true)}
+                >
+                  <Settings className="w-4 h-4 mr-2" />
+                  Administrer
+                </Button>
+              )}
+              <Button variant="outline" onClick={handleViewDetails}>
+                <MoreHorizontal className="w-4 h-4 mr-2" />
+                Se detaljer
+              </Button>
+            </div>
           </div>
         </div>
       </CardContent>
+
+      {/* Status Dialog for Stylists */}
+      {userRole === 'stylist' && (
+        <BookingStatusDialog
+          bookingId={booking.id}
+          currentStatus={booking.status}
+          customerName="Kunde" 
+          serviceName={services[0]?.title || "Booking"}
+          isOpen={isStatusDialogOpen}
+          onOpenChange={setIsStatusDialogOpen}
+        />
+      )}
     </Card>
   );
 }

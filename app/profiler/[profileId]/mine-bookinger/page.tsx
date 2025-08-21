@@ -30,7 +30,10 @@ export default async function MineBookingerPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <MyBookingsPageContent userId={profileId} />
+      <MyBookingsPageContent 
+        userId={profileId} 
+        userRole={profile?.role === 'stylist' ? 'stylist' : 'customer'} 
+      />
     </ProfileLayout>
   );
 }

@@ -56,7 +56,7 @@ export async function deleteBooking(
 }
 
 
-export async function getUserBookings(userId: string, filters: BookingFilters = {}) {
+export async function getUserBookings(userId: string, filters: BookingFilters = {}, userRole: 'customer' | 'stylist' = 'customer') {
     const supabase = await createClient();
     
     // Get current user to verify access
@@ -74,6 +74,12 @@ export async function getUserBookings(userId: string, filters: BookingFilters = 
         .from("bookings")
         .select(`
             *,
+            customer:profiles!bookings_customer_id_fkey(
+                id,
+                full_name,
+                email,
+                role
+            ),
             stylist:profiles!bookings_stylist_id_fkey(
                 id,
                 full_name,
@@ -102,8 +108,14 @@ export async function getUserBookings(userId: string, filters: BookingFilters = 
                 )
             ),
             chats(id)
-        `)
-        .eq("customer_id", userId);
+        `);
+    
+    // Filter by role - customers see their bookings, stylists see bookings assigned to them
+    if (userRole === 'customer') {
+        query = query.eq("customer_id", userId);
+    } else {
+        query = query.eq("stylist_id", userId);
+    }
     
     // Apply search filter
     if (filters.search?.trim()) {
@@ -127,6 +139,12 @@ export async function getUserBookings(userId: string, filters: BookingFilters = 
             query = query.gt("start_time", now);
         } else if (filters.dateRange === 'completed') {
             query = query.lt("start_time", now);
+        } else if (filters.dateRange === 'to_be_confirmed') {
+            // Stylist view: pending bookings
+            query = query.eq("status", "pending");
+        } else if (filters.dateRange === 'planned') {
+            // Stylist view: confirmed bookings that are upcoming
+            query = query.eq("status", "confirmed").gt("start_time", now);
         }
     }
     
@@ -153,8 +171,14 @@ export async function getUserBookings(userId: string, filters: BookingFilters = 
     // Get total count for pagination
     const countQuery = supabase
         .from("bookings")
-        .select("*", { count: 'exact', head: true })
-        .eq("customer_id", userId);
+        .select("*", { count: 'exact', head: true });
+    
+    // Apply same role-based filtering for count
+    if (userRole === 'customer') {
+        countQuery.eq("customer_id", userId);
+    } else {
+        countQuery.eq("stylist_id", userId);
+    }
     
     // Apply the same filters for counting
     if (filters.search?.trim()) {
@@ -175,6 +199,10 @@ export async function getUserBookings(userId: string, filters: BookingFilters = 
             countQuery.gt("start_time", now);
         } else if (filters.dateRange === 'completed') {
             countQuery.lt("start_time", now);
+        } else if (filters.dateRange === 'to_be_confirmed') {
+            countQuery.eq("status", "pending");
+        } else if (filters.dateRange === 'planned') {
+            countQuery.eq("status", "confirmed").gt("start_time", now);
         }
     }
     
@@ -615,4 +643,102 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         }, 
         error: null 
     };
+}
+
+export async function updateBookingStatus({
+    bookingId,
+    status,
+    message,
+}: {
+    bookingId: string;
+    status: 'confirmed' | 'cancelled';
+    message?: string;
+}) {
+    const supabase = await createClient();
+    
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+    
+    // Get booking details to verify stylist access
+    const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("id", bookingId)
+        .single();
+    
+    if (bookingError || !booking) {
+        return { error: "Booking not found", data: null };
+    }
+    
+    // Check if user is the assigned stylist
+    if (booking.stylist_id !== user.id) {
+        return { error: "Not authorized to update this booking", data: null };
+    }
+    
+    // Only allow status updates for pending bookings
+    if (booking.status !== 'pending') {
+        return { error: "Can only update status of pending bookings", data: null };
+    }
+    
+    // Prepare update data
+    const updateData: DatabaseTables["bookings"]["Update"] = {
+        status,
+        ...(status === 'cancelled' && {
+            cancelled_at: new Date().toISOString(),
+            cancellation_reason: message || "Cancelled by stylist",
+        }),
+    };
+    
+    // Update booking status
+    const { data, error } = await supabase
+        .from("bookings")
+        .update(updateData)
+        .eq("id", bookingId)
+        .select(`
+            *,
+            customer:profiles!bookings_customer_id_fkey(
+                id,
+                full_name,
+                email,
+                phone_number
+            ),
+            stylist:profiles!bookings_stylist_id_fkey(
+                id,
+                full_name,
+                email,
+                phone_number
+            )
+        `)
+        .single();
+    
+    if (error) {
+        return { error: "Failed to update booking status", data: null };
+    }
+    
+    // TODO: Send notification email to customer about status change
+    // if (status === 'confirmed') {
+    //     await sendBookingConfirmationEmail({
+    //         to: data.customer.email,
+    //         bookingId: bookingId,
+    //         message: message,
+    //     });
+    // } else if (status === 'cancelled') {
+    //     await sendBookingCancellationEmail({
+    //         to: data.customer.email,
+    //         bookingId: bookingId,
+    //         reason: message,
+    //     });
+    // }
+    
+    // TODO: If confirmed, create payment record or update Stripe PaymentIntent
+    // if (status === 'confirmed' && booking.stripe_payment_intent_id) {
+    //     await stripe.paymentIntents.update(booking.stripe_payment_intent_id, {
+    //         metadata: { status: 'confirmed' }
+    //     });
+    // }
+    
+    return { data, error: null };
 }

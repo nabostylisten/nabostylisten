@@ -173,10 +173,10 @@ export function BookingCard({ booking }: BookingCardProps) {
           )}
 
           {/* Discount Applied */}
-          {booking.discounts && booking.discount_applied > 0 && (
+          {booking.discount_id && booking.discount_applied > 0 && (
             <div className="flex items-center gap-2 text-sm text-green-600">
               <CreditCard className="w-4 h-4" />
-              <span>Rabatt "{booking.discounts.code}" anvendt: -{booking.discount_applied.toFixed(2)} NOK</span>
+              <span>Rabatt anvendt: -{booking.discount_applied.toFixed(2)} NOK</span>
             </div>
           )}
 

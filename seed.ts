@@ -1,8 +1,14 @@
 import { createSeedClient } from "@snaplet/seed";
 import type { DatabaseTables } from "./types/index";
+import { addDays, addHours, addMinutes, subDays } from "date-fns";
 
 // Service category types
-type ServiceCategoryKey = "hair" | "nails" | "makeup" | "browsLashes" | "wedding";
+type ServiceCategoryKey =
+  | "hair"
+  | "nails"
+  | "makeup"
+  | "browsLashes"
+  | "wedding";
 
 // Curated images organized by main category
 const categoryImages: Record<ServiceCategoryKey, string[]> = {
@@ -13,7 +19,7 @@ const categoryImages: Record<ServiceCategoryKey, string[]> = {
     "https://images.unsplash.com/photo-1559599101-f09722fb4948?w=800", // hair treatment
     "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=800", // salon
   ],
-  
+
   nails: [
     "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=800", // nail art
     "https://images.unsplash.com/photo-1610992015732-2449b76344bc?w=800", // manicure
@@ -21,7 +27,7 @@ const categoryImages: Record<ServiceCategoryKey, string[]> = {
     "https://images.unsplash.com/photo-1563401289-e8010d13da76?w=800", // nail polish
     "https://images.unsplash.com/photo-1595476108010-b4d1f102b1b1?w=800", // nail salon
   ],
-  
+
   makeup: [
     "https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=800", // makeup artist
     "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800", // makeup brushes
@@ -29,7 +35,7 @@ const categoryImages: Record<ServiceCategoryKey, string[]> = {
     "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800", // cosmetics
     "https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=800", // makeup palette
   ],
-  
+
   browsLashes: [
     "https://images.unsplash.com/photo-1614807536394-cd67bd4a634b?w=800", // close-up eyes
     "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800", // eyelashes
@@ -37,7 +43,7 @@ const categoryImages: Record<ServiceCategoryKey, string[]> = {
     "https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=800", // woman's face with eyeliner
     "https://images.unsplash.com/photo-1577565177023-d0f29c354b69?w=800", // eyeglasses
   ],
-  
+
   wedding: [
     "https://images.unsplash.com/photo-1469371670807-013ccf25f16a?w=800", // bride and groom at altar
     "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800", // bride and groom silhouettes
@@ -48,15 +54,18 @@ const categoryImages: Record<ServiceCategoryKey, string[]> = {
   ],
 };
 
-function getRandomImagesForCategory(categoryKey: ServiceCategoryKey, count: number = 3): string[] {
+function getRandomImagesForCategory(
+  categoryKey: ServiceCategoryKey,
+  count: number = 3,
+): string[] {
   const images = categoryImages[categoryKey];
   const selectedImages: string[] = [];
-  
+
   for (let i = 0; i < count; i++) {
     const randomIndex = Math.floor(Math.random() * images.length);
     selectedImages.push(images[randomIndex]);
   }
-  
+
   return selectedImages;
 }
 
@@ -312,7 +321,8 @@ async function main() {
     // Hair Services
     {
       title: "Dameklipp",
-      description: "Profesjonell klipp med vask og føn. Konsultasjon inkludert.",
+      description:
+        "Profesjonell klipp med vask og føn. Konsultasjon inkludert.",
       category: "hair",
       categoryIndex: 0,
       duration: [45, 60, 75],
@@ -560,7 +570,7 @@ async function main() {
       "Oppfølging etter behandling",
       "Vask og balsam",
       "Føn og styling",
-      "Hjemmepleieprodukter"
+      "Hjemmepleieprodukter",
     ],
     nails: [
       "Base coat og top coat",
@@ -569,7 +579,7 @@ async function main() {
       "Cuticle behandling",
       "Håndkrem og negleolje",
       "UV-lampe behandling",
-      "Neglebånd massage"
+      "Neglebånd massage",
     ],
     makeup: [
       "Makeup konsultasjon",
@@ -578,7 +588,7 @@ async function main() {
       "Fargeanalyse",
       "Styling tips",
       "Touchup produkter",
-      "Foto-ready finish"
+      "Foto-ready finish",
     ],
     browsLashes: [
       "Konsultasjon og fargetest",
@@ -587,7 +597,7 @@ async function main() {
       "Oppfølging instruksjoner",
       "Allergi test",
       "Profesjonelle produkter",
-      "Touch-up etter 2 uker"
+      "Touch-up etter 2 uker",
     ],
     wedding: [
       "Prøvetime inkludert",
@@ -596,8 +606,8 @@ async function main() {
       "Profesjonelle produkter",
       "Styling konsultasjon",
       "Foto dokumentasjon",
-      "Brudeparti styling tilbud"
-    ]
+      "Brudeparti styling tilbud",
+    ],
   };
 
   const categoryRequirements: Record<ServiceCategoryKey, string[]> = {
@@ -606,28 +616,28 @@ async function main() {
       "God belysning",
       "Plass til arbeid (2x2 meter)",
       "Stol med ryggstø",
-      "Håndkle tilgjengelig"
+      "Håndkle tilgjengelig",
     ],
     nails: [
       "Godt ventilert rom",
       "Bord eller fast overflate",
       "God belysning",
       "Tilgang til strøm",
-      "Stol med armstø"
+      "Stol med armstø",
     ],
     makeup: [
       "God naturlig belysning",
       "Speil i full størrelse",
       "Stol med god ryggstø",
       "Ren arbeidsplass",
-      "Tilgang til vann"
+      "Tilgang til vann",
     ],
     browsLashes: [
       "Godt belyst rom",
       "Komfortabel liggestol/seng",
       "Tilgang til strøm",
       "Ren og støvfri miljø",
-      "Rolig omgivelser"
+      "Rolig omgivelser",
     ],
     wedding: [
       "Rolig og privat område",
@@ -635,11 +645,15 @@ async function main() {
       "Speil i full størrelse",
       "Strømtilgang",
       "Plass til utstyr og produkter",
-      "Mulighet for å henge kjoler"
-    ]
+      "Mulighet for å henge kjoler",
+    ],
   };
 
-  function getRandomItemsFromArray<T>(array: T[], min: number = 3, max: number = 5): T[] {
+  function getRandomItemsFromArray<T>(
+    array: T[],
+    min: number = 3,
+    max: number = 5,
+  ): T[] {
     const count = Math.floor(Math.random() * (max - min + 1)) + min;
     const shuffled = array.sort(() => 0.5 - Math.random());
     return shuffled.slice(0, count);
@@ -665,8 +679,16 @@ async function main() {
       : "";
 
     // Get random includes and requirements for this category
-    const includes = getRandomItemsFromArray(categoryIncludes[template.category], 3, 6);
-    const requirements = getRandomItemsFromArray(categoryRequirements[template.category], 2, 4);
+    const includes = getRandomItemsFromArray(
+      categoryIncludes[template.category],
+      3,
+      6,
+    );
+    const requirements = getRandomItemsFromArray(
+      categoryRequirements[template.category],
+      2,
+      4,
+    );
     const offerHomeService = Math.random() > 0.3; // 70% offer home service
 
     const service: DatabaseTables["services"]["Insert"] = {
@@ -834,8 +856,7 @@ async function main() {
   ]);
 
   // Create one-off unavailability periods
-  const nextWeek = new Date();
-  nextWeek.setDate(nextWeek.getDate() + 7);
+  const nextWeek = addDays(new Date(), 7);
   const lunchDate = new Date(nextWeek);
   lunchDate.setHours(13, 0, 0, 0);
 
@@ -843,13 +864,13 @@ async function main() {
     {
       stylist_id: stylistUsers[0].id,
       start_time: lunchDate,
-      end_time: new Date(lunchDate.getTime() + 60 * 60 * 1000), // 1 hour later
+      end_time: addHours(lunchDate, 1), // 1 hour later
       reason: "Lunsj",
     },
     {
       stylist_id: stylistUsers[1].id,
       start_time: new Date(nextWeek.setHours(15, 0, 0, 0)),
-      end_time: new Date(nextWeek.getTime() + 2 * 60 * 60 * 1000), // 2 hours later
+      end_time: addHours(new Date(nextWeek.getTime()), 2), // 2 hours later
       reason: "Tannlegetime",
     },
   ]);
@@ -949,7 +970,7 @@ async function main() {
   ]);
 
   // Create discount codes
-  await seed.discounts([
+  const { discounts } = await seed.discounts([
     {
       code: "VELKOMMEN20",
       description: "20% rabatt for nye kunder",
@@ -979,6 +1000,245 @@ async function main() {
       minimum_order_amount: 80000, // 800 NOK in øre
     },
   ]);
+
+  console.log("-- Creating bookings for testing...");
+
+  // Create some addresses for booking testing
+  const { addresses: customerAddresses } = await seed.addresses([
+    {
+      user_id: customerUsers[0].id, // Kari Nordmann
+      nickname: "Sommerhus",
+      street_address: "Strandveien 123",
+      city: "Oslo",
+      postal_code: "0250",
+      country: "Norge",
+      entry_instructions: "Ring på døren, kode 1234",
+      is_primary: false,
+    },
+  ]);
+
+  // Create diverse bookings for testing
+  const { bookings } = await seed.bookings([
+    // 1. Upcoming confirmed booking with discount - Kari Nordmann
+    {
+      customer_id: customerUsers[0].id, // Kari Nordmann
+      stylist_id: stylistUsers[0].id, // Maria Hansen
+      start_time: addDays(new Date(), 7), // Next week
+      end_time: addMinutes(addDays(new Date(), 7), 90), // 90 minutes later
+      message_to_stylist:
+        "Håper du kan hjelpe meg med en fin balayage som passer til hudfarge!",
+      status: "confirmed",
+      address_id: null, // At stylist's place
+      discount_id: discounts[0].id, // VELKOMMEN20
+      discount_applied: 400, // 20% of 2000 NOK
+      total_price: 1600, // After discount
+      total_duration_minutes: 90,
+      stripe_payment_intent_id: "pi_test_upcoming_confirmed_001",
+    },
+
+    // 2. Upcoming pending booking at customer's place - Kari Nordmann
+    {
+      customer_id: customerUsers[0].id, // Kari Nordmann
+      stylist_id: stylistUsers[1].id, // Emma Nilsen
+      start_time: addDays(new Date(), 3), // In 3 days
+      end_time: addMinutes(addDays(new Date(), 3), 60), // 60 minutes later
+      message_to_stylist: "Første gang jeg skal ha festmakeup, er litt nervøs!",
+      status: "pending",
+      address_id: customerAddresses[0].id, // At customer's sommerhus
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 1200,
+      total_duration_minutes: 60,
+      stripe_payment_intent_id: "pi_test_upcoming_pending_002",
+    },
+
+    // 3. Completed booking from last month - Kari Nordmann
+    {
+      customer_id: customerUsers[0].id, // Kari Nordmann
+      stylist_id: stylistUsers[2].id, // Sophia Larsen
+      start_time: subDays(new Date(), 30), // 30 days ago
+      end_time: addMinutes(subDays(new Date(), 30), 120), // 120 minutes later
+      message_to_stylist:
+        "Trenger klassiske vipper for bryllupet til min søster",
+      status: "completed",
+      address_id: null, // At stylist's place
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 2500,
+      total_duration_minutes: 120,
+      stripe_payment_intent_id: "pi_test_completed_003",
+    },
+
+    // 4. Cancelled booking from last week - Kari Nordmann
+    {
+      customer_id: customerUsers[0].id, // Kari Nordmann
+      stylist_id: stylistUsers[0].id, // Maria Hansen
+      start_time: subDays(new Date(), 7), // 7 days ago
+      end_time: addMinutes(subDays(new Date(), 7), 45), // 45 minutes later
+      message_to_stylist: "Bare et enkelt klipp, takk!",
+      status: "cancelled",
+      cancelled_at: subDays(new Date(), 8), // Cancelled day before
+      cancellation_reason: "Måtte reise på jobb uventet",
+      address_id: null,
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 800,
+      total_duration_minutes: 45,
+      stripe_payment_intent_id: "pi_test_cancelled_004",
+    },
+
+    // 5. Upcoming wedding booking - Ole Hansen
+    {
+      customer_id: customerUsers[1].id, // Ole Hansen
+      stylist_id: stylistUsers[1].id, // Emma Nilsen
+      start_time: addDays(new Date(), 14), // In 2 weeks
+      end_time: addMinutes(addDays(new Date(), 14), 180), // 3 hours later
+      message_to_stylist:
+        "Dette er til bryllupet mitt! Ønsker både makeup og hår til forloveden min. Vi møtes hjemme hos oss.",
+      status: "confirmed",
+      address_id: null, // Will be added as customer address in the booking
+      discount_id: discounts[1].id, // SOMMER100
+      discount_applied: 100,
+      total_price: 2900, // 3000 - 100 discount
+      total_duration_minutes: 180,
+      stripe_payment_intent_id: "pi_test_wedding_005",
+    },
+
+    // 6. Completed booking with multiple services - Ole Hansen
+    {
+      customer_id: customerUsers[1].id, // Ole Hansen
+      stylist_id: stylistUsers[2].id, // Sophia Larsen
+      start_time: subDays(new Date(), 45), // 45 days ago
+      end_time: addMinutes(subDays(new Date(), 45), 75), // 75 minutes later
+      message_to_stylist: "Både brynslaminering og forming, takk!",
+      status: "completed",
+      address_id: null,
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 1400,
+      total_duration_minutes: 75,
+      stripe_payment_intent_id: "pi_test_multiple_services_006",
+    },
+  ]);
+
+  console.log("-- Linking services to bookings...");
+
+  // Link services to bookings
+  await seed.booking_services([
+    // Booking 1: Balayage service
+    { booking_id: bookings[0].id, service_id: services[2].id }, // Balayage service
+
+    // Booking 2: Festmakeup
+    { booking_id: bookings[1].id, service_id: services[22].id }, // Festmakeup service
+
+    // Booking 3: Vippeextensions
+    { booking_id: bookings[2].id, service_id: services[27].id }, // Classic lash extensions
+
+    // Booking 4: Dameklipp
+    { booking_id: bookings[3].id, service_id: services[0].id }, // Dameklipp service
+
+    // Booking 5: Wedding package - multiple services
+    { booking_id: bookings[4].id, service_id: services[38].id }, // Brudemakeup
+    { booking_id: bookings[4].id, service_id: services[39].id }, // Brudefrisyre
+
+    // Booking 6: Bryn services - multiple
+    { booking_id: bookings[5].id, service_id: services[31].id }, // Brynslaminering
+    { booking_id: bookings[5].id, service_id: services[33].id }, // Brynspluking
+  ]);
+
+  console.log("-- Creating chats for some bookings...");
+
+  // Create chats for some bookings
+  const { chats } = await seed.chats([
+    { booking_id: bookings[0].id }, // Upcoming confirmed booking
+    { booking_id: bookings[1].id }, // Upcoming pending booking
+    { booking_id: bookings[4].id }, // Wedding booking
+  ]);
+
+  console.log("-- Adding chat messages...");
+
+  // Add some chat messages
+  await seed.chat_messages([
+    // Messages for upcoming confirmed booking
+    {
+      chat_id: chats[0].id,
+      sender_id: customerUsers[0].id, // Kari
+      content:
+        "Hei Maria! Gleder meg til å få balayage neste uke. Har du noen tips til hvordan jeg skal forberede håret?",
+      is_read: true,
+    },
+    {
+      chat_id: chats[0].id,
+      sender_id: stylistUsers[0].id, // Maria
+      content:
+        "Hei Kari! Så hyggelig at du kommer til meg. Unngå å vaske håret dagen før, så får vi best resultat 😊",
+      is_read: true,
+    },
+    {
+      chat_id: chats[0].id,
+      sender_id: customerUsers[0].id, // Kari
+      content: "Tusen takk for tipset! Sees neste uke!",
+      is_read: false,
+    },
+
+    // Messages for pending booking
+    {
+      chat_id: chats[1].id,
+      sender_id: customerUsers[0].id, // Kari
+      content:
+        "Hei Emma! Lurer på om du kan komme til sommerhuset mitt i stedet? Sender adressen i meldingen til stylisten.",
+      is_read: false,
+    },
+
+    // Messages for wedding booking
+    {
+      chat_id: chats[2].id,
+      sender_id: customerUsers[1].id, // Ole
+      content:
+        "Hei Emma! Dette er for bryllupet vårt. Har du gjort bryllupsstyling før?",
+      is_read: true,
+    },
+    {
+      chat_id: chats[2].id,
+      sender_id: stylistUsers[1].id, // Emma
+      content:
+        "Gratulerer med bryllupet! Ja, jeg har mye erfaring med bryllup. Dette blir fantastisk! 💍✨",
+      is_read: true,
+    },
+  ]);
+
+  console.log("-- Creating payment records...");
+
+  // Create payment records for completed bookings
+  await seed.payments([
+    {
+      booking_id: bookings[2].id, // Completed lash extensions
+      payment_intent_id: "pi_test_completed_003",
+      total_amount: 250000, // 2500 NOK in øre
+      platform_fee: 50000, // 20% platform fee in øre
+      stylist_payout_amount: 200000, // 80% to stylist in øre
+      currency: "NOK",
+      status: "succeeded",
+      succeeded_at: subDays(new Date(), 29),
+      payout_completed_at: subDays(new Date(), 28),
+    },
+    {
+      booking_id: bookings[5].id, // Completed bryn services
+      payment_intent_id: "pi_test_multiple_services_006",
+      total_amount: 140000, // 1400 NOK in øre
+      platform_fee: 28000, // 20% platform fee in øre
+      stylist_payout_amount: 112000, // 80% to stylist in øre
+      currency: "NOK",
+      status: "succeeded",
+      succeeded_at: subDays(new Date(), 44),
+      payout_completed_at: subDays(new Date(), 43),
+    },
+  ]);
+
+  console.log("-- Successfully seeded database with bookings for testing!");
+  console.log("-- Test accounts:");
+  console.log("--   Customer 1: kari.nordmann@example.com (6 bookings)");
+  console.log("--   Customer 2: ole.hansen@example.com (2 bookings)");
 
   process.exit(0);
 }

@@ -404,11 +404,11 @@ export function BookingDetailsContent({
                 </div>
               ))}
 
-              {booking.discounts && booking.discount_applied > 0 && (
+              {booking.discount_id && booking.discount_applied > 0 && (
                 <>
                   <Separator />
                   <div className="flex justify-between text-green-600">
-                    <span>Rabatt ({booking.discounts.code})</span>
+                    <span>Rabatt anvendt</span>
                     <span>-{booking.discount_applied.toFixed(2)} NOK</span>
                   </div>
                 </>

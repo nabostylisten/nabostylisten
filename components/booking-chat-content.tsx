@@ -1,14 +1,19 @@
 "use client";
 
-import { RealtimeChat, type ChatMessage } from "@/components/realtime-chat";
+import { RealtimeChat } from "@/components/realtime-chat";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowLeft, Calendar, MessageCircle, User } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect } from "react";
-import { createChatMessage, markChatMessagesAsRead } from "@/server/chat.actions";
+import {
+  createChatMessage,
+  markChatMessagesAsRead,
+} from "@/server/chat.actions";
 import { toast } from "sonner";
+import { useQueryClient } from "@tanstack/react-query";
+import { ChatMessage } from "@/hooks/use-realtime-chat";
 
 interface BookingChatContentProps {
   bookingId: string;
@@ -83,25 +88,36 @@ export function BookingChatContent({
     }
   };
 
+  const queryClient = useQueryClient();
+
   // Mark messages as read when component mounts
   useEffect(() => {
     const markAsRead = async () => {
       try {
-        await markChatMessagesAsRead(chatId);
+        const result = await markChatMessagesAsRead(chatId);
+        if (result.error) {
+          console.error("Error marking messages as read:", result.error);
+        } else {
+          // Invalidate relevant queries to refresh UI
+          queryClient.invalidateQueries({
+            queryKey: ["unread-messages", currentUserId],
+          });
+          queryClient.invalidateQueries({ queryKey: ["chats", currentUserId] });
+        }
       } catch (error) {
         console.error("Error marking messages as read:", error);
       }
     };
 
     markAsRead();
-  }, [chatId]);
+  }, [chatId, queryClient, currentUserId]);
 
   // Handle message persistence when new messages are sent via realtime chat
   const handleMessage = useCallback(
     async (messages: ChatMessage[]) => {
       // Get the most recent message that might need to be persisted
       const latestMessage = messages[messages.length - 1];
-      
+
       // Only persist messages that were sent by the current user and are not already in the database
       if (
         latestMessage &&
@@ -166,13 +182,13 @@ export function BookingChatContent({
                 })}
               </span>
             </div>
-            
+
             {serviceTitles.length > 0 && (
               <div className="text-muted-foreground">
                 {serviceTitles.join(", ")}
               </div>
             )}
-            
+
             <Badge variant={getStatusVariant(bookingStatus)}>
               {getStatusLabel(bookingStatus)}
             </Badge>

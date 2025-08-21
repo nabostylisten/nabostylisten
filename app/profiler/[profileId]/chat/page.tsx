@@ -1,38 +1,51 @@
-import { createClient } from "@/lib/supabase/server";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { ProfileLayout } from "@/components/profile-layout";
-import { getChatsByProfileId } from "@/server/chat.actions";
 import { ChatCard } from "@/components/chat-card";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/use-auth";
+import { useChats } from "@/hooks/use-chats";
+import { Spinner } from "@/components/ui/kibo-ui/spinner";
 
-export default async function ChatPage({
-  params,
-}: {
+interface ChatPageProps {
   params: Promise<{ profileId: string }>;
-}) {
-  const { profileId } = await params;
-  const supabase = await createClient();
+}
 
-  // Get current user session
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function ChatPage({ params }: ChatPageProps) {
+  const router = useRouter();
+  const { user, profile, loading } = useAuth();
+  const [profileId, setProfileId] = useState<string>("");
+
+  // Get profileId from params
+  useEffect(() => {
+    params.then(({ profileId }) => setProfileId(profileId));
+  }, [params]);
+
+  const { chats, isLoading: chatsLoading, error } = useChats(profileId);
 
   // Non-owners shouldn't be able to access this subpage
-  if (!user || user.id !== profileId) {
-    redirect(`/profiler/${profileId}`);
+  useEffect(() => {
+    if (!loading && (!user || user.id !== profileId)) {
+      router.push(`/profiler/${profileId}`);
+    }
+  }, [user, profileId, loading, router]);
+
+  if (loading || chatsLoading || !profileId) {
+    return (
+      <ProfileLayout profileId={profileId} userRole={profile?.role}>
+        <div className="flex flex-1 flex-col gap-4 p-4">
+          <div className="max-w-4xl mx-auto w-full">
+            <div className="flex items-center justify-center py-12">
+              <Spinner className="w-8 h-8" />
+            </div>
+          </div>
+        </div>
+      </ProfileLayout>
+    );
   }
-
-  // Fetch profile data to get user role
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("role")
-    .eq("id", profileId)
-    .single();
-
-  // Get chats for this profile
-  const { data: chats, error } = await getChatsByProfileId(profileId);
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
@@ -50,7 +63,8 @@ export default async function ChatPage({
 
           {error && (
             <div className="text-red-500 mb-4">
-              Feil ved lasting av samtaler: {error}
+              Feil ved lasting av samtaler:{" "}
+              {typeof error === "string" ? error : "Ukjent feil"}
             </div>
           )}
 
@@ -71,16 +85,19 @@ export default async function ChatPage({
                 const processedChats = chats.map((chat) => {
                   const booking = chat.bookings;
                   const isCustomer = booking.customer_id === profileId;
-                  const partner = isCustomer ? booking.stylist : booking.customer;
+                  const partner = isCustomer
+                    ? booking.stylist
+                    : booking.customer;
                   const serviceTitles =
                     booking.booking_services
                       ?.map((bs) => bs.services?.title)
                       .filter(Boolean) || [];
 
                   // Count unread messages (not sent by current user)
-                  const unreadCount = chat.chat_messages?.filter(
-                    (msg) => !msg.is_read && msg.sender_id !== profileId
-                  ).length || 0;
+                  const unreadCount =
+                    chat.chat_messages?.filter(
+                      (msg) => !msg.is_read && msg.sender_id !== profileId
+                    ).length || 0;
 
                   return {
                     chat,
@@ -96,12 +113,19 @@ export default async function ChatPage({
                 const sortedChats = processedChats.sort((a, b) => {
                   if (a.unreadCount > 0 && b.unreadCount === 0) return -1;
                   if (a.unreadCount === 0 && b.unreadCount > 0) return 1;
-                  return new Date(b.chat.updated_at).getTime() - new Date(a.chat.updated_at).getTime();
+                  return (
+                    new Date(b.chat.updated_at).getTime() -
+                    new Date(a.chat.updated_at).getTime()
+                  );
                 });
 
                 // Separate read and unread chats
-                const unreadChats = sortedChats.filter(item => item.unreadCount > 0);
-                const readChats = sortedChats.filter(item => item.unreadCount === 0);
+                const unreadChats = sortedChats.filter(
+                  (item) => item.unreadCount > 0
+                );
+                const readChats = sortedChats.filter(
+                  (item) => item.unreadCount === 0
+                );
 
                 return (
                   <>
@@ -120,15 +144,17 @@ export default async function ChatPage({
                         unreadCount={item.unreadCount}
                       />
                     ))}
-                    
+
                     {unreadChats.length > 0 && readChats.length > 0 && (
                       <div className="flex items-center gap-4 my-4">
                         <Separator className="flex-1" />
-                        <span className="text-sm text-muted-foreground font-medium">Lest</span>
+                        <span className="text-sm text-muted-foreground font-medium">
+                          Lest
+                        </span>
                         <Separator className="flex-1" />
                       </div>
                     )}
-                    
+
                     {readChats.map((item) => (
                       <ChatCard
                         key={item.chat.id}

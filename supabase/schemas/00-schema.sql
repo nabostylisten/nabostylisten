@@ -447,6 +447,41 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
+-- Function to broadcast chat message read status changes
+CREATE OR REPLACE FUNCTION public.broadcast_chat_message_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Only broadcast when is_read status changes
+  IF TG_OP = 'UPDATE' AND OLD.is_read != NEW.is_read THEN
+    PERFORM realtime.send(
+      jsonb_build_object(
+        'type', 'message_read_status_change',
+        'chat_id', NEW.chat_id,
+        'message_id', NEW.id,
+        'is_read', NEW.is_read,
+        'sender_id', NEW.sender_id
+      ),
+      'chat_message_read_status',
+      'booking-' || (
+        SELECT b.id::text 
+        FROM public.chats c 
+        JOIN public.bookings b ON c.booking_id = b.id 
+        WHERE c.id = NEW.chat_id
+      ),
+      false
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
+
+-- Trigger to broadcast chat message read status changes
+CREATE TRIGGER broadcast_chat_message_read_status_trigger
+AFTER UPDATE ON public.chat_messages
+FOR EACH ROW
+EXECUTE FUNCTION public.broadcast_chat_message_changes();
+
 -- ================== PERMISSIONS ==================
 
 -- Grant access to the gis schema for PostGIS functions

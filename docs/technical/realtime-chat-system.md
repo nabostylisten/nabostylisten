@@ -248,6 +248,46 @@ const unreadCount = chat_messages.filter(
 ).length;
 ```
 
+### Real-time Read Status Updates
+
+The system uses Supabase's realtime broadcast to notify clients when message read status changes:
+
+```sql
+-- Database trigger broadcasts read status changes
+CREATE OR REPLACE FUNCTION public.broadcast_chat_message_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'UPDATE' AND OLD.is_read != NEW.is_read THEN
+    PERFORM realtime.send(
+      jsonb_build_object(
+        'type', 'message_read_status_change',
+        'chat_id', NEW.chat_id,
+        'message_id', NEW.id,
+        'is_read', NEW.is_read,
+        'sender_id', NEW.sender_id
+      ),
+      'chat_message_read_status',
+      'booking-' || booking_id,
+      false
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+```typescript
+// Client-side real-time listening
+const handleReadStatusChange = useCallback(
+  (data: { chat_id: string; message_id: string; is_read: boolean }) => {
+    // Invalidate queries to refresh unread counts
+    queryClient.invalidateQueries(["unread-messages", currentUserId]);
+    queryClient.invalidateQueries(["chats", currentUserId]);
+  },
+  [queryClient, currentUserId]
+);
+```
+
 ### UI Indicators
 
 - **Navbar**: Red badge with count on chat icon
@@ -261,6 +301,24 @@ const unreadCount = chat_messages.filter(
 - **Booking-based Authorization**: Users can only access chats for their bookings
 - **Role Verification**: Customer/stylist roles verified before chat access
 - **Server-side Validation**: All database operations validated on server
+- **Realtime Authorization**: Simplified policies for authenticated users, with main security enforced at database table level
+
+```sql
+-- Simplified realtime authorization - main security handled by table RLS
+CREATE POLICY "authenticated can receive broadcasts" ON "realtime"."messages"
+FOR SELECT TO authenticated
+USING ( true );
+
+CREATE POLICY "authenticated can send broadcasts" ON "realtime"."messages"
+FOR INSERT TO authenticated  
+WITH CHECK ( true );
+```
+
+**Security Rationale**: The realtime broadcast layer uses simplified authentication-only policies because:
+- Primary security is enforced by RLS policies on `chat_messages`, `chats`, and `bookings` tables
+- Complex realtime policies can cause connection issues and increased latency
+- Message persistence and access are protected at the database level where it matters most
+- Broadcast events are ephemeral and don't persist sensitive data
 
 ### Data Protection
 

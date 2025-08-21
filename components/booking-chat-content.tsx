@@ -142,6 +142,18 @@ export function BookingChatContent({
     [chatId, currentUserName, initialMessages]
   );
 
+  // Handle real-time read status changes
+  const handleReadStatusChange = useCallback(
+    (data: { chat_id: string; message_id: string; is_read: boolean }) => {
+      // Invalidate queries to refresh unread counts in UI
+      queryClient.invalidateQueries({
+        queryKey: ["unread-messages", currentUserId],
+      });
+      queryClient.invalidateQueries({ queryKey: ["chats", currentUserId] });
+    },
+    [queryClient, currentUserId]
+  );
+
   return (
     <div className="max-w-4xl mx-auto w-full h-full flex flex-col">
       {/* Header */}
@@ -212,6 +224,7 @@ export function BookingChatContent({
           username={currentUserName}
           messages={convertedMessages}
           onMessage={handleMessage}
+          onReadStatusChange={handleReadStatusChange}
         />
       </div>
     </div>

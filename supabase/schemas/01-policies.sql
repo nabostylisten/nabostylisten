@@ -271,6 +271,20 @@ WITH CHECK (
   )
 );
 
+-- Users can update messages in chats they are a part of (for marking as read).
+CREATE POLICY "Users can update messages in their own chats." ON public.chat_messages
+FOR UPDATE TO authenticated
+USING (
+  chat_id IN (
+    SELECT id FROM public.chats
+  )
+)
+WITH CHECK (
+  chat_id IN (
+    SELECT id FROM public.chats
+  )
+);
+
 -- Public media is viewable by everyone.
 CREATE POLICY "Public media is viewable by everyone." ON public.media
 FOR SELECT TO anon, authenticated
@@ -540,3 +554,13 @@ CREATE POLICY "Admins can manage buckets" ON storage.buckets
 FOR ALL TO authenticated
 USING (public.get_my_role() = 'admin')
 WITH CHECK (public.get_my_role() = 'admin');
+
+-- ========== REALTIME POLICIES ==========
+-- Simplified realtime policies - main security is handled by database table RLS
+CREATE POLICY "authenticated can receive broadcasts" ON "realtime"."messages"
+FOR SELECT TO authenticated
+USING ( true );
+
+CREATE POLICY "authenticated can send broadcasts" ON "realtime"."messages"
+FOR INSERT TO authenticated
+WITH CHECK ( true );

@@ -56,7 +56,7 @@ export const ImageGalleryDialog = ({
       <DialogTitle>
         <VisuallyHidden>Bildegalleri</VisuallyHidden>
       </DialogTitle>
-      <DialogContent className="max-w-6xl w-full h-[95vh] p-0">
+      <DialogContent className="max-w-6xl w-full h-[80vh] p-0">
         <div className="flex flex-col h-full">
           {/* Image counter badge */}
           <div className="flex justify-center pt-4">
@@ -78,7 +78,7 @@ export const ImageGalleryDialog = ({
               <CarouselContent className="h-full -ml-0">
                 {images.map((image, index) => (
                   <CarouselItem key={image.id} className="h-full pl-0 basis-full">
-                    <div className="relative w-full h-full min-h-[60vh] flex items-center justify-center">
+                    <div className="relative w-full h-full min-h-[50vh] flex items-center justify-center">
                       <Image
                         src={image.url}
                         alt={`Bilde ${index + 1} av ${images.length}`}

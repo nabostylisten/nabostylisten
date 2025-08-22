@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowLeft, Calendar, MessageCircle, User } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import {
   createChatMessage,
   markChatMessagesAsRead,
@@ -50,12 +50,19 @@ export function BookingChatContent({
   messagesError,
 }: BookingChatContentProps) {
   const [convertedMessages, setConvertedMessages] = useState<ChatMessage[]>([]);
+  const processedMessageIds = useRef<Set<string>>(new Set());
 
   // Load images for messages and convert to ChatMessage format
   useEffect(() => {
     const loadMessagesWithImages = async () => {
+      // Clear processed messages when initial messages change
+      processedMessageIds.current.clear();
+      
       const messagesWithImages = await Promise.all(
         initialMessages.map(async (msg) => {
+          // Mark initial messages as processed
+          processedMessageIds.current.add(msg.id);
+          
           // Fetch images for this message
           const imagesResult = await getChatMessageImages(msg.id);
           const images = imagesResult.error ? [] : imagesResult.data || [];
@@ -138,18 +145,19 @@ export function BookingChatContent({
       // Get the most recent message that might need to be persisted
       const latestMessage = messages[messages.length - 1];
 
-      // Only persist messages that were sent by the current user and are not already in the database
+      // Only persist text messages that were sent by the current user and are not already processed
+      // Image messages are already persisted during the upload process
       if (
         latestMessage &&
         latestMessage.user.name === currentUserName &&
-        !initialMessages.some((msg) => msg.id === latestMessage.id)
+        !processedMessageIds.current.has(latestMessage.id) &&
+        !latestMessage.images // Only handle text messages here, image messages are handled in upload
       ) {
+        processedMessageIds.current.add(latestMessage.id);
         try {
-          // For image messages, the content might be empty, but we still need to save the message
-          // The images are already uploaded and linked to the message ID
           const result = await createChatMessage({
             chatId,
-            content: latestMessage.content || "", // Allow empty content for image-only messages
+            content: latestMessage.content,
             messageId: latestMessage.id, // Use the client-generated message ID
           });
 
@@ -171,6 +179,22 @@ export function BookingChatContent({
           console.error("Error saving message:", error);
           toast.error("Feil ved lagring av melding");
         }
+      } else if (
+        latestMessage && 
+        latestMessage.images && 
+        latestMessage.user.name === currentUserName &&
+        !processedMessageIds.current.has(latestMessage.id)
+      ) {
+        processedMessageIds.current.add(latestMessage.id);
+        // For image messages, just update the UI since they're already persisted
+        setConvertedMessages((prev) => {
+          const updated = [...prev];
+          const existingIndex = updated.findIndex((msg) => msg.id === latestMessage.id);
+          if (existingIndex === -1) {
+            updated.push(latestMessage);
+          }
+          return updated;
+        });
       }
     },
     [chatId, currentUserName, initialMessages]

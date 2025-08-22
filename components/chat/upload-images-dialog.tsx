@@ -15,6 +15,7 @@ import {
     DropzoneEmptyState,
 } from "@/components/ui/kibo-ui/dropzone";
 import { useUploadChatImages } from "@/hooks/use-upload-chat-images";
+import { createChatMessage } from "@/server/chat.actions";
 import { Image as ImageIcon, Upload, X } from "lucide-react";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import { toast } from "sonner";
@@ -35,7 +36,8 @@ export const UploadImagesDialog = ({
     const uploadMutation = useUploadChatImages();
 
     const handleFilesSelected = (acceptedFiles: File[]) => {
-        setSelectedFiles(acceptedFiles);
+        // Add new files to existing selection instead of replacing
+        setSelectedFiles((prev) => [...prev, ...acceptedFiles]);
     };
 
     const handleRemoveFile = (index: number) => {
@@ -50,6 +52,20 @@ export const UploadImagesDialog = ({
 
         try {
             const messageId = crypto.randomUUID(); // Generate message ID for this upload
+            
+            // First, create the chat message with empty content
+            const messageResult = await createChatMessage({
+                chatId,
+                content: "", // Empty content for image-only message
+                messageId,
+            });
+
+            if (messageResult.error) {
+                toast.error("Feil ved opprettelse av melding: " + messageResult.error);
+                return;
+            }
+
+            // Then upload the images linked to this message
             const uploadedImages = await uploadMutation.mutateAsync({
                 chatId,
                 messageId,
@@ -61,6 +77,7 @@ export const UploadImagesDialog = ({
             setOpen(false);
         } catch (error) {
             // Error is already handled in the mutation
+            console.error("Upload error:", error);
         }
     };
 

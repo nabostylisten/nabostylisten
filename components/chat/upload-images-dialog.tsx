@@ -18,6 +18,7 @@ import { useUploadChatImages } from "@/hooks/use-upload-chat-images";
 import { createChatMessage } from "@/server/chat.actions";
 import { Image as ImageIcon, Upload, X } from "lucide-react";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 interface UploadImagesDialogProps {
@@ -25,6 +26,27 @@ interface UploadImagesDialogProps {
     onUploadComplete: (images: Array<{ id: string; file_path: string; url: string }>, messageId: string) => void;
     children?: React.ReactNode;
 }
+
+// Helper function to get file extension
+const getFileExtension = (filename: string): string => {
+    const parts = filename.split('.');
+    return parts.length > 1 ? parts.pop()?.toUpperCase() || '' : '';
+};
+
+// Helper function to truncate filename
+const truncateFilename = (filename: string, maxLength: number = 25): string => {
+    if (filename.length <= maxLength) return filename;
+    
+    const extension = getFileExtension(filename);
+    const nameWithoutExt = filename.substring(0, filename.lastIndexOf('.'));
+    const maxNameLength = maxLength - extension.length - 1; // -1 for the dot
+    
+    if (nameWithoutExt.length <= maxNameLength) {
+        return filename;
+    }
+    
+    return `${nameWithoutExt.substring(0, maxNameLength - 3)}...${extension ? '.' + extension.toLowerCase() : ''}`;
+};
 
 export const UploadImagesDialog = ({
     chatId,
@@ -95,11 +117,11 @@ export const UploadImagesDialog = ({
                     </Button>
                 )}
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-lg max-h-[85vh]">
                 <DialogHeader>
                     <DialogTitle>Last opp bilder</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4">
+                <div className="space-y-4 max-h-[70vh] overflow-y-auto">
                     <Dropzone
                         accept={{
                             "image/jpeg": [".jpg", ".jpeg"],
@@ -137,26 +159,39 @@ export const UploadImagesDialog = ({
                             <p className="text-sm font-medium">
                                 Valgte filer ({selectedFiles.length})
                             </p>
-                            <div className="max-h-32 overflow-y-auto space-y-1">
-                                {selectedFiles.map((file, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center justify-between rounded border p-2"
-                                    >
-                                        <div className="flex items-center space-x-2">
-                                            <ImageIcon className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-sm truncate">{file.name}</span>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleRemoveFile(index)}
-                                            disabled={uploadMutation.isUploading}
+                            <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
+                                {selectedFiles.map((file, index) => {
+                                    const extension = getFileExtension(file.name);
+                                    const truncatedName = truncateFilename(file.name, 25);
+                                    
+                                    return (
+                                        <div
+                                            key={index}
+                                            className="flex items-center justify-between rounded border p-2 gap-2"
                                         >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ))}
+                                            <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                                <ImageIcon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                                                <span className="text-sm truncate" title={file.name}>
+                                                    {truncatedName}
+                                                </span>
+                                                {extension && (
+                                                    <Badge variant="outline" className="text-xs flex-shrink-0">
+                                                        {extension}
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleRemoveFile(index)}
+                                                disabled={uploadMutation.isUploading}
+                                                className="flex-shrink-0"
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     )}

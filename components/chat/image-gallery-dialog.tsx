@@ -1,138 +1,126 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+  type CarouselApi,
+} from "@/components/ui/carousel";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 
 interface ImageGalleryDialogProps {
-    images: Array<{
-        id: string;
-        file_path: string;
-        url: string;
-    }>;
-    initialIndex?: number;
-    open: boolean;
-    onOpenChange: (open: boolean) => void;
+  images: Array<{
+    id: string;
+    file_path: string;
+    url: string;
+  }>;
+  initialIndex?: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export const ImageGalleryDialog = ({
-    images,
-    initialIndex = 0,
-    open,
-    onOpenChange,
+  images,
+  initialIndex = 0,
+  open,
+  onOpenChange,
 }: ImageGalleryDialogProps) => {
-    const [currentIndex, setCurrentIndex] = useState(initialIndex);
+  const [api, setApi] = useState<CarouselApi>();
+  const [current, setCurrent] = useState(0);
 
-    const handlePrevious = () => {
-        setCurrentIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1));
-    };
+  useEffect(() => {
+    if (!api) return;
 
-    const handleNext = () => {
-        setCurrentIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0));
-    };
+    setCurrent(api.selectedScrollSnap() + 1);
 
-    const handleKeyDown = (event: React.KeyboardEvent) => {
-        if (event.key === "ArrowLeft") {
-            handlePrevious();
-        } else if (event.key === "ArrowRight") {
-            handleNext();
-        } else if (event.key === "Escape") {
-            onOpenChange(false);
-        }
-    };
+    api.on("select", () => {
+      setCurrent(api.selectedScrollSnap() + 1);
+    });
 
-    if (images.length === 0) return null;
+    // Set initial slide
+    if (initialIndex > 0) {
+      api.scrollTo(initialIndex);
+    }
+  }, [api, initialIndex]);
 
-    const currentImage = images[currentIndex];
+  if (images.length === 0) return null;
 
-    return (
-        <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent
-                className="max-w-4xl w-full h-[90vh] p-0"
-                onKeyDown={handleKeyDown}
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-6xl w-full h-[95vh] p-0">
+        <div className="flex flex-col h-full">
+          {/* Image counter badge */}
+          <div className="flex justify-center pt-4">
+            <Badge variant="secondary" className="text-sm">
+              {current} / {images.length}
+            </Badge>
+          </div>
+
+          {/* Main carousel */}
+          <div className="flex-1 p-4">
+            <Carousel
+              setApi={setApi}
+              className="w-full h-full"
+              opts={{
+                align: "center",
+                loop: true,
+              }}
             >
-                <DialogHeader className="p-4 pb-0">
-                    <div className="flex items-center justify-between">
-                        <DialogTitle className="text-sm font-medium">
-                            {currentIndex + 1} / {images.length}
-                        </DialogTitle>
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => onOpenChange(false)}
-                        >
-                            <X className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </DialogHeader>
-
-                <div className="flex-1 relative flex items-center justify-center p-4">
-                    {/* Navigation arrows */}
-                    {images.length > 1 && (
-                        <>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="absolute left-4 z-10 bg-black/20 hover:bg-black/40 text-white"
-                                onClick={handlePrevious}
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="absolute right-4 z-10 bg-black/20 hover:bg-black/40 text-white"
-                                onClick={handleNext}
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </>
-                    )}
-
-                    {/* Main image */}
+              <CarouselContent className="h-full">
+                {images.map((image, index) => (
+                  <CarouselItem key={image.id} className="h-full">
                     <div className="relative w-full h-full flex items-center justify-center">
-                        <Image
-                            src={currentImage.url}
-                            alt={`Bilde ${currentIndex + 1} av ${images.length}`}
-                            fill
-                            className="object-contain rounded-lg"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 60vw"
-                        />
+                      <Image
+                        src={image.url}
+                        alt={`Bilde ${index + 1} av ${images.length}`}
+                        fill
+                        className="object-contain rounded-lg"
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
+                      />
                     </div>
-                </div>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+              {images.length > 1 && (
+                <>
+                  <CarouselPrevious className="left-4" />
+                  <CarouselNext className="right-4" />
+                </>
+              )}
+            </Carousel>
+          </div>
 
-                {/* Thumbnail navigation */}
-                {images.length > 1 && (
-                    <div className="flex gap-2 p-4 pt-0 overflow-x-auto">
-                        {images.map((image, index) => (
-                            <button
-                                key={image.id}
-                                onClick={() => setCurrentIndex(index)}
-                                className={`relative w-16 h-16 rounded-md overflow-hidden border-2 transition-colors ${
-                                    index === currentIndex
-                                        ? "border-primary"
-                                        : "border-transparent hover:border-border"
-                                }`}
-                            >
-                                <Image
-                                    src={image.url}
-                                    alt={`Thumbnail ${index + 1}`}
-                                    fill
-                                    className="object-cover"
-                                    sizes="64px"
-                                />
-                            </button>
-                        ))}
-                    </div>
-                )}
-            </DialogContent>
-        </Dialog>
-    );
+          {/* Thumbnail navigation */}
+          {images.length > 1 && (
+            <div className="flex gap-2 p-4 pt-0 overflow-x-auto justify-center">
+              {images.map((image, index) => (
+                <button
+                  key={image.id}
+                  onClick={() => api?.scrollTo(index)}
+                  className={`relative w-16 h-16 rounded-md overflow-hidden border-2 transition-colors flex-shrink-0 ${
+                    index === current - 1
+                      ? "border-primary"
+                      : "border-transparent hover:border-border"
+                  }`}
+                >
+                  <Image
+                    src={image.url}
+                    alt={`Thumbnail ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 };

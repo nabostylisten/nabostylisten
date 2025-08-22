@@ -26,10 +26,21 @@ import {
   DropzoneEmptyState,
 } from "@/components/ui/kibo-ui/dropzone";
 import { Badge } from "@/components/ui/badge";
-import { X, ImageIcon } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { X, ImageIcon, Trash2 } from "lucide-react";
 
 import { useUploadReviewImages } from "@/hooks/use-upload-review-images";
-import { upsertReview } from "@/server/review.actions";
+import { upsertReview, deleteReview } from "@/server/review.actions";
 import type { DatabaseTables } from "@/types";
 
 const reviewFormSchema = z.object({
@@ -60,6 +71,7 @@ export function ReviewForm({
   onCancel,
 }: ReviewFormProps) {
   const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const queryClient = useQueryClient();
   const uploadImagesMutation = useUploadReviewImages();
 
@@ -125,6 +137,38 @@ export function ReviewForm({
     },
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!existingReview?.id) {
+        throw new Error("Ingen anmeldelse å slette");
+      }
+      
+      const result = await deleteReview(existingReview.id);
+      if (result.error) {
+        throw new Error(
+          typeof result.error === "string" ? result.error : result.error.message
+        );
+      }
+      return result;
+    },
+    onSuccess: () => {
+      toast.success("Anmeldelse slettet!");
+      
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["review", bookingId] });
+      queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
+      queryClient.invalidateQueries({
+        queryKey: ["completedBookingsWithoutReviews"],
+      });
+
+      onSuccess?.();
+    },
+    onError: (error) => {
+      toast.error(`Feil ved sletting av anmeldelse: ${error.message}`);
+    },
+  });
+
   const handleSubmit = (data: ReviewFormData) => {
     reviewMutation.mutate(data);
   };
@@ -134,7 +178,7 @@ export function ReviewForm({
   };
 
   const isLoading =
-    reviewMutation.isPending || uploadImagesMutation.isUploading;
+    reviewMutation.isPending || uploadImagesMutation.isUploading || deleteMutation.isPending;
 
   return (
     <Form {...form}>
@@ -264,23 +308,69 @@ export function ReviewForm({
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-3 pt-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={onCancel}
-            disabled={isLoading}
-          >
-            Avbryt
-          </Button>
-          <Button type="submit" disabled={isLoading} className="flex-1">
-            {isLoading && <Spinner className="w-4 h-4 mr-2" />}
-            {reviewMutation.isPending
-              ? existingReview ? "Oppdaterer anmeldelse..." : "Oppretter anmeldelse..."
-              : uploadImagesMutation.isUploading
-                ? "Laster opp bilder..."
-                : existingReview ? "Oppdater anmeldelse" : "Publiser anmeldelse"}
-          </Button>
+        <div className="space-y-4 pt-4">
+          <div className="flex gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onCancel}
+              disabled={isLoading}
+            >
+              Avbryt
+            </Button>
+            <Button type="submit" disabled={isLoading} className="flex-1">
+              {isLoading && <Spinner className="w-4 h-4 mr-2" />}
+              {reviewMutation.isPending
+                ? existingReview ? "Oppdaterer anmeldelse..." : "Oppretter anmeldelse..."
+                : uploadImagesMutation.isUploading
+                  ? "Laster opp bilder..."
+                  : existingReview ? "Oppdater anmeldelse" : "Publiser anmeldelse"}
+            </Button>
+          </div>
+
+          {/* Delete button - only show for existing reviews */}
+          {existingReview && (
+            <div className="border-t pt-4">
+              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    disabled={isLoading}
+                    className="w-full"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Slett anmeldelse
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Slett anmeldelse</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Er du sikker på at du vil slette denne anmeldelsen? Denne handlingen kan ikke angres.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={deleteMutation.isPending}>
+                      Avbryt
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => {
+                        deleteMutation.mutate();
+                        setIsDeleteDialogOpen(false);
+                      }}
+                      disabled={deleteMutation.isPending}
+                      className="bg-red-600 hover:bg-red-700"
+                    >
+                      {deleteMutation.isPending && <Spinner className="w-4 h-4 mr-2" />}
+                      Slett anmeldelse
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
         </div>
       </form>
     </Form>

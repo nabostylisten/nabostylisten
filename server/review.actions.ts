@@ -288,6 +288,69 @@ export async function getCustomerReviews(
     return { data, error: null, total, totalPages, currentPage: page };
 }
 
+export async function upsertReview(
+    review: DatabaseTables["reviews"]["Insert"],
+) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+
+    // Verify that the user is the customer of the booking
+    const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .select("customer_id, stylist_id, status")
+        .eq("id", review.booking_id)
+        .single();
+
+    if (bookingError || !booking) {
+        return { error: "Booking not found", data: null };
+    }
+
+    if (booking.customer_id !== user.id) {
+        return { error: "Not authorized to review this booking", data: null };
+    }
+
+    if (booking.status !== "completed") {
+        return { error: "Can only review completed bookings", data: null };
+    }
+
+    // Check if review already exists for this booking
+    const { data: existingReview } = await supabase
+        .from("reviews")
+        .select("id")
+        .eq("booking_id", review.booking_id)
+        .single();
+
+    // Set customer_id and stylist_id from booking
+    const reviewData = {
+        ...review,
+        customer_id: booking.customer_id,
+        stylist_id: booking.stylist_id,
+    };
+
+    if (existingReview) {
+        // Update existing review
+        const updateData: DatabaseTables["reviews"]["Update"] = {
+            rating: reviewData.rating,
+            comment: reviewData.comment,
+        };
+        
+        return await supabase
+            .from("reviews")
+            .update(updateData)
+            .eq("id", existingReview.id)
+            .select()
+            .single();
+    } else {
+        // Create new review
+        return await supabase.from("reviews").insert(reviewData).select().single();
+    }
+}
+
 export async function getStylistAverageRating(stylistId: string) {
     const supabase = await createClient();
 

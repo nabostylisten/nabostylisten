@@ -15,13 +15,18 @@ import {
   Building2,
   Settings,
   ChevronRight,
+  Star,
+  Edit,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import Link from "next/link";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { getReviewByBookingId } from "@/server/review.actions";
 import type { Database } from "@/types/database.types";
 import { BookingStatusDialog } from "./booking-status-dialog";
+import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
 
 // Type for the booking with all related data
@@ -66,12 +71,22 @@ export function BookingCard({
   userRole = "customer",
 }: BookingCardProps) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
   const services =
     booking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
   const hasChat = booking.chats && booking.chats.id;
+  
+  // Check if there's an existing review for this booking
+  const { data: reviewResponse } = useQuery({
+    queryKey: ['review', booking.id],
+    queryFn: () => getReviewByBookingId(booking.id),
+    enabled: booking.status === 'completed' && userRole === 'customer',
+  });
+  
+  const existingReview = reviewResponse?.data;
 
   // Status styling
   const getStatusBadge = (status: string) => {
@@ -238,6 +253,26 @@ export function BookingCard({
                   Administrer
                 </Button>
               )}
+              {/* Review button for completed bookings (customers only) */}
+              {userRole === "customer" && booking.status === "completed" && (
+                <Button
+                  variant={existingReview ? "outline" : "default"}
+                  size="sm"
+                  onClick={() => setIsReviewDialogOpen(true)}
+                >
+                  {existingReview ? (
+                    <>
+                      <Edit className="w-4 h-4 mr-2" />
+                      Endre anmeldelse
+                    </>
+                  ) : (
+                    <>
+                      <Star className="w-4 h-4 mr-2" />
+                      Gi anmeldelse
+                    </>
+                  )}
+                </Button>
+              )}
               <Link
                 href={`/bookinger/${booking.id}`}
                 className={cn(
@@ -265,6 +300,18 @@ export function BookingCard({
           serviceName={services[0]?.title || "Booking"}
           isOpen={isStatusDialogOpen}
           onOpenChange={setIsStatusDialogOpen}
+        />
+      )}
+      
+      {/* Review Dialog for Customers */}
+      {userRole === "customer" && booking.status === "completed" && (
+        <ReviewDialog
+          open={isReviewDialogOpen}
+          onOpenChange={setIsReviewDialogOpen}
+          bookingId={booking.id}
+          stylistName={booking.stylist?.full_name || "Stylisten"}
+          serviceTitles={services.map(s => s?.title || "Tjeneste")}
+          existingReview={existingReview}
         />
       )}
     </Card>

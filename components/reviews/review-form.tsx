@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { X, ImageIcon } from "lucide-react";
 
 import { useUploadReviewImages } from "@/hooks/use-upload-review-images";
-import { createReview } from "@/server/review.actions";
+import { upsertReview } from "@/server/review.actions";
 import type { DatabaseTables } from "@/types";
 
 const reviewFormSchema = z.object({
@@ -46,6 +46,7 @@ interface ReviewFormProps {
   bookingId: string;
   stylistName: string;
   serviceTitles: string[];
+  existingReview?: DatabaseTables["reviews"]["Row"] | null;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
@@ -54,6 +55,7 @@ export function ReviewForm({
   bookingId,
   stylistName,
   serviceTitles,
+  existingReview,
   onSuccess,
   onCancel,
 }: ReviewFormProps) {
@@ -64,12 +66,12 @@ export function ReviewForm({
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
     defaultValues: {
-      rating: 0,
-      comment: "",
+      rating: existingReview?.rating || 0,
+      comment: existingReview?.comment || "",
     },
   });
 
-  const createMutation = useMutation({
+  const reviewMutation = useMutation({
     mutationFn: async (data: ReviewFormData) => {
       const reviewData: DatabaseTables["reviews"]["Insert"] = {
         booking_id: bookingId,
@@ -79,7 +81,7 @@ export function ReviewForm({
         stylist_id: "", // Will be set by the server action
       };
 
-      const result = await createReview(reviewData);
+      const result = await upsertReview(reviewData);
       if (result.error) {
         throw new Error(
           typeof result.error === "string" ? result.error : result.error.message
@@ -88,7 +90,7 @@ export function ReviewForm({
       return result.data;
     },
     onSuccess: async (data) => {
-      toast.success("Anmeldelse opprettet!");
+      toast.success(existingReview ? "Anmeldelse oppdatert!" : "Anmeldelse opprettet!");
 
       // Upload images if any were selected
       if (uploadedFiles.length > 0 && data?.id) {
@@ -106,6 +108,7 @@ export function ReviewForm({
 
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["review", bookingId] });
       queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
       queryClient.invalidateQueries({
         queryKey: ["completedBookingsWithoutReviews"],
@@ -116,12 +119,14 @@ export function ReviewForm({
       onSuccess?.();
     },
     onError: (error) => {
-      toast.error(`Feil ved opprettelse av anmeldelse: ${error.message}`);
+      toast.error(
+        `Feil ved ${existingReview ? "oppdatering" : "opprettelse"} av anmeldelse: ${error.message}`
+      );
     },
   });
 
   const handleSubmit = (data: ReviewFormData) => {
-    createMutation.mutate(data);
+    reviewMutation.mutate(data);
   };
 
   const removeFile = (index: number) => {
@@ -129,7 +134,7 @@ export function ReviewForm({
   };
 
   const isLoading =
-    createMutation.isPending || uploadImagesMutation.isUploading;
+    reviewMutation.isPending || uploadImagesMutation.isUploading;
 
   return (
     <Form {...form}>
@@ -270,11 +275,11 @@ export function ReviewForm({
           </Button>
           <Button type="submit" disabled={isLoading} className="flex-1">
             {isLoading && <Spinner className="w-4 h-4 mr-2" />}
-            {createMutation.isPending
-              ? "Oppretter anmeldelse..."
+            {reviewMutation.isPending
+              ? existingReview ? "Oppdaterer anmeldelse..." : "Oppretter anmeldelse..."
               : uploadImagesMutation.isUploading
                 ? "Laster opp bilder..."
-                : "Publiser anmeldelse"}
+                : existingReview ? "Oppdater anmeldelse" : "Publiser anmeldelse"}
           </Button>
         </div>
       </form>

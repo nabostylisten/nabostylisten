@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ReviewForm } from "./review-form";
+import type { DatabaseTables } from "@/types";
 
 interface ReviewDialogProps {
   open: boolean;
@@ -15,6 +16,7 @@ interface ReviewDialogProps {
   bookingId: string;
   stylistName: string;
   serviceTitles: string[];
+  existingReview?: DatabaseTables["reviews"]["Row"] | null;
 }
 
 export function ReviewDialog({
@@ -23,6 +25,7 @@ export function ReviewDialog({
   bookingId,
   stylistName,
   serviceTitles,
+  existingReview,
 }: ReviewDialogProps) {
   const handleSuccess = () => {
     onOpenChange(false);
@@ -36,15 +39,21 @@ export function ReviewDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Legg til anmeldelse</DialogTitle>
+          <DialogTitle>
+            {existingReview ? "Rediger anmeldelse" : "Legg til anmeldelse"}
+          </DialogTitle>
           <DialogDescription>
-            Del din opplevelse med andre brukere ved å skrive en anmeldelse
+            {existingReview 
+              ? "Oppdater din anmeldelse og del din opplevelse"
+              : "Del din opplevelse med andre brukere ved å skrive en anmeldelse"
+            }
           </DialogDescription>
         </DialogHeader>
         <ReviewForm
           bookingId={bookingId}
           stylistName={stylistName}
           serviceTitles={serviceTitles}
+          existingReview={existingReview}
           onSuccess={handleSuccess}
           onCancel={handleCancel}
         />

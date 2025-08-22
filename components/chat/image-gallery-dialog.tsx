@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import {
   Carousel,
   CarouselContent,
@@ -51,7 +52,10 @@ export const ImageGalleryDialog = ({
   if (images.length === 0) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange} modal={true}>
+      <DialogTitle>
+        <VisuallyHidden>Bildegalleri</VisuallyHidden>
+      </DialogTitle>
       <DialogContent className="max-w-6xl w-full h-[95vh] p-0">
         <div className="flex flex-col h-full">
           {/* Image counter badge */}
@@ -62,7 +66,7 @@ export const ImageGalleryDialog = ({
           </div>
 
           {/* Main carousel */}
-          <div className="flex-1 p-4">
+          <div className="flex-1 p-4 min-h-0">
             <Carousel
               setApi={setApi}
               className="w-full h-full"
@@ -71,16 +75,17 @@ export const ImageGalleryDialog = ({
                 loop: true,
               }}
             >
-              <CarouselContent className="h-full">
+              <CarouselContent className="h-full -ml-0">
                 {images.map((image, index) => (
-                  <CarouselItem key={image.id} className="h-full">
-                    <div className="relative w-full h-full flex items-center justify-center">
+                  <CarouselItem key={image.id} className="h-full pl-0 basis-full">
+                    <div className="relative w-full h-full min-h-[60vh] flex items-center justify-center">
                       <Image
                         src={image.url}
                         alt={`Bilde ${index + 1} av ${images.length}`}
                         fill
                         className="object-contain rounded-lg"
                         sizes="(max-width: 768px) 100vw, (max-width: 1200px) 90vw, 80vw"
+                        priority
                       />
                     </div>
                   </CarouselItem>

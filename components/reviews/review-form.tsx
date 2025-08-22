@@ -37,10 +37,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { X, ImageIcon, Trash2 } from "lucide-react";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+import { X, ImageIcon, Trash2, Upload as UploadIcon } from "lucide-react";
+import Image from "next/image";
 
 import { useUploadReviewImages } from "@/hooks/use-upload-review-images";
-import { upsertReview, deleteReview } from "@/server/review.actions";
+import { upsertReview, deleteReview, deleteReviewImage } from "@/server/review.actions";
+import { createClient } from "@/lib/supabase/client";
+import { getPublicUrl } from "@/lib/supabase/storage";
 import type { DatabaseTables } from "@/types";
 
 const reviewFormSchema = z.object({
@@ -53,14 +63,81 @@ const reviewFormSchema = z.object({
 
 type ReviewFormData = z.infer<typeof reviewFormSchema>;
 
+type ReviewWithMedia = DatabaseTables["reviews"]["Row"] & {
+  media?: Array<{
+    id: string;
+    file_path: string;
+    media_type: string;
+  }>;
+};
+
+type ReviewImageWithPublicUrl = {
+  id: string;
+  file_path: string;
+  media_type: string;
+  publicUrl: string;
+};
+
 interface ReviewFormProps {
   bookingId: string;
   stylistName: string;
   serviceTitles: string[];
-  existingReview?: DatabaseTables["reviews"]["Row"] | null;
+  existingReview?: ReviewWithMedia | null;
   onSuccess?: () => void;
   onCancel?: () => void;
 }
+
+// Helper function to truncate filename
+const truncateFilename = (filename: string, maxLength: number = 25): string => {
+  if (filename.length <= maxLength) return filename;
+  
+  const extension = filename.split('.').pop() || '';
+  const nameWithoutExt = filename.slice(0, filename.lastIndexOf('.'));
+  const truncatedName = nameWithoutExt.slice(0, maxLength - extension.length - 4); // -4 for "..." + "."
+  
+  return `${truncatedName}...${extension}`;
+};
+
+// Custom dropzone content with truncated filenames
+const TruncatedDropzoneContent = ({ files }: { files: File[] }) => {
+  const maxLabelItems = 3;
+  
+  // Show default empty state when no files
+  if (files.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center">
+        <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+          <ImageIcon className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+          Dra og slipp bilder her, eller klikk for å velge
+        </p>
+        <p className="w-full text-wrap text-muted-foreground text-xs">
+          Maks 5 bilder, kun bildefiler
+        </p>
+      </div>
+    );
+  }
+  
+  // Show files when they exist
+  return (
+    <div className="flex flex-col items-center justify-center">
+      <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+        <UploadIcon size={16} />
+      </div>
+      <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+        {files.length > maxLabelItems
+          ? `${new Intl.ListFormat("nb-NO").format(
+              files.slice(0, maxLabelItems).map((file) => truncateFilename(file.name))
+            )} og ${files.length - maxLabelItems} flere`
+          : new Intl.ListFormat("nb-NO").format(files.map((file) => truncateFilename(file.name)))}
+      </p>
+      <p className="w-full text-wrap text-muted-foreground text-xs">
+        Dra og slipp eller klikk for å erstatte
+      </p>
+    </div>
+  );
+};
 
 export function ReviewForm({
   bookingId,
@@ -71,9 +148,25 @@ export function ReviewForm({
   onCancel,
 }: ReviewFormProps) {
   const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
+  const [fileProcessing, setFileProcessing] = React.useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+  const [existingImages, setExistingImages] = React.useState<ReviewImageWithPublicUrl[]>([]);
   const queryClient = useQueryClient();
   const uploadImagesMutation = useUploadReviewImages();
+  
+  // Update existing images when existingReview changes and generate public URLs
+  React.useEffect(() => {
+    const supabase = createClient();
+    const images = existingReview?.media?.filter((m) => m.media_type === "review_image") || [];
+    
+    // Generate public URLs for existing images
+    const imagesWithPublicUrls = images.map(image => ({
+      ...image,
+      publicUrl: getPublicUrl(supabase, "review-media", image.file_path)
+    }));
+    
+    setExistingImages(imagesWithPublicUrls);
+  }, [existingReview]);
 
   const form = useForm<ReviewFormData>({
     resolver: zodResolver(reviewFormSchema),
@@ -102,7 +195,9 @@ export function ReviewForm({
       return result.data;
     },
     onSuccess: async (data) => {
-      toast.success(existingReview ? "Anmeldelse oppdatert!" : "Anmeldelse opprettet!");
+      toast.success(
+        existingReview ? "Anmeldelse oppdatert!" : "Anmeldelse opprettet!"
+      );
 
       // Upload images if any were selected
       if (uploadedFiles.length > 0 && data?.id) {
@@ -142,7 +237,7 @@ export function ReviewForm({
       if (!existingReview?.id) {
         throw new Error("Ingen anmeldelse å slette");
       }
-      
+
       const result = await deleteReview(existingReview.id);
       if (result.error) {
         throw new Error(
@@ -153,7 +248,7 @@ export function ReviewForm({
     },
     onSuccess: () => {
       toast.success("Anmeldelse slettet!");
-      
+
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       queryClient.invalidateQueries({ queryKey: ["review", bookingId] });
@@ -169,16 +264,64 @@ export function ReviewForm({
     },
   });
 
+  const deleteImageMutation = useMutation({
+    mutationFn: deleteReviewImage,
+    onSuccess: (data) => {
+      if (data.data?.id) {
+        // Remove the image from local state
+        setExistingImages(prev => prev.filter(img => img.id !== data.data.id));
+        toast.success("Bilde slettet!");
+        
+        // Invalidate queries to refresh data
+        queryClient.invalidateQueries({ queryKey: ["review", bookingId] });
+      }
+    },
+    onError: (error) => {
+      toast.error(`Feil ved sletting av bilde: ${error.message}`);
+    },
+  });
+
+  const handleDeleteImage = (imageId: string) => {
+    deleteImageMutation.mutate(imageId);
+  };
+
   const handleSubmit = (data: ReviewFormData) => {
     reviewMutation.mutate(data);
   };
 
-  const removeFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+  const handleDrop = async (files: File[]) => {
+    setFileProcessing(true);
+    try {
+      const processedFiles: File[] = [];
+      for (const file of files) {
+        if (file.type.startsWith("image/")) {
+          processedFiles.push(file);
+        }
+      }
+      if (processedFiles.length > 0) {
+        setUploadedFiles((prev) => [...prev, ...processedFiles]);
+        toast.success(`${processedFiles.length} bilde(r) klar for opplasting`);
+      }
+      if (processedFiles.length !== files.length) {
+        toast.error("Bare bildefiler er tillatt");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Feil ved behandling av filer";
+      toast.error("En feil oppstod ved behandling av filer", {
+        description: message,
+      });
+    } finally {
+      setFileProcessing(false);
+    }
   };
 
   const isLoading =
-    reviewMutation.isPending || uploadImagesMutation.isUploading || deleteMutation.isPending;
+    reviewMutation.isPending ||
+    uploadImagesMutation.isUploading ||
+    deleteMutation.isPending ||
+    deleteImageMutation.isPending ||
+    fileProcessing;
 
   return (
     <Form {...form}>
@@ -233,8 +376,7 @@ export function ReviewForm({
               <FormControl>
                 <Textarea
                   placeholder="Fortell om din opplevelse..."
-                  className="resize-none"
-                  rows={4}
+                  rows={5}
                   {...field}
                 />
               </FormControl>
@@ -246,65 +388,158 @@ export function ReviewForm({
           )}
         />
 
-        {/* Image upload */}
+        {/* Existing Images */}
+        {existingImages.length > 0 && (
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Eksisterende bilder
+              </label>
+              <p className="text-sm text-muted-foreground mt-1">
+                Bilder du har lastet opp tidligere
+              </p>
+            </div>
+            
+            <div className="aspect-video bg-muted rounded-xl relative overflow-hidden">
+              {existingImages.length === 1 ? (
+                <div className="aspect-video relative group">
+                  <Image
+                    src={existingImages[0].publicUrl}
+                    alt={`Anmeldelse bilde`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteImage(existingImages[0].id)}
+                    disabled={isLoading}
+                    className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : (
+                <Carousel
+                  className="w-full h-full"
+                  opts={{
+                    align: "start",
+                    loop: true,
+                  }}
+                >
+                  <CarouselContent>
+                    {existingImages.map((image) => (
+                      <CarouselItem key={image.id}>
+                        <div className="aspect-video relative group">
+                          <Image
+                            src={image.publicUrl}
+                            alt={`Anmeldelse bilde`}
+                            fill
+                            className="object-cover"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteImage(image.id)}
+                            disabled={isLoading}
+                            className="absolute top-2 right-2 bg-red-600 hover:bg-red-700 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselPrevious 
+                    type="button"
+                    className="left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-0 shadow-md" 
+                  />
+                  <CarouselNext 
+                    type="button"
+                    className="right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white border-0 shadow-md" 
+                  />
+                </Carousel>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* New Image upload */}
         <div className="space-y-4">
           <div>
             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Bilder
+              {existingImages.length > 0 ? "Last opp flere bilder" : "Bilder"}
             </label>
             <p className="text-sm text-muted-foreground mt-1">
               Last opp bilder av resultatet (valgfritt)
             </p>
           </div>
-
-          {/* Show uploaded files */}
+          
+          <Dropzone
+            accept={{ "image/*": [] }}
+            maxFiles={5}
+            maxSize={1024 * 1024 * 10} // 10MB
+            minSize={1024} // 1KB
+            onDrop={handleDrop}
+            onError={(error) => {
+              toast.error(`Feil ved opplasting: ${error.message}`);
+            }}
+            src={uploadedFiles}
+            disabled={isLoading}
+          >
+            <DropzoneEmptyState>
+              {fileProcessing ? (
+                <div className="flex flex-col items-center justify-center">
+                  <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  </div>
+                  <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+                    Behandler bilder...
+                  </p>
+                  <p className="w-full truncate text-wrap text-muted-foreground text-xs">
+                    Komprimerer og validerer filer
+                  </p>
+                </div>
+              ) : null}
+            </DropzoneEmptyState>
+            <TruncatedDropzoneContent files={uploadedFiles} />
+          </Dropzone>
+          
           {uploadedFiles.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {uploadedFiles.map((file, index) => (
-                <Badge key={index} variant="secondary" className="pr-1">
-                  <ImageIcon className="w-3 h-3 mr-1" />
-                  <span className="truncate max-w-[100px]">{file.name}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto p-0 ml-1"
-                    onClick={() => removeFile(index)}
+            <div className="mt-4 space-y-2">
+              <p className="text-sm font-medium">
+                {uploadedFiles.length} bilde(r) klar for opplasting:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {uploadedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 bg-muted px-3 py-1 rounded-md text-sm"
                   >
-                    <X className="w-3 h-3" />
-                  </Button>
-                </Badge>
-              ))}
+                    <span className="truncate max-w-[200px]">
+                      {truncateFilename(file.name, 30)}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {(file.size / 1024 / 1024).toFixed(1)}MB
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newFiles = [...uploadedFiles];
+                        newFiles.splice(index, 1);
+                        setUploadedFiles(newFiles);
+                        toast.success("Bilde fjernet");
+                      }}
+                      className="text-muted-foreground hover:text-destructive ml-1"
+                      disabled={isLoading}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-
-          {/* Dropzone */}
-          <Dropzone
-            onDrop={(files) => {
-              const imageFiles = files.filter((file) =>
-                file.type.startsWith("image/")
-              );
-              if (imageFiles.length !== files.length) {
-                toast.error("Bare bildefiler er tillatt");
-              }
-              setUploadedFiles((prev) => [...prev, ...imageFiles]);
-            }}
-            accept={{ "image/*": [] }}
-            multiple
-            maxFiles={5}
-          >
-            <DropzoneContent>
-              <DropzoneEmptyState>
-                <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  Dra og slipp bilder her, eller klikk for å velge
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Maks 5 bilder, kun bildefiler
-                </p>
-              </DropzoneEmptyState>
-            </DropzoneContent>
-          </Dropzone>
         </div>
 
         {/* Action buttons */}
@@ -321,17 +556,24 @@ export function ReviewForm({
             <Button type="submit" disabled={isLoading} className="flex-1">
               {isLoading && <Spinner className="w-4 h-4 mr-2" />}
               {reviewMutation.isPending
-                ? existingReview ? "Oppdaterer anmeldelse..." : "Oppretter anmeldelse..."
+                ? existingReview
+                  ? "Oppdaterer anmeldelse..."
+                  : "Oppretter anmeldelse..."
                 : uploadImagesMutation.isUploading
                   ? "Laster opp bilder..."
-                  : existingReview ? "Oppdater anmeldelse" : "Publiser anmeldelse"}
+                  : existingReview
+                    ? "Oppdater anmeldelse"
+                    : "Publiser anmeldelse"}
             </Button>
           </div>
 
           {/* Delete button - only show for existing reviews */}
           {existingReview && (
             <div className="border-t pt-4">
-              <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+              >
                 <AlertDialogTrigger asChild>
                   <Button
                     type="button"
@@ -348,7 +590,8 @@ export function ReviewForm({
                   <AlertDialogHeader>
                     <AlertDialogTitle>Slett anmeldelse</AlertDialogTitle>
                     <AlertDialogDescription>
-                      Er du sikker på at du vil slette denne anmeldelsen? Denne handlingen kan ikke angres.
+                      Er du sikker på at du vil slette denne anmeldelsen? Denne
+                      handlingen kan ikke angres.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
@@ -363,7 +606,9 @@ export function ReviewForm({
                       disabled={deleteMutation.isPending}
                       className="bg-red-600 hover:bg-red-700"
                     >
-                      {deleteMutation.isPending && <Spinner className="w-4 h-4 mr-2" />}
+                      {deleteMutation.isPending && (
+                        <Spinner className="w-4 h-4 mr-2" />
+                      )}
                       Slett anmeldelse
                     </AlertDialogAction>
                   </AlertDialogFooter>

@@ -417,3 +417,57 @@ export async function getCompletedBookingsWithoutReviews(customerId: string) {
 
     return { data, error };
 }
+
+export async function deleteReviewImage(imageId: string) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+
+    // Get the image and verify ownership through the review
+    const { data: image, error: imageError } = await supabase
+        .from("media")
+        .select(`
+            id,
+            review_id,
+            file_path,
+            reviews!inner(customer_id)
+        `)
+        .eq("id", imageId)
+        .eq("media_type", "review_image")
+        .single();
+
+    if (imageError || !image) {
+        return { error: "Review image not found", data: null };
+    }
+
+    // Verify that the user owns the review
+    if (image.reviews.customer_id !== user.id) {
+        return { error: "Not authorized to delete this image", data: null };
+    }
+
+    // Delete the file from storage
+    const { error: storageError } = await supabase.storage
+        .from("review-media")
+        .remove([image.file_path]);
+
+    if (storageError) {
+        console.error("Failed to delete image from storage:", storageError);
+        // Continue with database deletion even if storage deletion fails
+    }
+
+    // Delete the media record
+    const { error: deleteError } = await supabase
+        .from("media")
+        .delete()
+        .eq("id", imageId);
+
+    if (deleteError) {
+        return { error: deleteError.message, data: null };
+    }
+
+    return { error: null, data: { id: imageId } };
+}

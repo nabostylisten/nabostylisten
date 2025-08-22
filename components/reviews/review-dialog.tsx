@@ -10,13 +10,21 @@ import {
 import { ReviewForm } from "./review-form";
 import type { DatabaseTables } from "@/types";
 
+type ReviewWithMedia = DatabaseTables["reviews"]["Row"] & {
+  media?: Array<{
+    id: string;
+    file_path: string;
+    media_type: string;
+  }>;
+};
+
 interface ReviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   bookingId: string;
   stylistName: string;
   serviceTitles: string[];
-  existingReview?: DatabaseTables["reviews"]["Row"] | null;
+  existingReview?: ReviewWithMedia | null;
 }
 
 export function ReviewDialog({

@@ -18,7 +18,8 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 
 - **5-Star Rating System**: Simple 1-5 star rating with visual star display
 - **Written Comments**: Optional detailed text feedback up to 1000 characters
-- **Photo Upload**: Support for multiple images showing service results
+- **Photo Upload**: Support for up to 5 images per review showing service results
+- **Image Management**: Drag-and-drop interface with file validation and compression
 - **Single Review Per Booking**: One review allowed per completed booking
 - **Customer-Only Reviews**: Only customers who received the service can leave reviews
 
@@ -32,6 +33,10 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 ### Review Management
 
 - **Customer View**: List of all reviews they've written across bookings
+- **Review Editing**: Full edit capability including rating, comment, and image updates
+- **Review Deletion**: Complete review removal with confirmation dialog
+- **Image Management**: Individual image deletion from existing reviews
+- **Image Carousel**: Visual browsing of multiple review images
 - **Stylist View**: Dual tabs showing reviews received vs reviews written (as customer)
 - **Review Reminders**: Proactive alerts encouraging review completion
 - **Review Analytics**: Average ratings and review counts for performance tracking
@@ -46,10 +51,16 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
    - Click "Write Review" button
    - Rate experience (1-5 stars)
    - Add optional written comment
-   - Upload optional photos
+   - Upload up to 5 optional photos (drag-and-drop)
+   - Preview and manage uploaded images
    - Submit review
 4. **Review Published**: Review appears on stylist's profile and service listings
-5. **Review Management**: Access all written reviews through "Anmeldelser" page
+5. **Review Management**: Access and edit all written reviews through "Anmeldelser" page
+6. **Review Updates**:
+   - Edit existing reviews with prepopulated values
+   - Add or remove images from published reviews
+   - Update ratings and comments
+   - Delete entire reviews if needed
 
 ### Stylist Review Monitoring
 
@@ -77,24 +88,31 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 
 ### Review Content Guidelines
 
-- Rating: Required 1-5 star rating
-- Comment: Optional, maximum 1000 characters
-- Photos: Optional, maximum 5 images per review
-- Content: Must be relevant to the actual service experience
+- **Rating**: Required 1-5 star rating
+- **Comment**: Optional, maximum 1000 characters
+- **Photos**: Optional, maximum 5 images per review (JPEG, PNG, WebP formats)
+- **Image Size**: Maximum 5MB per image with automatic compression
+- **Image Display**: Carousel view for multiple images with navigation controls
+- **Content**: Must be relevant to the actual service experience
+- **Editability**: Reviews can be updated or deleted by the original author
 
 ### Review Timing
 
 - Reviews can be submitted immediately after booking completion
-- No expiration date for review submission
+- Reviews can be updated or deleted at any time after creation
+- No expiration date for review submission or editing
 - Review reminders appear until review is completed
 - Historical bookings remain eligible for review indefinitely
+- Image updates and deletions are processed immediately
 
 ### Review Visibility
 
 - All reviews are public and visible to platform users
 - Reviews appear on stylist profiles and service listings
-- Review aggregations (averages) update in real-time
+- Review images displayed in carousel format for multiple photos
+- Review aggregations (averages) update in real-time after edits/deletions
 - Reviews are sorted by date (newest first) by default
+- Image thumbnails shown in review cards with full-size carousel view
 
 ## Integration Points
 
@@ -130,7 +148,10 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 - Review completion rate per completed booking
 - Average time from booking completion to review submission
 - Review reminder click-through rate
-- Photo upload rate in reviews
+- Photo upload rate in reviews (up to 5 images per review)
+- Review edit frequency and update patterns
+- Image deletion and management usage
+- Review deletion rate and reasons
 
 ### Quality Metrics
 
@@ -150,10 +171,13 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 
 ### Automated Safeguards
 
-- Character limits prevent spam
-- Image validation ensures appropriate content
+- Character limits prevent spam (1000 character maximum)
+- Image validation ensures appropriate content (5MB max, image formats only)
+- File type validation (JPEG, PNG, WebP only)
 - Authorization checks prevent fake reviews
 - Rate limiting prevents review bombing
+- Secure image storage with automatic cleanup on deletion
+- Image compression for optimal performance
 
 ### Review Guidelines
 
@@ -179,8 +203,31 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 ### Data Storage
 
 - Reviews stored securely with proper access controls
-- Review images stored in dedicated bucket with appropriate permissions
+- Review images stored in dedicated `review-media` bucket with appropriate permissions
+- Public URL generation for image display with security validation
+- Individual image deletion removes both database records and storage files
+- Complete review deletion cascades to remove all associated images
 - Review deletion cascades properly when bookings or users are removed
+- Atomic operations ensure data consistency during updates
+
+## Recent Enhancements
+
+### Advanced Image Management
+
+- ✅ **Carousel Display**: Multiple review images displayed in interactive carousel
+- ✅ **Individual Image Deletion**: Remove specific images without deleting entire review
+- ✅ **Drag-and-Drop Upload**: Intuitive file upload with visual feedback
+- ✅ **Image Preview**: Real-time preview of images before submission
+- ✅ **File Validation**: Automatic format and size validation with user feedback
+- ✅ **Filename Truncation**: Clean display of long filenames in UI
+
+### Review Editing Capabilities
+
+- ✅ **Full Review Updates**: Edit ratings, comments, and images in existing reviews
+- ✅ **Upsert Operations**: Seamless create/update workflow through single interface
+- ✅ **Review Deletion**: Complete review removal with confirmation dialog
+- ✅ **Form Prepopulation**: Existing review data automatically loaded for editing
+- ✅ **Real-time Updates**: Immediate UI updates after modifications
 
 ## Future Enhancements
 

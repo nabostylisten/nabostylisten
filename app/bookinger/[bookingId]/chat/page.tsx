@@ -2,7 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
 import { getChatByBookingId, getChatMessages } from "@/server/chat.actions";
+import { getReviewByBookingId } from "@/server/review.actions";
 import { BookingChatContent } from "@/components/booking-chat-content";
+import { ReviewReminderAlert } from "@/components/reviews/review-reminder-alert";
 
 export default async function BookingChatPage({
   params,
@@ -90,6 +92,9 @@ export default async function BookingChatPage({
   // Get existing messages for this chat
   const { data: messages, error: messagesError } = await getChatMessages(chat.id);
 
+  // Check if there's already a review for this booking
+  const { data: existingReview } = await getReviewByBookingId(bookingId);
+
   // Determine user role for this specific booking context and partner info
   const isCustomer = booking.customer_id === user.id;
   const partner = isCustomer ? booking.stylist : booking.customer;
@@ -97,9 +102,22 @@ export default async function BookingChatPage({
     ?.map((bs) => bs.services?.title)
     .filter(Boolean) || [];
 
+  // Check if we should show review reminder alert
+  const shouldShowReviewReminder = 
+    booking.status === "completed" && 
+    isCustomer && 
+    !existingReview;
+
   return (
     <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
       <div className="flex flex-1 flex-col gap-4 p-4">
+        {shouldShowReviewReminder && (
+          <ReviewReminderAlert
+            bookingId={bookingId}
+            stylistName={partner?.full_name || "Stylisten"}
+            serviceTitles={serviceTitles}
+          />
+        )}
         <BookingChatContent
           bookingId={bookingId}
           chatId={chat.id}

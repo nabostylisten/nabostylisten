@@ -11,6 +11,7 @@ import {
   Calendar,
   MessageCircle,
   Scissors,
+  Star,
 } from "lucide-react";
 
 interface ProfileSidebarProps {
@@ -44,6 +45,12 @@ const getSidebarItems = (userRole?: string) => {
       href: "/chat",
       icon: MessageCircle,
       description: "Meldinger og samtaler",
+    },
+    {
+      title: "Anmeldelser",
+      href: "/anmeldelser",
+      icon: Star,
+      description: "Se og administrer anmeldelser",
     },
   ];
 

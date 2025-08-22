@@ -18,6 +18,8 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { RatingDisplay } from "@/components/reviews/rating-display";
+import { useStylistRating } from "@/hooks/use-stylist-rating";
 // Export the type so it can be used elsewhere
 export type ServiceWithRelations = {
   id: string;
@@ -81,6 +83,9 @@ export function ServiceCard({ service }: ServiceCardProps) {
     service.service_service_categories?.map((ssc) => ssc.service_categories) ||
     [];
   const stylistDetails = service.profiles?.stylist_details;
+
+  // Fetch stylist rating
+  const { data: rating } = useStylistRating(service.profiles?.id);
 
   // Format price from øre to NOK
   const formatPrice = (priceInOre: number) => {
@@ -190,8 +195,17 @@ export function ServiceCard({ service }: ServiceCardProps) {
               )}
             </div>
             {service.profiles?.full_name && (
-              <div className="mt-2 text-sm text-muted-foreground">
-                av {service.profiles.full_name}
+              <div className="mt-2 space-y-1">
+                <div className="text-sm text-muted-foreground">
+                  av {service.profiles.full_name}
+                </div>
+                {rating && rating.count > 0 && (
+                  <RatingDisplay
+                    average={rating.average}
+                    count={rating.count}
+                    size="sm"
+                  />
+                )}
               </div>
             )}
             <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">

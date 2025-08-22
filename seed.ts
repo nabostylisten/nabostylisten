@@ -1093,7 +1093,7 @@ async function main() {
 
   // Create more bookings for pagination testing
   const allBookingsToCreate: DatabaseTables["bookings"]["Insert"][] = [];
-  
+
   // Add the original 6 specific bookings
   const specificBookings: DatabaseTables["bookings"]["Insert"][] = [
     // 1. Upcoming confirmed booking with discount - Kari Nordmann
@@ -1199,9 +1199,14 @@ async function main() {
   ];
 
   allBookingsToCreate.push(...specificBookings);
-  
+
   // Generate additional bookings for pagination testing
-  const statuses: Array<Database["public"]["Enums"]["booking_status"]> = ['confirmed', 'completed', 'pending', 'cancelled'];
+  const statuses: Array<Database["public"]["Enums"]["booking_status"]> = [
+    "confirmed",
+    "completed",
+    "pending",
+    "cancelled",
+  ];
   const messages = [
     "Gleder meg til timen!",
     "Første gang hos dere, er spent!",
@@ -1215,14 +1220,18 @@ async function main() {
 
   // Create 20 additional bookings to test pagination (total will be 26)
   for (let i = 0; i < 20; i++) {
-    const customer = customerUsers[Math.floor(Math.random() * customerUsers.length)];
-    const stylist = stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
+    const customer =
+      customerUsers[Math.floor(Math.random() * customerUsers.length)];
+    const stylist =
+      stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
     const isUpcoming = Math.random() > 0.5;
-    const baseDate = isUpcoming ? addDays(new Date(), Math.floor(Math.random() * 30)) : subDays(new Date(), Math.floor(Math.random() * 60));
+    const baseDate = isUpcoming
+      ? addDays(new Date(), Math.floor(Math.random() * 30))
+      : subDays(new Date(), Math.floor(Math.random() * 60));
     const duration = 60 + (Math.floor(Math.random() * 3) * 30); // 60, 90, or 120 minutes
     const price = 800 + Math.floor(Math.random() * 1500); // 800-2300 NOK
-    
+
     const bookingData: DatabaseTables["bookings"]["Insert"] = {
       customer_id: customer.id,
       stylist_id: stylist.id,
@@ -1236,12 +1245,12 @@ async function main() {
       total_price: price,
       total_duration_minutes: duration,
       stripe_payment_intent_id: `pi_test_generated_${i + 7}`, // Starting from 7
-      ...(status === 'cancelled' && {
+      ...(status === "cancelled" && {
         cancelled_at: subDays(baseDate, 1).toISOString(),
-        cancellation_reason: "Endret planer"
-      })
+        cancellation_reason: "Endret planer",
+      }),
     };
-    
+
     allBookingsToCreate.push(bookingData);
   }
 
@@ -1277,13 +1286,14 @@ async function main() {
     const booking = bookings[i];
     // Pick 1-2 random services
     const numServices = Math.random() > 0.7 ? 2 : 1;
-    
+
     for (let j = 0; j < numServices; j++) {
-      const randomService = services[Math.floor(Math.random() * services.length)];
+      const randomService =
+        services[Math.floor(Math.random() * services.length)];
       if (randomService && booking) {
         bookingServiceLinks.push({
           booking_id: booking.id,
-          service_id: randomService.id
+          service_id: randomService.id,
         });
       }
     }
@@ -1380,10 +1390,251 @@ async function main() {
     },
   ]);
 
-  console.log("-- Successfully seeded database with bookings for testing!");
+  console.log("-- Creating reviews and ratings...");
+
+  // Get completed bookings for review creation
+  const completedBookings = bookings.filter((b) => b.status === "completed");
+
+  // Review templates with variety
+  const reviewTemplates = [
+    {
+      ratings: [5, 5, 4, 5],
+      comments: [
+        "Absolutt fantastisk! Emma er så dyktig og profesjonell. Resultatet overgikk mine forventninger. Kommer definitivt tilbake!",
+        "Perfekt service fra start til slutt. Hun lyttet til ønskene mine og leverte akkurat det jeg ba om. Anbefales på det sterkeste!",
+        "Så fornøyd med resultatet! Profesjonell og hyggelig betjening. Stedet var rent og pent. Kommer igjen!",
+        "Emma er fantastisk! Hun gjorde en utrolig jobb og jeg følte meg så velkommen. Kunne ikke vært mer fornøyd!",
+      ],
+    },
+    {
+      ratings: [4, 5, 5, 4],
+      comments: [
+        "Veldig fornøyd med tjenesten! Sofia er dyktig og jobbet nøye. Litt travelt den dagen, men resultatet var bra.",
+        "Utrolig bra jobb! Sofia har virkelig peiling på det hun driver med. Anbefaler henne til alle!",
+        "Så glad for at jeg valgte Sofia! Hun er så profesjonell og resultatet ble bedre enn jeg hadde forventet.",
+        "Bra service og hyggelig betjening. Sofia tok seg god tid og forklarte alt hun gjorde. Kommer tilbake!",
+      ],
+    },
+    {
+      ratings: [5, 4, 5, 5],
+      comments: [
+        "Maria er helt fantastisk! Hun har gullhender og er så snill. Resultatet ble perfekt!",
+        "Veldig fornøyd med opplevelsen. Maria er profesjonell og gjorde en grundig jobb. Anbefales!",
+        "Kunne ikke vært mer fornøyd! Maria lyttet til ønskene mine og leverte akkurat det jeg ønsket meg.",
+        "Fantastisk service! Maria er så dyktig og hyggelig. Stedet er også veldig koselig og rent.",
+      ],
+    },
+    {
+      ratings: [4, 4, 5, 4],
+      comments: [
+        "Sophia gjorde en flott jobb! Profesjonell og hyggelig. Kommer gjerne tilbake for ny behandling.",
+        "Så fornøyd med resultatet! Sophia tok seg god tid og var veldig nøye med detaljene.",
+        "Utmerket service! Sophia er dyktig og gjorde akkurat det jeg ba om. Anbefaler henne varmt!",
+        "Bra opplevelse hos Sophia. Hun er profesjonell og resultatet ble som forventet. Kommer igjen!",
+      ],
+    },
+  ];
+
+  // Create reviews for completed bookings
+  const reviewsToCreate: DatabaseTables["reviews"]["Insert"][] = [];
+
+  // Ensure all customers write reviews for their completed bookings
+  for (let i = 0; i < completedBookings.length; i++) {
+    const booking = completedBookings[i];
+    const templateIndex = i % reviewTemplates.length;
+    const template = reviewTemplates[templateIndex];
+    const commentIndex = i % template.comments.length;
+
+    if (booking.id && booking.customer_id && booking.stylist_id) {
+      reviewsToCreate.push({
+        booking_id: booking.id,
+        customer_id: booking.customer_id,
+        stylist_id: booking.stylist_id,
+        rating: template.ratings[commentIndex],
+        comment: template.comments[commentIndex],
+      });
+    }
+  }
+
+  // Add more reviews to reach ~50 total
+  // Generate additional completed bookings for stylists as customers
+  const stylistAsCustomerBookings: DatabaseTables["bookings"]["Insert"][] = [];
+
+  // Sofia books with Emma
+  stylistAsCustomerBookings.push({
+    customer_id: stylistUsers[1].id, // Sofia as customer
+    stylist_id: stylistUsers[0].id, // Emma as stylist
+    start_time: subDays(new Date(), 15).toISOString(),
+    end_time: addHours(subDays(new Date(), 15), 1).toISOString(),
+    message_to_stylist: "Trenger en oppfriskning av håret mitt!",
+    status: "completed",
+    total_price: 800,
+    total_duration_minutes: 60,
+    stripe_payment_intent_id: "pi_test_stylist_customer_001",
+  });
+
+  // Maria books with Sofia
+  stylistAsCustomerBookings.push({
+    customer_id: stylistUsers[2].id, // Maria as customer
+    stylist_id: stylistUsers[1].id, // Sofia as stylist
+    start_time: subDays(new Date(), 22).toISOString(),
+    end_time: addHours(subDays(new Date(), 22), 1.5).toISOString(),
+    message_to_stylist: "Vil gjerne prøve den nye gel-metoden din!",
+    status: "completed",
+    total_price: 650,
+    total_duration_minutes: 90,
+    stripe_payment_intent_id: "pi_test_stylist_customer_002",
+  });
+
+  // Sophia books with Maria
+  stylistAsCustomerBookings.push({
+    customer_id: stylistUsers[2].id, // Sophia as customer
+    stylist_id: stylistUsers[0].id, // Maria as stylist
+    start_time: subDays(new Date(), 8).toISOString(),
+    end_time: addHours(subDays(new Date(), 8), 2).toISOString(),
+    message_to_stylist: "Trenger makeup til fest på lørdag!",
+    status: "completed",
+    total_price: 1200,
+    total_duration_minutes: 120,
+    stripe_payment_intent_id: "pi_test_stylist_customer_003",
+  });
+
+  // Emma books with Sophia
+  stylistAsCustomerBookings.push({
+    customer_id: stylistUsers[1].id, // Emma as customer
+    stylist_id: stylistUsers[2].id, // Sophia as stylist
+      start_time: subDays(new Date(), 35).toISOString(),
+      end_time: addHours(subDays(new Date(), 35), 1.5).toISOString(),
+      message_to_stylist: "Vil prøve lash lift for første gang!",
+      status: "completed",
+      total_price: 800,
+      total_duration_minutes: 90,
+      stripe_payment_intent_id: "pi_test_stylist_customer_004",
+    });
+
+  // Additional cross-bookings between stylists and with regular customers
+  for (let i = 0; i < 25; i++) {
+    const randomCustomer = [
+      ...customerUsers,
+      ...stylistUsers,
+    ][
+      Math.floor(Math.random() * (customerUsers.length + stylistUsers.length))
+    ];
+    const randomStylist =
+      stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
+
+    // Avoid self-booking
+    if (randomCustomer.id === randomStylist.id) continue;
+
+    const randomDaysAgo = Math.floor(Math.random() * 60) + 10; // 10-70 days ago
+    const randomDuration = [60, 90, 120, 150][Math.floor(Math.random() * 4)];
+    const randomPrice =
+      [500, 650, 800, 1200, 1500][Math.floor(Math.random() * 5)];
+
+    stylistAsCustomerBookings.push({
+      customer_id: randomCustomer.id,
+      stylist_id: randomStylist.id,
+      start_time: subDays(new Date(), randomDaysAgo).toISOString(),
+      end_time: addMinutes(subDays(new Date(), randomDaysAgo), randomDuration)
+        .toISOString(),
+      message_to_stylist: [
+        "Gleder meg!",
+        "Første gang hos deg!",
+        "Samme som sist takk!",
+        "Noe nytt og spennende!",
+        "Trenger en fresh look!",
+      ][Math.floor(Math.random() * 5)],
+      status: "completed",
+      total_price: randomPrice,
+      total_duration_minutes: randomDuration,
+      stripe_payment_intent_id: `pi_test_extra_${
+        i.toString().padStart(3, "0")
+      }`,
+    });
+  }
+
+  // Create additional bookings
+  const { bookings: extraBookings } = await seed.bookings(
+    stylistAsCustomerBookings,
+  );
+
+  // Create reviews for stylist-as-customer bookings
+  const stylistReviewComments = [
+    "Som stylist selv kan jeg si at dette var virkelig profesjonelt utført! Imponert over teknikken og resultatet.",
+    "Fantastisk jobb! Jeg jobber selv i bransjen og kan virkelig sette pris på kvaliteten her.",
+    "Så bra å finne en kollega som leverer så høy kvalitet! Kommer definitivt tilbake.",
+    "Utrolig dyktig! Som stylist vet jeg hva som kreves, og dette var toppklasse.",
+    "Perfekt utførelse! Anbefaler henne til alle mine kunder også.",
+    "Så profesjonell og hyggelig! Resultatet ble akkurat som jeg ønsket.",
+    "Flott opplevelse! God å finne noen som tar seg tid til å gjøre jobben skikkelig.",
+    "Kjempefornøyd! Hun er virkelig flink til det hun driver med.",
+    "Så bra service! Kommer til å anbefale henne til venner og familie.",
+    "Fantastisk resultat! Kunne ikke vært mer fornøyd med opplevelsen.",
+  ];
+
+  // Create reviews for the stylist-as-customer bookings
+  for (let i = 0; i < extraBookings.length; i++) {
+    const booking = extraBookings[i];
+    const rating = [3, 4, 4, 4, 5, 5, 5][Math.floor(Math.random() * 7)]; // Weighted towards higher ratings
+    const comment = stylistReviewComments[
+      Math.floor(Math.random() * stylistReviewComments.length)
+    ];
+
+    if (booking.id && booking.customer_id && booking.stylist_id) {
+      reviewsToCreate.push({
+        booking_id: booking.id,
+        customer_id: booking.customer_id,
+        stylist_id: booking.stylist_id,
+        rating,
+        comment,
+      });
+    }
+  }
+
+  // Create all reviews
+  const { reviews } = await seed.reviews(reviewsToCreate);
+
+  console.log(`-- Created ${reviews.length} reviews for completed bookings`);
+
+  // Create some review images for variety
+  const reviewImagesUrls = [
+    "https://images.unsplash.com/photo-1560869713-c9e73ac4e93f?w=400", // hair result
+    "https://images.unsplash.com/photo-1583001931096-959e9a1a6223?w=400", // makeup result
+    "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=400", // nails result
+    "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400", // lashes result
+    "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400", // salon selfie
+  ];
+
+  // Add review images to some reviews (about 30% of reviews)
+  const reviewImagesData: DatabaseTables["media"]["Insert"][] = [];
+  const reviewsWithImages = reviews.filter((_, index) => index % 3 === 0); // Every 3rd review gets images
+
+  for (const review of reviewsWithImages) {
+    const numImages = Math.floor(Math.random() * 3) + 1; // 1-3 images per review
+    for (let i = 0; i < numImages; i++) {
+      const randomImageUrl =
+        reviewImagesUrls[Math.floor(Math.random() * reviewImagesUrls.length)];
+      reviewImagesData.push({
+        owner_id: review.customer_id,
+        file_path: randomImageUrl,
+        media_type: "review_image",
+        is_preview_image: false,
+        review_id: review.id,
+      });
+    }
+  }
+
+  if (reviewImagesData.length > 0) {
+    await seed.media(reviewImagesData);
+    console.log(`-- Added ${reviewImagesData.length} review images`);
+  }
+
+  console.log("-- Successfully seeded database with reviews and ratings!");
   console.log("-- Test accounts:");
   console.log("--   Customer 1: kari.nordmann@example.com (6 bookings)");
   console.log("--   Customer 2: ole.hansen@example.com (2 bookings)");
+  console.log("--   All stylists have reviews both received and written");
+  console.log(`--   Total reviews: ${reviews.length}`);
 
   process.exit(0);
 }

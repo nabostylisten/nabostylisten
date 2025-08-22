@@ -1,10 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
-import { MyBookingsPageContent } from "@/components/my-bookings/my-bookings-page-content";
-import { BookingsWithoutReviewsAlerts } from "@/components/reviews/bookings-without-reviews-alerts";
+import { ReviewsPageContent } from "@/components/reviews/reviews-page-content";
 
-export default async function MineBookingerPage({
+export default async function AnmeldelserPage({
   params,
 }: {
   params: Promise<{ profileId: string }>;
@@ -31,19 +30,10 @@ export default async function MineBookingerPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <div className="space-y-6">
-        {/* Show review alerts for customers only */}
-        {profile?.role === 'customer' && (
-          <BookingsWithoutReviewsAlerts 
-            customerId={profileId}
-            className="px-4"
-          />
-        )}
-        <MyBookingsPageContent 
-          userId={profileId} 
-          userRole={profile?.role === 'stylist' ? 'stylist' : 'customer'} 
-        />
-      </div>
+      <ReviewsPageContent 
+        userId={profileId} 
+        userRole={profile?.role === 'stylist' ? 'stylist' : 'customer'} 
+      />
     </ProfileLayout>
   );
 }

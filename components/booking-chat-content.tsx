@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowLeft, Calendar, MessageCircle, User } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   createChatMessage,
   markChatMessagesAsRead,
+  getChatMessageImages,
 } from "@/server/chat.actions";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -48,15 +49,34 @@ export function BookingChatContent({
   initialMessages,
   messagesError,
 }: BookingChatContentProps) {
-  // Convert database messages to ChatMessage format
-  const convertedMessages: ChatMessage[] = initialMessages.map((msg) => ({
-    id: msg.id,
-    content: msg.content,
-    createdAt: msg.created_at,
-    user: {
-      name: msg.sender.full_name || "Ukjent bruker",
-    },
-  }));
+  const [convertedMessages, setConvertedMessages] = useState<ChatMessage[]>([]);
+
+  // Load images for messages and convert to ChatMessage format
+  useEffect(() => {
+    const loadMessagesWithImages = async () => {
+      const messagesWithImages = await Promise.all(
+        initialMessages.map(async (msg) => {
+          // Fetch images for this message
+          const imagesResult = await getChatMessageImages(msg.id);
+          const images = imagesResult.error ? [] : imagesResult.data || [];
+
+          return {
+            id: msg.id,
+            content: msg.content,
+            createdAt: msg.created_at,
+            user: {
+              name: msg.sender.full_name || "Ukjent bruker",
+            },
+            images: images.length > 0 ? images : undefined,
+          };
+        })
+      );
+
+      setConvertedMessages(messagesWithImages);
+    };
+
+    loadMessagesWithImages();
+  }, [initialMessages]);
 
   const getStatusVariant = (status: string) => {
     switch (status) {
@@ -125,13 +145,27 @@ export function BookingChatContent({
         !initialMessages.some((msg) => msg.id === latestMessage.id)
       ) {
         try {
+          // For image messages, the content might be empty, but we still need to save the message
+          // The images are already uploaded and linked to the message ID
           const result = await createChatMessage({
             chatId,
-            content: latestMessage.content,
+            content: latestMessage.content || "", // Allow empty content for image-only messages
+            messageId: latestMessage.id, // Use the client-generated message ID
           });
 
           if (result.error) {
             toast.error("Feil ved lagring av melding: " + result.error);
+          } else {
+            // Update the converted messages to include the new message
+            setConvertedMessages((prev) => {
+              const updated = [...prev];
+              // Replace the temporary message with the persisted one if it exists
+              const existingIndex = updated.findIndex((msg) => msg.id === latestMessage.id);
+              if (existingIndex === -1) {
+                updated.push(latestMessage);
+              }
+              return updated;
+            });
           }
         } catch (error) {
           console.error("Error saving message:", error);
@@ -144,7 +178,7 @@ export function BookingChatContent({
 
   // Handle real-time read status changes
   const handleReadStatusChange = useCallback(
-    (data: { chat_id: string; message_id: string; is_read: boolean }) => {
+    (_data: { chat_id: string; message_id: string; is_read: boolean }) => {
       // Invalidate queries to refresh unread counts in UI
       queryClient.invalidateQueries({
         queryKey: ["unread-messages", currentUserId],
@@ -222,6 +256,7 @@ export function BookingChatContent({
         <RealtimeChat
           roomName={`booking-${bookingId}`}
           username={currentUserName}
+          chatId={chatId}
           messages={convertedMessages}
           onMessage={handleMessage}
           onReadStatusChange={handleReadStatusChange}

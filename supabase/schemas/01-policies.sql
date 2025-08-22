@@ -303,6 +303,21 @@ CREATE POLICY "Users can insert their own media." ON public.media
 FOR INSERT TO authenticated
 WITH CHECK ( (select auth.uid()) = owner_id );
 
+-- Users can upload chat images for messages in chats they participate in.
+CREATE POLICY "Users can insert chat images for their chats." ON public.media
+FOR INSERT TO authenticated
+WITH CHECK (
+  media_type = 'chat_image' AND
+  (select auth.uid()) = owner_id AND
+  chat_message_id IN (
+    SELECT cm.id 
+    FROM public.chat_messages cm
+    JOIN public.chats c ON cm.chat_id = c.id
+    JOIN public.bookings b ON c.booking_id = b.id
+    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+  )
+);
+
 -- Users can update their own media.
 CREATE POLICY "Users can update their own media." ON public.media
 FOR UPDATE TO authenticated

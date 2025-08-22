@@ -6,12 +6,14 @@ import { useChatScroll } from "@/hooks/use-chat-scroll";
 import { type ChatMessage, useRealtimeChat } from "@/hooks/use-realtime-chat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Send } from "lucide-react";
+import { Send, Image as ImageIcon } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { UploadImagesDialog } from "@/components/chat/upload-images-dialog";
 
 interface RealtimeChatProps {
   roomName: string;
   username: string;
+  chatId?: string;
   onMessage?: (messages: ChatMessage[]) => void;
   messages?: ChatMessage[];
   onReadStatusChange?: (data: {
@@ -32,6 +34,7 @@ interface RealtimeChatProps {
 export const RealtimeChat = ({
   roomName,
   username,
+  chatId,
   onMessage,
   messages: initialMessages = [],
   onReadStatusChange,
@@ -87,13 +90,40 @@ export const RealtimeChat = ({
     [newMessage, isConnected, sendMessage]
   );
 
+  const handleImageUpload = useCallback(
+    (
+      uploadedImages: Array<{ id: string; file_path: string; url: string }>,
+      messageId: string
+    ) => {
+      if (!isConnected || !uploadedImages.length) return;
+
+      // Create an image message with the uploaded images
+      const imageMessage: ChatMessage = {
+        id: messageId,
+        content: "", // No text content for image-only messages
+        user: {
+          name: username,
+        },
+        createdAt: new Date().toISOString(),
+        images: uploadedImages,
+      };
+
+      // Add the message to the realtime messages and let the parent handle persistence
+      if (onMessage) {
+        const updatedMessages = [...allMessages, imageMessage];
+        onMessage(updatedMessages);
+      }
+    },
+    [isConnected, username, allMessages, onMessage]
+  );
+
   return (
     <div className="flex flex-col h-full w-full bg-background text-foreground antialiased">
       {/* Messages */}
       <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
         {allMessages.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground">
-            No messages yet. Start the conversation!
+            Ingen meldinger enda. Start samtalen!
           </div>
         ) : null}
         <div className="space-y-1">
@@ -122,10 +152,32 @@ export const RealtimeChat = ({
         onSubmit={handleSendMessage}
         className="flex w-full gap-2 border-t border-border p-4"
       >
+        {/* Image upload button */}
+        {chatId && (
+          <UploadImagesDialog
+            chatId={chatId}
+            onUploadComplete={handleImageUpload}
+          >
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="aspect-square rounded-full"
+              disabled={!isConnected}
+            >
+              <ImageIcon className="size-4" />
+            </Button>
+          </UploadImagesDialog>
+        )}
+
         <Input
           className={cn(
             "rounded-full bg-background text-sm transition-all duration-300",
-            isConnected && newMessage.trim() ? "w-[calc(100%-36px)]" : "w-full"
+            isConnected && newMessage.trim()
+              ? "w-[calc(100%-72px)]"
+              : chatId
+                ? "w-[calc(100%-36px)]"
+                : "w-full"
           )}
           type="text"
           value={newMessage}

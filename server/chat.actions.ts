@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getSignedUrl } from "@/lib/supabase/storage";
 import type { Database } from "@/types/database.types";
 
 export async function getChatsByProfileId(profileId: string) {
@@ -195,9 +196,11 @@ export async function getChatMessages(chatId: string) {
 export async function createChatMessage({
   chatId,
   content,
+  messageId,
 }: {
   chatId: string;
   content: string;
+  messageId?: string;
 }) {
   const supabase = await createClient();
 
@@ -235,14 +238,21 @@ export async function createChatMessage({
     return { error: "Unauthorized", data: null };
   }
 
-  // Create the message
+  // Create the message with optional predefined ID
+  const insertData: any = {
+    chat_id: chatId,
+    sender_id: user.id,
+    content,
+  };
+
+  // Add the ID if provided (for client-generated IDs)
+  if (messageId) {
+    insertData.id = messageId;
+  }
+
   const { data: message, error } = await supabase
     .from("chat_messages")
-    .insert({
-      chat_id: chatId,
-      sender_id: user.id,
-      content,
-    })
+    .insert(insertData)
     .select(`
       id,
       content,
@@ -370,4 +380,43 @@ export async function getUnreadMessageCount(profileId: string) {
   }
 
   return { error: null, data: { count: count || 0 } };
+}
+
+
+export async function getChatMessageImages(messageId: string) {
+  const supabase = await createClient();
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized", data: null };
+  }
+
+  // Get images for this message
+  const { data: images, error } = await supabase
+    .from("media")
+    .select("id, file_path")
+    .eq("chat_message_id", messageId)
+    .eq("media_type", "chat_image");
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  // Generate signed URLs for images
+  const imagesWithUrls = await Promise.all(
+    images.map(async (image) => {
+      const signedUrl = await getSignedUrl(supabase, "chat-media", image.file_path, 86400);
+      return {
+        id: image.id,
+        file_path: image.file_path,
+        url: signedUrl,
+      };
+    })
+  );
+
+  return { error: null, data: imagesWithUrls };
 }

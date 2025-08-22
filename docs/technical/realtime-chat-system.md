@@ -57,7 +57,11 @@ interface RealtimeChatProps {
   username: string; // Display name for current user
   onMessage?: (messages: ChatMessage[]) => void; // Callback for message persistence
   messages?: ChatMessage[]; // Initial messages from database
-  onReadStatusChange?: (data: { chat_id: string; message_id: string; is_read: boolean }) => void; // Callback for read status changes
+  onReadStatusChange?: (data: {
+    chat_id: string;
+    message_id: string;
+    is_read: boolean;
+  }) => void; // Callback for read status changes
 }
 ```
 
@@ -81,7 +85,11 @@ Custom hook that manages Supabase Broadcast connection and message state.
 interface UseRealtimeChatProps {
   roomName: string;
   username: string;
-  onReadStatusChange?: (data: { chat_id: string; message_id: string; is_read: boolean }) => void;
+  onReadStatusChange?: (data: {
+    chat_id: string;
+    message_id: string;
+    is_read: boolean;
+  }) => void;
 }
 
 interface ChatMessage {
@@ -256,6 +264,7 @@ WHERE chat_id = $1
 ```
 
 **Automatic Mark-as-Read Flow**:
+
 1. User enters chat page → `markChatMessagesAsRead()` server action called
 2. Database updates `is_read = true` for relevant messages
 3. Database trigger detects read status change
@@ -321,6 +330,7 @@ const handleReadStatusChange = useCallback(
 ```
 
 **End-to-End Read Status Flow**:
+
 1. **User A** enters chat → Messages marked as read in database
 2. **Database trigger** broadcasts read status change to `booking-${bookingId}` room
 3. **User B** (other participant) receives broadcast via WebSocket
@@ -332,15 +342,15 @@ const handleReadStatusChange = useCallback(
 
 The system provides multiple visual indicators that update in real-time:
 
-- **Navbar**: 
+- **Navbar**:
   - Chat icon with animated ping notification only appears when unread count > 0
   - Displays "9+" for counts over 9
   - Automatically disappears when all messages are read
-- **Chat Overview Page**: 
+- **Chat Overview Page**:
   - Unread chats sorted to top with visual emphasis
   - Individual unread badges showing count per chat
   - "Lest" (Read) separator dividing read and unread chats
-- **Chat Cards**: 
+- **Chat Cards**:
   - Enhanced styling for unread conversations
   - Real-time badge updates as messages are read/received
   - Ping animation for active unread indicators
@@ -361,11 +371,12 @@ FOR SELECT TO authenticated
 USING ( true );
 
 CREATE POLICY "authenticated can send broadcasts" ON "realtime"."messages"
-FOR INSERT TO authenticated  
+FOR INSERT TO authenticated
 WITH CHECK ( true );
 ```
 
 **Security Rationale**: The realtime broadcast layer uses simplified authentication-only policies because:
+
 - Primary security is enforced by RLS policies on `chat_messages`, `chats`, and `bookings` tables
 - Complex realtime policies can cause connection issues and increased latency
 - Message persistence and access are protected at the database level where it matters most
@@ -509,6 +520,7 @@ if (DEBUG_CHAT) {
 This real-time chat system provides a comprehensive solution for customer-stylist communication with the following key achievements:
 
 ### ✅ **Core Features Implemented**
+
 - **Real-time messaging** with instant delivery via Supabase Broadcast
 - **Message persistence** with proper authorization and validation
 - **Automatic read status tracking** with real-time synchronization
@@ -516,6 +528,7 @@ This real-time chat system provides a comprehensive solution for customer-stylis
 - **Booking-based chat isolation** ensuring security and privacy
 
 ### ✅ **Technical Achievements**
+
 - **Zero-refresh updates** - all status changes happen in real-time
 - **Optimistic UI updates** for instant user feedback
 - **Proper cache invalidation** preventing stale data issues
@@ -523,6 +536,7 @@ This real-time chat system provides a comprehensive solution for customer-stylis
 - **Database-level security** with comprehensive RLS policies
 
 ### ✅ **User Experience**
+
 - **Intuitive notifications** with conditional chat icon visibility
 - **Visual read/unread separation** in chat overview
 - **Responsive design** across all chat components

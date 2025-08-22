@@ -16,6 +16,11 @@ export interface ChatMessage {
     name: string
   }
   createdAt: string
+  images?: Array<{
+    id: string
+    file_path: string
+    url: string
+  }>
 }
 
 const EVENT_MESSAGE_TYPE = 'message'

@@ -214,12 +214,6 @@ async function main() {
             await deleteBucket(bucketName);
             break;
         default:
-            console.log("Usage:");
-            console.log("  npm run buckets:create  - Create all buckets");
-            console.log("  npm run buckets:list    - List all buckets");
-            console.log(
-                "  npm run buckets:delete <name> - Delete a specific bucket",
-            );
             console.log("\nAvailable commands:");
             console.log("  create - Create all configured buckets");
             console.log("  list   - List existing buckets");

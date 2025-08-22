@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Filter, X } from "lucide-react";
+import { Search, Filter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import {
@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import type { BookingFilters } from "@/types";
 
 export function MyBookingsFilter() {
@@ -22,9 +21,6 @@ export function MyBookingsFilter() {
   const [isPending, startTransition] = useTransition();
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [selectedStatus, setSelectedStatus] = useState(
-    searchParams.get("status") as BookingFilters["status"] || undefined
-  );
   const [sortBy, setSortBy] = useState<BookingFilters["sortBy"]>(
     (searchParams.get("sort") as BookingFilters["sortBy"]) || "date_desc"
   );
@@ -34,7 +30,6 @@ export function MyBookingsFilter() {
       const params = new URLSearchParams();
 
       if (search.trim()) params.set("search", search.trim());
-      if (selectedStatus) params.set("status", selectedStatus);
       if (sortBy !== "date_desc" && sortBy) params.set("sort", sortBy);
 
       const queryString = params.toString();
@@ -45,31 +40,16 @@ export function MyBookingsFilter() {
   const handleClearFilters = () => {
     startTransition(() => {
       setSearch("");
-      setSelectedStatus(undefined);
       setSortBy("date_desc");
       router.push(window.location.pathname);
     });
   };
 
-  const handleRemoveStatus = () => {
-    setSelectedStatus(undefined);
-    const params = new URLSearchParams(searchParams);
-    params.delete("status");
-    const queryString = params.toString();
-    router.push(queryString ? `?${queryString}` : window.location.pathname);
-  };
 
   const hasActiveFilters =
     search ||
-    selectedStatus ||
     sortBy !== "date_desc";
 
-  const statusLabels = {
-    pending: "Venter",
-    confirmed: "Bekreftet", 
-    cancelled: "Avlyst",
-    completed: "Fullført"
-  };
 
   return (
     <Card>
@@ -87,25 +67,6 @@ export function MyBookingsFilter() {
             />
           </div>
           
-          {/* Status Filter */}
-          <div className="flex-1">
-            <Select
-              value={selectedStatus || "all"}
-              onValueChange={(value) => setSelectedStatus(value === "all" ? undefined : value as BookingFilters["status"])}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Alle statuser" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle statuser</SelectItem>
-                <SelectItem value="pending">Venter</SelectItem>
-                <SelectItem value="confirmed">Bekreftet</SelectItem>
-                <SelectItem value="cancelled">Avlyst</SelectItem>
-                <SelectItem value="completed">Fullført</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
           {/* Sort By */}
           <div className="flex-1">
             <Select
@@ -126,26 +87,6 @@ export function MyBookingsFilter() {
           </div>
         </div>
 
-        {/* Active Filters Display */}
-        {(selectedStatus) && (
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-muted-foreground">
-              Aktive filtre:
-            </span>
-            {selectedStatus && (
-              <Badge
-                variant="secondary"
-                className="flex items-center gap-1"
-              >
-                Status: {statusLabels[selectedStatus]}
-                <X
-                  className="h-3 w-3 cursor-pointer"
-                  onClick={handleRemoveStatus}
-                />
-              </Badge>
-            )}
-          </div>
-        )}
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2">

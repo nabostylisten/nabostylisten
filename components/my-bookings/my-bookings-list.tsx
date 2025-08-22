@@ -21,11 +21,11 @@ import { searchParamsToBookingFilters } from "@/types";
 
 interface MyBookingsListProps {
   userId: string;
-  dateRange: "upcoming" | "completed" | "all" | "to_be_confirmed" | "planned";
+  status: "pending" | "confirmed" | "cancelled" | "completed";
   userRole?: 'customer' | 'stylist';
 }
 
-export function MyBookingsList({ userId, dateRange, userRole = 'customer' }: MyBookingsListProps) {
+export function MyBookingsList({ userId, status, userRole = 'customer' }: MyBookingsListProps) {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
@@ -33,26 +33,28 @@ export function MyBookingsList({ userId, dateRange, userRole = 'customer' }: MyB
   const filters = searchParamsToBookingFilters(
     {
       search: searchParams.get("search") || undefined,
-      status: searchParams.get("status") || undefined,
       sort: searchParams.get("sort") || undefined,
     },
-    dateRange,
+    undefined, // no dateRange anymore
     currentPage,
     4
   );
+  
+  // Add the status to filters
+  const filtersWithStatus = { ...filters, status };
 
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters.search, filters.status, dateRange, filters.sortBy]);
+  }, [filters.search, status, filters.sortBy]);
 
   const {
     data: bookingsResponse,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["user-bookings", userId, filters, userRole],
-    queryFn: () => getUserBookings(userId, filters, userRole),
+    queryKey: ["user-bookings", userId, filtersWithStatus, userRole],
+    queryFn: () => getUserBookings(userId, filtersWithStatus, userRole),
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
@@ -286,18 +288,16 @@ export function MyBookingsList({ userId, dateRange, userRole = 'customer' }: MyB
             <div className="space-y-3">
               <CalendarX className="w-12 h-12 mx-auto text-muted-foreground" />
               <h3 className="text-lg font-medium">
-                {dateRange === "upcoming" && "Ingen kommende bookinger"}
-                {dateRange === "completed" && "Ingen tidligere bookinger"}
-                {dateRange === "to_be_confirmed" && "Ingen forespørsler"}
-                {dateRange === "planned" && "Ingen planlagte bookinger"}
-                {dateRange === "all" && "Ingen bookinger"}
+                {status === "pending" && "Ingen ventende bookinger"}
+                {status === "confirmed" && "Ingen bekreftede bookinger"}
+                {status === "cancelled" && "Ingen avlyste bookinger"}
+                {status === "completed" && "Ingen fullførte bookinger"}
               </h3>
               <p className="text-muted-foreground">
-                {dateRange === "upcoming" && "Du har ingen bookinger som er planlagt."}
-                {dateRange === "completed" && "Du har ingen bookinger som er fullført eller avlyst."}
-                {dateRange === "to_be_confirmed" && "Du har ingen forespørsler som venter på godkjenning."}
-                {dateRange === "planned" && "Du har ingen godkjente bookinger som skal gjennomføres."}
-                {dateRange === "all" && "Du har ingen bookinger ennå."}
+                {status === "pending" && "Du har ingen bookinger som venter på godkjenning."}
+                {status === "confirmed" && "Du har ingen bookinger som er bekreftet."}
+                {status === "cancelled" && "Du har ingen bookinger som er avlyst."}
+                {status === "completed" && "Du har ingen bookinger som er fullført."}
               </p>
             </div>
           )}

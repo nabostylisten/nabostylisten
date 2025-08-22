@@ -253,7 +253,6 @@ export interface BookingFilters {
 // URL search parameters for bookings (as they appear in the URL)
 export interface BookingSearchParams {
   search?: string;
-  status?: string;
   sort?: string;
 }
 
@@ -266,7 +265,6 @@ export function searchParamsToBookingFilters(
 ): BookingFilters {
   return {
     search: searchParams.search,
-    status: searchParams.status as BookingFilters["status"],
     dateRange,
     sortBy: searchParams.sort as BookingFilters["sortBy"] || "date_desc",
     page: page || 1,
@@ -280,7 +278,6 @@ export function bookingFiltersToSearchParams(
 ): BookingSearchParams {
   return {
     search: filters.search,
-    status: filters.status,
     sort: filters.sortBy === "date_desc" ? undefined : filters.sortBy,
   };
 }

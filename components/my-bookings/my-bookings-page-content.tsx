@@ -10,21 +10,19 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
-  Calendar,
-  Clock,
   BookOpen,
-  AlertCircle,
-  CheckCircle,
   User,
   Briefcase,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Clock,
 } from "lucide-react";
 import { MyBookingsList } from "./my-bookings-list";
 import { MyBookingsFilter } from "./my-bookings-filter";
 import { useState, useEffect } from "react";
 
-type CustomerTabs = "upcoming" | "completed";
-type StylistTabs = "to_be_confirmed" | "planned" | "completed";
-type AllTabs = CustomerTabs | StylistTabs;
+type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
 interface MyBookingsPageContentProps {
   userId: string;
@@ -42,17 +40,11 @@ export function MyBookingsPageContent({
   );
 
   // State for active tab - needs to reset when switching modes
-  const [activeTab, setActiveTab] = useState<AllTabs>(
-    userRole === "stylist" ? "to_be_confirmed" : "upcoming"
-  );
+  const [activeTab, setActiveTab] = useState<BookingStatus>("pending");
 
   // Reset tab when switching stylist mode
   useEffect(() => {
-    if (stylistMode === "personal") {
-      setActiveTab("upcoming" as CustomerTabs);
-    } else {
-      setActiveTab("to_be_confirmed" as StylistTabs);
-    }
+    setActiveTab("pending");
   }, [stylistMode]);
   return (
     <div className="flex flex-1 flex-col gap-4 p-4">
@@ -109,150 +101,111 @@ export function MyBookingsPageContent({
           <MyBookingsFilter />
         </div>
 
-        {/* Tabs - different logic based on user role and stylist mode */}
-        {userRole === "customer" ||
-        (userRole === "stylist" && stylistMode === "personal") ? (
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value as AllTabs)}
-            className="space-y-6"
-          >
-            <TabsList className="grid w-full grid-cols-2 max-w-md">
-              <TabsTrigger value="upcoming" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Kommende
-              </TabsTrigger>
-              <TabsTrigger
-                value="completed"
-                className="flex items-center gap-2"
-              >
-                <Clock className="w-4 h-4" />
-                Tidligere
-              </TabsTrigger>
-            </TabsList>
+        {/* Status Tabs */}
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => setActiveTab(value as BookingStatus)}
+          className="space-y-6"
+        >
+          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+            <TabsTrigger value="pending" className="flex items-center gap-2">
+              <AlertTriangle className="w-4 h-4" />
+              Venter
+            </TabsTrigger>
+            <TabsTrigger value="confirmed" className="flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              Bekreftet
+            </TabsTrigger>
+            <TabsTrigger value="cancelled" className="flex items-center gap-2">
+              <XCircle className="w-4 h-4" />
+              Avlyst
+            </TabsTrigger>
+            <TabsTrigger value="completed" className="flex items-center gap-2">
+              <Clock className="w-4 h-4" />
+              Fullført
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="upcoming" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Kommende bookinger</CardTitle>
-                  <CardDescription>
-                    Bookinger som skal skje i fremtiden
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MyBookingsList
-                    userId={userId}
-                    dateRange={activeTab}
-                    userRole={
-                      stylistMode === "personal" ? "customer" : userRole
-                    }
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
+          <TabsContent value="pending" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Ventende bookinger</CardTitle>
+                <CardDescription>
+                  Bookinger som venter på godkjenning
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MyBookingsList
+                  userId={userId}
+                  status={activeTab}
+                  userRole={
+                    stylistMode === "personal" ? "customer" : userRole
+                  }
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="completed" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Tidligere bookinger</CardTitle>
-                  <CardDescription>
-                    Bookinger som er fullført eller avlyst
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MyBookingsList
-                    userId={userId}
-                    dateRange={activeTab}
-                    userRole={
-                      stylistMode === "personal" ? "customer" : userRole
-                    }
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        ) : (
-          <Tabs
-            value={activeTab}
-            onValueChange={(value) => setActiveTab(value as AllTabs)}
-            className="space-y-6"
-          >
-            <TabsList className="grid w-full grid-cols-3 max-w-lg">
-              <TabsTrigger
-                value="to_be_confirmed"
-                className="flex items-center gap-2"
-              >
-                <AlertCircle className="w-4 h-4" />
-                Til godkjenning
-              </TabsTrigger>
-              <TabsTrigger value="planned" className="flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Planlagt
-              </TabsTrigger>
-              <TabsTrigger
-                value="completed"
-                className="flex items-center gap-2"
-              >
-                <CheckCircle className="w-4 h-4" />
-                Fullført
-              </TabsTrigger>
-            </TabsList>
+          <TabsContent value="confirmed" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Bekreftede bookinger</CardTitle>
+                <CardDescription>
+                  Bookinger som er bekreftet og planlagt
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MyBookingsList
+                  userId={userId}
+                  status={activeTab}
+                  userRole={
+                    stylistMode === "personal" ? "customer" : userRole
+                  }
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="to_be_confirmed" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Forespørsler til godkjenning</CardTitle>
-                  <CardDescription>
-                    Bookinger som venter på din godkjenning
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MyBookingsList
-                    userId={userId}
-                    dateRange={activeTab}
-                    userRole="stylist"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
+          <TabsContent value="cancelled" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Avlyste bookinger</CardTitle>
+                <CardDescription>
+                  Bookinger som har blitt avlyst
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MyBookingsList
+                  userId={userId}
+                  status={activeTab}
+                  userRole={
+                    stylistMode === "personal" ? "customer" : userRole
+                  }
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-            <TabsContent value="planned" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Planlagte bookinger</CardTitle>
-                  <CardDescription>
-                    Godkjente bookinger som skal gjennomføres
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MyBookingsList
-                    userId={userId}
-                    dateRange={activeTab}
-                    userRole="stylist"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            <TabsContent value="completed" className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Fullførte bookinger</CardTitle>
-                  <CardDescription>
-                    Bookinger som er fullført eller avlyst
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <MyBookingsList
-                    userId={userId}
-                    dateRange={activeTab}
-                    userRole="stylist"
-                  />
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        )}
+          <TabsContent value="completed" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Fullførte bookinger</CardTitle>
+                <CardDescription>
+                  Bookinger som er fullført
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <MyBookingsList
+                  userId={userId}
+                  status={activeTab}
+                  userRole={
+                    stylistMode === "personal" ? "customer" : userRole
+                  }
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

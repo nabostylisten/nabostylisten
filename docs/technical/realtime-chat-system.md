@@ -41,6 +41,21 @@ CREATE TABLE public.chat_messages (
 ```
 bookings (1) ←→ (1) chats ←→ (many) chat_messages
 profiles (1) ←→ (many) chat_messages (as sender)
+chat_messages (1) ←→ (many) media (as chat images)
+```
+
+### Media Support
+
+```sql
+-- Media table for chat images and other file types
+CREATE TABLE public.media (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    owner_id uuid REFERENCES profiles(id) ON DELETE CASCADE,
+    file_path text NOT NULL,
+    media_type media_type NOT NULL, -- 'chat_image', 'avatar', etc.
+    chat_message_id uuid REFERENCES chat_messages(id) ON DELETE CASCADE,
+    created_at timestamp with time zone DEFAULT now()
+);
 ```
 
 ## Component Architecture
@@ -97,6 +112,11 @@ interface ChatMessage {
   content: string;
   user: { name: string };
   createdAt: string;
+  images?: Array<{
+    id: string;
+    file_path: string;
+    url: string;
+  }>;
 }
 ```
 
@@ -137,8 +157,95 @@ interface ChatMessageItemProps {
 - Conditional header display for message grouping
 - Timestamp formatting with localization
 - Responsive design with proper message bubbles
+- **Image Support**:
+  - Single image display with rounded corners
+  - Multiple images with "+X flere" overlay on first image
+  - Click to open full-screen image gallery with carousel
+  - Thumbnail navigation for multiple images
 
-### 4. useChatScroll Hook
+### 4. Image Support Components
+
+#### UploadImagesDialog Component
+
+**Location**: `components/chat/upload-images-dialog.tsx`
+
+Modal dialog for uploading multiple images to chat messages with drag-and-drop support.
+
+```typescript
+interface UploadImagesDialogProps {
+  chatId: string;
+  onUploadComplete: (images: Array<{ id: string; file_path: string; url: string }>, messageId: string) => void;
+  children?: React.ReactNode;
+}
+```
+
+**Key Features**:
+
+- **Multiple File Selection**: Accumulates files across multiple selections
+- **Drag & Drop Interface**: Uses existing dropzone component
+- **File Validation**: Supports JPEG, PNG, WebP, GIF up to 5MB
+- **Preview & Management**: Shows selected files with ability to remove individual items
+- **Extension Badges**: Displays file type badges for easy identification
+- **Smart Filename Handling**: Truncates long filenames while preserving extensions
+- **Client-side Upload**: Direct upload to Supabase storage without server intermediation
+
+**Upload Flow**:
+
+1. Generate unique message ID
+2. Create chat message record in database
+3. Upload images to Supabase storage (`chat-media` bucket)
+4. Create media records linked to message ID
+5. Return signed URLs for immediate display
+
+#### ImageGalleryDialog Component
+
+**Location**: `components/chat/image-gallery-dialog.tsx`
+
+Full-screen image gallery with carousel navigation for viewing multiple chat images.
+
+```typescript
+interface ImageGalleryDialogProps {
+  images: Array<{ id: string; file_path: string; url: string }>;
+  initialIndex?: number;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+```
+
+**Key Features**:
+
+- **Shadcn Carousel Integration**: Uses `@/components/ui/carousel` for smooth navigation
+- **Full-screen Viewing**: Large dialog (80vh height, 6xl width) for optimal image viewing
+- **Image Counter Badge**: Shows current position (e.g., "2 / 5") above the main image
+- **Thumbnail Navigation**: Clickable thumbnails at bottom for quick image jumping
+- **Keyboard Navigation**: Arrow keys and escape key support
+- **Responsive Design**: Adapts to different screen sizes
+- **Accessibility**: Proper ARIA labels and screen reader support
+
+#### useUploadChatImages Hook
+
+**Location**: `hooks/use-upload-chat-images.ts`
+
+Custom hook for handling client-side image uploads to chat messages.
+
+```typescript
+interface UploadChatImagesParams {
+  chatId: string;
+  messageId?: string;
+  files: File[];
+}
+```
+
+**Core Functionality**:
+
+- **Image Compression**: Reduces file size before upload (max 1920px, preserves quality)
+- **File Validation**: Checks file types and sizes against bucket configuration
+- **Batch Upload**: Handles multiple files efficiently
+- **Error Handling**: Comprehensive error reporting with user-friendly messages
+- **Progress Tracking**: Loading states for UI feedback
+- **Storage Path Generation**: Creates organized file paths (`chatId/messageId/filename`)
+
+### 5. useChatScroll Hook
 
 **Location**: `hooks/use-chat-scroll.tsx`
 
@@ -167,12 +274,21 @@ export function useChatScroll() {
 // Room naming convention
 const roomName = `booking-${bookingId}`;
 
-// Message structure
-const message: ChatMessage = {
+// Text message structure
+const textMessage: ChatMessage = {
   id: crypto.randomUUID(),
   content: userInput,
   user: { name: username },
   createdAt: new Date().toISOString(),
+};
+
+// Image message structure
+const imageMessage: ChatMessage = {
+  id: messageId, // Pre-generated ID used for uploads
+  content: "", // Empty content for image-only messages
+  user: { name: username },
+  createdAt: new Date().toISOString(),
+  images: uploadedImages, // Array of uploaded image objects
 };
 
 // Broadcasting
@@ -215,6 +331,62 @@ return () => {
 };
 ```
 
+## Storage Architecture
+
+### Supabase Storage Integration
+
+The system uses Supabase Storage for chat media with organized bucket structure:
+
+```
+chat-media/
+├── {chatId}/
+│   ├── {messageId}/
+│   │   ├── {timestamp}-{random}.{extension}
+│   │   └── {timestamp}-{random}.{extension}
+│   └── {messageId}/
+│       └── ...
+└── ...
+```
+
+**Storage Configuration**:
+
+- **Bucket**: `chat-media` (private bucket)
+- **File Types**: JPEG, PNG, WebP, GIF
+- **Size Limit**: 5MB per file
+- **Access**: Signed URLs with 24-hour expiry
+- **Compression**: Client-side compression before upload (max 1920px)
+
+### Row Level Security (RLS) Policies
+
+```sql
+-- Chat participants can view chat media
+CREATE POLICY "Chat participants can view chat media" ON storage.objects
+FOR SELECT TO authenticated
+USING (
+  bucket_id = 'chat-media' AND
+  (storage.foldername(name))[1] IN (
+    SELECT c.id::text FROM public.chats c
+    JOIN public.bookings b ON c.booking_id = b.id
+    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+  )
+);
+
+-- Users can upload chat images for messages in chats they participate in
+CREATE POLICY "Users can insert chat images for their chats." ON public.media
+FOR INSERT TO authenticated
+WITH CHECK (
+  media_type = 'chat_image' AND
+  (select auth.uid()) = owner_id AND
+  chat_message_id IN (
+    SELECT cm.id 
+    FROM public.chat_messages cm
+    JOIN public.chats c ON cm.chat_id = c.id
+    JOIN public.bookings b ON c.booking_id = b.id
+    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+  )
+);
+```
+
 ## Message Persistence
 
 ### Database Integration
@@ -224,29 +396,56 @@ Messages are persisted through server actions that provide:
 - **Authorization**: Verify user access to chat
 - **Validation**: Ensure message content and chat permissions
 - **Storage**: Save to PostgreSQL with proper relationships
+- **Media Linking**: Connect uploaded images to message records
 
 ```typescript
 // Server action for message creation
 export async function createChatMessage({
   chatId,
   content,
+  messageId,
 }: {
   chatId: string;
   content: string;
+  messageId?: string; // Optional pre-generated ID for image messages
 }) {
   // 1. Authenticate user
   // 2. Verify chat access
-  // 3. Insert message
-  // 4. Return created message
+  // 3. Insert message (with predefined ID if provided)
+  // 4. Return created message with any linked media
+}
+
+// Server action for retrieving message images
+export async function getChatMessageImages(messageId: string) {
+  // 1. Authenticate user
+  // 2. Verify access to message/chat
+  // 3. Retrieve media records for message
+  // 4. Generate signed URLs for images
+  // 5. Return image objects with URLs
 }
 ```
 
 ### Persistence Strategy
 
+#### Text Messages
 1. **Immediate Local Update**: Messages appear instantly for sender
 2. **Broadcast to Room**: Real-time delivery to other participants
 3. **Database Storage**: Async persistence via server action
 4. **Error Handling**: Toast notifications for persistence failures
+
+#### Image Messages
+1. **Message Creation**: Create empty message record in database first
+2. **File Upload**: Upload images to Supabase storage with message ID
+3. **Media Records**: Create media table entries linking images to message
+4. **Local Update**: Display message with images immediately
+5. **Broadcast to Room**: Send complete message with image URLs to other participants
+6. **Error Handling**: Comprehensive error handling at each step with rollback capability
+
+#### Image Loading Strategy
+- **Initial Load**: Fetch existing message images via `getChatMessageImages()`
+- **Signed URLs**: Generate 24-hour expiry URLs for secure access
+- **Lazy Loading**: Images loaded on-demand with Next.js Image optimization
+- **Caching**: Browser caches images with proper cache headers
 
 ## Unread Message Tracking
 
@@ -498,7 +697,8 @@ if (DEBUG_CHAT) {
 
 - **Message Reactions**: Emoji reactions to messages
 - **Message Editing**: Edit/delete sent messages
-- **File Sharing**: Image and document uploads
+- ✅ **Image Sharing**: Multiple image uploads with gallery view (IMPLEMENTED)
+- **Document Sharing**: PDF and document uploads
 - **Read Receipts**: Show when messages are read
 
 ### Advanced Features
@@ -526,6 +726,9 @@ This real-time chat system provides a comprehensive solution for customer-stylis
 - **Automatic read status tracking** with real-time synchronization
 - **Unread count management** with live UI updates
 - **Booking-based chat isolation** ensuring security and privacy
+- **Multi-image support** with client-side uploads and gallery viewing
+- **Image compression and optimization** for efficient storage and loading
+- **Secure media access** with time-limited signed URLs
 
 ### ✅ **Technical Achievements**
 
@@ -534,6 +737,9 @@ This real-time chat system provides a comprehensive solution for customer-stylis
 - **Proper cache invalidation** preventing stale data issues
 - **Connection resilience** with simplified realtime policies
 - **Database-level security** with comprehensive RLS policies
+- **Client-side file processing** with compression and validation
+- **Efficient storage architecture** with organized bucket structure
+- **Carousel-based image viewing** with keyboard and touch navigation
 
 ### ✅ **User Experience**
 
@@ -541,5 +747,9 @@ This real-time chat system provides a comprehensive solution for customer-stylis
 - **Visual read/unread separation** in chat overview
 - **Responsive design** across all chat components
 - **Seamless integration** with existing booking workflows
+- **Drag-and-drop image uploads** with file management interface
+- **Full-screen image gallery** with smooth carousel navigation
+- **Smart file handling** with extension badges and truncated names
+- **Instant image previews** with optimized loading and caching
 
 The system successfully balances real-time performance, security, and user experience while providing a solid foundation for future enhancements like file sharing, message reactions, and advanced notification features.

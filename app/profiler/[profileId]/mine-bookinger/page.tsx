@@ -33,15 +33,15 @@ export default async function MineBookingerPage({
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
       <div className="space-y-6">
         {/* Show review alerts for customers only */}
-        {profile?.role === 'customer' && (
-          <BookingsWithoutReviewsAlerts 
+        {profile?.role === "customer" && (
+          <BookingsWithoutReviewsAlerts
             customerId={profileId}
-            className="px-4"
+            className="mt-2"
           />
         )}
-        <MyBookingsPageContent 
-          userId={profileId} 
-          userRole={profile?.role === 'stylist' ? 'stylist' : 'customer'} 
+        <MyBookingsPageContent
+          userId={profileId}
+          userRole={profile?.role === "stylist" ? "stylist" : "customer"}
         />
       </div>
     </ProfileLayout>

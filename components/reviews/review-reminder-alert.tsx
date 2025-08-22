@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Star } from "lucide-react";
+import { Star, Calendar } from "lucide-react";
+import { format } from "date-fns";
+import { nb } from "date-fns/locale";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ReviewDialog } from "./review-dialog";
@@ -10,6 +12,7 @@ interface ReviewReminderAlertProps {
   bookingId: string;
   stylistName: string;
   serviceTitles: string[];
+  bookingDate: string;
   className?: string;
 }
 
@@ -17,6 +20,7 @@ export function ReviewReminderAlert({
   bookingId,
   stylistName,
   serviceTitles,
+  bookingDate,
   className,
 }: ReviewReminderAlertProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -27,17 +31,34 @@ export function ReviewReminderAlert({
         <Star className="h-4 w-4" />
         <AlertTitle>Vurder din opplevelse</AlertTitle>
         <AlertDescription className="mt-2">
-          <p className="mb-3">
-            Denne bookingen er fullført. Del din opplevelse med andre ved å
-            skrive en anmeldelse av {stylistName}.
-          </p>
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            size="sm"
-            className="mt-2"
-          >
-            Skriv anmeldelse
-          </Button>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Calendar className="h-4 w-4" />
+                {format(new Date(bookingDate), "EEEE d. MMMM yyyy", { locale: nb })}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                <span className="font-medium">{stylistName}</span>
+                {serviceTitles.length > 0 && (
+                  <span>
+                    {" • "}
+                    {serviceTitles.length === 1
+                      ? serviceTitles[0]
+                      : `${serviceTitles[0]} +${serviceTitles.length - 1} til`}
+                  </span>
+                )}
+              </div>
+            </div>
+            <p className="text-sm">
+              Bookingen er fullført. Del din opplevelse med andre ved å skrive en anmeldelse.
+            </p>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              size="sm"
+            >
+              Skriv anmeldelse
+            </Button>
+          </div>
         </AlertDescription>
       </Alert>
 

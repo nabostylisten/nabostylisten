@@ -21,6 +21,7 @@ import {
 import { MyBookingsList } from "./my-bookings-list";
 import { MyBookingsFilter } from "./my-bookings-filter";
 import { useState, useEffect } from "react";
+import { BookingsWithoutReviewsAlerts } from "../reviews/bookings-without-reviews-alerts";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
@@ -69,6 +70,11 @@ export function MyBookingsPageContent({
             </p>
           </div>
         </div>
+
+        {/* Show review alerts for customers only */}
+        {userRole === "customer" && (
+          <BookingsWithoutReviewsAlerts customerId={userId} className="my-4" />
+        )}
 
         {/* Mode toggle for stylists */}
         {userRole === "stylist" && (
@@ -138,9 +144,7 @@ export function MyBookingsPageContent({
                 <MyBookingsList
                   userId={userId}
                   status={activeTab}
-                  userRole={
-                    stylistMode === "personal" ? "customer" : userRole
-                  }
+                  userRole={stylistMode === "personal" ? "customer" : userRole}
                 />
               </CardContent>
             </Card>
@@ -158,9 +162,7 @@ export function MyBookingsPageContent({
                 <MyBookingsList
                   userId={userId}
                   status={activeTab}
-                  userRole={
-                    stylistMode === "personal" ? "customer" : userRole
-                  }
+                  userRole={stylistMode === "personal" ? "customer" : userRole}
                 />
               </CardContent>
             </Card>
@@ -178,9 +180,7 @@ export function MyBookingsPageContent({
                 <MyBookingsList
                   userId={userId}
                   status={activeTab}
-                  userRole={
-                    stylistMode === "personal" ? "customer" : userRole
-                  }
+                  userRole={stylistMode === "personal" ? "customer" : userRole}
                 />
               </CardContent>
             </Card>
@@ -190,17 +190,13 @@ export function MyBookingsPageContent({
             <Card>
               <CardHeader>
                 <CardTitle>Fullførte bookinger</CardTitle>
-                <CardDescription>
-                  Bookinger som er fullført
-                </CardDescription>
+                <CardDescription>Bookinger som er fullført</CardDescription>
               </CardHeader>
               <CardContent>
                 <MyBookingsList
                   userId={userId}
                   status={activeTab}
-                  userRole={
-                    stylistMode === "personal" ? "customer" : userRole
-                  }
+                  userRole={stylistMode === "personal" ? "customer" : userRole}
                 />
               </CardContent>
             </Card>

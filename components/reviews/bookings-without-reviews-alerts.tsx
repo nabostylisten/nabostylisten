@@ -32,15 +32,7 @@ export function BookingsWithoutReviewsAlerts({
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className={className}>
-        <Skeleton className="h-20 w-full" />
-      </div>
-    );
-  }
-
-  if (error || !bookings || bookings.length === 0) {
+  if (error || !bookings || bookings.length === 0 || isLoading) {
     return null;
   }
 

@@ -31,6 +31,7 @@ import {
   XCircle,
   Loader2,
   Settings,
+  FileText,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -39,6 +40,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingDetailsSkeleton } from "./booking-details-skeleton";
+import { BookingNoteDialog } from "../booking/booking-note-dialog";
+import { BookingNoteCard } from "../booking/booking-note-card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getBookingNotes } from "@/server/booking-note.actions";
 
 interface BookingDetailsContentProps {
   bookingId: string;
@@ -53,6 +58,8 @@ export function BookingDetailsContent({
 }: BookingDetailsContentProps) {
   const router = useRouter();
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isBookingNotesDialogOpen, setIsBookingNotesDialogOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<any>(null);
 
   const {
     data: bookingResponse,
@@ -62,6 +69,18 @@ export function BookingDetailsContent({
     queryKey: ["booking-details", bookingId],
     queryFn: () => getBookingDetails(bookingId),
     staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  // Fetch booking notes (only for stylists)
+  const {
+    data: bookingNotesResponse,
+    isLoading: notesLoading,
+    error: notesError,
+  } = useQuery({
+    queryKey: ["booking-notes", bookingId],
+    queryFn: () => getBookingNotes(bookingId),
+    enabled: userRole === "stylist", // Only load for stylists
+    staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
   if (isLoading) {
@@ -449,6 +468,69 @@ export function BookingDetailsContent({
           </CardContent>
         </Card>
 
+        {/* Booking Notes - Only for stylists */}
+        {userRole === "stylist" && (
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Bookingnotater
+                </CardTitle>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsBookingNotesDialogOpen(true)}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Administrer notater
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {notesLoading ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <span>Laster notater...</span>
+                </div>
+              ) : notesError ? (
+                <div className="flex items-center justify-center py-8 text-muted-foreground">
+                  <AlertCircle className="w-5 h-5 mr-2" />
+                  <span>Feil ved lasting av notater</span>
+                </div>
+              ) : bookingNotesResponse?.data && bookingNotesResponse.data.length > 0 ? (
+                <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+                  <div className="space-y-4">
+                    {bookingNotesResponse.data.map((note) => (
+                      <BookingNoteCard
+                        key={note.id}
+                        note={note}
+                        onEdit={() => {
+                          setEditingNote(note);
+                          setIsBookingNotesDialogOpen(true);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <FileText className="w-12 h-12 mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Ingen notater ennå</h3>
+                  <p className="text-sm text-center mb-4">
+                    Opprett ditt første bookingnotat for å dokumentere tjenesten og dele informasjon med kunden.
+                  </p>
+                  <Button 
+                    variant="outline"
+                    onClick={() => setIsBookingNotesDialogOpen(true)}
+                  >
+                    Opprett notat
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
       </div>
 
       {/* Status Dialog for Stylists */}
@@ -460,6 +542,30 @@ export function BookingDetailsContent({
           serviceName={services.length > 0 ? services[0].title : "Booking"}
           isOpen={isStatusDialogOpen}
           onOpenChange={setIsStatusDialogOpen}
+        />
+      )}
+
+      {/* Booking Notes Dialog */}
+      {userRole === "stylist" && (
+        <BookingNoteDialog
+          open={isBookingNotesDialogOpen}
+          onOpenChange={(open) => {
+            setIsBookingNotesDialogOpen(open);
+            if (!open) {
+              setEditingNote(null);
+            }
+          }}
+          bookingId={bookingId}
+          stylistId={userId}
+          isEditing={!!editingNote}
+          editingNote={editingNote}
+          onEditComplete={() => {
+            setEditingNote(null);
+          }}
+          onEditNote={(note) => {
+            setEditingNote(note);
+            // Keep dialog open but switch to edit mode
+          }}
         />
       )}
     </div>

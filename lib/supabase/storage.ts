@@ -61,6 +61,16 @@ export const storagePaths = {
         bucket: "applications",
         path: `${applicationId}/${filename}`,
     }),
+
+    // Booking note media
+    bookingNoteMedia: (
+        bookingId: string,
+        noteId: string,
+        filename: string,
+    ): StoragePath => ({
+        bucket: "booking-note-media",
+        path: `${bookingId}/${noteId}/${filename}`,
+    }),
 };
 
 /**
@@ -259,6 +269,10 @@ export const bucketConfigs = {
             "image/webp",
             "application/pdf",
         ],
+        maxSize: 10 * 1024 * 1024, // 10MB
+    },
+    "booking-note-media": {
+        allowedTypes: ["image/jpeg", "image/png", "image/webp"],
         maxSize: 10 * 1024 * 1024, // 10MB
     },
 } as const;

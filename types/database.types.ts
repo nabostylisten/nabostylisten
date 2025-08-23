@@ -2009,6 +2009,66 @@ export type Database = {
           },
         ]
       }
+      booking_notes: {
+        Row: {
+          actual_end_time: string | null
+          actual_start_time: string | null
+          booking_id: string
+          category: Database["public"]["Enums"]["booking_note_category"]
+          content: string
+          created_at: string
+          customer_visible: boolean
+          id: string
+          next_appointment_suggestion: string | null
+          stylist_id: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          booking_id: string
+          category?: Database["public"]["Enums"]["booking_note_category"]
+          content: string
+          created_at?: string
+          customer_visible?: boolean
+          id?: string
+          next_appointment_suggestion?: string | null
+          stylist_id: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          actual_end_time?: string | null
+          actual_start_time?: string | null
+          booking_id?: string
+          category?: Database["public"]["Enums"]["booking_note_category"]
+          content?: string
+          created_at?: string
+          customer_visible?: boolean
+          id?: string
+          next_appointment_suggestion?: string | null
+          stylist_id?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "booking_notes_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_notes_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       booking_services: {
         Row: {
           booking_id: string
@@ -2256,6 +2316,7 @@ export type Database = {
       media: {
         Row: {
           application_id: string | null
+          booking_note_id: string | null
           chat_message_id: string | null
           created_at: string
           file_path: string
@@ -2268,6 +2329,7 @@ export type Database = {
         }
         Insert: {
           application_id?: string | null
+          booking_note_id?: string | null
           chat_message_id?: string | null
           created_at?: string
           file_path: string
@@ -2280,6 +2342,7 @@ export type Database = {
         }
         Update: {
           application_id?: string | null
+          booking_note_id?: string | null
           chat_message_id?: string | null
           created_at?: string
           file_path?: string
@@ -2296,6 +2359,13 @@ export type Database = {
             columns: ["application_id"]
             isOneToOne: false
             referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "media_booking_note_id_fkey"
+            columns: ["booking_note_id"]
+            isOneToOne: false
+            referencedRelation: "booking_notes"
             referencedColumns: ["id"]
           },
           {
@@ -2898,6 +2968,13 @@ export type Database = {
     }
     Enums: {
       application_status: "applied" | "pending_info" | "rejected" | "approved"
+      booking_note_category:
+        | "service_notes"
+        | "customer_preferences"
+        | "issues"
+        | "results"
+        | "follow_up"
+        | "other"
       booking_status: "pending" | "confirmed" | "cancelled" | "completed"
       day_of_week:
         | "monday"
@@ -2915,6 +2992,7 @@ export type Database = {
         | "application_image"
         | "landing_asset"
         | "logo_asset"
+        | "booking_note_image"
         | "other"
       user_role: "customer" | "stylist" | "admin"
     }
@@ -4713,6 +4791,14 @@ export const Constants = {
   public: {
     Enums: {
       application_status: ["applied", "pending_info", "rejected", "approved"],
+      booking_note_category: [
+        "service_notes",
+        "customer_preferences",
+        "issues",
+        "results",
+        "follow_up",
+        "other",
+      ],
       booking_status: ["pending", "confirmed", "cancelled", "completed"],
       day_of_week: [
         "monday",
@@ -4731,6 +4817,7 @@ export const Constants = {
         "application_image",
         "landing_asset",
         "logo_asset",
+        "booking_note_image",
         "other",
       ],
       user_role: ["customer", "stylist", "admin"],

@@ -14,6 +14,15 @@ export const ApplicationStatusSchema = z.union([
   z.literal("approved"),
 ]);
 
+export const BookingNoteCategorySchema = z.union([
+  z.literal("service_notes"),
+  z.literal("customer_preferences"),
+  z.literal("issues"),
+  z.literal("results"),
+  z.literal("follow_up"),
+  z.literal("other"),
+]);
+
 export const BookingStatusSchema = z.union([
   z.literal("pending"),
   z.literal("confirmed"),
@@ -39,6 +48,7 @@ export const MediaTypeSchema = z.union([
   z.literal("application_image"),
   z.literal("landing_asset"),
   z.literal("logo_asset"),
+  z.literal("booking_note_image"),
   z.literal("other"),
 ]);
 
@@ -251,6 +261,68 @@ export const applicationsRelationshipsSchema = z.tuple([
   z.object({
     foreignKeyName: z.literal("applications_user_id_fkey"),
     columns: z.tuple([z.literal("user_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const bookingNotesRowSchema = z.object({
+  actual_end_time: z.string().nullable(),
+  actual_start_time: z.string().nullable(),
+  booking_id: z.string(),
+  category: BookingNoteCategorySchema,
+  content: z.string(),
+  created_at: z.string(),
+  customer_visible: z.boolean(),
+  id: z.string(),
+  next_appointment_suggestion: z.string().nullable(),
+  stylist_id: z.string(),
+  tags: z.array(z.string()),
+  updated_at: z.string(),
+});
+
+export const bookingNotesInsertSchema = z.object({
+  actual_end_time: z.string().optional().nullable(),
+  actual_start_time: z.string().optional().nullable(),
+  booking_id: z.string(),
+  category: BookingNoteCategorySchema.optional(),
+  content: z.string(),
+  created_at: z.string().optional(),
+  customer_visible: z.boolean().optional(),
+  id: z.string().optional(),
+  next_appointment_suggestion: z.string().optional().nullable(),
+  stylist_id: z.string(),
+  tags: z.array(z.string()).optional(),
+  updated_at: z.string().optional(),
+});
+
+export const bookingNotesUpdateSchema = z.object({
+  actual_end_time: z.string().optional().nullable(),
+  actual_start_time: z.string().optional().nullable(),
+  booking_id: z.string().optional(),
+  category: BookingNoteCategorySchema.optional(),
+  content: z.string().optional(),
+  created_at: z.string().optional(),
+  customer_visible: z.boolean().optional(),
+  id: z.string().optional(),
+  next_appointment_suggestion: z.string().optional().nullable(),
+  stylist_id: z.string().optional(),
+  tags: z.array(z.string()).optional(),
+  updated_at: z.string().optional(),
+});
+
+export const bookingNotesRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("booking_notes_booking_id_fkey"),
+    columns: z.tuple([z.literal("booking_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("bookings"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("booking_notes_stylist_id_fkey"),
+    columns: z.tuple([z.literal("stylist_id")]),
     isOneToOne: z.literal(false),
     referencedRelation: z.literal("profiles"),
     referencedColumns: z.tuple([z.literal("id")]),
@@ -511,6 +583,7 @@ export const discountsUpdateSchema = z.object({
 
 export const mediaRowSchema = z.object({
   application_id: z.string().nullable(),
+  booking_note_id: z.string().nullable(),
   chat_message_id: z.string().nullable(),
   created_at: z.string(),
   file_path: z.string(),
@@ -524,6 +597,7 @@ export const mediaRowSchema = z.object({
 
 export const mediaInsertSchema = z.object({
   application_id: z.string().optional().nullable(),
+  booking_note_id: z.string().optional().nullable(),
   chat_message_id: z.string().optional().nullable(),
   created_at: z.string().optional(),
   file_path: z.string(),
@@ -537,6 +611,7 @@ export const mediaInsertSchema = z.object({
 
 export const mediaUpdateSchema = z.object({
   application_id: z.string().optional().nullable(),
+  booking_note_id: z.string().optional().nullable(),
   chat_message_id: z.string().optional().nullable(),
   created_at: z.string().optional(),
   file_path: z.string().optional(),
@@ -554,6 +629,13 @@ export const mediaRelationshipsSchema = z.tuple([
     columns: z.tuple([z.literal("application_id")]),
     isOneToOne: z.literal(false),
     referencedRelation: z.literal("applications"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("media_booking_note_id_fkey"),
+    columns: z.tuple([z.literal("booking_note_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("booking_notes"),
     referencedColumns: z.tuple([z.literal("id")]),
   }),
   z.object({

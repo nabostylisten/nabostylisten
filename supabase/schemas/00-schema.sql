@@ -19,10 +19,13 @@ CREATE TYPE public.booking_status AS ENUM ('pending', 'confirmed', 'cancelled', 
 CREATE TYPE public.application_status AS ENUM ('applied', 'pending_info', 'rejected', 'approved');
 
 -- Enum for different types of media, adding application and review images
-CREATE TYPE public.media_type AS ENUM ('avatar', 'service_image', 'review_image', 'chat_image', 'application_image', 'landing_asset', 'logo_asset', 'other');
+CREATE TYPE public.media_type AS ENUM ('avatar', 'service_image', 'review_image', 'chat_image', 'application_image', 'landing_asset', 'logo_asset', 'booking_note_image', 'other');
 
 -- Enum for days of the week for stylist availability rules
 CREATE TYPE public.day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday');
+
+-- Enum for booking note categories
+CREATE TYPE public.booking_note_category AS ENUM ('service_notes', 'customer_preferences', 'issues', 'results', 'follow_up', 'other');
 
 
 -- ================== TABLES ==================
@@ -286,6 +289,29 @@ CREATE TABLE IF NOT EXISTS public.payments (
     payout_completed_at timestamp with time zone
 );
 
+-- Table for booking notes created by stylists
+CREATE TABLE IF NOT EXISTS public.booking_notes (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    
+    booking_id uuid NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
+    stylist_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    
+    -- Core content
+    content text NOT NULL,
+    category public.booking_note_category DEFAULT 'service_notes' NOT NULL,
+    
+    -- Additional metadata
+    customer_visible boolean DEFAULT false NOT NULL,
+    actual_start_time timestamp with time zone,
+    actual_end_time timestamp with time zone,
+    
+    -- Future booking suggestions
+    next_appointment_suggestion text,
+    tags text[] DEFAULT '{}' NOT NULL
+);
+
 
 -- Table for stylist's general availability rules (e.g., "M-F, 9-5")
 CREATE TABLE IF NOT EXISTS public.stylist_availability_rules (
@@ -378,7 +404,8 @@ CREATE TABLE IF NOT EXISTS public.media (
     service_id uuid REFERENCES public.services(id) ON DELETE CASCADE,
     review_id uuid REFERENCES public.reviews(id) ON DELETE CASCADE,
     chat_message_id uuid REFERENCES public.chat_messages(id) ON DELETE CASCADE,
-    application_id uuid REFERENCES public.applications(id) ON DELETE CASCADE
+    application_id uuid REFERENCES public.applications(id) ON DELETE CASCADE,
+    booking_note_id uuid REFERENCES public.booking_notes(id) ON DELETE CASCADE
 );
 -- Note: owner_id links to the uploader. For avatars, media_type = 'avatar' and owner_id is the profile owner.
 
@@ -480,6 +507,7 @@ CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON public.payments FOR E
 CREATE TRIGGER update_discounts_updated_at BEFORE UPDATE ON public.discounts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_chats_updated_at BEFORE UPDATE ON public.chats FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_user_preferences_updated_at BEFORE UPDATE ON public.user_preferences FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_booking_notes_updated_at BEFORE UPDATE ON public.booking_notes FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Trigger to automatically create a profile when a new user signs up
 CREATE TRIGGER on_auth_user_created

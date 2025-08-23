@@ -51,6 +51,9 @@ export function BookingAddressSelector({
       // We'll fetch the full address details
       const { data } = await getAddress(addressId);
       onAddressSelect(addressId, data || undefined);
+      // Close manual address input when an address is selected from combobox
+      setUseManualAddress(false);
+      setManualAddress("");
     }
   };
 

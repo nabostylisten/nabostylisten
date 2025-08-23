@@ -44,8 +44,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     role public.user_role DEFAULT 'customer' NOT NULL,
 
     -- Integrations
-    stripe_customer_id text,
-    subscribed_to_newsletter boolean DEFAULT false NOT NULL
+    stripe_customer_id text
 );
 
 -- Table for stylist-specific details (one-to-one with profiles where role = 'stylist')
@@ -383,6 +382,46 @@ CREATE TABLE IF NOT EXISTS public.media (
 );
 -- Note: owner_id links to the uploader. For avatars, media_type = 'avatar' and owner_id is the profile owner.
 
+-- Table for user preferences and notification settings
+CREATE TABLE IF NOT EXISTS public.user_preferences (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id uuid NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Newsletter and Marketing
+    newsletter_subscribed boolean DEFAULT false NOT NULL,
+    marketing_emails boolean DEFAULT true NOT NULL,
+    promotional_sms boolean DEFAULT false NOT NULL,
+
+    -- Booking Notifications
+    booking_confirmations boolean DEFAULT true NOT NULL,
+    booking_reminders boolean DEFAULT true NOT NULL,
+    booking_cancellations boolean DEFAULT true NOT NULL,
+    booking_status_updates boolean DEFAULT true NOT NULL,
+
+    -- Chat and Communication
+    chat_messages boolean DEFAULT true NOT NULL,
+    chat_message_sounds boolean DEFAULT true NOT NULL,
+
+    -- Stylist-specific Notifications (for stylists)
+    new_booking_requests boolean DEFAULT true NOT NULL,
+    review_notifications boolean DEFAULT true NOT NULL,
+    payment_notifications boolean DEFAULT true NOT NULL,
+
+    -- Application Updates (for pending/applied stylists)
+    application_status_updates boolean DEFAULT true NOT NULL,
+
+    -- System and Security
+    security_alerts boolean DEFAULT true NOT NULL,
+    system_updates boolean DEFAULT false NOT NULL,
+
+    -- Delivery Preferences
+    email_delivery boolean DEFAULT true NOT NULL,
+    sms_delivery boolean DEFAULT false NOT NULL,
+    push_notifications boolean DEFAULT false NOT NULL -- Future: for mobile app
+);
+
 -- ================== TRIGGERS AND FUNCTIONS ==================
 
 -- Function to update the 'updated_at' column automatically
@@ -441,6 +480,7 @@ CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON public.bookings FOR E
 CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON public.payments FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_discounts_updated_at BEFORE UPDATE ON public.discounts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_chats_updated_at BEFORE UPDATE ON public.chats FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_user_preferences_updated_at BEFORE UPDATE ON public.user_preferences FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Trigger to automatically create a profile when a new user signs up
 CREATE TRIGGER on_auth_user_created

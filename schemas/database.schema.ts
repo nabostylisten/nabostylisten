@@ -656,7 +656,6 @@ export const profilesRowSchema = z.object({
   phone_number: z.string().nullable(),
   role: UserRoleSchema,
   stripe_customer_id: z.string().nullable(),
-  subscribed_to_newsletter: z.boolean(),
   updated_at: z.string(),
 });
 
@@ -669,7 +668,6 @@ export const profilesInsertSchema = z.object({
   phone_number: z.string().optional().nullable(),
   role: UserRoleSchema.optional(),
   stripe_customer_id: z.string().optional().nullable(),
-  subscribed_to_newsletter: z.boolean().optional(),
   updated_at: z.string().optional(),
 });
 
@@ -682,7 +680,6 @@ export const profilesUpdateSchema = z.object({
   phone_number: z.string().optional().nullable(),
   role: UserRoleSchema.optional(),
   stripe_customer_id: z.string().optional().nullable(),
-  subscribed_to_newsletter: z.boolean().optional(),
   updated_at: z.string().optional(),
 });
 
@@ -1093,6 +1090,91 @@ export const stylistUnavailabilityRelationshipsSchema = z.tuple([
     foreignKeyName: z.literal("stylist_unavailability_stylist_id_fkey"),
     columns: z.tuple([z.literal("stylist_id")]),
     isOneToOne: z.literal(false),
+    referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const userPreferencesRowSchema = z.object({
+  application_status_updates: z.boolean(),
+  booking_cancellations: z.boolean(),
+  booking_confirmations: z.boolean(),
+  booking_reminders: z.boolean(),
+  booking_status_updates: z.boolean(),
+  chat_message_sounds: z.boolean(),
+  chat_messages: z.boolean(),
+  created_at: z.string(),
+  email_delivery: z.boolean(),
+  id: z.string(),
+  marketing_emails: z.boolean(),
+  new_booking_requests: z.boolean(),
+  newsletter_subscribed: z.boolean(),
+  payment_notifications: z.boolean(),
+  promotional_sms: z.boolean(),
+  push_notifications: z.boolean(),
+  review_notifications: z.boolean(),
+  security_alerts: z.boolean(),
+  sms_delivery: z.boolean(),
+  system_updates: z.boolean(),
+  updated_at: z.string(),
+  user_id: z.string(),
+});
+
+export const userPreferencesInsertSchema = z.object({
+  application_status_updates: z.boolean().optional(),
+  booking_cancellations: z.boolean().optional(),
+  booking_confirmations: z.boolean().optional(),
+  booking_reminders: z.boolean().optional(),
+  booking_status_updates: z.boolean().optional(),
+  chat_message_sounds: z.boolean().optional(),
+  chat_messages: z.boolean().optional(),
+  created_at: z.string().optional(),
+  email_delivery: z.boolean().optional(),
+  id: z.string().optional(),
+  marketing_emails: z.boolean().optional(),
+  new_booking_requests: z.boolean().optional(),
+  newsletter_subscribed: z.boolean().optional(),
+  payment_notifications: z.boolean().optional(),
+  promotional_sms: z.boolean().optional(),
+  push_notifications: z.boolean().optional(),
+  review_notifications: z.boolean().optional(),
+  security_alerts: z.boolean().optional(),
+  sms_delivery: z.boolean().optional(),
+  system_updates: z.boolean().optional(),
+  updated_at: z.string().optional(),
+  user_id: z.string(),
+});
+
+export const userPreferencesUpdateSchema = z.object({
+  application_status_updates: z.boolean().optional(),
+  booking_cancellations: z.boolean().optional(),
+  booking_confirmations: z.boolean().optional(),
+  booking_reminders: z.boolean().optional(),
+  booking_status_updates: z.boolean().optional(),
+  chat_message_sounds: z.boolean().optional(),
+  chat_messages: z.boolean().optional(),
+  created_at: z.string().optional(),
+  email_delivery: z.boolean().optional(),
+  id: z.string().optional(),
+  marketing_emails: z.boolean().optional(),
+  new_booking_requests: z.boolean().optional(),
+  newsletter_subscribed: z.boolean().optional(),
+  payment_notifications: z.boolean().optional(),
+  promotional_sms: z.boolean().optional(),
+  push_notifications: z.boolean().optional(),
+  review_notifications: z.boolean().optional(),
+  security_alerts: z.boolean().optional(),
+  sms_delivery: z.boolean().optional(),
+  system_updates: z.boolean().optional(),
+  updated_at: z.string().optional(),
+  user_id: z.string().optional(),
+});
+
+export const userPreferencesRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("user_preferences_user_id_fkey"),
+    columns: z.tuple([z.literal("user_id")]),
+    isOneToOne: z.literal(true),
     referencedRelation: z.literal("profiles"),
     referencedColumns: z.tuple([z.literal("id")]),
   }),

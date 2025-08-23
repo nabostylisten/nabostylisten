@@ -18,6 +18,7 @@ ALTER TABLE public.recurring_unavailability_exceptions ENABLE ROW LEVEL SECURITY
 ALTER TABLE public.chats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
 
 -- A function to check the current user's role (recommended for performance).
 CREATE OR REPLACE FUNCTION public.get_my_role()
@@ -579,3 +580,23 @@ USING ( true );
 CREATE POLICY "authenticated can send broadcasts" ON "realtime"."messages"
 FOR INSERT TO authenticated
 WITH CHECK ( true );
+
+-- ========== USER PREFERENCES POLICIES ==========
+-- Users can view their own preferences
+CREATE POLICY "Users can view their own preferences" ON public.user_preferences
+FOR SELECT TO authenticated
+USING ( user_id = (select auth.uid()) );
+
+-- Users can insert their own preferences (handled by server action with defaults)
+CREATE POLICY "Users can insert their own preferences" ON public.user_preferences
+FOR INSERT TO authenticated
+WITH CHECK ( user_id = (select auth.uid()) );
+
+-- Users can update their own preferences
+CREATE POLICY "Users can update their own preferences" ON public.user_preferences
+FOR UPDATE TO authenticated
+USING ( user_id = (select auth.uid()) )
+WITH CHECK ( user_id = (select auth.uid()) );
+
+-- Users cannot delete preferences (they should always exist with defaults)
+-- No DELETE policy means no one can delete preferences

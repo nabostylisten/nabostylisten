@@ -283,16 +283,6 @@ export function ProfileForm({ profile, isOwner }: ProfileFormProps) {
 
           <Separator />
 
-          {/* Newsletter Subscription */}
-          <div className="space-y-2">
-            <Label>Nyhetsbrev</Label>
-            <p className="text-sm text-muted-foreground">
-              {profile.subscribed_to_newsletter ? "Abonnert" : "Ikke abonnert"}
-            </p>
-          </div>
-
-          <Separator />
-
           {/* BankID Verification */}
           <div className="space-y-2">
             <Label>BankID verifisering</Label>

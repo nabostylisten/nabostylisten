@@ -2397,7 +2397,6 @@ export type Database = {
           phone_number: string | null
           role: Database["public"]["Enums"]["user_role"]
           stripe_customer_id: string | null
-          subscribed_to_newsletter: boolean
           updated_at: string
         }
         Insert: {
@@ -2409,7 +2408,6 @@ export type Database = {
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           stripe_customer_id?: string | null
-          subscribed_to_newsletter?: boolean
           updated_at?: string
         }
         Update: {
@@ -2421,7 +2419,6 @@ export type Database = {
           phone_number?: string | null
           role?: Database["public"]["Enums"]["user_role"]
           stripe_customer_id?: string | null
-          subscribed_to_newsletter?: boolean
           updated_at?: string
         }
         Relationships: []
@@ -2787,6 +2784,89 @@ export type Database = {
             foreignKeyName: "stylist_unavailability_stylist_id_fkey"
             columns: ["stylist_id"]
             isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_preferences: {
+        Row: {
+          application_status_updates: boolean
+          booking_cancellations: boolean
+          booking_confirmations: boolean
+          booking_reminders: boolean
+          booking_status_updates: boolean
+          chat_message_sounds: boolean
+          chat_messages: boolean
+          created_at: string
+          email_delivery: boolean
+          id: string
+          marketing_emails: boolean
+          new_booking_requests: boolean
+          newsletter_subscribed: boolean
+          payment_notifications: boolean
+          promotional_sms: boolean
+          push_notifications: boolean
+          review_notifications: boolean
+          security_alerts: boolean
+          sms_delivery: boolean
+          system_updates: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          application_status_updates?: boolean
+          booking_cancellations?: boolean
+          booking_confirmations?: boolean
+          booking_reminders?: boolean
+          booking_status_updates?: boolean
+          chat_message_sounds?: boolean
+          chat_messages?: boolean
+          created_at?: string
+          email_delivery?: boolean
+          id?: string
+          marketing_emails?: boolean
+          new_booking_requests?: boolean
+          newsletter_subscribed?: boolean
+          payment_notifications?: boolean
+          promotional_sms?: boolean
+          push_notifications?: boolean
+          review_notifications?: boolean
+          security_alerts?: boolean
+          sms_delivery?: boolean
+          system_updates?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          application_status_updates?: boolean
+          booking_cancellations?: boolean
+          booking_confirmations?: boolean
+          booking_reminders?: boolean
+          booking_status_updates?: boolean
+          chat_message_sounds?: boolean
+          chat_messages?: boolean
+          created_at?: string
+          email_delivery?: boolean
+          id?: string
+          marketing_emails?: boolean
+          new_booking_requests?: boolean
+          newsletter_subscribed?: boolean
+          payment_notifications?: boolean
+          promotional_sms?: boolean
+          push_notifications?: boolean
+          review_notifications?: boolean
+          security_alerts?: boolean
+          sms_delivery?: boolean
+          system_updates?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_preferences_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },

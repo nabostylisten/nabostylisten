@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getPublicUrl } from "@/lib/supabase/storage";
-import { findNearbyServices } from "@/lib/supabase/rpc";
+import { findNearbyServices, debugGeographicData } from "@/lib/supabase/rpc";
 import type { ServiceFilters } from "@/types";
 import type { ServiceWithRelations } from "@/components/services/service-card";
 import type { Database } from "@/types/database.types";
@@ -42,28 +42,54 @@ async function fetchGeographicServices(
 ): Promise<InfiniteServicesResponse> {
   const { location, ...otherFilters } = filters;
 
+  console.log("🔍 Geographic Search Debug:");
+  console.log("  - Original filters:", filters);
+  console.log("  - Location coordinates:", location?.coordinates);
+  console.log("  - Radius:", location?.radius);
+  console.log("  - Other filters:", otherFilters);
+
   if (!location?.coordinates) {
     throw new Error("Geographic search requires coordinates");
   }
+
+  const rpcParams = { ...otherFilters, radiusKm: location.radius };
+  console.log("  - RPC parameters:", rpcParams);
+  console.log("  - Calling nearby_services with lat:", location.coordinates.lat, "lng:", location.coordinates.lng);
 
   const { data, error } = await findNearbyServices(
     supabase,
     location.coordinates.lat,
     location.coordinates.lng,
-    { ...otherFilters, radiusKm: location.radius },
+    rpcParams,
   );
 
   if (error) {
+    console.log("  ❌ RPC Error:", error);
     throw new Error(`Failed to fetch nearby services: ${error}`);
   }
 
+  console.log("  ✅ RPC Success - Raw data length:", data?.length || 0);
+  console.log("  - First few results:", data?.slice(0, 3));
+
   if (!data) {
+    console.log("  ⚠️ No data returned from RPC");
     return { services: [], hasMore: false, totalCount: 0 };
+  }
+
+  // If we got 0 results, run diagnostic to understand why
+  if (data.length === 0) {
+    console.log("  🔍 Zero results returned - running diagnostics...");
+    await debugGeographicData(supabase);
   }
 
   // Apply pagination to the results
   const totalCount = data.length;
   const paginatedData = data.slice(offset, offset + limit);
+  
+  console.log("  📄 Pagination:");
+  console.log("    - Total count:", totalCount);
+  console.log("    - Offset:", offset, "Limit:", limit);
+  console.log("    - Paginated data length:", paginatedData.length);
 
   // Transform RPC results to ServiceWithRelations format
   const services = await Promise.all(

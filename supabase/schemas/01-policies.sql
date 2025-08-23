@@ -71,6 +71,18 @@ CREATE POLICY "Users can view their own addresses." ON public.addresses
 FOR SELECT TO authenticated
 USING ( (select auth.uid()) = user_id );
 
+-- Primary addresses of stylists with published services are viewable by everyone (needed for geographic search)
+CREATE POLICY "Primary addresses of stylists with published services are viewable" ON public.addresses
+FOR SELECT TO anon, authenticated
+USING (
+  is_primary = true 
+  AND user_id IN (
+    SELECT DISTINCT stylist_id 
+    FROM public.services 
+    WHERE is_published = true
+  )
+);
+
 -- A user can create an address for themselves.
 CREATE POLICY "Users can insert their own addresses." ON public.addresses
 FOR INSERT TO authenticated

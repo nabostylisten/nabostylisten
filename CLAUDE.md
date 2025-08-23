@@ -361,5 +361,29 @@ All new features and significant functionality changes must be documented in the
 - Booking status updates
 - Availability changes
 
+## Scheduled Tasks & Automation
+
+### Cron Jobs
+
+- **Infrastructure**: Vercel Cron Jobs for scheduled task execution
+- **Security**: Protected endpoints using `CRON_SECRET` environment variable
+- **Configuration**: Defined in `vercel.json` with cron expressions
+- **Location**: API routes in `/app/api/cron/[job-name]/route.ts`
+
+### Active Cron Jobs
+
+- **Chat Message Cleanup**: Monthly deletion of messages older than 5 years (1st of month, 3 AM UTC)
+  - Preserves recent history for customer service
+  - Reduces storage costs and maintains performance
+  - Complies with data retention policies
+
+### Testing Cron Jobs Locally
+
+```bash
+# Test with curl (requires CRON_SECRET env var)
+curl -H "Authorization: Bearer your-secret-here" \
+  http://localhost:3000/api/cron/cleanup-old-messages
+```
+
 - when running seed script, first run the seed script and then afterwards reset the database
 - After making changes to the database, before running seed script again, we must run seed:sync to sync snaplet to the database

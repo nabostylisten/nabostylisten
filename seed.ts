@@ -1328,6 +1328,36 @@ async function main() {
 
   console.log("-- Adding chat messages...");
 
+  // Add some OLD chat messages (for cron job testing - older than 5 years)
+  const sixYearsAgo = subDays(new Date(), 365 * 6); // 6 years ago
+  
+  // Create old messages that should be deleted by cron job
+  await seed.chat_messages([
+    {
+      chat_id: chats[0].id,
+      sender_id: customerUsers[0].id,
+      content: "Dette er en veldig gammel melding som skal slettes av cron job.",
+      is_read: true,
+      created_at: sixYearsAgo,
+    },
+    {
+      chat_id: chats[0].id,
+      sender_id: stylistUsers[0].id,
+      content: "Denne meldingen er også over 5 år gammel og skal fjernes.",
+      is_read: true,
+      created_at: addDays(sixYearsAgo, 1),
+    },
+    {
+      chat_id: chats[1].id,
+      sender_id: customerUsers[0].id,
+      content: "Gammel chat fra 2018 som skal slettes automatisk.",
+      is_read: true,
+      created_at: addDays(sixYearsAgo, 10),
+    },
+  ]);
+
+  console.log("-- Added old chat messages for cron job testing");
+
   // Add some chat messages
   await seed.chat_messages([
     // Messages for upcoming confirmed booking
@@ -1796,6 +1826,11 @@ async function main() {
   console.log("--   All stylists have reviews both received and written");
   console.log(`--   Total reviews: ${totalReviews}`);
   console.log(`--   Every published service has at least 3 reviews`);
+  console.log("-- ");
+  console.log("-- Cron Job Testing:");
+  console.log("--   Added 3 chat messages older than 5 years for cleanup testing");
+  console.log("--   Test endpoint: GET /api/cron/cleanup-old-messages");
+  console.log("--   Remember to set CRON_SECRET environment variable");
 
   process.exit(0);
 }

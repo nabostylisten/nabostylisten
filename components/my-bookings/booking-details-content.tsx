@@ -45,12 +45,20 @@ import { BookingNoteDialog } from "../booking/booking-note-dialog";
 import { BookingNoteCard } from "../booking/booking-note-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getBookingNotes } from "@/server/booking-note.actions";
+import { Database } from "@/types/database.types";
 
 interface BookingDetailsContentProps {
   bookingId: string;
   userId: string;
   userRole?: "customer" | "stylist";
 }
+
+type BookingNote = Database["public"]["Tables"]["booking_notes"]["Row"] & {
+  stylist: {
+    id: string;
+    full_name: string | null;
+  } | null;
+};
 
 export function BookingDetailsContent({
   bookingId,
@@ -61,7 +69,7 @@ export function BookingDetailsContent({
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isBookingNotesDialogOpen, setIsBookingNotesDialogOpen] =
     useState(false);
-  const [editingNote, setEditingNote] = useState<any>(null);
+  const [editingNote, setEditingNote] = useState<BookingNote | null>(null);
 
   const {
     data: bookingResponse,
@@ -563,7 +571,7 @@ export function BookingDetailsContent({
           bookingId={bookingId}
           stylistId={userId}
           isEditing={!!editingNote}
-          editingNote={editingNote}
+          editingNote={editingNote || undefined}
           onEditComplete={() => {
             setEditingNote(null);
           }}

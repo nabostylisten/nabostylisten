@@ -310,23 +310,22 @@ export function BookingNoteForm({
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      content: "",
-      category: "service_notes" as const,
-      customer_visible: false,
-      duration_minutes: undefined,
-      next_appointment_suggestion: "",
-      tags: [],
+      content: editingNote?.content || "",
+      category: editingNote?.category || "service_notes",
+      customer_visible: editingNote?.customer_visible || false,
+      duration_minutes: editingNote?.duration_minutes || undefined,
+      next_appointment_suggestion:
+        editingNote?.next_appointment_suggestion || "",
+      tags: editingNote?.tags || [],
     },
   });
-
-  console.log(editingNote?.category);
 
   // Populate form when editing
   useEffect(() => {
     if (editingNote) {
       form.reset({
         content: editingNote.content,
-        category: editingNote.category as FormValues["category"],
+        category: editingNote.category,
         customer_visible: editingNote.customer_visible,
         duration_minutes: editingNote.duration_minutes || undefined,
         next_appointment_suggestion:
@@ -335,8 +334,6 @@ export function BookingNoteForm({
       });
     }
   }, [editingNote, form]);
-
-  console.log(form.getValues());
 
   const createMutation = useMutation({
     mutationFn: createBookingNote,
@@ -544,7 +541,10 @@ export function BookingNoteForm({
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Kategori</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Velg kategori" />

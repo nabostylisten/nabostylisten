@@ -204,7 +204,7 @@ export function ServiceFilterForm({
       <CardContent className="p-6 space-y-4">
         {/* Search and Location Row */}
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
+          <div className="md:flex-1 relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Søk etter tjeneste..."
@@ -214,27 +214,29 @@ export function ServiceFilterForm({
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
-          <div className="flex gap-2">
-            <AddressInput
-              value={location.address}
-              onChange={(address) =>
-                setLocation((prev) => ({ ...prev, address }))
-              }
-              onSelect={(suggestion) => {
-                if (suggestion.center) {
-                  setLocation((prev) => ({
-                    ...prev,
-                    address: suggestion.place_name,
-                    coordinates: {
-                      lat: suggestion.center[1],
-                      lng: suggestion.center[0],
-                    },
-                  }));
+          <div className="md:flex-1 flex gap-2">
+            <div className="flex-1">
+              <AddressInput
+                value={location.address}
+                onChange={(address) =>
+                  setLocation((prev) => ({ ...prev, address }))
                 }
-              }}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Søk lokasjon..."
-            />
+                onSelect={(suggestion) => {
+                  if (suggestion.center) {
+                    setLocation((prev) => ({
+                      ...prev,
+                      address: suggestion.place_name,
+                      coordinates: {
+                        lat: suggestion.center[1],
+                        lng: suggestion.center[0],
+                      },
+                    }));
+                  }
+                }}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Søk lokasjon..."
+              />
+            </div>
             {location.coordinates && (
               <div className="flex items-center gap-2 min-w-0">
                 <Input

@@ -319,6 +319,8 @@ export function BookingNoteForm({
     },
   });
 
+  console.log(editingNote?.category);
+
   // Populate form when editing
   useEffect(() => {
     if (editingNote) {
@@ -333,6 +335,8 @@ export function BookingNoteForm({
       });
     }
   }, [editingNote, form]);
+
+  console.log(form.getValues());
 
   const createMutation = useMutation({
     mutationFn: createBookingNote,
@@ -739,24 +743,24 @@ export function BookingNoteForm({
                       </p>
                       <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
                         {selectedFiles.map((file, index) => {
-                          const truncatedName = truncateFilename(file.name, 25);
+                          const truncatedName = truncateFilename(file.name, 20);
 
                           return (
                             <div
                               key={index}
-                              className="flex items-center justify-between rounded border p-2 gap-2"
+                              className="flex items-center justify-between rounded border p-2 gap-2 min-w-0"
                             >
-                              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                              <div className="flex items-center space-x-2 min-w-0 flex-1 overflow-hidden">
                                 <div className="h-4 w-4 bg-muted rounded flex-shrink-0 flex items-center justify-center">
                                   <div className="h-2 w-2 bg-muted-foreground rounded" />
                                 </div>
                                 <span
-                                  className="text-sm truncate"
+                                  className="text-sm truncate flex-1 min-w-0"
                                   title={file.name}
                                 >
                                   {truncatedName}
                                 </span>
-                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                <span className="text-xs text-muted-foreground flex-shrink-0 hidden sm:block">
                                   {(file.size / 1024 / 1024).toFixed(1)}MB
                                 </span>
                               </div>
@@ -769,7 +773,7 @@ export function BookingNoteForm({
                                   toast.success("Bilde fjernet");
                                 }}
                                 disabled={isPending}
-                                className="flex-shrink-0"
+                                className="flex-shrink-0 h-6 w-6 p-0"
                               >
                                 ×
                               </Button>

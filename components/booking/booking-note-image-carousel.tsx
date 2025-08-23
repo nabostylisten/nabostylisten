@@ -135,13 +135,13 @@ export function BookingNoteImageCarousel({
                 align: "start",
                 loop: true,
               }}
-              className="w-full px-12"
+              className="w-full px-2 sm:px-8 md:px-12"
             >
               <CarouselContent className="-ml-2 md:-ml-4">
                 {images.map((image, index) => (
                   <CarouselItem
                     key={image.id}
-                    className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3"
+                    className="pl-2 md:pl-4 basis-full sm:basis-1/2 lg:basis-1/3"
                   >
                     <div className="relative group">
                       <div className="relative aspect-square overflow-hidden rounded-lg bg-muted">
@@ -172,14 +172,14 @@ export function BookingNoteImageCarousel({
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              {images.length > 2 && (
+              {images.length > 1 && (
                 <>
                   <CarouselPrevious
-                    className="absolute top-1/2 left-2 -translate-y-1/2 size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md"
+                    className="absolute top-1/2 left-0 sm:left-2 -translate-y-1/2 size-6 sm:size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md"
                     type="button"
                   />
                   <CarouselNext
-                    className="absolute top-1/2 right-2 -translate-y-1/2 size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md"
+                    className="absolute top-1/2 right-0 sm:right-2 -translate-y-1/2 size-6 sm:size-8 rounded-full z-10 bg-white/90 hover:bg-white border shadow-md"
                     type="button"
                   />
                 </>

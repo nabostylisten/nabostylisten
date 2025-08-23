@@ -29,6 +29,7 @@ import {
   ArrowRight,
   Tag,
 } from "lucide-react";
+import { BookingNoteImageCarousel } from "./booking-note-image-carousel";
 import { deleteBookingNote } from "@/server/booking-note.actions";
 import type { Database } from "@/types/database.types";
 
@@ -136,6 +137,9 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
               {note.content}
             </p>
           </div>
+
+          {/* Images */}
+          <BookingNoteImageCarousel noteId={note.id} />
 
           {/* Tags */}
           {note.tags && note.tags.length > 0 && (

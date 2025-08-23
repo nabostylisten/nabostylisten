@@ -78,7 +78,7 @@ const applicationFormSchema = z
       streetAddress: z.string().min(5, "Gateadresse er påkrevet"),
       city: z.string().min(2, "By er påkrevet"),
       postalCode: z.string().min(4, "Postnummer må være minst 4 siffer"),
-      country: z.string().min(1, "Land er påkrevet").default("Norge"),
+      country: z.string().min(1, "Land er påkrevet"),
       entryInstructions: z.string().optional(),
     }),
 
@@ -357,7 +357,10 @@ export function StylistApplicationForm({
                 form.setValue("address.city", address.city);
                 form.setValue("address.postalCode", address.postalCode);
                 form.setValue("address.country", address.country);
-                form.setValue("address.entryInstructions", address.entryInstructions);
+                form.setValue(
+                  "address.entryInstructions",
+                  address.entryInstructions
+                );
               }}
               defaultValues={form.getValues("address")}
               error={form.formState.errors.address?.root?.message}

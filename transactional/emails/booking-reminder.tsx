@@ -19,7 +19,8 @@ import {
   buttonStyles,
   layoutStyles,
   colors,
-} from "../utils/styles";
+} from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface BookingReminderEmailProps {
   customerName: string;
@@ -35,10 +36,6 @@ interface BookingReminderEmailProps {
   totalPrice: number;
   currency: string;
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 export const BookingReminderEmail = ({
   customerName = "Ola Nordmann",

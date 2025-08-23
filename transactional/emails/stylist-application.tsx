@@ -13,7 +13,14 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  colors,
+} from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface StylistApplicationEmailProps {
   applicantName: string;
@@ -28,10 +35,6 @@ interface StylistApplicationEmailProps {
     currency: string;
   };
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 export const StylistApplicationEmail = ({
   applicantName = "Ola Nordmann",

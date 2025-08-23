@@ -12,12 +12,24 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, layoutStyles, colors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  layoutStyles,
+  colors,
+} from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface PaymentNotificationEmailProps {
   recipientName: string;
   recipientRole: "customer" | "stylist";
-  notificationType: "payment_received" | "payout_processed" | "payment_failed" | "payout_pending";
+  notificationType:
+    | "payment_received"
+    | "payout_processed"
+    | "payment_failed"
+    | "payout_pending";
   bookingId: string;
   serviceName: string;
   serviceDate: string;
@@ -36,10 +48,6 @@ interface PaymentNotificationEmailProps {
   failureReason?: string;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
 export const PaymentNotificationEmail = ({
   recipientName = "Anna Stylist",
   recipientRole = "stylist",
@@ -49,8 +57,8 @@ export const PaymentNotificationEmail = ({
   serviceDate = "15. januar 2024",
   totalAmount = 650,
   currency = "NOK",
-  platformFee = 97.50,
-  stylistPayout = 552.50,
+  platformFee = 97.5,
+  stylistPayout = 552.5,
   paymentMethod = "Bankkort",
   transactionId = "pi_1234567890",
   payoutDate = "17. januar 2024",
@@ -58,16 +66,16 @@ export const PaymentNotificationEmail = ({
   nextPayoutDate = "22. januar 2024",
   failureReason,
 }: PaymentNotificationEmailProps) => {
-  
   const getNotificationConfig = () => {
     switch (notificationType) {
       case "payment_received":
         return {
           title: "Betaling mottatt",
           emoji: "✅",
-          description: recipientRole === "customer" 
-            ? "Din betaling er bekreftet" 
-            : "Du har mottatt en betaling",
+          description:
+            recipientRole === "customer"
+              ? "Din betaling er bekreftet"
+              : "Du har mottatt en betaling",
           color: { bg: "#4a7c4a", text: "#ffffff" }, // success green
         };
       case "payout_processed":
@@ -88,9 +96,10 @@ export const PaymentNotificationEmail = ({
         return {
           title: "Betaling feilet",
           emoji: "❌",
-          description: recipientRole === "customer"
-            ? "Din betaling kunne ikke gjennomføres"
-            : "En betaling til deg feilet",
+          description:
+            recipientRole === "customer"
+              ? "Din betaling kunne ikke gjennomføres"
+              : "En betaling til deg feilet",
           color: { bg: "#ff3333", text: "#ffffff" }, // error red
         };
       default:
@@ -122,24 +131,27 @@ export const PaymentNotificationEmail = ({
             />
           </Section>
 
-          <Section style={{
-            ...notificationBanner,
-            backgroundColor: config.color.bg,
-          }}>
-            <Text style={{
-              ...notificationText,
-              color: config.color.text,
-            }}>
+          <Section
+            style={{
+              ...notificationBanner,
+              backgroundColor: config.color.bg,
+            }}
+          >
+            <Text
+              style={{
+                ...notificationText,
+                color: config.color.text,
+              }}
+            >
               {config.emoji} {config.title}
             </Text>
           </Section>
 
-          <Heading style={heading}>
-            {config.description}
-          </Heading>
+          <Heading style={heading}>{config.description}</Heading>
 
           <Text style={paragraph}>
-            Hei {recipientName}! {config.description} for tjenesten "{serviceName}".
+            Hei {recipientName}! {config.description} for tjenesten "
+            {serviceName}".
           </Text>
 
           {/* Service Context */}
@@ -163,15 +175,19 @@ export const PaymentNotificationEmail = ({
           {recipientRole === "customer" && (
             <Section style={paymentSection}>
               <Text style={sectionHeader}>💳 Betalingsdetaljer:</Text>
-              
+
               <div style={amountRow}>
                 <Text style={amountLabel}>Tjeneste:</Text>
-                <Text style={amountValue}>{totalAmount} {currency}</Text>
+                <Text style={amountValue}>
+                  {totalAmount} {currency}
+                </Text>
               </div>
-              
+
               <div style={totalRow}>
                 <Text style={totalLabel}>Total betalt:</Text>
-                <Text style={totalValue}>{totalAmount} {currency}</Text>
+                <Text style={totalValue}>
+                  {totalAmount} {currency}
+                </Text>
               </div>
 
               <div style={paymentMethodRow}>
@@ -182,48 +198,53 @@ export const PaymentNotificationEmail = ({
           )}
 
           {/* Payout Breakdown for Stylists */}
-          {recipientRole === "stylist" && (notificationType === "payout_processed" || notificationType === "payout_pending") && (
-            <Section style={payoutSection}>
-              <Text style={sectionHeader}>💰 Utbetalingsdetaljer:</Text>
-              
-              <div style={breakdownRow}>
-                <Text style={breakdownLabel}>Tjenestepris:</Text>
-                <Text style={breakdownValue}>{totalAmount} {currency}</Text>
-              </div>
-              
-              <div style={breakdownRow}>
-                <Text style={breakdownLabel}>Plattformavgift (15%):</Text>
-                <Text style={breakdownValue}>-{platformFee} {currency}</Text>
-              </div>
-              
-              <div style={payoutTotalRow}>
-                <Text style={payoutTotalLabel}>Din utbetaling:</Text>
-                <Text style={payoutTotalValue}>{stylistPayout} {currency}</Text>
-              </div>
+          {recipientRole === "stylist" &&
+            (notificationType === "payout_processed" ||
+              notificationType === "payout_pending") && (
+              <Section style={payoutSection}>
+                <Text style={sectionHeader}>💰 Utbetalingsdetaljer:</Text>
 
-              {payoutDate && (
-                <div style={payoutDateRow}>
-                  <Text style={payoutDateLabel}>Utbetalt til:</Text>
-                  <Text style={payoutDateValue}>{payoutMethod} • {payoutDate}</Text>
+                <div style={breakdownRow}>
+                  <Text style={breakdownLabel}>Tjenestepris:</Text>
+                  <Text style={breakdownValue}>
+                    {totalAmount} {currency}
+                  </Text>
                 </div>
-              )}
-            </Section>
-          )}
+
+                <div style={breakdownRow}>
+                  <Text style={breakdownLabel}>Plattformavgift (15%):</Text>
+                  <Text style={breakdownValue}>
+                    -{platformFee} {currency}
+                  </Text>
+                </div>
+
+                <div style={payoutTotalRow}>
+                  <Text style={payoutTotalLabel}>Din utbetaling:</Text>
+                  <Text style={payoutTotalValue}>
+                    {stylistPayout} {currency}
+                  </Text>
+                </div>
+
+                {payoutDate && (
+                  <div style={payoutDateRow}>
+                    <Text style={payoutDateLabel}>Utbetalt til:</Text>
+                    <Text style={payoutDateValue}>
+                      {payoutMethod} • {payoutDate}
+                    </Text>
+                  </div>
+                )}
+              </Section>
+            )}
 
           {/* Failure Details */}
           {notificationType === "payment_failed" && failureReason && (
             <Section style={failureSection}>
-              <Text style={failureHeader}>
-                ⚠️ Årsak til feil:
-              </Text>
-              <Text style={failureReason}>
-                {failureReason}
-              </Text>
+              <Text style={failureHeader}>⚠️ Årsak til feil:</Text>
+              <Text style={failureReason}>{failureReason}</Text>
               <Text style={failureAction}>
-                {recipientRole === "customer" 
+                {recipientRole === "customer"
                   ? "Vennligst oppdater betalingsinformasjonen din og prøv igjen."
-                  : "Vi jobber med å løse problemet. Du vil motta ny utbetaling snart."
-                }
+                  : "Vi jobber med å løse problemet. Du vil motta ny utbetaling snart."}
               </Text>
             </Section>
           )}
@@ -231,27 +252,37 @@ export const PaymentNotificationEmail = ({
           {/* Next Steps */}
           <Section style={nextStepsSection}>
             <Text style={nextStepsHeader}>📋 Neste steg:</Text>
-            {recipientRole === "customer" && notificationType === "payment_received" && (
-              <Text style={nextStepsText}>
-                • Din booking er nå bekreftet<br/>
-                • Du vil motta påminnelse 24 timer før timen<br/>
-                • Du kan chatte med stylisten om spesielle ønsker<br/>
-                • Avlysning må skje minst 24 timer i forveien
-              </Text>
-            )}
-            {recipientRole === "stylist" && notificationType === "payout_processed" && (
-              <Text style={nextStepsText}>
-                • Pengene vil være tilgjengelig i bankkontoen din innen 1-3 virkedager<br/>
-                • Neste utbetaling: {nextPayoutDate}<br/>
-                • Se fullstendig utbetalingshistorikk i dashboardet<br/>
-                • Kontakt support hvis pengene ikke kommer frem
-              </Text>
-            )}
+            {recipientRole === "customer" &&
+              notificationType === "payment_received" && (
+                <Text style={nextStepsText}>
+                  • Din booking er nå bekreftet
+                  <br />
+                  • Du vil motta påminnelse 24 timer før timen
+                  <br />
+                  • Du kan chatte med stylisten om spesielle ønsker
+                  <br />• Avlysning må skje minst 24 timer i forveien
+                </Text>
+              )}
+            {recipientRole === "stylist" &&
+              notificationType === "payout_processed" && (
+                <Text style={nextStepsText}>
+                  • Pengene vil være tilgjengelig i bankkontoen din innen 1-3
+                  virkedager
+                  <br />• Neste utbetaling: {nextPayoutDate}
+                  <br />
+                  • Se fullstendig utbetalingshistorikk i dashboardet
+                  <br />• Kontakt support hvis pengene ikke kommer frem
+                </Text>
+              )}
             {notificationType === "payment_failed" && (
               <Text style={nextStepsText}>
-                • {recipientRole === "customer" ? "Oppdater betalingsinformasjon" : "Vi forsøker automatisk på nytt"}<br/>
-                • Kontakt support hvis problemet vedvarer<br/>
-                • Se betalingshistorikk for flere detaljer
+                •{" "}
+                {recipientRole === "customer"
+                  ? "Oppdater betalingsinformasjon"
+                  : "Vi forsøker automatisk på nytt"}
+                <br />
+                • Kontakt support hvis problemet vedvarer
+                <br />• Se betalingshistorikk for flere detaljer
               </Text>
             )}
           </Section>
@@ -259,16 +290,16 @@ export const PaymentNotificationEmail = ({
           {/* Call to Action */}
           <Section style={ctaSection}>
             {recipientRole === "customer" && (
-              <Button 
-                style={button} 
+              <Button
+                style={button}
                 href={`${baseUrl}/profiler/${recipientName}/mine-bookinger/${bookingId}`}
               >
                 Se booking
               </Button>
             )}
             {recipientRole === "stylist" && (
-              <Button 
-                style={button} 
+              <Button
+                style={button}
                 href={`${baseUrl}/profiler/${recipientName}/utbetalinger`}
               >
                 Se utbetalingshistorikk
@@ -277,16 +308,17 @@ export const PaymentNotificationEmail = ({
           </Section>
 
           {/* Tax Information for Stylists */}
-          {recipientRole === "stylist" && notificationType === "payout_processed" && (
-            <Section style={taxSection}>
-              <Text style={taxHeader}>📊 Skatteinformasjon:</Text>
-              <Text style={taxText}>
-                Husk at utbetalinger fra Nabostylisten må rapporteres som inntekt. 
-                Du vil motta skattedokumenter i slutten av året. Hold oversikt over 
-                alle utbetalinger for din egen regnskapsføring.
-              </Text>
-            </Section>
-          )}
+          {recipientRole === "stylist" &&
+            notificationType === "payout_processed" && (
+              <Section style={taxSection}>
+                <Text style={taxHeader}>📊 Skatteinformasjon:</Text>
+                <Text style={taxText}>
+                  Husk at utbetalinger fra Nabostylisten må rapporteres som
+                  inntekt. Du vil motta skattedokumenter i slutten av året. Hold
+                  oversikt over alle utbetalinger for din egen regnskapsføring.
+                </Text>
+              </Section>
+            )}
 
           {/* Transaction Details */}
           <Section style={transactionSection}>
@@ -297,7 +329,9 @@ export const PaymentNotificationEmail = ({
             </div>
             <div style={transactionRow}>
               <Text style={transactionLabel}>Dato:</Text>
-              <Text style={transactionValue}>{new Date().toLocaleDateString("nb-NO")}</Text>
+              <Text style={transactionValue}>
+                {new Date().toLocaleDateString("nb-NO")}
+              </Text>
             </div>
             <div style={transactionRow}>
               <Text style={transactionLabel}>Status:</Text>
@@ -313,9 +347,13 @@ export const PaymentNotificationEmail = ({
           {/* Notification Settings */}
           <Section style={settingsSection}>
             <Text style={settingsText}>
-              📧 Du mottar denne e-posten fordi du har aktivert varsler for betalinger.
+              📧 Du mottar denne e-posten fordi du har aktivert varsler for
+              betalinger.
             </Text>
-            <Link href={`${baseUrl}/profiler/${recipientName}/preferanser`} style={settingsLink}>
+            <Link
+              href={`${baseUrl}/profiler/${recipientName}/preferanser`}
+              style={settingsLink}
+            >
               Endre varselinnstillinger
             </Link>
           </Section>

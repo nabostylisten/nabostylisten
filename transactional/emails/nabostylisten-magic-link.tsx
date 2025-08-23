@@ -8,7 +8,8 @@ import {
   Preview,
   Text,
 } from "@react-email/components";
-import { baseStyles, colors, fontFamily } from "../utils/styles";
+import { baseStyles, colors, fontFamily } from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface NabostylistenOtpEmailProps {
   token?: string;
@@ -58,7 +59,7 @@ export const NabostylistenOtpEmail = ({
 
         <div style={footerSection}>
           <Text style={footer}>
-            <Link href={siteUrl} target="_blank" style={footerLink}>
+            <Link href={baseUrl} target="_blank" style={footerLink}>
               nabostylisten.no
             </Link>
             <br />

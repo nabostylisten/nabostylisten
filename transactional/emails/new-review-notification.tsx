@@ -12,9 +12,18 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  colors,
+} from "./utils/styles";
+import { baseUrl } from "./utils";
+import { NotificationSettings } from "../components/notification-settings";
 
 interface NewReviewNotificationEmailProps {
+  stylistProfileId: string;
   stylistName: string;
   customerName: string;
   reviewId: string;
@@ -27,11 +36,8 @@ interface NewReviewNotificationEmailProps {
   averageRating: number;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
 export const NewReviewNotificationEmail = ({
+  stylistProfileId = "12345",
   stylistName = "Anna Stylist",
   customerName = "Ola Nordmann",
   reviewId = "rev123",
@@ -44,16 +50,10 @@ export const NewReviewNotificationEmail = ({
   averageRating = 4.8,
 }: NewReviewNotificationEmailProps) => {
   const previewText = `Ny ${rating}-stjerner anmeldelse fra ${customerName}`;
-  
-  const renderStars = (starRating: number) => {
-    return Array.from({ length: 5 }, (_, i) => 
-      i < starRating ? "⭐" : "☆"
-    ).join("");
-  };
 
   const ratingColors = {
     5: { bg: "#4a7c4a", text: "#ffffff" }, // --accent-foreground (excellent)
-    4: { bg: "#e8f5e8", text: "#4a7c4a" }, // --accent (good)  
+    4: { bg: "#e8f5e8", text: "#4a7c4a" }, // --accent (good)
     3: { bg: "#fee7dc", text: "#c2724a" }, // --secondary (okay)
     2: { bg: "#fff3cd", text: "#856404" }, // warning yellow
     1: { bg: "#ff3333", text: "#ffffff" }, // --destructive (poor)
@@ -61,7 +61,7 @@ export const NewReviewNotificationEmail = ({
 
   const ratingLabels = {
     5: "Utmerket",
-    4: "Bra", 
+    4: "Bra",
     3: "Greit",
     2: "Ikke så bra",
     1: "Dårlig",
@@ -83,44 +83,24 @@ export const NewReviewNotificationEmail = ({
             />
           </Section>
 
-          <Section style={{
-            ...ratingBanner,
-            backgroundColor: ratingColors[rating].bg,
-          }}>
-            <Text style={{
-              ...ratingText,
-              color: ratingColors[rating].text,
-            }}>
-              🌟 Ny anmeldelse - {ratingLabels[rating]}
-            </Text>
-          </Section>
-
-          <Heading style={heading}>
-            Du har fått en ny anmeldelse!
-          </Heading>
+          <Heading style={heading}>Du har fått en ny anmeldelse!</Heading>
 
           <Text style={paragraph}>
-            Hei {stylistName}! {customerName} har lagt igjen en anmeldelse for tjenesten du utførte.
+            Hei {stylistName}! {customerName} har lagt igjen en anmeldelse for
+            tjenesten du utførte.
           </Text>
 
           {/* Rating Display */}
           <Section style={ratingSection}>
             <div style={starsContainer}>
-              <Text style={starsDisplay}>
-                {renderStars(rating)}
-              </Text>
-              <Text style={ratingNumber}>
-                {rating}/5
-              </Text>
+              <Text style={ratingNumber}>{rating}/5</Text>
             </div>
-            <Text style={ratingLabel}>
-              {ratingLabels[rating]} vurdering
-            </Text>
+            <Text style={ratingLabel}>{ratingLabels[rating]} vurdering</Text>
           </Section>
 
           {/* Service Context */}
           <Section style={serviceContextSection}>
-            <Text style={contextHeader}>📋 Angående booking:</Text>
+            <Text style={contextHeader}>Angående booking:</Text>
             <div style={contextRow}>
               <Text style={contextLabel}>Tjeneste:</Text>
               <Text style={contextValue}>{serviceName}</Text>
@@ -138,21 +118,15 @@ export const NewReviewNotificationEmail = ({
           {/* Review Comment */}
           {comment && (
             <Section style={commentSection}>
-              <Text style={commentHeader}>
-                💬 Kundens kommentar:
-              </Text>
-              <Text style={commentContent}>
-                "{comment}"
-              </Text>
-              <Text style={commentSignature}>
-                — {customerName}
-              </Text>
+              <Text style={commentHeader}>Kundens kommentar:</Text>
+              <Text style={commentContent}>"{comment}"</Text>
+              <Text style={commentSignature}>— {customerName}</Text>
             </Section>
           )}
 
           {/* Your Statistics */}
           <Section style={statsSection}>
-            <Text style={statsHeader}>📊 Dine anmeldelsesstatistikker:</Text>
+            <Text style={statsHeader}>Dine anmeldelsesstatistikker:</Text>
             <div style={statsGrid}>
               <div style={statItem}>
                 <Text style={statNumber}>{totalReviews}</Text>
@@ -162,77 +136,64 @@ export const NewReviewNotificationEmail = ({
                 <Text style={statNumber}>{averageRating.toFixed(1)}</Text>
                 <Text style={statLabel}>Gjennomsnittlig rating</Text>
               </div>
-              <div style={statItem}>
-                <Text style={statNumber}>{renderStars(Math.round(averageRating))}</Text>
-                <Text style={statLabel}>Stjerner</Text>
-              </div>
             </div>
           </Section>
 
           {/* Call to Action */}
           <Section style={ctaSection}>
             <Text style={paragraph}>
-              {rating >= 4 
+              {rating >= 4
                 ? "Gratulerer med en flott anmeldelse! Dette hjelper deg å tiltrekke flere kunder."
-                : "Takk for din service. Bruk tilbakemeldingen til å forbedre opplevelsen for fremtidige kunder."
-              }
+                : "Takk for din service. Bruk tilbakemeldingen til å forbedre opplevelsen for fremtidige kunder."}
             </Text>
-            <Button 
-              style={button} 
-              href={`${baseUrl}/profiler/${stylistName}/anmeldelser`}
+            <Button
+              style={button}
+              href={`${baseUrl}/profiler/${stylistProfileId}/anmeldelser`}
             >
               Se alle anmeldelser
             </Button>
-            {comment && (
-              <Button 
-                style={responseButton} 
-                href={`${baseUrl}/anmeldelser/${reviewId}/respond`}
-              >
-                Svar på anmeldelse
-              </Button>
-            )}
           </Section>
 
           {/* Tips Section */}
           <Section style={tipsSection}>
             <Text style={tipsHeader}>💡 Tips for å håndtere anmeldelser:</Text>
             <Text style={tipsText}>
-              • <strong>Takk kunden</strong> - Vis takknemlighet for tilbakemelding<br/>
-              • <strong>Vær profesjonell</strong> - Også ved kritiske anmeldelser<br/>
-              • <strong>Lær av feedback</strong> - Bruk det til å forbedre tjenestene<br/>
-              • <strong>Responder raskt</strong> - Vis at du bryr deg om kundens opplevelse<br/>
-              • <strong>Fremhev det positive</strong> - Boost din profil med gode anmeldelser
+              • <strong>Takk kunden</strong> - Vis takknemlighet for
+              tilbakemelding
+              <br />• <strong>Vær profesjonell</strong> - Også ved kritiske
+              anmeldelser
+              <br />• <strong>Lær av feedback</strong> - Bruk det til å forbedre
+              tjenestene
+              <br />• <strong>Responder raskt</strong> - Vis at du bryr deg om
+              kundens opplevelse
+              <br />• <strong>Fremhev det positive</strong> - Boost din profil
+              med gode anmeldelser
             </Text>
           </Section>
 
           {/* Encouragement based on rating */}
           {rating >= 4 ? (
             <Section style={encouragementSection}>
-              <Text style={encouragementHeader}>🎉 Fantastisk jobb!</Text>
+              <Text style={encouragementHeader}>Fantastisk jobb!</Text>
               <Text style={encouragementText}>
-                Du leverer konsekvent høy kvalitet. Slike anmeldelser hjelper deg å skille deg ut 
-                på plattformen og tiltrekke flere kunder.
+                Du leverer konsekvent høy kvalitet. Slike anmeldelser hjelper
+                deg å skille deg ut på plattformen og tiltrekke flere kunder.
               </Text>
             </Section>
           ) : (
             <Section style={improvementSection}>
-              <Text style={improvementHeader}>💪 Forbedring er en mulighet</Text>
+              <Text style={improvementHeader}>Forbedring er en mulighet</Text>
               <Text style={improvementText}>
-                Vi er her for å hjelpe deg lykkes. Hvis du trenger veiledning eller støtte 
-                for å forbedre tjenestene dine, ta kontakt med oss.
+                Vi er her for å hjelpe deg lykkes. Hvis du trenger veiledning
+                eller støtte for å forbedre tjenestene dine, ta kontakt med oss.
               </Text>
             </Section>
           )}
 
-          {/* Notification Settings */}
-          <Section style={settingsSection}>
-            <Text style={settingsText}>
-              📧 Du mottar denne e-posten fordi du har aktivert varsler for nye anmeldelser.
-            </Text>
-            <Link href={`${baseUrl}/profiler/${stylistName}/preferanser`} style={settingsLink}>
-              Endre varselinnstillinger
-            </Link>
-          </Section>
+          <NotificationSettings
+            profileId={stylistProfileId}
+            notificationType="review_notifications"
+          />
 
           <Hr style={hr} />
 
@@ -243,7 +204,9 @@ export const NewReviewNotificationEmail = ({
             </Link>
           </Text>
 
-          <Text style={footer}>Anmeldelse ID: {reviewId} | Booking ID: {bookingId}</Text>
+          <Text style={footer}>
+            Anmeldelse ID: {reviewId} | Booking ID: {bookingId}
+          </Text>
         </Container>
       </Body>
     </Html>
@@ -256,7 +219,8 @@ NewReviewNotificationEmail.PreviewProps = {
   reviewId: "review_12345",
   bookingId: "booking_67890",
   rating: 5,
-  reviewText: "Fantastisk opplevelse! Anna var så profesjonell og jeg elsker den nye frisyren min. Kommer definitivt tilbake!",
+  reviewText:
+    "Fantastisk opplevelse! Anna var så profesjonell og jeg elsker den nye frisyren min. Kommer definitivt tilbake!",
   serviceName: "Hårklipp og styling",
   bookingDate: "10. januar 2024",
 } as NewReviewNotificationEmailProps;

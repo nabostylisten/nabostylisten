@@ -12,11 +12,25 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  colors,
+} from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface SecurityAlertEmailProps {
   userName: string;
-  alertType: "successful_login" | "failed_login" | "password_changed" | "suspicious_activity" | "new_device" | "account_recovery" | "data_export";
+  alertType:
+    | "successful_login"
+    | "failed_login"
+    | "password_changed"
+    | "suspicious_activity"
+    | "new_device"
+    | "account_recovery"
+    | "data_export";
   timestamp: string;
   ipAddress?: string;
   location?: string;
@@ -26,10 +40,6 @@ interface SecurityAlertEmailProps {
   recoveryMethod?: string;
   dataType?: string;
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 export const SecurityAlertEmail = ({
   userName = "Ola Nordmann",
@@ -43,7 +53,6 @@ export const SecurityAlertEmail = ({
   recoveryMethod = "E-post",
   dataType = "Profildata",
 }: SecurityAlertEmailProps) => {
-  
   const getAlertConfig = () => {
     switch (alertType) {
       case "successful_login":
@@ -132,57 +141,60 @@ export const SecurityAlertEmail = ({
             />
           </Section>
 
-          <Section style={{
-            ...alertBanner,
-            backgroundColor: config.color.bg,
-            ...(config.severity === "critical" && criticalBorderStyle),
-          }}>
-            <Text style={{
-              ...alertText,
-              color: config.color.text,
-            }}>
+          <Section
+            style={{
+              ...alertBanner,
+              backgroundColor: config.color.bg,
+              ...(config.severity === "critical" && criticalBorderStyle),
+            }}
+          >
+            <Text
+              style={{
+                ...alertText,
+                color: config.color.text,
+              }}
+            >
               {config.emoji} {config.title}
             </Text>
           </Section>
 
-          <Heading style={heading}>
-            {config.description}
-          </Heading>
+          <Heading style={heading}>{config.description}</Heading>
 
           <Text style={paragraph}>
-            Hei {userName}! Vi sender deg dette sikkerhetsvarsselet for å holde deg informert om aktivitet på kontoen din.
+            Hei {userName}! Vi sender deg dette sikkerhetsvarsselet for å holde
+            deg informert om aktivitet på kontoen din.
           </Text>
 
           {/* Activity Details */}
           <Section style={activitySection}>
             <Text style={sectionHeader}>🔍 Aktivitetsdetaljer:</Text>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Tidspunkt:</Text>
               <Text style={detailValue}>{timestamp}</Text>
             </div>
-            
+
             {ipAddress && (
               <div style={detailRow}>
                 <Text style={detailLabel}>IP-adresse:</Text>
                 <Text style={detailValue}>{ipAddress}</Text>
               </div>
             )}
-            
+
             {location && (
               <div style={detailRow}>
                 <Text style={detailLabel}>Lokasjon:</Text>
                 <Text style={detailValue}>{location}</Text>
               </div>
             )}
-            
+
             {device && (
               <div style={detailRow}>
                 <Text style={detailLabel}>Enhet:</Text>
                 <Text style={detailValue}>{device}</Text>
               </div>
             )}
-            
+
             {browser && (
               <div style={detailRow}>
                 <Text style={detailLabel}>Nettleser:</Text>
@@ -208,16 +220,18 @@ export const SecurityAlertEmail = ({
           {/* Action Required for Critical Alerts */}
           {config.severity === "critical" && (
             <Section style={criticalSection}>
-              <Text style={criticalHeader}>
-                🚨 Handling kreves umiddelbart
-              </Text>
+              <Text style={criticalHeader}>🚨 Handling kreves umiddelbart</Text>
               <Text style={criticalText}>
-                Hvis dette ikke var deg, vennligst sikre kontoen din umiddelbart:
+                Hvis dette ikke var deg, vennligst sikre kontoen din
+                umiddelbart:
               </Text>
               <Text style={criticalSteps}>
-                1. Endre passordet ditt øyeblikkelig<br/>
-                2. Aktiver to-faktor autentisering<br/>
-                3. Sjekk kontoen din for uautoriserte endringer<br/>
+                1. Endre passordet ditt øyeblikkelig
+                <br />
+                2. Aktiver to-faktor autentisering
+                <br />
+                3. Sjekk kontoen din for uautoriserte endringer
+                <br />
                 4. Kontakt support hvis du trenger hjelp
               </Text>
             </Section>
@@ -226,12 +240,11 @@ export const SecurityAlertEmail = ({
           {/* Warning for Failed Logins */}
           {alertType === "failed_login" && (
             <Section style={warningSection}>
-              <Text style={warningHeader}>
-                ⚠️ Mislykkede påloggingsforsøk
-              </Text>
+              <Text style={warningHeader}>⚠️ Mislykkede påloggingsforsøk</Text>
               <Text style={warningText}>
-                Det har vært {attemptCount} mislykkede forsøk på å logge inn på kontoen din. 
-                Hvis dette ikke var deg, bør du vurdere å endre passordet ditt.
+                Det har vært {attemptCount} mislykkede forsøk på å logge inn på
+                kontoen din. Hvis dette ikke var deg, bør du vurdere å endre
+                passordet ditt.
               </Text>
             </Section>
           )}
@@ -239,12 +252,10 @@ export const SecurityAlertEmail = ({
           {/* Success Confirmation */}
           {config.severity === "info" && alertType !== "new_device" && (
             <Section style={infoSection}>
-              <Text style={infoHeader}>
-                ℹ️ Dette var deg?
-              </Text>
+              <Text style={infoHeader}>ℹ️ Dette var deg?</Text>
               <Text style={infoText}>
-                Hvis du gjenkjenner denne aktiviteten, trenger du ikke å gjøre noe. 
-                Vi sender disse varslene for å holde kontoen din sikker.
+                Hvis du gjenkjenner denne aktiviteten, trenger du ikke å gjøre
+                noe. Vi sender disse varslene for å holde kontoen din sikker.
               </Text>
             </Section>
           )}
@@ -252,12 +263,10 @@ export const SecurityAlertEmail = ({
           {/* New Device Instructions */}
           {alertType === "new_device" && (
             <Section style={newDeviceSection}>
-              <Text style={newDeviceHeader}>
-                📱 Ny enhet oppdaget
-              </Text>
+              <Text style={newDeviceHeader}>📱 Ny enhet oppdaget</Text>
               <Text style={newDeviceText}>
-                Vi har registrert en pålogging fra en enhet vi ikke gjenkjenner. 
-                Hvis dette var deg, kan du ignorere denne meldingen. Hvis ikke, 
+                Vi har registrert en pålogging fra en enhet vi ikke gjenkjenner.
+                Hvis dette var deg, kan du ignorere denne meldingen. Hvis ikke,
                 endre passordet ditt umiddelbart.
               </Text>
             </Section>
@@ -266,25 +275,22 @@ export const SecurityAlertEmail = ({
           {/* Security Actions */}
           <Section style={actionsSection}>
             <Text style={actionsHeader}>🔐 Sikkerhetstiltak:</Text>
-            
+
             {config.severity === "critical" || alertType === "failed_login" ? (
               <div style={urgentActions}>
-                <Button 
-                  style={urgentButton} 
-                  href={`${baseUrl}/reset-password`}
-                >
+                <Button style={urgentButton} href={`${baseUrl}/reset-password`}>
                   Endre passord nå
                 </Button>
-                <Button 
-                  style={secondaryButton} 
+                <Button
+                  style={secondaryButton}
                   href={`${baseUrl}/security-settings`}
                 >
                   Sikkerhetsinnstillinger
                 </Button>
               </div>
             ) : (
-              <Button 
-                style={button} 
+              <Button
+                style={button}
                 href={`${baseUrl}/profiler/${userName}/sikkerhet`}
               >
                 Se sikkerhetsaktivitet
@@ -296,12 +302,16 @@ export const SecurityAlertEmail = ({
           <Section style={tipsSection}>
             <Text style={tipsHeader}>💡 Sikkerhetstips:</Text>
             <Text style={tipsText}>
-              • Bruk et sterkt, unikt passord for kontoen din<br/>
-              • Aktiver to-faktor autentisering for ekstra sikkerhet<br/>
-              • Ikke del påloggingsopplysningene dine med andre<br/>
-              • Logg ut av offentlige datamaskiner etter bruk<br/>
-              • Hold nettleseren og appen oppdatert<br/>
-              • Vær forsiktig med phishing-e-poster og mistenkelige lenker
+              • Bruk et sterkt, unikt passord for kontoen din
+              <br />
+              • Aktiver to-faktor autentisering for ekstra sikkerhet
+              <br />
+              • Ikke del påloggingsopplysningene dine med andre
+              <br />
+              • Logg ut av offentlige datamaskiner etter bruk
+              <br />
+              • Hold nettleseren og appen oppdatert
+              <br />• Vær forsiktig med phishing-e-poster og mistenkelige lenker
             </Text>
           </Section>
 
@@ -309,8 +319,8 @@ export const SecurityAlertEmail = ({
           <Section style={contactSection}>
             <Text style={contactHeader}>🆘 Trenger du hjelp?</Text>
             <Text style={contactText}>
-              Hvis du har spørsmål om denne sikkerhetsaktiviteten eller trenger hjelp 
-              med å sikre kontoen din, ikke nøl med å kontakte oss.
+              Hvis du har spørsmål om denne sikkerhetsaktiviteten eller trenger
+              hjelp med å sikre kontoen din, ikke nøl med å kontakte oss.
             </Text>
             <div style={contactMethods}>
               <Link href="mailto:security@nabostylisten.no" style={contactLink}>
@@ -325,10 +335,12 @@ export const SecurityAlertEmail = ({
           {/* Notification Settings */}
           <Section style={settingsSection}>
             <Text style={settingsText}>
-              🔔 Du mottar denne e-posten fordi sikkerhetsvarsler er aktivert på kontoen din.
+              🔔 Du mottar denne e-posten fordi sikkerhetsvarsler er aktivert på
+              kontoen din.
             </Text>
             <Text style={settingsNote}>
-              Sikkerhetsvarsler kan ikke deaktiveres av sikkerhetsmessige årsaker.
+              Sikkerhetsvarsler kan ikke deaktiveres av sikkerhetsmessige
+              årsaker.
             </Text>
           </Section>
 

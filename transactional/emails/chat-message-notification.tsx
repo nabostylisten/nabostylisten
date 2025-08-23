@@ -18,7 +18,9 @@ import {
   textStyles,
   buttonStyles,
   colors,
-} from "../utils/styles";
+} from "./utils/styles";
+import { baseUrl } from "./utils";
+import { NotificationSettings } from "../components/notification-settings";
 
 interface ChatMessageNotificationEmailProps {
   recipientProfileId: string;
@@ -31,10 +33,6 @@ interface ChatMessageNotificationEmailProps {
   bookingDate: string;
   chatUrl: string;
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 export const ChatMessageNotificationEmail = ({
   recipientProfileId = "12345",
@@ -143,19 +141,10 @@ export const ChatMessageNotificationEmail = ({
             </Text>
           </Section>
 
-          {/* Notification Settings */}
-          <Section style={settingsSection}>
-            <Text style={settingsText}>
-              Du mottar denne e-posten fordi du har aktivert varsler for
-              chat-meldinger.
-            </Text>
-            <Link
-              href={`${baseUrl}/profiler/${recipientProfileId}/preferanser`}
-              style={settingsLink}
-            >
-              Endre varselinnstillinger
-            </Link>
-          </Section>
+          <NotificationSettings
+            profileId={recipientProfileId}
+            notificationType="chat_messages"
+          />
 
           <Hr style={hr} />
 

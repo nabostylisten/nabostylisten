@@ -20,7 +20,9 @@ import {
   layoutStyles,
   urgencyColors,
   colors,
-} from "../utils/styles";
+} from "./utils/styles";
+import { baseUrl } from "./utils";
+import { NotificationSettings } from "../components/notification-settings";
 
 interface NewBookingRequestEmailProps {
   stylistProfileId: string;
@@ -38,10 +40,6 @@ interface NewBookingRequestEmailProps {
   estimatedDuration: number;
   urgency?: "high" | "medium" | "low";
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 export const NewBookingRequestEmail = ({
   stylistProfileId = "12345",
@@ -155,28 +153,14 @@ export const NewBookingRequestEmail = ({
             </Section>
           )}
 
-          {/* Action Buttons */}
+          {/* Action Button */}
           <Section style={actionsSection}>
-            <Text style={actionsHeader}>Velg din handling:</Text>
-            <div style={buttonGroup}>
-              <Button
-                style={acceptButton}
-                href={`${baseUrl}/bookinger/${bookingId}/accept`}
-              >
-                Godta forespørsel
-              </Button>
-              <Button
-                style={declineButton}
-                href={`${baseUrl}/bookinger/${bookingId}/decline`}
-              >
-                Avslå forespørsel
-              </Button>
-            </div>
+            <Text style={actionsHeader}>Håndter forespørselen:</Text>
             <Button
               style={viewButton}
               href={`${baseUrl}/bookinger/${bookingId}`}
             >
-              Se fullstendige detaljer
+              Se og behandle forespørsel
             </Button>
           </Section>
 
@@ -194,19 +178,10 @@ export const NewBookingRequestEmail = ({
             </Text>
           </Section>
 
-          {/* Notification Settings */}
-          <Section style={settingsSection}>
-            <Text style={settingsText}>
-              Du mottar denne e-posten fordi du har aktivert varsler for nye
-              bookingforespørsler.
-            </Text>
-            <Link
-              href={`${baseUrl}/profiler/${stylistProfileId}/preferanser`}
-              style={settingsLink}
-            >
-              Endre varselinnstillinger
-            </Link>
-          </Section>
+          <NotificationSettings
+            profileId={stylistProfileId}
+            notificationType="new_booking_requests"
+          />
 
           <Hr style={hr} />
 

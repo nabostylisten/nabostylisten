@@ -12,11 +12,26 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  colors,
+} from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface SystemUpdateEmailProps {
   userName: string;
-  updateType: "maintenance" | "new_features" | "bug_fixes" | "security_update" | "performance" | "downtime" | "api_changes" | "mobile_update";
+  updateType:
+    | "maintenance"
+    | "new_features"
+    | "bug_fixes"
+    | "security_update"
+    | "performance"
+    | "downtime"
+    | "api_changes"
+    | "mobile_update";
   updateTitle: string;
   updateDescription: string;
   scheduledDate?: string;
@@ -34,10 +49,6 @@ interface SystemUpdateEmailProps {
   version?: string;
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
-
 export const SystemUpdateEmail = ({
   userName = "Ola Nordmann",
   updateType = "new_features",
@@ -50,13 +61,13 @@ export const SystemUpdateEmail = ({
     {
       title: "Forbedret søkefunksjon",
       description: "Finn stylister raskere med vår nye AI-drevne søkemotor",
-      userType: "all"
+      userType: "all",
     },
     {
       title: "Realtidsnotifikasjoner",
       description: "Få umiddelbare oppdateringer om bookingendringer",
-      userType: "all"
-    }
+      userType: "all",
+    },
   ],
   bugFixes = [],
   actionRequired = false,
@@ -64,7 +75,6 @@ export const SystemUpdateEmail = ({
   actionDescription,
   version = "2.1.0",
 }: SystemUpdateEmailProps) => {
-  
   const getUpdateConfig = () => {
     switch (updateType) {
       case "maintenance":
@@ -143,22 +153,24 @@ export const SystemUpdateEmail = ({
             />
           </Section>
 
-          <Section style={{
-            ...updateBanner,
-            backgroundColor: config.color.bg,
-            ...(config.priority === "high" && priorityBorderStyle),
-          }}>
-            <Text style={{
-              ...updateText,
-              color: config.color.text,
-            }}>
+          <Section
+            style={{
+              ...updateBanner,
+              backgroundColor: config.color.bg,
+              ...(config.priority === "high" && priorityBorderStyle),
+            }}
+          >
+            <Text
+              style={{
+                ...updateText,
+                color: config.color.text,
+              }}
+            >
               {config.emoji} Systemoppdatering
             </Text>
           </Section>
 
-          <Heading style={heading}>
-            {updateTitle}
-          </Heading>
+          <Heading style={heading}>{updateTitle}</Heading>
 
           <Text style={paragraph}>
             Hei {userName}! {updateDescription}
@@ -167,12 +179,8 @@ export const SystemUpdateEmail = ({
           {/* Action Required Section */}
           {actionRequired && (
             <Section style={actionRequiredSection}>
-              <Text style={actionRequiredHeader}>
-                ⚠️ Handling kreves
-              </Text>
-              <Text style={actionRequiredText}>
-                {actionDescription}
-              </Text>
+              <Text style={actionRequiredHeader}>⚠️ Handling kreves</Text>
+              <Text style={actionRequiredText}>{actionDescription}</Text>
               {actionDeadline && (
                 <Text style={actionDeadline}>
                   <strong>Frist:</strong> {actionDeadline}
@@ -182,29 +190,32 @@ export const SystemUpdateEmail = ({
           )}
 
           {/* Scheduled Maintenance */}
-          {(updateType === "maintenance" || updateType === "downtime") && scheduledDate && (
-            <Section style={scheduleSection}>
-              <Text style={scheduleHeader}>📅 Planlagt vedlikehold:</Text>
-              <div style={scheduleDetails}>
-                <div style={scheduleRow}>
-                  <Text style={scheduleLabel}>Dato og tid:</Text>
-                  <Text style={scheduleValue}>{scheduledDate}</Text>
+          {(updateType === "maintenance" || updateType === "downtime") &&
+            scheduledDate && (
+              <Section style={scheduleSection}>
+                <Text style={scheduleHeader}>📅 Planlagt vedlikehold:</Text>
+                <div style={scheduleDetails}>
+                  <div style={scheduleRow}>
+                    <Text style={scheduleLabel}>Dato og tid:</Text>
+                    <Text style={scheduleValue}>{scheduledDate}</Text>
+                  </div>
+                  {duration && (
+                    <div style={scheduleRow}>
+                      <Text style={scheduleLabel}>Varighet:</Text>
+                      <Text style={scheduleValue}>{duration}</Text>
+                    </div>
+                  )}
+                  {affectedServices.length > 0 && (
+                    <div style={scheduleRow}>
+                      <Text style={scheduleLabel}>Berørte tjenester:</Text>
+                      <Text style={scheduleValue}>
+                        {affectedServices.join(", ")}
+                      </Text>
+                    </div>
+                  )}
                 </div>
-                {duration && (
-                  <div style={scheduleRow}>
-                    <Text style={scheduleLabel}>Varighet:</Text>
-                    <Text style={scheduleValue}>{duration}</Text>
-                  </div>
-                )}
-                {affectedServices.length > 0 && (
-                  <div style={scheduleRow}>
-                    <Text style={scheduleLabel}>Berørte tjenester:</Text>
-                    <Text style={scheduleValue}>{affectedServices.join(", ")}</Text>
-                  </div>
-                )}
-              </div>
-            </Section>
-          )}
+              </Section>
+            )}
 
           {/* New Features */}
           {newFeatures.length > 0 && (
@@ -216,13 +227,13 @@ export const SystemUpdateEmail = ({
                     {feature.title}
                     {feature.userType && feature.userType !== "all" && (
                       <span style={userTypeTag}>
-                        {feature.userType === "customer" ? " (Kunder)" : " (Stylister)"}
+                        {feature.userType === "customer"
+                          ? " (Kunder)"
+                          : " (Stylister)"}
                       </span>
                     )}
                   </Text>
-                  <Text style={featureDescription}>
-                    {feature.description}
-                  </Text>
+                  <Text style={featureDescription}>{feature.description}</Text>
                 </div>
               ))}
             </Section>
@@ -247,15 +258,18 @@ export const SystemUpdateEmail = ({
             <Section style={performanceSection}>
               <Text style={performanceHeader}>⚡ Ytelsesforbredringer:</Text>
               <Text style={performanceText}>
-                Vi har gjort betydelige forbedringer for å gjøre Nabostylisten 
+                Vi har gjort betydelige forbedringer for å gjøre Nabostylisten
                 raskere og mer pålitelig:
               </Text>
               <Text style={performanceDetails}>
-                • Raskere innlasting av stylisterOversikt<br/>
-                • Forbedret søkehastighet med opptil 70%<br/>
-                • Optimalisert bildelasting i galleries<br/>
-                • Redusert app-størrelse med 25%<br/>
-                • Forbedret stabilitet ved høy trafikk
+                • Raskere innlasting av stylisterOversikt
+                <br />
+                • Forbedret søkehastighet med opptil 70%
+                <br />
+                • Optimalisert bildelasting i galleries
+                <br />
+                • Redusert app-størrelse med 25%
+                <br />• Forbedret stabilitet ved høy trafikk
               </Text>
             </Section>
           )}
@@ -265,12 +279,12 @@ export const SystemUpdateEmail = ({
             <Section style={securitySection}>
               <Text style={securityHeader}>🔒 Sikkerhetsoppdateringer:</Text>
               <Text style={securityText}>
-                Vi har implementert viktige sikkerhetsforbredringer for å 
+                Vi har implementert viktige sikkerhetsforbredringer for å
                 beskytte dine data og forbedre plattformens sikkerhet.
               </Text>
               <Text style={securityNote}>
-                Disse oppdateringene krever ingen handling fra din side, 
-                men vi anbefaler å logge ut og inn igjen for beste opplevelse.
+                Disse oppdateringene krever ingen handling fra din side, men vi
+                anbefaler å logge ut og inn igjen for beste opplevelse.
               </Text>
             </Section>
           )}
@@ -280,14 +294,20 @@ export const SystemUpdateEmail = ({
             <Section style={mobileSection}>
               <Text style={mobileHeader}>📱 Mobilapp-oppdatering:</Text>
               <Text style={mobileText}>
-                Versjon {version} av Nabostylisten-appen er nå tilgjengelig 
-                i App Store og Google Play.
+                Versjon {version} av Nabostylisten-appen er nå tilgjengelig i
+                App Store og Google Play.
               </Text>
               <div style={mobileActions}>
-                <Button style={appStoreButton} href="https://apps.apple.com/no/app/nabostylisten">
+                <Button
+                  style={appStoreButton}
+                  href="https://apps.apple.com/no/app/nabostylisten"
+                >
                   Last ned fra App Store
                 </Button>
-                <Button style={playStoreButton} href="https://play.google.com/store/apps/details?id=no.nabostylisten">
+                <Button
+                  style={playStoreButton}
+                  href="https://play.google.com/store/apps/details?id=no.nabostylisten"
+                >
                   Last ned fra Google Play
                 </Button>
               </div>
@@ -298,33 +318,33 @@ export const SystemUpdateEmail = ({
           <Section style={roadmapSection}>
             <Text style={roadmapHeader}>🗺️ Hva skjer videre?</Text>
             <Text style={roadmapText}>
-              Vi jobber kontinuerlig med å forbedre Nabostylisten. Her er noe 
-              av det du kan se frem til i kommende oppdateringer:
+              Vi jobber kontinuerlig med å forbedre Nabostylisten. Her er noe av
+              det du kan se frem til i kommende oppdateringer:
             </Text>
             <Text style={roadmapItems}>
-              • AI-drevne anbefalinger basert på preferansene dine<br/>
-              • Integrert kalender for bedre bookingplanlegging<br/>
-              • Utvidet støtte for gruppebehandlinger<br/>
-              • Forbedret chatfunksjonalitet med filedialing<br/>
-              • Mer detaljerte anmeldelser og rating
+              • AI-drevne anbefalinger basert på preferansene dine
+              <br />
+              • Integrert kalender for bedre bookingplanlegging
+              <br />
+              • Utvidet støtte for gruppebehandlinger
+              <br />
+              • Forbedret chatfunksjonalitet med filedialing
+              <br />• Mer detaljerte anmeldelser og rating
             </Text>
           </Section>
 
           {/* Call to Action */}
           <Section style={ctaSection}>
             <Text style={ctaText}>
-              {updateType === "new_features" 
+              {updateType === "new_features"
                 ? "Utforsk de nye funksjonene i dag!"
                 : updateType === "mobile_update"
-                ? "Oppdater appen din nå for den beste opplevelsen."
-                : "Takk for at du bruker Nabostylisten!"
-              }
+                  ? "Oppdater appen din nå for den beste opplevelsen."
+                  : "Takk for at du bruker Nabostylisten!"}
             </Text>
-            {(updateType === "new_features" || updateType === "performance") && (
-              <Button 
-                style={button} 
-                href={`${baseUrl}/`}
-              >
+            {(updateType === "new_features" ||
+              updateType === "performance") && (
+              <Button style={button} href={`${baseUrl}/`}>
                 Utforsk oppdateringene
               </Button>
             )}
@@ -334,7 +354,7 @@ export const SystemUpdateEmail = ({
           <Section style={supportSection}>
             <Text style={supportHeader}>🆘 Trenger du hjelp?</Text>
             <Text style={supportText}>
-              Hvis du opplever problemer etter oppdateringen eller har spørsmål 
+              Hvis du opplever problemer etter oppdateringen eller har spørsmål
               om de nye funksjonene, er vi her for å hjelpe.
             </Text>
             <div style={supportMethods}>
@@ -351,11 +371,11 @@ export const SystemUpdateEmail = ({
           <Section style={feedbackSection}>
             <Text style={feedbackHeader}>💭 Din mening betyr mye!</Text>
             <Text style={feedbackText}>
-              Hva synes du om oppdateringen? Din tilbakemelding hjelper oss 
-              å lage en bedre opplevelse for alle.
+              Hva synes du om oppdateringen? Din tilbakemelding hjelper oss å
+              lage en bedre opplevelse for alle.
             </Text>
-            <Button 
-              style={feedbackButton} 
+            <Button
+              style={feedbackButton}
               href={`${baseUrl}/feedback?update=${version}`}
             >
               Gi tilbakemelding
@@ -365,9 +385,13 @@ export const SystemUpdateEmail = ({
           {/* Notification Settings */}
           <Section style={settingsSection}>
             <Text style={settingsText}>
-              🔔 Du mottar denne e-posten fordi du har aktivert varsler for systemoppdateringer.
+              🔔 Du mottar denne e-posten fordi du har aktivert varsler for
+              systemoppdateringer.
             </Text>
-            <Link href={`${baseUrl}/profiler/${userName}/preferanser`} style={settingsLink}>
+            <Link
+              href={`${baseUrl}/profiler/${userName}/preferanser`}
+              style={settingsLink}
+            >
               Endre varselinnstillinger
             </Link>
           </Section>
@@ -386,7 +410,8 @@ export const SystemUpdateEmail = ({
           </Text>
 
           <Text style={footer}>
-            Versjon: {version} • Oppdateringsdato: {new Date().toLocaleDateString("nb-NO")}
+            Versjon: {version} • Oppdateringsdato:{" "}
+            {new Date().toLocaleDateString("nb-NO")}
           </Text>
         </Container>
       </Body>
@@ -398,7 +423,8 @@ SystemUpdateEmail.PreviewProps = {
   userName: "Ola Nordmann",
   updateType: "new_features" as const,
   updateTitle: "Nye funksjoner: Favoritt-stylister og forbedret søk!",
-  updateDescription: "Vi har lagt til mulighet til å markere stylister som favoritter og kraftig forbedret søkefunksjonaliteten.",
+  updateDescription:
+    "Vi har lagt til mulighet til å markere stylister som favoritter og kraftig forbedret søkefunksjonaliteten.",
   effectiveDate: "20. januar 2024",
   downtime: {
     required: false,

@@ -12,7 +12,15 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, colors, statusColors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  colors,
+  statusColors,
+} from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface ApplicationStatusUpdateEmailProps {
   applicantName: string;
@@ -20,10 +28,6 @@ interface ApplicationStatusUpdateEmailProps {
   status: "applied" | "pending_info" | "rejected" | "approved";
   message?: string;
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 export const ApplicationStatusUpdateEmail = ({
   applicantName = "Ola Nordmann",
@@ -128,7 +132,7 @@ export const ApplicationStatusUpdateEmail = ({
 
 ApplicationStatusUpdateEmail.PreviewProps = {
   applicantName: "Ola Nordmann",
-  applicationId: "app_12345", 
+  applicationId: "app_12345",
   status: "approved" as const,
   message: "Gratulerer! Vi ser frem til å ha deg på plattformen.",
 } as ApplicationStatusUpdateEmailProps;

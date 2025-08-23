@@ -12,7 +12,16 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, layoutStyles, colors, statusColors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  layoutStyles,
+  colors,
+  statusColors,
+} from "./utils/styles";
+import { baseUrl } from "./utils";
 
 interface BookingStatusUpdateEmailProps {
   customerName: string;
@@ -27,10 +36,6 @@ interface BookingStatusUpdateEmailProps {
   location: string;
   recipientType: "customer" | "stylist";
 }
-
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : "http://localhost:3000";
 
 export const BookingStatusUpdateEmail = ({
   customerName = "Ola Nordmann",
@@ -51,12 +56,14 @@ export const BookingStatusUpdateEmail = ({
   };
 
   const statusDescriptions = {
-    confirmed: recipientType === "customer" 
-      ? `Din booking er bekreftet av ${stylistName}. Se frem til en fantastisk opplevelse!`
-      : `Du har bekreftet bookingen med ${customerName}. Forbered deg på å levere en fantastisk opplevelse!`,
-    cancelled: recipientType === "customer"
-      ? `Din booking har blitt avlyst av ${stylistName}. Vi beklager ulempen dette måtte medføre.`
-      : `Du har avlyst bookingen med ${customerName}. Kunden vil bli informert om avlysningen.`,
+    confirmed:
+      recipientType === "customer"
+        ? `Din booking er bekreftet av ${stylistName}. Se frem til en fantastisk opplevelse!`
+        : `Du har bekreftet bookingen med ${customerName}. Forbered deg på å levere en fantastisk opplevelse!`,
+    cancelled:
+      recipientType === "customer"
+        ? `Din booking har blitt avlyst av ${stylistName}. Vi beklager ulempen dette måtte medføre.`
+        : `Du har avlyst bookingen med ${customerName}. Kunden vil bli informert om avlysningen.`,
   };
 
   const emailStatusColors = statusColors;
@@ -84,15 +91,16 @@ export const BookingStatusUpdateEmail = ({
           </Heading>
 
           <Text style={paragraph}>
-            {recipientType === "customer" 
+            {recipientType === "customer"
               ? `Hei ${customerName}! Din booking hos ${stylistName} har fått en statusoppdatering.`
-              : `Hei ${stylistName}! Bookingen med ${customerName} har fått en statusoppdatering.`
-            }
+              : `Hei ${stylistName}! Bookingen med ${customerName} har fått en statusoppdatering.`}
           </Text>
 
-          <Section style={{...statusSection, borderColor: statusColors[status]}}>
+          <Section
+            style={{ ...statusSection, borderColor: statusColors[status] }}
+          >
             <Text style={statusLabel}>Status:</Text>
-            <Text style={{...statusValue, color: statusColors[status]}}>
+            <Text style={{ ...statusValue, color: statusColors[status] }}>
               {statusLabels[status]}
             </Text>
           </Section>
@@ -102,27 +110,27 @@ export const BookingStatusUpdateEmail = ({
           {/* Booking Details */}
           <Section style={bookingDetailsSection}>
             <Text style={sectionHeader}>Bookingdetaljer:</Text>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Tjeneste:</Text>
               <Text style={detailValue}>{serviceName}</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Dato:</Text>
               <Text style={detailValue}>{bookingDate}</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Tid:</Text>
               <Text style={detailValue}>{bookingTime}</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Sted:</Text>
               <Text style={detailValue}>{location}</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>
                 {recipientType === "customer" ? "Stylist:" : "Kunde:"}
@@ -137,10 +145,9 @@ export const BookingStatusUpdateEmail = ({
           {message && (
             <Section style={messageSection}>
               <Text style={messageLabel}>
-                {recipientType === "customer" 
+                {recipientType === "customer"
                   ? `Melding fra ${stylistName}:`
-                  : "Din melding til kunden:"
-                }
+                  : "Din melding til kunden:"}
               </Text>
               <Text style={messageText}>{message}</Text>
             </Section>
@@ -152,11 +159,10 @@ export const BookingStatusUpdateEmail = ({
               <Text style={paragraph}>
                 {recipientType === "customer"
                   ? "Se alle detaljer for bookingen din og kommuniser direkte med stylisten."
-                  : "Se alle detaljer for bookingen og kommuniser med kunden om nødvendig."
-                }
+                  : "Se alle detaljer for bookingen og kommuniser med kunden om nødvendig."}
               </Text>
-              <Button 
-                style={{...button, backgroundColor: statusColors[status]}} 
+              <Button
+                style={{ ...button, backgroundColor: statusColors[status] }}
                 href={`${baseUrl}/bookinger/${bookingId}`}
               >
                 Se booking
@@ -167,10 +173,13 @@ export const BookingStatusUpdateEmail = ({
           {status === "cancelled" && recipientType === "customer" && (
             <Section style={ctaSection}>
               <Text style={paragraph}>
-                Du kan søke etter andre tilgjengelige stylister eller book en
-                ny time hos {stylistName} når det passer bedre.
+                Du kan søke etter andre tilgjengelige stylister eller book en ny
+                time hos {stylistName} når det passer bedre.
               </Text>
-              <Button style={{...button, backgroundColor: statusColors[status]}} href={`${baseUrl}/services`}>
+              <Button
+                style={{ ...button, backgroundColor: statusColors[status] }}
+                href={`${baseUrl}/services`}
+              >
                 Finn ny stylist
               </Button>
             </Section>
@@ -179,10 +188,13 @@ export const BookingStatusUpdateEmail = ({
           {status === "cancelled" && recipientType === "stylist" && (
             <Section style={ctaSection}>
               <Text style={paragraph}>
-                Bookingen er nå avlyst og kunden er informert. Du kan se andre 
+                Bookingen er nå avlyst og kunden er informert. Du kan se andre
                 ventende forespørsler i din bookingsoversikt.
               </Text>
-              <Button style={{...button, backgroundColor: statusColors[status]}} href={`${baseUrl}/profiler/${stylistId}/mine-bookinger`}>
+              <Button
+                style={{ ...button, backgroundColor: statusColors[status] }}
+                href={`${baseUrl}/profiler/${stylistId}/mine-bookinger`}
+              >
                 Se mine bookinger
               </Button>
             </Section>

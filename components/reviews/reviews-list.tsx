@@ -25,7 +25,6 @@ import { ReviewCard } from "./review-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getStylistReviews, getCustomerReviews } from "@/server/review.actions";
 import { Search, Star, Filter, X } from "lucide-react";
-import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import type { ReviewFilters } from "@/types";
 
 interface ReviewsListProps {
@@ -118,9 +117,6 @@ export function ReviewsList({
     filters.rating ||
     (filters.sortBy && filters.sortBy !== "newest");
 
-  // Check if we're currently searching (user typed but debounce hasn't finished)
-  const isSearching =
-    searchInput !== (filters.search || "") && searchInput.length > 0;
 
   if (error) {
     return (

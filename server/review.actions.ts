@@ -185,16 +185,8 @@ export async function getStylistReviews(
 
     // Apply filters
     if (search) {
-        // reviewsQuery = reviewsQuery.or(searchFilter);
-        reviewsQuery = reviewsQuery.ilike("comment", `%${search}%`).ilike(
-            "customer.full_name",
-            `%${search}%`,
-        );
-        // countQuery = countQuery.or(searchFilter);
-        countQuery = countQuery.ilike("comment", `%${search}%`).ilike(
-            "customer.full_name",
-            `%${search}%`,
-        );
+        reviewsQuery = reviewsQuery.ilike("comment", `%${search}%`);
+        countQuery = countQuery.ilike("comment", `%${search}%`);
     }
 
     if (rating) {
@@ -307,10 +299,8 @@ export async function getCustomerReviews(
 
     // Apply filters
     if (search) {
-        const searchFilter =
-            `comment.ilike.*${search}*,stylist.full_name.ilike.*${search}*`;
-        reviewsQuery = reviewsQuery.or(searchFilter);
-        countQuery = countQuery.or(searchFilter);
+        reviewsQuery = reviewsQuery.ilike("comment", `%${search}%`);
+        countQuery = countQuery.ilike("comment", `%${search}%`);
     }
 
     if (rating) {

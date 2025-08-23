@@ -207,6 +207,47 @@ export function searchParamsToFilters(
   };
 }
 
+// Reviews listing with search, filtering and sorting
+export interface ReviewFilters {
+  search?: string;
+  rating?: number;
+  sortBy?: "newest" | "oldest" | "highest" | "lowest";
+  page?: number;
+  limit?: number;
+}
+
+// URL search params for reviews
+export interface ReviewSearchParams {
+  search?: string;
+  rating?: string;
+  sort?: string;
+  page?: string;
+}
+
+// Utility function to convert URL search params to ReviewFilters
+export function searchParamsToReviewFilters(
+  searchParams: ReviewSearchParams,
+): ReviewFilters {
+  return {
+    search: searchParams.search,
+    rating: searchParams.rating ? parseInt(searchParams.rating) : undefined,
+    sortBy: searchParams.sort as ReviewFilters["sortBy"] || "newest",
+    page: searchParams.page ? parseInt(searchParams.page) : 1,
+  };
+}
+
+// Utility function to convert ReviewFilters back to URL search params
+export function reviewFiltersToSearchParams(
+  filters: ReviewFilters,
+): ReviewSearchParams {
+  return {
+    search: filters.search,
+    rating: filters.rating?.toString(),
+    sort: filters.sortBy !== "newest" ? filters.sortBy : undefined,
+    page: filters.page && filters.page > 1 ? filters.page.toString() : undefined,
+  };
+}
+
 // Utility function to convert ServiceFilters back to URL search params
 export function filtersToSearchParams(
   filters: ServiceFilters,

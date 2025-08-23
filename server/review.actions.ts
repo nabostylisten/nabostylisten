@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import type { DatabaseTables } from "@/types";
+import type { DatabaseTables, ReviewFilters } from "@/types";
 
 export async function getReview(id: string) {
     const supabase = await createClient();
@@ -143,15 +143,16 @@ export async function getReviewByBookingId(bookingId: string) {
 
 export async function getStylistReviews(
     stylistId: string,
-    { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
+    options: ReviewFilters = {},
 ) {
     const supabase = await createClient();
 
+    const { page = 1, limit = 10, search, rating, sortBy = "newest" } = options;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // Get reviews for the stylist
-    const reviewsQuery = supabase
+    // Build base query
+    let reviewsQuery = supabase
         .from("reviews")
         .select(`
             *,
@@ -175,15 +176,57 @@ export async function getStylistReviews(
                 media_type
             )
         `)
-        .eq("stylist_id", stylistId)
-        .order("created_at", { ascending: false })
-        .range(from, to);
+        .eq("stylist_id", stylistId);
 
-    // Get total count
-    const countQuery = supabase
+    let countQuery = supabase
         .from("reviews")
         .select("*", { count: "exact", head: true })
         .eq("stylist_id", stylistId);
+
+    // Apply filters
+    if (search) {
+        // reviewsQuery = reviewsQuery.or(searchFilter);
+        reviewsQuery = reviewsQuery.ilike("comment", `%${search}%`).ilike(
+            "customer.full_name",
+            `%${search}%`,
+        );
+        // countQuery = countQuery.or(searchFilter);
+        countQuery = countQuery.ilike("comment", `%${search}%`).ilike(
+            "customer.full_name",
+            `%${search}%`,
+        );
+    }
+
+    if (rating) {
+        reviewsQuery = reviewsQuery.eq("rating", rating);
+        countQuery = countQuery.eq("rating", rating);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+        case "oldest":
+            reviewsQuery = reviewsQuery.order("created_at", {
+                ascending: true,
+            });
+            break;
+        case "highest":
+            reviewsQuery = reviewsQuery.order("rating", { ascending: false })
+                .order("created_at", { ascending: false });
+            break;
+        case "lowest":
+            reviewsQuery = reviewsQuery.order("rating", { ascending: true })
+                .order("created_at", { ascending: false });
+            break;
+        case "newest":
+        default:
+            reviewsQuery = reviewsQuery.order("created_at", {
+                ascending: false,
+            });
+            break;
+    }
+
+    // Apply pagination
+    reviewsQuery = reviewsQuery.range(from, to);
 
     const [{ data, error }, { count, error: countError }] = await Promise.all([
         reviewsQuery,
@@ -211,7 +254,7 @@ export async function getStylistReviews(
 
 export async function getCustomerReviews(
     customerId: string,
-    { page = 1, limit = 10 }: { page?: number; limit?: number } = {},
+    options: ReviewFilters = {},
 ) {
     const supabase = await createClient();
 
@@ -226,11 +269,12 @@ export async function getCustomerReviews(
         };
     }
 
+    const { page = 1, limit = 10, search, rating, sortBy = "newest" } = options;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
-    // Get reviews written by the customer
-    const reviewsQuery = supabase
+    // Build base query
+    let reviewsQuery = supabase
         .from("reviews")
         .select(`
             *,
@@ -254,15 +298,51 @@ export async function getCustomerReviews(
                 media_type
             )
         `)
-        .eq("customer_id", customerId)
-        .order("created_at", { ascending: false })
-        .range(from, to);
+        .eq("customer_id", customerId);
 
-    // Get total count
-    const countQuery = supabase
+    let countQuery = supabase
         .from("reviews")
         .select("*", { count: "exact", head: true })
         .eq("customer_id", customerId);
+
+    // Apply filters
+    if (search) {
+        const searchFilter =
+            `comment.ilike.*${search}*,stylist.full_name.ilike.*${search}*`;
+        reviewsQuery = reviewsQuery.or(searchFilter);
+        countQuery = countQuery.or(searchFilter);
+    }
+
+    if (rating) {
+        reviewsQuery = reviewsQuery.eq("rating", rating);
+        countQuery = countQuery.eq("rating", rating);
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+        case "oldest":
+            reviewsQuery = reviewsQuery.order("created_at", {
+                ascending: true,
+            });
+            break;
+        case "highest":
+            reviewsQuery = reviewsQuery.order("rating", { ascending: false })
+                .order("created_at", { ascending: false });
+            break;
+        case "lowest":
+            reviewsQuery = reviewsQuery.order("rating", { ascending: true })
+                .order("created_at", { ascending: false });
+            break;
+        case "newest":
+        default:
+            reviewsQuery = reviewsQuery.order("created_at", {
+                ascending: false,
+            });
+            break;
+    }
+
+    // Apply pagination
+    reviewsQuery = reviewsQuery.range(from, to);
 
     const [{ data, error }, { count, error: countError }] = await Promise.all([
         reviewsQuery,
@@ -338,7 +418,7 @@ export async function upsertReview(
             rating: reviewData.rating,
             comment: reviewData.comment,
         };
-        
+
         return await supabase
             .from("reviews")
             .update(updateData)
@@ -347,7 +427,8 @@ export async function upsertReview(
             .single();
     } else {
         // Create new review
-        return await supabase.from("reviews").insert(reviewData).select().single();
+        return await supabase.from("reviews").insert(reviewData).select()
+            .single();
     }
 }
 

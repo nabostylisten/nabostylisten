@@ -3,13 +3,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Star } from "lucide-react";
+import { buttonVariants } from "@/components/ui/button";
+import { Star, ChevronRight } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { getPublicUrl } from "@/lib/supabase/storage";
+import { cn } from "@/lib/utils";
 
 type ReviewCardProps = {
   review: {
@@ -28,35 +30,44 @@ type ReviewCardProps = {
     booking?: {
       id: string;
       start_time: string;
-      booking_services?: {
-        services?: {
-          id: string;
-          title: string | null;
-        } | null;
-      }[] | null;
+      booking_services?:
+        | {
+            services?: {
+              id: string;
+              title: string | null;
+            } | null;
+          }[]
+        | null;
     } | null;
-    media?: {
-      id: string;
-      file_path: string;
-      media_type: string;
-    }[] | null;
+    media?:
+      | {
+          id: string;
+          file_path: string;
+          media_type: string;
+        }[]
+      | null;
   };
   viewType: "customer" | "stylist"; // who is viewing the review
 };
 
 export function ReviewCard({ review, viewType }: ReviewCardProps) {
-  const reviewImages = review.media?.filter((m) => m.media_type === "review_image") || [];
-  const displayPerson = viewType === "customer" ? review.stylist : review.customer;
-  const services = review.booking?.booking_services?.map((bs) => bs.services?.title).filter(Boolean) || [];
-  
+  const reviewImages =
+    review.media?.filter((m) => m.media_type === "review_image") || [];
+  const displayPerson =
+    viewType === "customer" ? review.stylist : review.customer;
+  const services =
+    review.booking?.booking_services
+      ?.map((bs) => bs.services?.title)
+      .filter(Boolean) || [];
+
   const supabase = createClient();
-  
+
   const getImageUrl = (filePath: string) => {
     return getPublicUrl(supabase, "review-media", filePath);
   };
 
   return (
-    <Card>
+    <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-6">
         <div className="flex gap-4">
           {/* Avatar */}
@@ -81,7 +92,9 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
                   )}
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  {format(new Date(review.created_at), "d. MMMM yyyy", { locale: nb })}
+                  {format(new Date(review.created_at), "d. MMMM yyyy", {
+                    locale: nb,
+                  })}
                 </div>
               </div>
 
@@ -118,9 +131,7 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
 
             {/* Comment */}
             {review.comment && (
-              <p className="text-sm leading-relaxed">
-                {review.comment}
-              </p>
+              <p className="text-sm leading-relaxed">{review.comment}</p>
             )}
 
             {/* Images */}
@@ -150,14 +161,21 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
               </div>
             )}
 
-            {/* Booking link */}
+            {/* Footer with booking link */}
             {review.booking && (
-              <div className="pt-2 border-t">
+              <div className="flex justify-end pt-2 border-t">
                 <Link
                   href={`/bookinger/${review.booking.id}`}
-                  className="text-sm text-primary hover:underline"
+                  className={cn(
+                    buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                    }),
+                    "flex items-center gap-2"
+                  )}
                 >
-                  Se booking detaljer
+                  Til booking
+                  <ChevronRight className="w-4 h-4" />
                 </Link>
               </div>
             )}

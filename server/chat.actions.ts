@@ -30,7 +30,7 @@ export async function getChatsByProfileId(profileId: string) {
     return { error: null, data: [] };
   }
 
-  const bookingIds = userBookings.map(b => b.id);
+  const bookingIds = userBookings.map((b) => b.id);
 
   // Get all chats for those bookings with unread message counts
   const { data: chats, error } = await supabase
@@ -67,7 +67,7 @@ export async function getChatsByProfileId(profileId: string) {
         created_at
       )
     `)
-    .in('booking_id', bookingIds)
+    .in("booking_id", bookingIds)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -77,7 +77,10 @@ export async function getChatsByProfileId(profileId: string) {
   return { error: null, data: chats };
 }
 
-export async function getChatsByRole(profileId: string, role: 'customer' | 'stylist') {
+export async function getChatsByRole(
+  profileId: string,
+  role: "customer" | "stylist",
+) {
   const supabase = await createClient();
 
   // Get current user
@@ -94,10 +97,10 @@ export async function getChatsByRole(profileId: string, role: 'customer' | 'styl
     .from("bookings")
     .select("id");
 
-  if (role === 'customer') {
-    bookingsQuery = bookingsQuery.eq('customer_id', profileId);
+  if (role === "customer") {
+    bookingsQuery = bookingsQuery.eq("customer_id", profileId);
   } else {
-    bookingsQuery = bookingsQuery.eq('stylist_id', profileId);
+    bookingsQuery = bookingsQuery.eq("stylist_id", profileId);
   }
 
   const { data: userBookings, error: bookingsError } = await bookingsQuery;
@@ -110,7 +113,7 @@ export async function getChatsByRole(profileId: string, role: 'customer' | 'styl
     return { error: null, data: [] };
   }
 
-  const bookingIds = userBookings.map(b => b.id);
+  const bookingIds = userBookings.map((b) => b.id);
 
   // Get all chats for those bookings with unread message counts
   const { data: chats, error } = await supabase
@@ -147,7 +150,7 @@ export async function getChatsByRole(profileId: string, role: 'customer' | 'styl
         created_at
       )
     `)
-    .in('booking_id', bookingIds)
+    .in("booking_id", bookingIds)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -180,19 +183,21 @@ export async function getChatByBookingId(bookingId: string) {
     return { error: "Booking not found", data: null };
   }
 
-  const hasAccess =
-    booking.customer_id === user.id || booking.stylist_id === user.id;
+  const hasAccess = booking.customer_id === user.id ||
+    booking.stylist_id === user.id;
 
   if (!hasAccess) {
     return { error: "Unauthorized", data: null };
   }
 
   // Get or create chat for this booking
-  let { data: chat, error: chatError } = await supabase
+  const chatResponse = await supabase
     .from("chats")
     .select("id, booking_id, created_at")
     .eq("booking_id", bookingId)
     .single();
+  const chatError = chatResponse.error;
+  let chat = chatResponse.data;
 
   if (chatError && chatError.code === "PGRST116") {
     // Chat doesn't exist, create it
@@ -243,8 +248,7 @@ export async function getChatMessages(chatId: string) {
     return { error: "Chat not found", data: null };
   }
 
-  const hasAccess =
-    chat.bookings.customer_id === user.id || 
+  const hasAccess = chat.bookings.customer_id === user.id ||
     chat.bookings.stylist_id === user.id;
 
   if (!hasAccess) {
@@ -310,8 +314,7 @@ export async function createChatMessage({
     return { error: "Chat not found", data: null };
   }
 
-  const hasAccess =
-    chat.bookings.customer_id === user.id || 
+  const hasAccess = chat.bookings.customer_id === user.id ||
     chat.bookings.stylist_id === user.id;
 
   if (!hasAccess) {
@@ -319,7 +322,7 @@ export async function createChatMessage({
   }
 
   // Create the message with optional predefined ID
-  const insertData: any = {
+  const insertData: Database["public"]["Tables"]["chat_messages"]["Insert"] = {
     chat_id: chatId,
     sender_id: user.id,
     content,
@@ -380,8 +383,7 @@ export async function markChatMessagesAsRead(chatId: string) {
     return { error: "Chat not found", data: null };
   }
 
-  const hasAccess =
-    chat.bookings.customer_id === user.id || 
+  const hasAccess = chat.bookings.customer_id === user.id ||
     chat.bookings.stylist_id === user.id;
 
   if (!hasAccess) {
@@ -429,7 +431,7 @@ export async function getUnreadMessageCount(profileId: string) {
     return { error: null, data: { count: 0 } };
   }
 
-  const bookingIds = userBookings.map(b => b.id);
+  const bookingIds = userBookings.map((b) => b.id);
 
   // First get chat IDs for these bookings
   const { data: userChats, error: chatsError } = await supabase
@@ -445,7 +447,7 @@ export async function getUnreadMessageCount(profileId: string) {
     return { error: null, data: { count: 0 } };
   }
 
-  const chatIds = userChats.map(c => c.id);
+  const chatIds = userChats.map((c) => c.id);
 
   // Get unread message count for user's chats
   const { count, error } = await supabase
@@ -461,7 +463,6 @@ export async function getUnreadMessageCount(profileId: string) {
 
   return { error: null, data: { count: count || 0 } };
 }
-
 
 export async function getChatMessageImages(messageId: string) {
   const supabase = await createClient();
@@ -489,19 +490,28 @@ export async function getChatMessageImages(messageId: string) {
   // Generate signed URLs for images
   const imagesWithUrls = await Promise.all(
     images.map(async (image) => {
-      const signedUrl = await getSignedUrl(supabase, "chat-media", image.file_path, 86400);
+      const signedUrl = await getSignedUrl(
+        supabase,
+        "chat-media",
+        image.file_path,
+        86400,
+      );
       return {
         id: image.id,
         file_path: image.file_path,
         url: signedUrl,
       };
-    })
+    }),
   );
 
   return { error: null, data: imagesWithUrls };
 }
 
-export async function getPreviousBookingsBetweenUsers(stylistId: string, customerId: string, currentBookingId?: string) {
+export async function getPreviousBookingsBetweenUsers(
+  stylistId: string,
+  customerId: string,
+  currentBookingId?: string,
+) {
   const supabase = await createClient();
 
   // Get current user
@@ -569,13 +579,13 @@ export async function getPreviousBookingsBetweenUsers(stylistId: string, custome
         id
       )
     `)
-    .eq('customer_id', customerId)
-    .eq('stylist_id', stylistId)
-    .order('start_time', { ascending: false });
+    .eq("customer_id", customerId)
+    .eq("stylist_id", stylistId)
+    .order("start_time", { ascending: false });
 
   // Exclude current booking if provided
   if (currentBookingId) {
-    query = query.neq('id', currentBookingId);
+    query = query.neq("id", currentBookingId);
   }
 
   const { data: bookings, error } = await query;

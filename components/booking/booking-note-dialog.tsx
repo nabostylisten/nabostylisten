@@ -8,10 +8,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BookingNoteForm } from "./booking-note-form";
-import { BookingNoteList } from "./booking-note-list";
-import { FileText, List } from "lucide-react";
+import { FileText } from "lucide-react";
 import type { Database } from "@/types/database.types";
 import { ScrollArea } from "../ui/scroll-area";
 
@@ -30,7 +28,6 @@ interface BookingNoteDialogProps {
   isEditing?: boolean;
   editingNote?: BookingNote;
   onEditComplete?: () => void;
-  onEditNote?: (note: BookingNote) => void;
 }
 
 export function BookingNoteDialog({
@@ -41,24 +38,16 @@ export function BookingNoteDialog({
   isEditing = false,
   editingNote,
   onEditComplete,
-  onEditNote,
 }: BookingNoteDialogProps) {
-  const [activeTab, setActiveTab] = useState<string>(
-    isEditing ? "form" : "list"
-  );
-
   const handleFormSuccess = () => {
     if (isEditing && onEditComplete) {
       onEditComplete();
     }
-    // Switch to list view after successful form submission
-    setActiveTab("list");
+    onOpenChange(false);
   };
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset to default tab when closing
-    setActiveTab(isEditing ? "form" : "list");
     if (isEditing && onEditComplete) {
       onEditComplete();
     }
@@ -66,71 +55,29 @@ export function BookingNoteDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-6xl w-full max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5" />
-            {isEditing ? "Rediger bookingnotat" : "Bookingnotater"}
+            {isEditing ? "Rediger bookingnotat" : "Nytt bookingnotat"}
           </DialogTitle>
           <DialogDescription>
             {isEditing
               ? "Oppdater ditt bookingnotat med detaljer og bilder fra tjenesten."
-              : "Administrer bookingnotater for å dokumentere tjenesten og dele viktig informasjon med kunden."}
+              : "Opprett et nytt bookingnotat for å dokumentere tjenesten og dele viktig informasjon med kunden."}
           </DialogDescription>
         </DialogHeader>
 
-        {isEditing ? (
-          // Edit mode - only show the form
-          <ScrollArea className="h-[600px] flex-1">
-            <div className="pr-4">
-              <BookingNoteForm
-                bookingId={bookingId}
-                stylistId={stylistId}
-                editingNote={editingNote}
-                onSuccess={handleFormSuccess}
-                onCancel={handleClose}
-              />
-            </div>
-          </ScrollArea>
-        ) : (
-          // Normal mode - show tabs
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="flex-1 flex flex-col"
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="list" className="flex items-center gap-2">
-                <List className="w-4 h-4" />
-                Eksisterende notater
-              </TabsTrigger>
-              <TabsTrigger value="form" className="flex items-center gap-2">
-                <FileText className="w-4 h-4" />
-                Nytt notat
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="list" className="flex-1 overflow-hidden">
-              <BookingNoteList
-                bookingId={bookingId}
-                onEditNote={(note) => {
-                  if (onEditNote) {
-                    onEditNote(note);
-                  }
-                }}
-              />
-            </TabsContent>
-
-            <TabsContent value="form" className="flex-1 overflow-hidden">
-              <BookingNoteForm
-                bookingId={bookingId}
-                stylistId={stylistId}
-                onSuccess={handleFormSuccess}
-                onCancel={() => setActiveTab("list")}
-              />
-            </TabsContent>
-          </Tabs>
-        )}
+        <ScrollArea className="h-[700px] flex-1">
+          <BookingNoteForm
+            key={editingNote?.id || "new"} 
+            bookingId={bookingId}
+            stylistId={stylistId}
+            editingNote={editingNote}
+            onSuccess={handleFormSuccess}
+            onCancel={handleClose}
+          />
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   );

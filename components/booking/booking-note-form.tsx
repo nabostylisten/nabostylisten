@@ -33,13 +33,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Upload } from "lucide-react";
+import {
+  Dropzone,
+  DropzoneContent,
+  DropzoneEmptyState,
+} from "@/components/ui/kibo-ui/dropzone";
 import { BookingNoteImageUpload } from "./booking-note-image-upload";
 import { BookingNoteImageCarousel } from "./booking-note-image-carousel";
 import {
   createBookingNote,
   updateBookingNote,
 } from "@/server/booking-note.actions";
+import { useUploadBookingNoteImages } from "@/hooks/use-upload-booking-note-images";
 import type { Database } from "@/types/database.types";
 import { ScrollArea } from "../ui/scroll-area";
 
@@ -67,6 +73,9 @@ const formSchema = z.object({
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+type BookingNoteUpdate =
+  Database["public"]["Tables"]["booking_notes"]["Update"];
 
 const CATEGORY_OPTIONS = [
   { value: "service_notes", label: "Tjenestenotater" },
@@ -98,6 +107,27 @@ const minutesToHoursAndMinutes = (totalMinutes: number | undefined) => {
 
 const hoursAndMinutesToMinutes = (hours: number, minutes: number) => {
   return hours * 60 + minutes;
+};
+
+// Helper function to get file extension
+const getFileExtension = (filename: string): string => {
+  const parts = filename.split(".");
+  return parts.length > 1 ? parts.pop()?.toUpperCase() || "" : "";
+};
+
+// Helper function to truncate filename
+const truncateFilename = (filename: string, maxLength: number = 25): string => {
+  if (filename.length <= maxLength) return filename;
+
+  const extension = getFileExtension(filename);
+  const nameWithoutExt = filename.substring(0, filename.lastIndexOf("."));
+  const maxNameLength = maxLength - extension.length - 1; // -1 for the dot
+
+  if (nameWithoutExt.length <= maxNameLength) {
+    return filename;
+  }
+
+  return `${nameWithoutExt.substring(0, maxNameLength - 3)}...${extension ? "." + extension.toLowerCase() : ""}`;
 };
 
 // Duration Input Component
@@ -272,8 +302,10 @@ export function BookingNoteForm({
   onCancel,
 }: BookingNoteFormProps) {
   const [newTag, setNewTag] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const queryClient = useQueryClient();
   const isEditing = !!editingNote;
+  const uploadMutation = useUploadBookingNoteImages();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -304,20 +336,43 @@ export function BookingNoteForm({
 
   const createMutation = useMutation({
     mutationFn: createBookingNote,
-    onSuccess: () => {
+    onSuccess: async (result) => {
+      const noteId = result.data?.id;
+      // Upload images if any were selected
+      if (selectedFiles.length > 0 && noteId) {
+        try {
+          await uploadMutation.mutateAsync({
+            files: selectedFiles,
+            bookingId: bookingId,
+            noteId: noteId,
+          });
+          toast.success("Bookingnotat opprettet med bilder!");
+        } catch (error) {
+          toast.error("Notat opprettet, men feil ved opplasting av bilder");
+        }
+      } else {
+        toast.success("Bookingnotat opprettet!");
+      }
+
       queryClient.invalidateQueries({ queryKey: ["booking-notes", bookingId] });
-      toast.success("Bookingnotat opprettet!");
       form.reset();
+      setSelectedFiles([]);
       onSuccess();
     },
     onError: (error) => {
+      console.error(error);
       toast.error("Feil ved opprettelse: " + error.message);
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ noteId, data }: { noteId: string; data: any }) =>
-      updateBookingNote(noteId, data),
+    mutationFn: ({
+      noteId,
+      data,
+    }: {
+      noteId: string;
+      data: BookingNoteUpdate;
+    }) => updateBookingNote(noteId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["booking-notes", bookingId] });
       toast.success("Bookingnotat oppdatert!");
@@ -376,6 +431,80 @@ export function BookingNoteForm({
       addTag(newTag.trim());
       setNewTag("");
     }
+  };
+
+  const handleFilesSelected = async (files: File[]) => {
+    const processedFiles: File[] = [];
+
+    try {
+      for (const file of files) {
+        // Validate file type immediately
+        const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
+        if (!allowedTypes.includes(file.type)) {
+          toast.error(
+            `Filtype ${file.type} er ikke tillatt. Tillatte typer: JPG, PNG, WebP`
+          );
+          continue;
+        }
+
+        // Validate file size
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          toast.error(
+            `Filen "${file.name}" er for stor. Maksimal størrelse er 10MB`
+          );
+          continue;
+        }
+
+        toast.success(`Behandler bilde: ${file.name}`);
+
+        try {
+          // Compress the image
+          const { default: imageCompression } = await import(
+            "browser-image-compression"
+          );
+          const compressedFile = await imageCompression(file, {
+            maxSizeMB: 10,
+            maxWidthOrHeight: 2048,
+            useWebWorker: true,
+            fileType: file.type,
+          });
+
+          const compressionRatio = (
+            ((file.size - compressedFile.size) / file.size) *
+            100
+          ).toFixed(1);
+          if (compressedFile.size < file.size) {
+            toast.success(
+              `Bilde komprimert: ${file.name} (${compressionRatio}% mindre)`
+            );
+          } else {
+            toast.success(`Bilde klar: ${file.name}`);
+          }
+
+          processedFiles.push(compressedFile);
+        } catch (compressionError) {
+          console.error("Compression failed:", compressionError);
+          toast.warning(`Kunne ikke komprimere ${file.name}, bruker original`);
+          processedFiles.push(file);
+        }
+      }
+
+      if (processedFiles.length > 0) {
+        setSelectedFiles((prev) => [...prev, ...processedFiles]);
+        toast.success(`${processedFiles.length} bilde(r) klar for opplasting`);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Feil ved behandling av filer";
+      toast.error("En feil oppstod ved behandling av filer", {
+        description: message,
+      });
+    }
+  };
+
+  const removeSelectedFile = (index: number) => {
+    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const isPending = createMutation.isPending || updateMutation.isPending;
@@ -560,16 +689,99 @@ export function BookingNoteForm({
             <Separator />
 
             {/* Images Section */}
-            {isEditing && editingNote && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Bilder</h3>
-                <BookingNoteImageCarousel noteId={editingNote.id} />
-                <BookingNoteImageUpload
-                  bookingId={bookingId}
-                  noteId={editingNote.id}
-                />
-              </div>
-            )}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Bilder</h3>
+
+              {isEditing && editingNote ? (
+                // Edit mode - show existing images and upload
+                <>
+                  <BookingNoteImageCarousel noteId={editingNote.id} />
+                  <BookingNoteImageUpload
+                    bookingId={bookingId}
+                    noteId={editingNote.id}
+                  />
+                </>
+              ) : (
+                // Create mode - show file selection
+                <>
+                  <Dropzone
+                    accept={{ "image/*": [] }}
+                    maxFiles={5}
+                    maxSize={1024 * 1024 * 10} // 10MB
+                    minSize={1024} // 1KB
+                    onDrop={handleFilesSelected}
+                    onError={(error) => {
+                      toast.error(`Feil ved opplasting: ${error.message}`);
+                    }}
+                    src={selectedFiles}
+                    disabled={isPending}
+                  >
+                    <DropzoneEmptyState>
+                      <div className="flex flex-col items-center justify-center">
+                        <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                          <Upload className="h-4 w-4" />
+                        </div>
+                        <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+                          Dra og slipp bilder her, eller klikk for å velge
+                        </p>
+                        <p className="w-full truncate text-wrap text-muted-foreground text-xs">
+                          PNG, JPG, WEBP opptil 10MB
+                        </p>
+                      </div>
+                    </DropzoneEmptyState>
+                    <DropzoneContent />
+                  </Dropzone>
+
+                  {selectedFiles.length > 0 && (
+                    <div className="mt-4 space-y-2">
+                      <p className="text-sm font-medium">
+                        Valgte filer ({selectedFiles.length})
+                      </p>
+                      <div className="max-h-48 overflow-y-auto space-y-1 pr-2">
+                        {selectedFiles.map((file, index) => {
+                          const truncatedName = truncateFilename(file.name, 25);
+
+                          return (
+                            <div
+                              key={index}
+                              className="flex items-center justify-between rounded border p-2 gap-2"
+                            >
+                              <div className="flex items-center space-x-2 min-w-0 flex-1">
+                                <div className="h-4 w-4 bg-muted rounded flex-shrink-0 flex items-center justify-center">
+                                  <div className="h-2 w-2 bg-muted-foreground rounded" />
+                                </div>
+                                <span
+                                  className="text-sm truncate"
+                                  title={file.name}
+                                >
+                                  {truncatedName}
+                                </span>
+                                <span className="text-xs text-muted-foreground flex-shrink-0">
+                                  {(file.size / 1024 / 1024).toFixed(1)}MB
+                                </span>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  removeSelectedFile(index);
+                                  toast.success("Bilde fjernet");
+                                }}
+                                disabled={isPending}
+                                className="flex-shrink-0"
+                              >
+                                ×
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
 
             {/* Form Actions */}
             <div className="flex justify-end gap-2">

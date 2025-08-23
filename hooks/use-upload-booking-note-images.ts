@@ -7,6 +7,7 @@ import {
     storagePaths,
     uploadFile,
     validateFile,
+    getSignedUrl,
 } from "@/lib/supabase/storage";
 import { useAuth } from "./use-auth";
 
@@ -21,7 +22,9 @@ export const useUploadBookingNoteImages = () => {
     const { profile } = useAuth();
 
     const mutation = useMutation({
-        mutationFn: async ({ bookingId, noteId, files }: UploadBookingNoteImagesParams) => {
+        mutationFn: async (
+            { bookingId, noteId, files }: UploadBookingNoteImagesParams,
+        ) => {
             const supabase = createClient();
 
             if (!profile) {
@@ -32,12 +35,12 @@ export const useUploadBookingNoteImages = () => {
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i];
-                
+
                 // Validate original file type
                 const allowedTypes = [
                     ...bucketConfigs["booking-note-media"].allowedTypes,
                 ] as string[];
-                
+
                 if (!allowedTypes.includes(file.type)) {
                     throw new Error(
                         `File type ${file.type} is not allowed. Allowed types: ${
@@ -77,7 +80,7 @@ export const useUploadBookingNoteImages = () => {
                 const filename = `${Date.now()}-${
                     Math.random().toString(36).substring(2, 15)
                 }.${compressedFile.name.split(".").pop()}`;
-                
+
                 const storagePath = storagePaths.bookingNoteMedia(
                     bookingId,
                     noteId,
@@ -92,10 +95,13 @@ export const useUploadBookingNoteImages = () => {
                     contentType: compressedFile.type,
                 });
 
-                // Get public URL for the new file
-                const { data: urlData } = supabase.storage
-                    .from(storagePath.bucket)
-                    .getPublicUrl(storagePath.path);
+                // Get signed URL for the new file (24 hour expiry)
+                const signedUrl = await getSignedUrl(
+                    supabase,
+                    storagePath.bucket,
+                    storagePath.path,
+                    86400 // 24 hours
+                );
 
                 // Create new media record
                 const { data: mediaData, error: mediaError } = await supabase
@@ -118,7 +124,7 @@ export const useUploadBookingNoteImages = () => {
 
                 results.push({
                     ...mediaData,
-                    publicUrl: urlData.publicUrl,
+                    publicUrl: signedUrl,
                 });
             }
 
@@ -127,10 +133,13 @@ export const useUploadBookingNoteImages = () => {
         onSuccess: (data) => {
             // Invalidate booking note queries to refresh the UI
             queryClient.invalidateQueries({ queryKey: ["booking-notes"] });
-            queryClient.invalidateQueries({ queryKey: ["booking-note-images"] });
+            queryClient.invalidateQueries({
+                queryKey: ["booking-note-images"],
+            });
             toast.success(`${data.length} bilde(r) lastet opp!`);
         },
         onError: (error) => {
+            console.error(error);
             toast.error("Feil ved opplasting av bilder: " + error.message);
         },
     });

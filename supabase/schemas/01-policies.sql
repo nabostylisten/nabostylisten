@@ -346,6 +346,7 @@ FOR INSERT TO anon, authenticated
 WITH CHECK ( media_type = 'application_image' );
 
 
+
 -- Policies for `service_categories`
 CREATE POLICY "Service categories are viewable by everyone." ON public.service_categories FOR SELECT TO anon, authenticated USING (true);
 CREATE POLICY "Admins can insert service categories." ON public.service_categories FOR INSERT WITH CHECK (public.get_my_role() = 'admin');
@@ -533,6 +534,7 @@ USING (bucket_id = 'portfolio' AND (select auth.uid())::text = (storage.folderna
 CREATE POLICY "Stylists can delete portfolio images" ON storage.objects
 FOR DELETE TO authenticated
 USING (bucket_id = 'portfolio' AND (select auth.uid())::text = (storage.foldername(name))[1]);
+
 
 -- ========== PUBLIC ASSETS BUCKETS ==========
 -- Anyone can view public assets (landing-media, assets)

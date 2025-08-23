@@ -102,6 +102,15 @@ const bucketConfigs: BucketConfig[] = [
         fileSizeLimit: "10MB",
         description: "Files uploaded with stylist applications",
     },
+
+    // Booking note media - public for easy viewing
+    {
+        name: "booking-note-media",
+        public: false,
+        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+        fileSizeLimit: "10MB",
+        description: "Media files uploaded with booking notes",
+    },
 ];
 
 async function createBuckets() {

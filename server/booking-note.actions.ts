@@ -5,6 +5,7 @@ import {
   bookingNotesInsertSchema,
   bookingNotesUpdateSchema,
 } from "@/schemas/database.schema";
+import { getSignedUrl } from "@/lib/supabase/storage";
 import type { Database } from "@/types/database.types";
 
 type BookingNoteInsert =
@@ -192,13 +193,29 @@ export async function getBookingNoteImages(noteId: string) {
     return { error: error.message, data: null };
   }
 
-  // Add public URLs to the images
-  const imagesWithUrls = data.map((image) => ({
-    ...image,
-    publicUrl: supabase.storage
-      .from("booking-note-media")
-      .getPublicUrl(image.file_path).data.publicUrl,
-  }));
+  // Add signed URLs to the images (24 hour expiry)
+  const imagesWithUrls = await Promise.all(
+    data.map(async (image) => {
+      try {
+        const signedUrl = await getSignedUrl(
+          supabase,
+          "booking-note-media",
+          image.file_path,
+          86400 // 24 hours
+        );
+        return {
+          ...image,
+          publicUrl: signedUrl,
+        };
+      } catch (error) {
+        console.error("Error generating signed URL for image:", error);
+        return {
+          ...image,
+          publicUrl: "", // Fallback to empty string if URL generation fails
+        };
+      }
+    })
+  );
 
   return { data: imagesWithUrls, error: null };
 }

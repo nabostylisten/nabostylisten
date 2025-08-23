@@ -32,6 +32,7 @@ import {
   Loader2,
   Settings,
   FileText,
+  Plus,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -482,8 +483,8 @@ export function BookingDetailsContent({
                   variant="outline"
                   onClick={() => setIsBookingNotesDialogOpen(true)}
                 >
-                  <FileText className="w-4 h-4 mr-2" />
-                  Administrer notater
+                  <Plus className="w-4 h-4 mr-2" />
+                  Opprett notat
                 </Button>
               </div>
             </CardHeader>
@@ -565,10 +566,6 @@ export function BookingDetailsContent({
           editingNote={editingNote}
           onEditComplete={() => {
             setEditingNote(null);
-          }}
-          onEditNote={(note) => {
-            setEditingNote(note);
-            // Keep dialog open but switch to edit mode
           }}
         />
       )}

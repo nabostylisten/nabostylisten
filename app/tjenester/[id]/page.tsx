@@ -39,10 +39,6 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
     getServiceReviewStats(serviceId),
   ]);
 
-  console.log("reviews", reviews);
-  console.log("reviewStats", reviewStats);
-  console.log({ reviewStatsError, reviewsError });
-
   if (error || !service) {
     notFound();
   }
@@ -232,82 +228,102 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
             )}
 
             {/* Reviews */}
-            {reviews && reviews.length > 0 ? (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
-                    <span>Anmeldelser</span>
-                    {reviewStats && reviewStats.total_reviews > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="font-medium">
-                            {reviewStats.average_rating}
-                          </span>
-                        </div>
-                        <span className="text-sm text-muted-foreground">
-                          ({reviewStats.total_reviews}{" "}
-                          {reviewStats.total_reviews === 1
-                            ? "anmeldelse"
-                            : "anmeldelser"}
-                          )
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Anmeldelser</span>
+                  {!reviewStatsError && reviewStats && reviewStats.total_reviews > 0 && (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="font-medium">
+                          {reviewStats.average_rating}
                         </span>
                       </div>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  {reviews.map((review, index) => (
-                    <div key={review.id}>
-                      <div className="flex items-center gap-3 mb-2">
-                        <Avatar className="w-8 h-8">
-                          <AvatarFallback className="text-xs">
-                            {review.customer_initial}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">
-                              {review.customer_name}
-                            </span>
-                            <div className="flex">
-                              {[...Array(review.rating)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                                />
-                              ))}
-                            </div>
-                          </div>
-                          <span className="text-sm text-muted-foreground">
-                            {formatReviewDate(review.created_at)}
-                          </span>
-                        </div>
-                      </div>
-                      {review.comment && (
-                        <p className="text-muted-foreground">
-                          {review.comment}
-                        </p>
-                      )}
-                      {index < reviews.length - 1 && (
-                        <Separator className="mt-6" />
-                      )}
+                      <span className="text-sm text-muted-foreground">
+                        ({reviewStats.total_reviews}{" "}
+                        {reviewStats.total_reviews === 1
+                          ? "anmeldelse"
+                          : "anmeldelser"}
+                        )
+                      </span>
                     </div>
-                  ))}
-                  {reviewStats &&
-                    reviewStats.total_reviews > reviews.length && (
-                      <Button variant="outline" className="w-full">
-                        Se alle {reviewStats.total_reviews} anmeldelser
-                      </Button>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                {reviewsError ? (
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-2">
+                      Kunne ikke laste anmeldelser for øyeblikket.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Prøv å laste siden på nytt.
+                    </p>
+                  </div>
+                ) : reviews && reviews.length > 0 ? (
+                  <>
+                    {reviews.map((review, index) => (
+                      <div key={review.id}>
+                        <div className="flex items-center gap-3 mb-2">
+                          <Avatar className="w-8 h-8">
+                            <AvatarFallback className="text-xs">
+                              {review.customer_initial}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-medium">
+                                {review.customer_name}
+                              </span>
+                              <div className="flex">
+                                {[...Array(review.rating)].map((_, i) => (
+                                  <Star
+                                    key={i}
+                                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                                  />
+                                ))}
+                              </div>
+                            </div>
+                            <span className="text-sm text-muted-foreground">
+                              {formatReviewDate(review.created_at)}
+                            </span>
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-muted-foreground">
+                            {review.comment}
+                          </p>
+                        )}
+                        {index < reviews.length - 1 && (
+                          <Separator className="mt-6" />
+                        )}
+                      </div>
+                    ))}
+                    {reviewStatsError ? (
+                      <p className="text-center text-sm text-muted-foreground py-2">
+                        Kunne ikke laste anmeldelsesstatistikk.
+                      </p>
+                    ) : (
+                      reviewStats &&
+                      reviewStats.total_reviews > reviews.length && (
+                        <Button variant="outline" className="w-full">
+                          Se alle {reviewStats.total_reviews} anmeldelser
+                        </Button>
+                      )
                     )}
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Anmeldelser</CardTitle>
-                </CardHeader>
-                <CardContent>
+                    <Button variant="outline" className="w-full" asChild>
+                      <Link
+                        href={`/profiler/${service.profiles?.id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <User className="w-4 h-4 mr-2" />
+                        Se stylistens profil
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground mb-4">
                       Denne tjenesten har ingen anmeldelser ennå.
@@ -316,9 +332,9 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                       Vær den første til å booke og dele din opplevelse!
                     </p>
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           {/* Booking Sidebar */}

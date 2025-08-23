@@ -19,11 +19,11 @@ interface ServiceDetailSidebarProps {
 
 export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
   const stylist = service.profiles;
-  
+
   if (!stylist) {
     return null; // Should not happen with the inner join, but handle gracefully
   }
-  
+
   // Format price from øre to NOK
   const formatPrice = (priceInOre: number) => {
     return new Intl.NumberFormat("no-NO", {
@@ -50,7 +50,7 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
     <Card className="sticky top-24">
       <CardHeader>
         <CardTitle className="text-2xl">
-          Fra {formatPrice(service.price)}
+          Fra {service.price} {service.currency}
         </CardTitle>
         <CardDescription>Per behandling</CardDescription>
       </CardHeader>
@@ -66,7 +66,7 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
                 : "Hos stylist"}
           </p>
         </div>
-        
+
         <AddToCartButton
           service={service}
           stylist={stylist}
@@ -76,14 +76,14 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
           <ShoppingCart className="w-4 h-4 mr-2" />
           Legg til i handlekurv
         </AddToCartButton>
-        
+
         <Button variant="outline" size="lg" className="w-full">
           <Heart className="w-4 h-4 mr-2" />
           Lagre
         </Button>
-        
+
         <Separator />
-        
+
         <div className="text-center text-sm text-muted-foreground">
           <p>✓ Gratis avbestilling frem til 24 timer før</p>
           <p>✓ Sikker betaling</p>

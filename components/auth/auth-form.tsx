@@ -172,18 +172,18 @@ export function AuthForm({
     <div className="space-y-4">
       {/* Development-only toggle for auth flow */}
       {process.env.NODE_ENV === "development" && (
-        <div className="rounded-lg border-2 border-dashed border-orange-200 bg-orange-50/50 p-3">
+        <div className="rounded-lg border-2 border-dashed border-muted-foreground/30 bg-muted/50 p-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <TestTube2 className="h-4 w-4 text-orange-600" />
-              <Label className="text-sm font-medium text-orange-700">
+              <TestTube2 className="h-4 w-4 text-muted-foreground" />
+              <Label className="text-sm font-medium text-foreground">
                 Utviklingsmodus
               </Label>
             </div>
             <div className="flex items-center gap-2">
               <Label
                 htmlFor="password-flow-toggle"
-                className="text-xs text-orange-600"
+                className="text-xs text-muted-foreground"
               >
                 {usePasswordFlow ? "Passord-flyt" : "E-post-flyt"}
               </Label>
@@ -200,7 +200,7 @@ export function AuthForm({
               />
             </div>
           </div>
-          <p className="mt-2 text-xs text-orange-600">
+          <p className="mt-2 text-xs text-muted-foreground">
             {usePasswordFlow
               ? "Bruker passord for rask testing med seed-brukere"
               : "Bruker e-post-bekreftelse for fullstendig flyt"}
@@ -255,7 +255,7 @@ export function AuthForm({
           <div className="grid gap-2">
             <Label htmlFor="password" className="flex items-center gap-2">
               Passord
-              <span className="text-xs text-orange-600 font-medium bg-orange-50 px-2 py-1 rounded">
+              <span className="text-xs text-muted-foreground font-medium bg-muted px-2 py-1 rounded">
                 Kun utvikling
               </span>
             </Label>

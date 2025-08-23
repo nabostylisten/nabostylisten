@@ -7,17 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-
-interface AddressSuggestion {
-  id: string;
-  place_name: string;
-  text: string;
-}
+import type { MapboxSuggestion } from "@/types";
 
 interface AddressInputProps {
   value: string;
   onChange: (value: string) => void;
-  onSelect?: (suggestion: AddressSuggestion) => void;
+  onSelect?: (suggestion: MapboxSuggestion) => void;
   placeholder?: string;
   className?: string;
   disabled?: boolean;
@@ -33,7 +28,7 @@ export function AddressInput({
   disabled,
   onKeyDown,
 }: AddressInputProps) {
-  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [suggestions, setSuggestions] = useState<MapboxSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -152,7 +147,7 @@ export function AddressInput({
     }
   };
 
-  const handleSelectSuggestion = (suggestion: AddressSuggestion) => {
+  const handleSelectSuggestion = (suggestion: MapboxSuggestion) => {
     onChange(suggestion.place_name);
     onSelect?.(suggestion);
     setIsOpen(false);

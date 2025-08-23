@@ -240,6 +240,40 @@ export interface UnsplashPhoto {
 
 export type UnsplashRandomArrayResponse = UnsplashPhoto[];
 
+// Mapbox Geocoding API Types
+export interface MapboxContextItem {
+  id: string;
+  mapbox_id: string;
+  text: string;
+  text_no?: string;
+  language?: string;
+  language_no?: string;
+  wikidata?: string;
+  short_code?: string;
+}
+
+export interface MapboxSuggestion {
+  id: string;
+  type: "Feature";
+  place_type: string[];
+  relevance: number;
+  properties: {
+    accuracy?: string;
+    mapbox_id: string;
+  };
+  text: string;
+  text_no?: string;
+  place_name: string;
+  place_name_no?: string;
+  center: [number, number]; // [lng, lat]
+  geometry: {
+    type: "Point";
+    coordinates: [number, number]; // [lng, lat]
+  };
+  address?: string; // House number/unit
+  context: MapboxContextItem[];
+}
+
 // Booking filters for user bookings page
 export interface BookingFilters {
   search?: string;

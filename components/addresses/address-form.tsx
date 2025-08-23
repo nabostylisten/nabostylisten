@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
-import { MapPin, Home, Building } from "lucide-react";
+import { Home, Building } from "lucide-react";
+import type { MapboxSuggestion } from "@/types";
 import {
   FormControl,
   FormDescription,
@@ -34,11 +35,9 @@ export interface AddressFormValues {
 
 interface AddressFormProps {
   form: UseFormReturn<AddressFormValues>;
-  isSubmitting?: boolean;
-  mode?: "create" | "update";
 }
 
-export function AddressForm({ form, isSubmitting = false, mode = "create" }: AddressFormProps) {
+export function AddressForm({ form }: AddressFormProps) {
   const [addressFieldsLocked, setAddressFieldsLocked] = useState(false);
 
   // Watch for changes in the full address field
@@ -51,20 +50,21 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
     }
   }, [fullAddress]);
 
-  const handleAddressSelect = (suggestion: any) => {
+  const handleAddressSelect = (suggestion: MapboxSuggestion) => {
     // Parse the Mapbox response to extract address components
     const components = parseMapboxResponse(suggestion);
-    
+
     form.setValue("street_address", components.street);
     form.setValue("city", components.city);
     form.setValue("postal_code", components.postalCode);
     form.setValue("country", components.country);
-    
-    // Store the coordinates
-    if (suggestion.center) {
+
+    // Store the coordinates from geometry (preferred) or center
+    const coordinates = suggestion.geometry?.coordinates || suggestion.center;
+    if (coordinates) {
       form.setValue("location", {
-        lng: suggestion.center[0],
-        lat: suggestion.center[1],
+        lng: coordinates[0],
+        lat: coordinates[1],
       });
     }
 
@@ -154,7 +154,8 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
         {addressFieldsLocked && (
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
-              Adressefeltene ble fylt ut automatisk. Du kan redigere dem om nødvendig.
+              Adressefeltene ble fylt ut automatisk. Du kan redigere dem om
+              nødvendig.
             </p>
             <Button
               type="button"
@@ -176,8 +177,8 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
             <FormItem>
               <FormLabel>Gateadresse</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
+                <Input
+                  {...field}
                   readOnly={addressFieldsLocked}
                   className={addressFieldsLocked ? "bg-muted" : ""}
                 />
@@ -194,8 +195,8 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
             <FormItem>
               <FormLabel>Postnummer</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
+                <Input
+                  {...field}
                   readOnly={addressFieldsLocked}
                   className={addressFieldsLocked ? "bg-muted" : ""}
                 />
@@ -214,8 +215,8 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
             <FormItem>
               <FormLabel>By</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
+                <Input
+                  {...field}
                   readOnly={addressFieldsLocked}
                   className={addressFieldsLocked ? "bg-muted" : ""}
                 />
@@ -232,8 +233,8 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
             <FormItem>
               <FormLabel>Land</FormLabel>
               <FormControl>
-                <Input 
-                  {...field} 
+                <Input
+                  {...field}
                   readOnly={addressFieldsLocked}
                   className={addressFieldsLocked ? "bg-muted" : ""}
                 />
@@ -277,9 +278,7 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
               />
             </FormControl>
             <div className="space-y-1 leading-none">
-              <FormLabel>
-                Sett som primæradresse
-              </FormLabel>
+              <FormLabel>Sett som primæradresse</FormLabel>
               <FormDescription>
                 Denne adressen vil bli valgt som standard
               </FormDescription>
@@ -292,15 +291,17 @@ export function AddressForm({ form, isSubmitting = false, mode = "create" }: Add
 }
 
 // Helper function to parse Mapbox response
-function parseMapboxResponse(suggestion: any) {
-  const placeNameParts = suggestion.place_name.split(",").map((s: string) => s.trim());
+function parseMapboxResponse(suggestion: MapboxSuggestion) {
+  const placeNameParts = suggestion.place_name
+    .split(",")
+    .map((s: string) => s.trim());
   const context = suggestion.context || [];
-  
+
   // Extract components from context
   let postalCode = "";
   let city = "";
   let country = "Norge";
-  
+
   for (const item of context) {
     if (item.id.startsWith("postcode")) {
       postalCode = item.text;
@@ -310,27 +311,37 @@ function parseMapboxResponse(suggestion: any) {
       country = item.text;
     }
   }
-  
-  // The first part is usually the street address
-  const street = suggestion.text || placeNameParts[0] || "";
-  
+
+  // Construct the full street address: street name + house number
+  // suggestion.text = "Sandåkerveien", suggestion.address = "22e"
+  let street = suggestion.text;
+  if (suggestion.address) {
+    street = `${suggestion.text} ${suggestion.address}`;
+  }
+
+  // Fallback to first part of place_name if no proper street/address fields
+  if (!street) {
+    street = placeNameParts[0] || "";
+  }
+
   // Fallback to parsing from place_name if context doesn't have all info
   if (!city && placeNameParts.length > 1) {
     // Try to find city from place_name
-    const possibleCity = placeNameParts.find((part: string) => 
-      !part.match(/^\d{4}/) && part !== street && part !== country
+    const possibleCity = placeNameParts.find(
+      (part: string) =>
+        !part.match(/^\d{4}/) && part !== street && part !== country
     );
     if (possibleCity) city = possibleCity;
   }
-  
+
   if (!postalCode && placeNameParts.length > 1) {
     // Look for 4-digit postal code
-    const possiblePostal = placeNameParts.find((part: string) => 
+    const possiblePostal = placeNameParts.find((part: string) =>
       part.match(/^\d{4}/)
     );
     if (possiblePostal) postalCode = possiblePostal;
   }
-  
+
   return {
     street,
     city,

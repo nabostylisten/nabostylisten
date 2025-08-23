@@ -189,11 +189,7 @@ export function AddressDialog({
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <AddressForm 
-              form={form} 
-              isSubmitting={isSubmitting} 
-              mode={actualMode}
-            />
+            <AddressForm form={form} />
 
             <DialogFooter>
               <Button

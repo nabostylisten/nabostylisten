@@ -27,15 +27,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Calendar } from "@/components/ui/calendar";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon, Clock } from "lucide-react";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import { BookingNoteImageUpload } from "./booking-note-image-upload";
 import { BookingNoteImageCarousel } from "./booking-note-image-carousel";
 import {
@@ -63,8 +61,7 @@ const formSchema = z.object({
     "other",
   ]),
   customer_visible: z.boolean(),
-  actual_start_time: z.string(),
-  actual_end_time: z.string(),
+  duration_minutes: z.number().optional(),
   next_appointment_suggestion: z.string(),
   tags: z.array(z.string()),
 });
@@ -91,29 +88,173 @@ const COMMON_TAGS = [
   "Anbefal produkter",
 ];
 
-// Helper function to parse datetime-local string to date and time
-const parseDateTime = (datetimeString: string) => {
-  if (!datetimeString) return { date: undefined, time: "" };
+// Helper functions for duration conversion
+const minutesToHoursAndMinutes = (totalMinutes: number | undefined) => {
+  if (!totalMinutes) return { hours: 0, minutes: 0 };
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return { hours, minutes };
+};
 
-  const date = new Date(datetimeString);
-  const formattedTime = date.toTimeString().slice(0, 8); // HH:MM:SS format
+const hoursAndMinutesToMinutes = (hours: number, minutes: number) => {
+  return hours * 60 + minutes;
+};
 
-  return {
-    date: date,
-    time: formattedTime,
+// Duration Input Component
+interface DurationInputProps {
+  value?: number;
+  onChange: (minutes?: number) => void;
+}
+
+function DurationInput({ value, onChange }: DurationInputProps) {
+  const [durationUnit, setDurationUnit] = useState<"hours" | "minutes">(
+    "hours"
+  );
+  const [hoursValue, setHoursValue] = useState<string>("");
+  const [minutesValue, setMinutesValue] = useState<string>("");
+
+  // Initialize values from prop
+  useEffect(() => {
+    if (value) {
+      const { hours, minutes } = minutesToHoursAndMinutes(value);
+      if (hours > 0 && minutes > 0) {
+        setDurationUnit("hours");
+        setHoursValue(hours.toString());
+        setMinutesValue(minutes.toString());
+      } else if (hours > 0) {
+        setDurationUnit("hours");
+        setHoursValue(hours.toString());
+        setMinutesValue("");
+      } else if (minutes > 0) {
+        setDurationUnit("minutes");
+        setHoursValue("");
+        setMinutesValue(minutes.toString());
+      }
+    } else {
+      setHoursValue("");
+      setMinutesValue("");
+    }
+  }, [value]);
+
+  const updateDuration = (hours: number, minutes: number) => {
+    const totalMinutes = hoursAndMinutesToMinutes(hours, minutes);
+    onChange(totalMinutes > 0 ? totalMinutes : undefined);
   };
-};
 
-// Helper function to combine date and time into datetime-local string
-const combineDateTime = (date: Date | undefined, time: string) => {
-  if (!date || !time) return "";
+  const handleHoursChange = (value: string) => {
+    setHoursValue(value);
+    const hours = parseInt(value) || 0;
+    const minutes = parseInt(minutesValue) || 0;
+    updateDuration(hours, minutes);
+  };
 
-  const [hours, minutes, seconds = "00"] = time.split(":");
-  const combined = new Date(date);
-  combined.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds));
+  const handleMinutesChange = (value: string) => {
+    setMinutesValue(value);
+    if (durationUnit === "hours") {
+      const hours = parseInt(hoursValue) || 0;
+      const minutes = parseInt(value) || 0;
+      updateDuration(hours, minutes);
+    } else {
+      const minutes = parseInt(value) || 0;
+      updateDuration(0, minutes);
+    }
+  };
 
-  return combined.toISOString().slice(0, 16); // Format for datetime-local input
-};
+  const handleUnitChange = (unit: "hours" | "minutes") => {
+    setDurationUnit(unit);
+    if (unit === "minutes") {
+      // Convert current duration to minutes only
+      const currentTotal = hoursAndMinutesToMinutes(
+        parseInt(hoursValue) || 0,
+        parseInt(minutesValue) || 0
+      );
+      setHoursValue("");
+      setMinutesValue(currentTotal > 0 ? currentTotal.toString() : "");
+      onChange(currentTotal > 0 ? currentTotal : undefined);
+    } else {
+      // Convert minutes to hours if needed
+      const totalMinutes = parseInt(minutesValue) || 0;
+      if (totalMinutes >= 60) {
+        const hours = Math.floor(totalMinutes / 60);
+        const remainingMinutes = totalMinutes % 60;
+        setHoursValue(hours.toString());
+        setMinutesValue(
+          remainingMinutes > 0 ? remainingMinutes.toString() : ""
+        );
+      } else {
+        setHoursValue("");
+      }
+    }
+  };
+
+  return (
+    <FormItem>
+      <div className="flex items-center justify-between">
+        <FormLabel>Varighet av tjeneste</FormLabel>
+        <div className="flex gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="w-[120px] justify-between">
+                {durationUnit === "hours" ? "Timer" : "Minutter"}
+                <ChevronDown className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => handleUnitChange("hours")}>
+                Timer
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleUnitChange("minutes")}>
+                Minutter
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          {durationUnit === "hours" && (
+            <>
+              <div className="flex-1 flex items-center gap-2">
+                <Input
+                  type="number"
+                  placeholder="Timer"
+                  value={hoursValue}
+                  onChange={(e) => handleHoursChange(e.target.value)}
+                  min="0"
+                />
+                <span className="text-sm text-muted-foreground">timer</span>
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <Input
+                  type="number"
+                  placeholder="Minutter"
+                  value={minutesValue}
+                  onChange={(e) => handleMinutesChange(e.target.value)}
+                  min="0"
+                  max="59"
+                />
+                <span className="text-sm text-muted-foreground">minutter</span>
+              </div>
+            </>
+          )}
+
+          {durationUnit === "minutes" && (
+            <div className="flex-1">
+              <Input
+                type="number"
+                placeholder="Minutter"
+                value={minutesValue}
+                onChange={(e) => handleMinutesChange(e.target.value)}
+                min="0"
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      <FormDescription>Hvor lang tid tok tjenesten?</FormDescription>
+    </FormItem>
+  );
+}
 
 interface BookingNoteFormProps {
   bookingId: string;
@@ -140,8 +281,7 @@ export function BookingNoteForm({
       content: "",
       category: "service_notes" as const,
       customer_visible: false,
-      actual_start_time: "",
-      actual_end_time: "",
+      duration_minutes: undefined,
       next_appointment_suggestion: "",
       tags: [],
     },
@@ -154,12 +294,7 @@ export function BookingNoteForm({
         content: editingNote.content,
         category: editingNote.category as FormValues["category"],
         customer_visible: editingNote.customer_visible,
-        actual_start_time: editingNote.actual_start_time
-          ? new Date(editingNote.actual_start_time).toISOString().slice(0, 16)
-          : "",
-        actual_end_time: editingNote.actual_end_time
-          ? new Date(editingNote.actual_end_time).toISOString().slice(0, 16)
-          : "",
+        duration_minutes: editingNote.duration_minutes || undefined,
         next_appointment_suggestion:
           editingNote.next_appointment_suggestion || "",
         tags: editingNote.tags || [],
@@ -199,14 +334,7 @@ export function BookingNoteForm({
       content: values.content,
       category: values.category,
       customer_visible: values.customer_visible,
-      actual_start_time:
-        values.actual_start_time && values.actual_start_time.trim()
-          ? new Date(values.actual_start_time).toISOString()
-          : null,
-      actual_end_time:
-        values.actual_end_time && values.actual_end_time.trim()
-          ? new Date(values.actual_end_time).toISOString()
-          : null,
+      duration_minutes: values.duration_minutes || null,
       next_appointment_suggestion:
         values.next_appointment_suggestion &&
         values.next_appointment_suggestion.trim()
@@ -328,165 +456,11 @@ export function BookingNoteForm({
 
             <Separator />
 
-            {/* Timing */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold">Tidspunkter</h3>
-              <div className="grid grid-cols-1 gap-4">
-                <FormField
-                  control={form.control}
-                  name="actual_start_time"
-                  render={({ field }) => {
-                    const { date: startDate, time: startTime } = parseDateTime(
-                      field.value
-                    );
-
-                    return (
-                      <FormItem>
-                        <FormLabel>Faktisk starttid</FormLabel>
-                        <div className="flex gap-2">
-                          <div className="flex-1">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full justify-start font-normal",
-                                      !startDate && "text-muted-foreground"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {startDate
-                                      ? format(startDate, "dd.MM.yyyy")
-                                      : "Velg dato"}
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
-                                <Calendar
-                                  mode="single"
-                                  selected={startDate}
-                                  onSelect={(date) => {
-                                    const combined = combineDateTime(
-                                      date,
-                                      startTime
-                                    );
-                                    field.onChange(combined);
-                                  }}
-                                  autoFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="flex-1">
-                            <div className="relative">
-                              <Clock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                type="time"
-                                value={startTime}
-                                onChange={(e) => {
-                                  const combined = combineDateTime(
-                                    startDate,
-                                    e.target.value
-                                  );
-                                  field.onChange(combined);
-                                }}
-                                className="pl-8"
-                                step="60"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <FormDescription>
-                          Hvis forskjellig fra booket tid
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="actual_end_time"
-                  render={({ field }) => {
-                    const { date: endDate, time: endTime } = parseDateTime(
-                      field.value
-                    );
-
-                    return (
-                      <FormItem>
-                        <FormLabel>Faktisk sluttid</FormLabel>
-                        <div className="flex gap-2">
-                          <div className="flex-1">
-                            <Popover>
-                              <PopoverTrigger asChild>
-                                <FormControl>
-                                  <Button
-                                    variant="outline"
-                                    className={cn(
-                                      "w-full justify-start font-normal",
-                                      !endDate && "text-muted-foreground"
-                                    )}
-                                  >
-                                    <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {endDate
-                                      ? format(endDate, "dd.MM.yyyy")
-                                      : "Velg dato"}
-                                  </Button>
-                                </FormControl>
-                              </PopoverTrigger>
-                              <PopoverContent
-                                className="w-auto p-0"
-                                align="start"
-                              >
-                                <Calendar
-                                  mode="single"
-                                  selected={endDate}
-                                  onSelect={(date) => {
-                                    const combined = combineDateTime(
-                                      date,
-                                      endTime
-                                    );
-                                    field.onChange(combined);
-                                  }}
-                                  autoFocus
-                                />
-                              </PopoverContent>
-                            </Popover>
-                          </div>
-                          <div className="flex-1">
-                            <div className="relative">
-                              <Clock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                              <Input
-                                type="time"
-                                value={endTime}
-                                onChange={(e) => {
-                                  const combined = combineDateTime(
-                                    endDate,
-                                    e.target.value
-                                  );
-                                  field.onChange(combined);
-                                }}
-                                className="pl-8"
-                                step="60"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        <FormDescription>
-                          Hvis forskjellig fra booket tid
-                        </FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    );
-                  }}
-                />
-              </div>
-            </div>
+            {/* Duration */}
+            <DurationInput
+              value={form.watch("duration_minutes")}
+              onChange={(minutes) => form.setValue("duration_minutes", minutes)}
+            />
 
             <Separator />
 

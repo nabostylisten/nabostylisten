@@ -149,23 +149,16 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
             </div>
           )}
 
-          {/* Timing Information */}
-          {(note.actual_start_time || note.actual_end_time) && (
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                <span>Faktisk tid:</span>
-              </div>
-              {note.actual_start_time && (
-                <span>
-                  Start: {format(new Date(note.actual_start_time), "HH:mm dd.MM.yyyy")}
-                </span>
-              )}
-              {note.actual_end_time && (
-                <span>
-                  Slutt: {format(new Date(note.actual_end_time), "HH:mm dd.MM.yyyy")}
-                </span>
-              )}
+          {/* Duration Information */}
+          {note.duration_minutes && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Clock className="w-4 h-4" />
+              <span>Varighet:</span>
+              <span className="font-medium">
+                {note.duration_minutes >= 60 
+                  ? `${Math.floor(note.duration_minutes / 60)} timer ${note.duration_minutes % 60 === 0 ? '' : `${note.duration_minutes % 60} min`}`.trim()
+                  : `${note.duration_minutes} minutter`}
+              </span>
             </div>
           )}
 

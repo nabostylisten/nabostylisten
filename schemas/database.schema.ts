@@ -268,13 +268,12 @@ export const applicationsRelationshipsSchema = z.tuple([
 ]);
 
 export const bookingNotesRowSchema = z.object({
-  actual_end_time: z.string().nullable(),
-  actual_start_time: z.string().nullable(),
   booking_id: z.string(),
   category: BookingNoteCategorySchema,
   content: z.string(),
   created_at: z.string(),
   customer_visible: z.boolean(),
+  duration_minutes: z.number().nullable(),
   id: z.string(),
   next_appointment_suggestion: z.string().nullable(),
   stylist_id: z.string(),
@@ -283,13 +282,12 @@ export const bookingNotesRowSchema = z.object({
 });
 
 export const bookingNotesInsertSchema = z.object({
-  actual_end_time: z.string().optional().nullable(),
-  actual_start_time: z.string().optional().nullable(),
   booking_id: z.string(),
   category: BookingNoteCategorySchema.optional(),
   content: z.string(),
   created_at: z.string().optional(),
   customer_visible: z.boolean().optional(),
+  duration_minutes: z.number().optional().nullable(),
   id: z.string().optional(),
   next_appointment_suggestion: z.string().optional().nullable(),
   stylist_id: z.string(),
@@ -298,13 +296,12 @@ export const bookingNotesInsertSchema = z.object({
 });
 
 export const bookingNotesUpdateSchema = z.object({
-  actual_end_time: z.string().optional().nullable(),
-  actual_start_time: z.string().optional().nullable(),
   booking_id: z.string().optional(),
   category: BookingNoteCategorySchema.optional(),
   content: z.string().optional(),
   created_at: z.string().optional(),
   customer_visible: z.boolean().optional(),
+  duration_minutes: z.number().optional().nullable(),
   id: z.string().optional(),
   next_appointment_suggestion: z.string().optional().nullable(),
   stylist_id: z.string().optional(),

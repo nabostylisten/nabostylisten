@@ -2011,13 +2011,12 @@ export type Database = {
       }
       booking_notes: {
         Row: {
-          actual_end_time: string | null
-          actual_start_time: string | null
           booking_id: string
           category: Database["public"]["Enums"]["booking_note_category"]
           content: string
           created_at: string
           customer_visible: boolean
+          duration_minutes: number | null
           id: string
           next_appointment_suggestion: string | null
           stylist_id: string
@@ -2025,13 +2024,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          actual_end_time?: string | null
-          actual_start_time?: string | null
           booking_id: string
           category?: Database["public"]["Enums"]["booking_note_category"]
           content: string
           created_at?: string
           customer_visible?: boolean
+          duration_minutes?: number | null
           id?: string
           next_appointment_suggestion?: string | null
           stylist_id: string
@@ -2039,13 +2037,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          actual_end_time?: string | null
-          actual_start_time?: string | null
           booking_id?: string
           category?: Database["public"]["Enums"]["booking_note_category"]
           content?: string
           created_at?: string
           customer_visible?: boolean
+          duration_minutes?: number | null
           id?: string
           next_appointment_suggestion?: string | null
           stylist_id?: string

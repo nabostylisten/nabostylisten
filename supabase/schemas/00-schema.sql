@@ -304,8 +304,7 @@ CREATE TABLE IF NOT EXISTS public.booking_notes (
     
     -- Additional metadata
     customer_visible boolean DEFAULT false NOT NULL,
-    actual_start_time timestamp with time zone,
-    actual_end_time timestamp with time zone,
+    duration_minutes integer, -- How long the service actually took
     
     -- Future booking suggestions
     next_appointment_suggestion text,

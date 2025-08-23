@@ -27,48 +27,43 @@ export const NabostylistenOtpEmail = ({
     <Body style={main}>
       <Container style={container}>
         <div style={headerSection}>
-          <Heading style={h1}>🎨 Nabostylisten</Heading>
+          <Heading style={h1}>Nabostylisten</Heading>
           <Text style={subtitle}>Din plattform for stylisttjenester</Text>
         </div>
-        
+
         <div style={contentSection}>
           <Heading style={h2}>Din innloggingskode</Heading>
-          <Text style={text}>
-            Hei{email ? ` ${email}` : ""}!
-          </Text>
-          <Text style={text}>
-            Her er din 6-sifrede innloggingskode:
-          </Text>
-          
+          <Text style={text}>Hei{email ? ` ${email}` : ""}!</Text>
+          <Text style={text}>Her er din 6-sifrede innloggingskode:</Text>
+
           <div style={codeContainer}>
             <code style={code}>{token}</code>
           </div>
-          
+
           <Text style={instructionText}>
-            Skriv inn denne koden på innloggingssiden for å fullføre påloggingen.
+            Skriv inn denne koden på innloggingssiden for å fullføre
+            påloggingen.
           </Text>
-          
+
           <Text style={securityText}>
-            Av sikkerhetsmessige årsaker utløper denne koden om <strong>1 time</strong>.
+            Av sikkerhetsmessige årsaker utløper denne koden om{" "}
+            <strong>1 time</strong>.
           </Text>
-          
+
           <Text style={warningText}>
-            Hvis du ikke forsøkte å logge inn på Nabostylisten, kan du trygt ignorere denne e-posten.
+            Hvis du ikke forsøkte å logge inn på Nabostylisten, kan du trygt
+            ignorere denne e-posten.
           </Text>
         </div>
-        
+
         <div style={footerSection}>
           <Text style={footer}>
-            <Link
-              href={siteUrl}
-              target="_blank"
-              style={footerLink}
-            >
-              Nabostylisten.no
+            <Link href={siteUrl} target="_blank" style={footerLink}>
+              nabostylisten.no
             </Link>
             <br />
             <span style={footerTagline}>
-              Book din neste stylistopplevelse i dag ✨
+              Book din neste stylistopplevelse i dag
             </span>
           </Text>
         </div>

@@ -12,9 +12,18 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, layoutStyles, urgencyColors, colors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  layoutStyles,
+  urgencyColors,
+  colors,
+} from "../utils/styles";
 
 interface NewBookingRequestEmailProps {
+  stylistProfileId: string;
   stylistName: string;
   customerName: string;
   bookingId: string;
@@ -35,6 +44,7 @@ const baseUrl = process.env.VERCEL_URL
   : "http://localhost:3000";
 
 export const NewBookingRequestEmail = ({
+  stylistProfileId = "12345",
   stylistName = "Anna Stylist",
   customerName = "Ola Nordmann",
   bookingId = "12345",
@@ -51,7 +61,7 @@ export const NewBookingRequestEmail = ({
 }: NewBookingRequestEmailProps) => {
   const locationText = location === "stylist" ? "Hos deg" : "Hjemme hos kunden";
   const previewText = `Ny bookingforespørsel fra ${customerName} for ${serviceName}`;
-  
+
   const urgencyColors = {
     high: { bg: "#ff3333", text: "#ffffff" }, // --destructive
     medium: { bg: "#fee7dc", text: "#c2724a" }, // --secondary colors
@@ -60,7 +70,7 @@ export const NewBookingRequestEmail = ({
 
   const urgencyLabels = {
     high: "Høy prioritet",
-    medium: "Middels prioritet", 
+    medium: "Middels prioritet",
     low: "Lav prioritet",
   };
 
@@ -80,61 +90,43 @@ export const NewBookingRequestEmail = ({
             />
           </Section>
 
-          <Section style={{
-            ...urgencyBanner,
-            backgroundColor: urgencyColors[urgency].bg,
-          }}>
-            <Text style={{
-              ...urgencyText,
-              color: urgencyColors[urgency].text,
-            }}>
-              🚀 {urgencyLabels[urgency]} - Ny bookingforespørsel
-            </Text>
-          </Section>
-
-          <Heading style={heading}>
-            Du har en ny bookingforespørsel!
-          </Heading>
+          <Heading style={heading}>Du har en ny bookingforespørsel!</Heading>
 
           <Text style={paragraph}>
-            Hei {stylistName}! Du har mottatt en ny bookingforespørsel fra {customerName}.
+            Hei {stylistName}! Du har mottatt en ny bookingforespørsel fra{" "}
+            {customerName}.
           </Text>
 
           {/* Customer Information */}
           <Section style={customerSection}>
-            <Text style={sectionHeader}>👤 Kunde:</Text>
-            <Text style={customerName}>
-              {customerName}
-            </Text>
-            <Text style={customerNote}>
-              Ny kunde på plattformen
-            </Text>
+            <Text style={sectionHeader}>Kunde:</Text>
+            <Text>{customerName}</Text>
           </Section>
 
           {/* Booking Details */}
           <Section style={bookingDetailsSection}>
-            <Text style={sectionHeader}>📋 Forespurte detaljer:</Text>
-            
+            <Text style={sectionHeader}>Forespurte detaljer:</Text>
+
             <div style={detailRow}>
               <Text style={detailLabel}>Tjeneste:</Text>
               <Text style={detailValue}>{serviceName}</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Dato:</Text>
               <Text style={detailValue}>{requestedDate}</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Tid:</Text>
               <Text style={detailValue}>{requestedTime}</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Varighet:</Text>
               <Text style={detailValue}>~{estimatedDuration} minutter</Text>
             </div>
-            
+
             <div style={detailRow}>
               <Text style={detailLabel}>Sted:</Text>
               <Text style={detailValue}>{locationText}</Text>
@@ -149,75 +141,69 @@ export const NewBookingRequestEmail = ({
 
             <div style={detailRow}>
               <Text style={detailLabel}>Pris:</Text>
-              <Text style={detailValue}>{totalPrice} {currency}</Text>
+              <Text style={detailValue}>
+                {totalPrice} {currency}
+              </Text>
             </div>
           </Section>
 
           {/* Customer Message */}
           {messageFromCustomer && (
             <Section style={messageSection}>
-              <Text style={messageHeader}>
-                💬 Melding fra {customerName}:
-              </Text>
-              <Text style={messageContent}>
-                "{messageFromCustomer}"
-              </Text>
+              <Text style={messageHeader}>Melding fra {customerName}:</Text>
+              <Text style={messageContent}>"{messageFromCustomer}"</Text>
             </Section>
           )}
 
           {/* Action Buttons */}
           <Section style={actionsSection}>
-            <Text style={actionsHeader}>
-              ⚡ Velg din handling:
-            </Text>
+            <Text style={actionsHeader}>Velg din handling:</Text>
             <div style={buttonGroup}>
-              <Button 
-                style={acceptButton} 
+              <Button
+                style={acceptButton}
                 href={`${baseUrl}/bookinger/${bookingId}/accept`}
               >
-                ✅ Godta forespørsel
+                Godta forespørsel
               </Button>
-              <Button 
-                style={declineButton} 
+              <Button
+                style={declineButton}
                 href={`${baseUrl}/bookinger/${bookingId}/decline`}
               >
-                ❌ Avslå forespørsel
+                Avslå forespørsel
               </Button>
             </div>
-            <Button 
-              style={viewButton} 
+            <Button
+              style={viewButton}
               href={`${baseUrl}/bookinger/${bookingId}`}
             >
-              👁️ Se fullstendige detaljer
+              Se fullstendige detaljer
             </Button>
           </Section>
 
           {/* Tips for Stylists */}
           <Section style={tipsSection}>
-            <Text style={tipsHeader}>💡 Tips for å håndtere forespørsler:</Text>
+            <Text style={tipsHeader}>Tips for å håndtere forespørsler:</Text>
             <Text style={tipsText}>
-              • <strong>Svar raskt</strong> - Kunder setter pris på rask respons<br/>
-              • <strong>Vær profesjonell</strong> - Første inntrykk betyr mye<br/>
-              • <strong>Still spørsmål</strong> - Avklar forventninger tidlig<br/>
-              • <strong>Bekreft detaljer</strong> - Tid, sted og spesielle ønsker
-            </Text>
-          </Section>
-
-          {/* Reminder Section */}
-          <Section style={reminderSection}>
-            <Text style={reminderHeader}>⏰ Husk:</Text>
-            <Text style={reminderText}>
-              Du har <strong>24 timer</strong> til å svare på denne forespørselen. 
-              Etter det vil kunden bli informert om at du ikke var tilgjengelig.
+              • <strong>Svar raskt</strong> - Kunder setter pris på rask respons
+              <br />• <strong>Vær profesjonell</strong> - Første inntrykk betyr
+              mye
+              <br />• <strong>Still spørsmål</strong> - Avklar forventninger
+              tidlig
+              <br />• <strong>Bekreft detaljer</strong> - Tid, sted og spesielle
+              ønsker
             </Text>
           </Section>
 
           {/* Notification Settings */}
           <Section style={settingsSection}>
             <Text style={settingsText}>
-              📧 Du mottar denne e-posten fordi du har aktivert varsler for nye bookingforespørsler.
+              Du mottar denne e-posten fordi du har aktivert varsler for nye
+              bookingforespørsler.
             </Text>
-            <Link href={`${baseUrl}/profiler/${stylistName}/preferanser`} style={settingsLink}>
+            <Link
+              href={`${baseUrl}/profiler/${stylistProfileId}/preferanser`}
+              style={settingsLink}
+            >
               Endre varselinnstillinger
             </Link>
           </Section>
@@ -247,7 +233,8 @@ NewBookingRequestEmail.PreviewProps = {
   requestedTime: "14:00 - 15:30",
   location: "customer" as const,
   customerAddress: "Storgata 1, 0001 Oslo",
-  messageFromCustomer: "Jeg ønsker en moderne frisyre som er lett å style. Har langt hår nå.",
+  messageFromCustomer:
+    "Jeg ønsker en moderne frisyre som er lett å style. Har langt hår nå.",
   totalPrice: 650,
   currency: "NOK",
   estimatedDuration: 90,

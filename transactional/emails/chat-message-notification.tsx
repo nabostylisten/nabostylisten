@@ -12,9 +12,16 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
+import {
+  baseStyles,
+  sectionStyles,
+  textStyles,
+  buttonStyles,
+  colors,
+} from "../utils/styles";
 
 interface ChatMessageNotificationEmailProps {
+  recipientProfileId: string;
   recipientName: string;
   senderName: string;
   senderRole: "customer" | "stylist";
@@ -30,6 +37,7 @@ const baseUrl = process.env.VERCEL_URL
   : "http://localhost:3000";
 
 export const ChatMessageNotificationEmail = ({
+  recipientProfileId = "12345",
   recipientName = "Ola Nordmann",
   senderName = "Anna Stylist",
   senderRole = "stylist",
@@ -43,9 +51,8 @@ export const ChatMessageNotificationEmail = ({
   const previewText = `Ny melding fra ${senderName}: ${message.substring(0, 50)}${message.length > 50 ? "..." : ""}`;
 
   // Truncate message if too long for email
-  const truncatedMessage = message.length > 200 
-    ? `${message.substring(0, 200)}...` 
-    : message;
+  const truncatedMessage =
+    message.length > 200 ? `${message.substring(0, 200)}...` : message;
 
   return (
     <Html>
@@ -64,34 +71,30 @@ export const ChatMessageNotificationEmail = ({
           </Section>
 
           <Section style={messageTypeBanner}>
-            <Text style={messageTypeText}>💬 Ny melding</Text>
+            <Text style={messageTypeText}>Ny melding</Text>
           </Section>
 
-          <Heading style={heading}>
-            Du har fått en ny melding!
-          </Heading>
+          <Heading style={heading}>Du har fått en ny melding!</Heading>
 
           <Text style={paragraph}>
-            Hei {recipientName}! Du har mottatt en ny melding fra {senderName}, {roleText}.
+            Hei {recipientName}! Du har mottatt en ny melding fra {senderName},{" "}
+            {roleText}.
           </Text>
 
           {/* Booking Context */}
           <Section style={bookingContextSection}>
-            <Text style={contextHeader}>📋 Angående booking:</Text>
+            <Text style={contextHeader}>Angående booking:</Text>
             <Text style={contextText}>
-              <strong>{serviceName}</strong><br/>
+              <strong>{serviceName}</strong>
+              <br />
               {bookingDate}
             </Text>
           </Section>
 
           {/* Message Content */}
           <Section style={messageSection}>
-            <Text style={messageHeader}>
-              Melding fra {senderName}:
-            </Text>
-            <Text style={messageContent}>
-              "{truncatedMessage}"
-            </Text>
+            <Text style={messageHeader}>Melding fra {senderName}:</Text>
+            <Text style={messageContent}>"{truncatedMessage}"</Text>
             {message.length > 200 && (
               <Text style={messageTruncated}>
                 Se hele meldingen i chatten →
@@ -122,31 +125,34 @@ export const ChatMessageNotificationEmail = ({
             <Text style={paragraph}>
               Svar direkte i chatten for rask kommunikasjon.
             </Text>
-            <Button 
-              style={button} 
-              href={`${baseUrl}${chatUrl}`}
-            >
+            <Button style={button} href={`${baseUrl}${chatUrl}`}>
               Åpne chat
             </Button>
           </Section>
 
           {/* Tips Section */}
           <Section style={tipsSection}>
-            <Text style={tipsHeader}>💡 Tips for god kommunikasjon:</Text>
+            <Text style={tipsHeader}>Tips for god kommunikasjon:</Text>
             <Text style={tipsText}>
-              • Svar raskt for best opplevelse<br/>
-              • Vær tydelig på spørsmål og behov<br/>
-              • Del gjerne inspirasjon og referansebilder<br/>
-              • Still spørsmål hvis noe er uklart
+              • Svar raskt for best opplevelse
+              <br />
+              • Vær tydelig på spørsmål og behov
+              <br />
+              • Del gjerne inspirasjon og referansebilder
+              <br />• Still spørsmål hvis noe er uklart
             </Text>
           </Section>
 
           {/* Notification Settings */}
           <Section style={settingsSection}>
             <Text style={settingsText}>
-              📧 Du mottar denne e-posten fordi du har aktivert varsler for chat-meldinger.
+              Du mottar denne e-posten fordi du har aktivert varsler for
+              chat-meldinger.
             </Text>
-            <Link href={`${baseUrl}/profiler/${recipientName}/preferanser`} style={settingsLink}>
+            <Link
+              href={`${baseUrl}/profiler/${recipientProfileId}/preferanser`}
+              style={settingsLink}
+            >
               Endre varselinnstillinger
             </Link>
           </Section>
@@ -171,7 +177,8 @@ ChatMessageNotificationEmail.PreviewProps = {
   recipientName: "Ola Nordmann",
   senderName: "Anna Stylist",
   senderRole: "stylist" as const,
-  message: "Hei! Jeg gleder meg til å se deg i morgen. Har du noen spesielle ønsker for frisyren?",
+  message:
+    "Hei! Jeg gleder meg til å se deg i morgen. Har du noen spesielle ønsker for frisyren?",
   bookingId: "booking_12345",
   serviceName: "Hårklipp og styling",
   bookingDate: "15. januar 2024",

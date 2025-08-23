@@ -5,9 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AddressInput } from "@/components/ui/address-input";
 import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
-import { Search, Filter } from "lucide-react";
+import { Search, Filter, HelpCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { ServiceFilterHelpDialog } from "./service-filter-help-dialog";
 import {
   Select,
   SelectContent,
@@ -96,6 +97,8 @@ export function ServiceFilterForm({
 
   const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
   const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
+
+  const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
 
   const handleSearch = () => {
     startTransition(() => {
@@ -253,6 +256,15 @@ export function ServiceFilterForm({
                 </span>
               </div>
             )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsHelpDialogOpen(true)}
+              className="h-8 w-8 p-0"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span className="sr-only">Åpne hjelp</span>
+            </Button>
           </div>
         </div>
 
@@ -672,6 +684,12 @@ export function ServiceFilterForm({
             </Button>
           )}
         </div>
+
+        {/* Help Dialog */}
+        <ServiceFilterHelpDialog
+          open={isHelpDialogOpen}
+          onOpenChange={setIsHelpDialogOpen}
+        />
       </CardContent>
     </Card>
   );

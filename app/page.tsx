@@ -24,7 +24,7 @@ async function ServiceFilterSection() {
   const stylists = stylistsResult.error ? [] : stylistsResult.data || [];
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <ServiceFilterForm
         categories={categories}
         stylists={stylists}

@@ -204,15 +204,26 @@ export function ServiceFilterForm({
       <CardContent className="p-6 space-y-4">
         {/* Search and Location Row */}
         <div className="flex flex-col md:flex-row gap-4">
-          <div className="md:flex-1 relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Søk etter tjeneste..."
-              className="pl-10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
+          <div className="md:flex-1 flex gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Søk etter tjeneste..."
+                className="pl-10"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsHelpDialogOpen(true)}
+              className="h-10 w-10 p-0 md:hidden"
+            >
+              <HelpCircle className="h-4 w-4" />
+              <span className="sr-only">Åpne hjelp</span>
+            </Button>
           </div>
           <div className="md:flex-1 flex gap-2">
             <div className="flex-1">
@@ -262,7 +273,7 @@ export function ServiceFilterForm({
               variant="ghost"
               size="sm"
               onClick={() => setIsHelpDialogOpen(true)}
-              className="h-8 w-8 p-0"
+              className="h-10 w-10 p-0 hidden md:block"
             >
               <HelpCircle className="h-4 w-4" />
               <span className="sr-only">Åpne hjelp</span>

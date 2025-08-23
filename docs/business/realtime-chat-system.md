@@ -24,6 +24,8 @@ The real-time chat system enables direct communication between customers and sty
 - **Portfolio Building**: Document and showcase work with customer consent
 - **Operational Efficiency**: Reduce back-and-forth through other channels
 - **Customer Retention**: Maintain engagement beyond the single booking
+- **Dual Role Management**: Separate view of chats when acting as customer vs. service provider
+- **Historical Context**: Access to previous chat histories with repeat customers
 
 ### Platform Benefits
 
@@ -47,6 +49,9 @@ The real-time chat system enables direct communication between customers and sty
 - **Authentication Required**: Users must be logged in to access chat functionality
 - **Role-Based Permissions**: Users can only access chats for their own bookings
 - **Admin Oversight**: Administrators have access to all chats for moderation purposes
+- **Dual Role Access**: Stylists can view chats in two modes:
+  - **Personal Mode**: Chats where they are the customer (booked services from other stylists)
+  - **Stylist Mode**: Chats where they are providing services to customers
 
 ### Message Persistence
 
@@ -81,7 +86,20 @@ The real-time chat system enables direct communication between customers and sty
 
 1. **From Booking Management**: Navigate to booking details → Click "Åpne chat"
 2. **From Dashboard**: Access all active chats from profile chat overview
-3. **Direct Navigation**: Use booking-specific chat URLs
+3. **Chat Mode Selection**: Toggle between "Mine samtaler" (personal) and "Kundesamtaler" (stylist)
+4. **Direct Navigation**: Use booking-specific chat URLs
+
+#### Chat Mode Management
+
+**Personal Mode ("Mine samtaler")**
+- View chats where the stylist is acting as a customer
+- See bookings they've made with other stylists
+- Separate interface for their own service needs
+
+**Stylist Mode ("Kundesamtaler")**  
+- View chats where they are providing services
+- Access to previous booking histories with repeat customers
+- Professional service provider interface
 
 #### Typical Use Cases
 
@@ -92,6 +110,58 @@ The real-time chat system enables direct communication between customers and sty
 - **Progress Documentation**: Share photos during multi-step processes
 - **Service Documentation**: "Here's what we discussed for your next appointment" with reference photos
 - **Customer Education**: "Here's how to maintain your new style" with visual guides
+- **Historical Reference**: Access previous chat histories to understand customer preferences and past services
+
+## Previous Bookings Integration
+
+### Business Purpose
+
+The previous bookings feature enhances the stylist experience by providing context from past customer relationships. This feature enables stylists to:
+
+- **Understand Customer History**: View complete booking timeline with specific customers
+- **Access Chat Archives**: Read previous conversations to understand customer preferences
+- **Improve Service Quality**: Reference past services and customer feedback
+- **Build Stronger Relationships**: Demonstrate continuity and personalized attention
+
+### User Experience
+
+#### For Stylists
+
+When viewing a chat with a repeat customer, the system automatically detects previous bookings and displays an information alert. The stylist can:
+
+1. **See Alert**: "Tidligere bookinger tilgjengelig" with customer name
+2. **Access History**: Click "Se tidligere bookinger" to open detailed dialog
+3. **Browse Previous Bookings**: View chronological list of past bookings with:
+   - Service details and dates
+   - Booking status and pricing
+   - Chat availability indicators
+4. **Access Chat History**: Click "Se chat" on any previous booking to view:
+   - Complete message history in read-only format
+   - Visual context with proper sender identification
+   - Booking context (date, services, participants)
+
+### Technical Implementation
+
+#### Components Overview
+
+- **`PreviousBookingsAlert`**: Displays notification when previous bookings exist
+- **`PreviousBookingsDialog`**: Modal showing list of previous bookings between users  
+- **`PreviousBookingCard`**: Individual booking display with chat access
+- **`ChatHistorySheet`**: Read-only chat history viewer with proper formatting
+
+#### Data Flow
+
+1. **Detection**: System queries for bookings between current stylist and customer (excluding current booking)
+2. **Alert Display**: Shows alert if previous bookings exist with chat functionality
+3. **History Access**: Loads previous booking details with chat availability status
+4. **Chat Viewing**: Retrieves complete message history in read-only format
+
+#### Key Features
+
+- **Automatic Detection**: No manual setup required - system automatically identifies repeat customers
+- **Secure Access**: Only shows bookings where current user was a participant
+- **Read-Only History**: Previous chats are view-only to maintain historical integrity
+- **Context Preservation**: Each chat history includes booking details for proper context
 
 ## Technical Integration
 

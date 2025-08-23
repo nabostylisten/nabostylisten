@@ -78,8 +78,17 @@ export async function createAddress(data: Omit<AddressInsert, "user_id" | "id" |
     return { error: "Invalid data", data: null };
   }
 
+  // Check if user has any existing addresses
+  const { data: existingAddresses } = await supabase
+    .from("addresses")
+    .select("id")
+    .eq("user_id", user.id);
+
+  const isFirstAddress = !existingAddresses || existingAddresses.length === 0;
+
+  // If this is the first address, automatically set it as primary
   // If this is set as primary, unset other primary addresses
-  if (data.is_primary) {
+  if (data.is_primary || isFirstAddress) {
     await supabase
       .from("addresses")
       .update({ is_primary: false })
@@ -106,6 +115,7 @@ export async function createAddress(data: Omit<AddressInsert, "user_id" | "id" |
     .insert({
       ...validationResult.data,
       location,
+      is_primary: data.is_primary || isFirstAddress,
     })
     .select()
     .single();
@@ -168,10 +178,13 @@ export async function updateAddress(id: string, data: Omit<AddressUpdate, "id" |
     }
   }
 
-  const updateData = {
+  const updateData: AddressUpdate = {
     ...validationResult.data,
-    ...(location && { location }),
-  } as AddressUpdate;
+  };
+  
+  if (location) {
+    updateData.location = location;
+  }
 
   const { data: updatedAddress, error } = await supabase
     .from("addresses")

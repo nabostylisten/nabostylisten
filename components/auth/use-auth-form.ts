@@ -64,8 +64,6 @@ export function useAuthForm({
     }
 
     try {
-      console.log("[AUTH_FORM] Verifying OTP code", { email, otpCode });
-      
       const { error, data } = await supabase.auth.verifyOtp({
         email,
         token: otpCode,
@@ -74,15 +72,8 @@ export function useAuthForm({
 
       if (error) throw error;
 
-      console.log("[AUTH_FORM] OTP verification successful", {
-        userId: data.user?.id,
-        email: data.user?.email,
-      });
-
       // Check if this is a new user signup and send welcome email
       if (data.user && mode === "signup") {
-        console.log("[AUTH_FORM] New user signup verified, checking for welcome email");
-        
         // Get user profile to check if welcome email should be sent
         const { data: profile } = await supabase
           .from("profiles")
@@ -91,18 +82,11 @@ export function useAuthForm({
           .single();
 
         if (profile && data.user.email) {
-          const accountAge = Date.now() - new Date(profile.created_at).getTime();
+          const accountAge = Date.now() -
+            new Date(profile.created_at).getTime();
           const oneHourMs = 60 * 60 * 1000;
 
-          console.log("[AUTH_FORM] Checking if welcome email should be sent", {
-            accountAge,
-            withinHour: accountAge < oneHourMs,
-            role: profile.role,
-          });
-
           if (accountAge < oneHourMs) {
-            console.log("[AUTH_FORM] Sending welcome email for new signup");
-            
             // Send welcome email asynchronously (don't wait for it)
             sendWelcomeEmail({
               email: data.user.email,
@@ -140,13 +124,6 @@ export function useAuthForm({
     setError(null);
     setIsSuccess(false);
 
-    console.log("[AUTH_FORM] Starting auth submission", {
-      mode,
-      usePasswordFlow,
-      hasPassword: !!password.trim(),
-      email,
-    });
-
     // For signup mode, validate required fields
     if (mode === "signup") {
       if (
@@ -180,12 +157,6 @@ export function useAuthForm({
           process.env.NODE_ENV === "development" && usePasswordFlow &&
           password.trim()
         ) {
-          console.log("[AUTH_FORM] Development signup with password", {
-            email,
-            fullName: fullName.trim() || "Development User",
-            phoneNumber: phoneNumber.trim() || "+47 000 00 000",
-          });
-
           const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -222,13 +193,6 @@ export function useAuthForm({
             return;
           }
         } else {
-          console.log("[AUTH_FORM] Normal signup with OTP", {
-            email,
-            fullName: fullName.trim(),
-            phoneNumber: phoneNumber.trim(),
-            emailRedirectTo,
-          });
-
           // For normal signup: Use signInWithOtp with shouldCreateUser: true to create new users
           const { error } = await supabase.auth.signInWithOtp({
             email,
@@ -246,8 +210,6 @@ export function useAuthForm({
             console.error("[AUTH_FORM] OTP signup failed:", error);
             throw error;
           }
-
-          console.log("[AUTH_FORM] OTP signup email sent successfully");
         }
       } else {
         // For login: Try password authentication first (development only)

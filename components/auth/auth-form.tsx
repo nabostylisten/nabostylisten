@@ -191,10 +191,6 @@ export function AuthForm({
                 id="password-flow-toggle"
                 checked={usePasswordFlow}
                 onCheckedChange={(checked) => {
-                  console.log("[AUTH_TOGGLE] Switching flow type", {
-                    from: usePasswordFlow ? "password" : "email",
-                    to: checked ? "password" : "email",
-                  });
                   setUsePasswordFlow(checked);
                 }}
               />

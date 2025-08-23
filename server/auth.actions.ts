@@ -6,7 +6,7 @@ import { Resend } from "resend";
 import { WelcomeEmail } from "@/transactional/emails/welcome";
 import { AccountDeletionConfirmationEmail } from "@/transactional/emails/account-deletion-confirmation";
 import { AccountDeletedNotificationEmail } from "@/transactional/emails/account-deleted-notification";
-import { SignJWT, jwtVerify } from "jose";
+import { jwtVerify, SignJWT } from "jose";
 
 export async function checkUserExists(email: string) {
   try {
@@ -40,27 +40,13 @@ export async function sendWelcomeEmail({
   userName?: string;
   userId: string;
 }) {
-  console.log("[WELCOME_EMAIL] Starting welcome email send", {
-    email,
-    userName,
-    userId,
-  });
-
   try {
     if (!process.env.RESEND_API_KEY) {
       console.error("[WELCOME_EMAIL] RESEND_API_KEY is not configured");
       return { error: "Email service not configured", success: false };
     }
 
-    console.log("[WELCOME_EMAIL] Initializing Resend client");
     const resend = new Resend(process.env.RESEND_API_KEY);
-
-    console.log("[WELCOME_EMAIL] Sending email via Resend", {
-      from: "Nabostylisten <noreply@magnusrodseth.no>",
-      to: email,
-      subject: "Velkommen til Nabostylisten",
-      userName: userName || "Kjære kunde",
-    });
 
     const { data, error } = await resend.emails.send({
       // TODO: Change to production email after we have setup
@@ -80,10 +66,6 @@ export async function sendWelcomeEmail({
       return { error: "Failed to send welcome email", success: false };
     }
 
-    console.log("[WELCOME_EMAIL] Welcome email sent successfully:", {
-      emailId: data?.id,
-      recipient: email,
-    });
     return { success: true, emailId: data?.id };
   } catch (error) {
     console.error("[WELCOME_EMAIL] Error sending welcome email:", error);
@@ -96,7 +78,7 @@ export async function sendWelcomeEmail({
 
 async function generateAccountDeletionToken(userId: string): Promise<string> {
   const secret = new TextEncoder().encode(
-    process.env.JWT_SECRET || "fallback-secret-key"
+    process.env.JWT_SECRET || "fallback-secret-key",
   );
 
   const token = await new SignJWT({
@@ -118,18 +100,12 @@ export async function verifyAccountDeletionToken({
   token: string;
   userId: string;
 }) {
-  console.log("[VERIFY_DELETE_TOKEN] Starting token verification", {
-    userId,
-    tokenLength: token.length,
-  });
-
   try {
     const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET || "fallback-secret-key"
+      process.env.JWT_SECRET || "fallback-secret-key",
     );
 
     const { payload } = await jwtVerify(token, secret);
-    console.log("[VERIFY_DELETE_TOKEN] Token payload:", payload);
 
     // Validate token purpose and user ID
     if (payload.purpose !== "account-deletion" || payload.userId !== userId) {
@@ -138,9 +114,10 @@ export async function verifyAccountDeletionToken({
         tokenUserId: payload.userId,
         expectedUserId: userId,
       });
-      return { 
-        valid: false, 
-        error: "Ugyldig token. Denne lenken er ikke gyldig for sletting av konto."
+      return {
+        valid: false,
+        error:
+          "Ugyldig token. Denne lenken er ikke gyldig for sletting av konto.",
       };
     }
 
@@ -152,28 +129,28 @@ export async function verifyAccountDeletionToken({
         now: now,
         expiresAt: new Date(payload.exp * 1000),
       });
-      return { 
-        valid: false, 
-        error: "Utløpt lenke. Denne lenken er ikke lenger gyldig. Vennligst be om en ny lenke."
+      return {
+        valid: false,
+        error:
+          "Utløpt lenke. Denne lenken er ikke lenger gyldig. Vennligst be om en ny lenke.",
       };
     }
 
-    console.log("[VERIFY_DELETE_TOKEN] Token verified successfully");
-    return { 
-      valid: true, 
+    return {
+      valid: true,
       payload: {
         userId: payload.userId as string,
         purpose: payload.purpose as string,
         exp: payload.exp as number,
         iat: payload.iat as number,
-      }
+      },
     };
-
   } catch (error) {
     console.error("[VERIFY_DELETE_TOKEN] Token verification failed:", error);
-    return { 
-      valid: false, 
-      error: "Ugyldig eller utløpt lenke. Vennligst be om en ny lenke fra din profil."
+    return {
+      valid: false,
+      error:
+        "Ugyldig eller utløpt lenke. Vennligst be om en ny lenke fra din profil.",
     };
   }
 }
@@ -183,10 +160,6 @@ export async function sendAccountDeletionConfirmationEmail({
 }: {
   userId: string;
 }) {
-  console.log("[DELETE_ACCOUNT] Starting deletion confirmation email send", {
-    userId,
-  });
-
   try {
     const supabase = await createClient();
 
@@ -198,38 +171,27 @@ export async function sendAccountDeletionConfirmationEmail({
       .single();
 
     if (profileError || !profile?.email) {
-      console.error("[DELETE_ACCOUNT] Failed to get user profile:", profileError);
+      console.error(
+        "[DELETE_ACCOUNT] Failed to get user profile:",
+        profileError,
+      );
       return { error: "Kunne ikke finne brukerprofil", success: false };
     }
 
-    console.log("[DELETE_ACCOUNT] Found user profile:", {
-      email: profile.email,
-      userName: profile.full_name,
-    });
-
     // Generate deletion confirmation token
     const confirmationToken = await generateAccountDeletionToken(userId);
-    console.log("[DELETE_ACCOUNT] Generated confirmation token");
 
     if (!process.env.RESEND_API_KEY) {
       console.error("[DELETE_ACCOUNT] RESEND_API_KEY is not configured");
       return { error: "Email service not configured", success: false };
     }
 
-    console.log("[DELETE_ACCOUNT] Initializing Resend client");
     const resend = new Resend(process.env.RESEND_API_KEY);
-
-    console.log("[DELETE_ACCOUNT] Sending deletion confirmation email via Resend", {
-      from: "Nabostylisten <no-reply@magnusrodseth.com>",
-      to: profile.email,
-      subject: "Bekreft sletting av konto - Nabostylisten",
-      userName: profile.full_name || "Kjære kunde",
-    });
 
     const { data, error } = await resend.emails.send({
       from: "Nabostylisten <no-reply@magnusrodseth.com>",
       // For development - send to test email
-      to: ["magnus.rodseth@gmail.com"], 
+      to: ["magnus.rodseth@gmail.com"],
       // to: [profile.email], // Uncomment for production
       subject: "Bekreft sletting av konto - Nabostylisten",
       react: AccountDeletionConfirmationEmail({
@@ -240,17 +202,26 @@ export async function sendAccountDeletionConfirmationEmail({
     });
 
     if (error) {
-      console.error("[DELETE_ACCOUNT] Failed to send deletion confirmation email:", error);
+      console.error(
+        "[DELETE_ACCOUNT] Failed to send deletion confirmation email:",
+        error,
+      );
       return { error: "Failed to send confirmation email", success: false };
     }
 
-    console.log("[DELETE_ACCOUNT] Deletion confirmation email sent successfully:", {
-      emailId: data?.id,
-      recipient: profile.email,
-    });
+    console.log(
+      "[DELETE_ACCOUNT] Deletion confirmation email sent successfully:",
+      {
+        emailId: data?.id,
+        recipient: profile.email,
+      },
+    );
     return { success: true, emailId: data?.id };
   } catch (error) {
-    console.error("[DELETE_ACCOUNT] Error sending deletion confirmation email:", error);
+    console.error(
+      "[DELETE_ACCOUNT] Error sending deletion confirmation email:",
+      error,
+    );
     return {
       error: "An error occurred while sending confirmation email",
       success: false,
@@ -265,23 +236,23 @@ export async function deleteUserAccount({
   token: string;
   userId: string;
 }) {
-  console.log("[DELETE_USER] Starting account deletion process", {
-    userId,
-  });
-
   try {
     // First, verify the token again for security
-    const tokenVerification = await verifyAccountDeletionToken({ token, userId });
+    const tokenVerification = await verifyAccountDeletionToken({
+      token,
+      userId,
+    });
     if (!tokenVerification.valid) {
-      console.error("[DELETE_USER] Token verification failed:", tokenVerification.error);
-      return { 
-        success: false, 
+      console.error(
+        "[DELETE_USER] Token verification failed:",
+        tokenVerification.error,
+      );
+      return {
+        success: false,
         error: tokenVerification.error,
-        redirectTo: "/auth/delete-account/error?reason=token_invalid"
+        redirectTo: "/auth/delete-account/error?reason=token_invalid",
       };
     }
-
-    console.log("[DELETE_USER] Token verified, proceeding with deletion");
 
     // Get user profile information before deletion for the notification email
     const supabase = await createClient();
@@ -292,66 +263,78 @@ export async function deleteUserAccount({
       .single();
 
     if (profileError || !profile?.email) {
-      console.error("[DELETE_USER] Failed to get user profile before deletion:", profileError);
-      return { 
-        success: false, 
+      console.error(
+        "[DELETE_USER] Failed to get user profile before deletion:",
+        profileError,
+      );
+      return {
+        success: false,
         error: "Kunne ikke finne brukerinformasjon",
-        redirectTo: "/auth/delete-account/error?reason=user_not_found"
+        redirectTo: "/auth/delete-account/error?reason=user_not_found",
       };
     }
-
-    console.log("[DELETE_USER] Found user profile before deletion:", {
-      email: profile.email,
-      userName: profile.full_name,
-    });
 
     const userEmail = profile.email;
     const userName = profile.full_name || undefined;
 
     // Use service client to delete the user (bypasses RLS and handles cascading)
     const serviceClient = createServiceClient();
-    
-    console.log("[DELETE_USER] Deleting user from auth.users table");
-    const { error: deleteError } = await serviceClient.auth.admin.deleteUser(userId);
+
+    const { error: deleteError } = await serviceClient.auth.admin.deleteUser(
+      userId,
+    );
 
     if (deleteError) {
-      console.error("[DELETE_USER] Failed to delete user from auth:", deleteError);
-      return { 
-        success: false, 
+      console.error(
+        "[DELETE_USER] Failed to delete user from auth:",
+        deleteError,
+      );
+      return {
+        success: false,
         error: "Teknisk feil ved sletting av konto",
-        redirectTo: "/auth/delete-account/error?reason=deletion_failed&message=" + encodeURIComponent(deleteError.message)
+        redirectTo:
+          "/auth/delete-account/error?reason=deletion_failed&message=" +
+          encodeURIComponent(deleteError.message),
       };
     }
 
-    console.log("[DELETE_USER] User deleted from auth.users, cascade deletion should handle related data");
+    console.log(
+      "[DELETE_USER] User deleted from auth.users, cascade deletion should handle related data",
+    );
 
     // Send account deleted notification email
     try {
-      console.log("[DELETE_USER] Sending account deleted notification email");
       await sendAccountDeletedNotificationEmail({
         userEmail,
         userName,
       });
-      console.log("[DELETE_USER] Account deleted notification email sent successfully");
+      console.log(
+        "[DELETE_USER] Account deleted notification email sent successfully",
+      );
     } catch (emailError) {
-      console.error("[DELETE_USER] Failed to send notification email, but deletion was successful:", emailError);
+      console.error(
+        "[DELETE_USER] Failed to send notification email, but deletion was successful:",
+        emailError,
+      );
       // Don't fail the deletion if email fails - account is already deleted
     }
 
-    console.log("[DELETE_USER] Account deletion completed successfully");
-    return { 
+    return {
       success: true,
-      redirectTo: "/auth/delete-account/success"
+      redirectTo: "/auth/delete-account/success",
     };
-
   } catch (error) {
-    console.error("[DELETE_USER] Unexpected error during account deletion:", error);
-    return { 
-      success: false, 
+    console.error(
+      "[DELETE_USER] Unexpected error during account deletion:",
+      error,
+    );
+    return {
+      success: false,
       error: "En uventet feil oppstod under sletting av kontoen",
-      redirectTo: "/auth/delete-account/error?reason=deletion_failed&message=" + encodeURIComponent(
-        error instanceof Error ? error.message : "Unknown error"
-      )
+      redirectTo: "/auth/delete-account/error?reason=deletion_failed&message=" +
+        encodeURIComponent(
+          error instanceof Error ? error.message : "Unknown error",
+        ),
     };
   }
 }
@@ -363,10 +346,13 @@ async function sendAccountDeletedNotificationEmail({
   userEmail: string;
   userName?: string;
 }) {
-  console.log("[DELETE_NOTIFICATION] Sending account deleted notification email", {
-    email: userEmail,
-    userName,
-  });
+  console.log(
+    "[DELETE_NOTIFICATION] Sending account deleted notification email",
+    {
+      email: userEmail,
+      userName,
+    },
+  );
 
   if (!process.env.RESEND_API_KEY) {
     console.error("[DELETE_NOTIFICATION] RESEND_API_KEY is not configured");
@@ -378,7 +364,7 @@ async function sendAccountDeletedNotificationEmail({
   const { data, error } = await resend.emails.send({
     from: "Nabostylisten <no-reply@magnusrodseth.com>",
     // For development - send to test email
-    to: ["magnus.rodseth@gmail.com"], 
+    to: ["magnus.rodseth@gmail.com"],
     // to: [userEmail], // Uncomment for production
     subject: "Konto slettet - Nabostylisten",
     react: AccountDeletedNotificationEmail({
@@ -388,12 +374,18 @@ async function sendAccountDeletedNotificationEmail({
   });
 
   if (error) {
-    console.error("[DELETE_NOTIFICATION] Failed to send notification email:", error);
+    console.error(
+      "[DELETE_NOTIFICATION] Failed to send notification email:",
+      error,
+    );
     throw new Error("Failed to send notification email: " + error.message);
   }
 
-  console.log("[DELETE_NOTIFICATION] Account deleted notification email sent successfully:", {
-    emailId: data?.id,
-    recipient: userEmail,
-  });
+  console.log(
+    "[DELETE_NOTIFICATION] Account deleted notification email sent successfully:",
+    {
+      emailId: data?.id,
+      recipient: userEmail,
+    },
+  );
 }

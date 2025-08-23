@@ -6,6 +6,7 @@ import {
   verifyAccountDeletionToken,
   deleteUserAccount,
 } from "@/server/auth.actions";
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -73,11 +74,6 @@ export function DeleteAccountConfirmation() {
           return;
         }
 
-        console.log("[DELETE_CONFIRM] Token verified successfully:", {
-          userId: userIdFromToken,
-          expiresAt: new Date(expiryFromToken * 1000),
-        });
-
         const payload = result.payload;
 
         if (!payload) {
@@ -126,15 +122,9 @@ export function DeleteAccountConfirmation() {
     setVerificationState({ status: "deleting" });
 
     try {
-      console.log("[DELETE_CONFIRM] Calling deleteUserAccount server action");
       const result = await deleteUserAccount({ token, userId });
 
       if (!result.success) {
-        console.error(
-          "[DELETE_CONFIRM] Account deletion failed:",
-          result.error
-        );
-
         // Redirect to error page with specific error information
         if (result.redirectTo) {
           router.push(result.redirectTo);
@@ -148,7 +138,13 @@ export function DeleteAccountConfirmation() {
         return;
       }
 
-      console.log("[DELETE_CONFIRM] Account deletion successful, redirecting");
+      // Sign out the user from the client to clear local auth state
+      try {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        // Continue anyway since account is deleted
+      }
 
       // Redirect to success page
       if (result.redirectTo) {

@@ -287,7 +287,7 @@ export function ReviewsList({
                               return (
                                 <CommandItem
                                   key={reviewer.value}
-                                  value={reviewer.value}
+                                  value={reviewer.label}
                                   onSelect={() =>
                                     handleReviewerToggle(reviewer.value)
                                   }

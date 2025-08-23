@@ -110,6 +110,45 @@ The authentication system provides a unified, secure, and user-friendly way to h
 - **Login Flow**: Profile created with email only (for existing users signing up via login)
 - **Database Trigger**: `handle_new_user()` function processes metadata
 
+### 6. Welcome Email System
+
+**Rule**: New customers receive a branded welcome email after successful signup and email verification.
+
+**Business Purpose**:
+
+- **Onboarding Guidance**: Step-by-step instructions for platform usage
+- **Feature Discovery**: Introduction to key platform capabilities
+- **Engagement**: Immediate value delivery to reduce churn
+- **Stylist Recruitment**: Cross-promotion to potential stylists
+- **Brand Consistency**: Professional, branded communication
+
+**Welcome Email Triggers**:
+
+- **Magic Link Verification**: Sent via `/auth/confirm` route after server-side verification
+- **OTP Code Verification**: Sent via client-side `handleVerifyOtp` function
+- **Account Age Check**: Only sent for accounts created within the last hour
+- **Customer-Only**: Only sent to users with `role: "customer"` (not stylists or admins)
+
+**Welcome Email Content**:
+
+- **Personalized Greeting**: Uses user's full name when available
+- **3-Step Onboarding Guide**: 
+  1. Explore stylists in your area
+  2. Book your first appointment  
+  3. Enjoy your stylist experience
+- **Platform Tips**: Best practices for using Nabostylisten effectively
+- **Stylist Recruitment Section**: "Interessert i å bli stylist?" with benefits and application link
+- **Support Information**: Contact details and response expectations
+- **Notification Settings**: Links to preference management
+
+**Technical Implementation**:
+
+- **Email Service**: Resend API for reliable delivery
+- **Template Engine**: React Email for branded, responsive templates
+- **Dual Coverage**: Works with both magic link and OTP code verification flows
+- **Async Processing**: Non-blocking email sending to avoid authentication delays
+- **Error Handling**: Comprehensive logging for debugging email delivery issues
+
 ## User Workflows
 
 ### Registration (New Users)
@@ -137,6 +176,7 @@ The authentication system provides a unified, secure, and user-friendly way to h
    - User automatically logged in
    - Redirected to intended destination or dashboard
    - Profile fully populated with registration data
+   - **Welcome email sent automatically** with onboarding guidance and platform tips
 
 **Development Signup Enhancement:**
 
@@ -166,6 +206,7 @@ The authentication system provides a unified, secure, and user-friendly way to h
    - User created and authenticated in single step
    - Immediate redirect to intended destination
    - Profile accessible immediately for testing workflows
+   - **No welcome email sent** (development users bypass email verification flow)
 
 ### Login (Existing Users)
 
@@ -243,6 +284,32 @@ The authentication system provides a unified, secure, and user-friendly way to h
 - "Have code already?" button on email form for quick access to code entry
 - "Back to email" button on code form for easy navigation
 - Mode switching (login/signup) available at any step
+
+### Welcome Email Workflow
+
+**Automatic Email Delivery Process**:
+
+**Step 1: Email Verification Completion**
+- User completes either magic link click or OTP code entry
+- System verifies user identity and email ownership
+- Profile lookup performed to gather user data
+
+**Step 2: Eligibility Check**
+- **Account Age**: Only accounts created within last hour receive welcome email
+- **User Role**: Only customers receive welcome email (not stylists or admins)  
+- **Email Availability**: Valid email address must be present
+
+**Step 3: Email Composition & Delivery**
+- **Personalization**: Email customized with user's full name
+- **Content Assembly**: Welcome message, onboarding steps, and recruitment section
+- **Template Rendering**: React Email template compiled for cross-client compatibility
+- **Delivery**: Sent via Resend API with error handling and retry logic
+
+**Step 4: User Experience**
+- **Immediate Value**: Users receive actionable next steps within minutes of signup
+- **Platform Familiarity**: Introduction to key features reduces learning curve
+- **Engagement Opportunity**: Stylist recruitment section expands user base
+- **Support Access**: Clear contact information reduces support friction
 
 ## Authentication Contexts
 
@@ -513,6 +580,15 @@ AuthForm (Core)
 - **Booking Conversion**: Auth impact on booking completion
 - **User Retention**: Post-auth engagement rates
 
+### Welcome Email Metrics
+
+- **Email Delivery Rate**: Successfully sent welcome emails vs. eligible signups
+- **Email Open Rate**: Welcome email engagement and visibility
+- **Onboarding Completion**: Users who follow welcome email guidance
+- **Stylist Conversion**: Customers who apply to become stylists after welcome email
+- **Support Ticket Reduction**: Impact of welcome email on new user support requests
+- **First Booking Rate**: Conversion from welcome email to first service booking
+
 ## Error Handling & Edge Cases
 
 ### Common Error Scenarios
@@ -547,6 +623,14 @@ AuthForm (Core)
 - Progress preservation
 - Clear status communication
 
+**Welcome Email Delivery Issues**:
+
+- Email service API failures (Resend downtime)
+- Invalid email addresses preventing delivery
+- Spam filtering by recipient email providers
+- Template rendering errors
+- Missing user profile data
+
 ### Recovery Workflows
 
 **Email Not Received**:
@@ -573,6 +657,14 @@ AuthForm (Core)
 3. Clear format requirements
 4. Magic link fallback option
 5. Step navigation assistance
+
+**Welcome Email Not Received**:
+
+1. Check spam/promotions folder guidance
+2. Verify email delivery through server logs
+3. Manual resend option (future enhancement)
+4. Support contact for delivery issues
+5. Alternative onboarding through in-app tips
 
 ## Development Features & Testing
 

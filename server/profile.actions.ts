@@ -168,6 +168,143 @@ export async function getStylists() {
 
 export type StylistProfileData = Awaited<ReturnType<typeof getStylistProfileWithServices>>["data"];
 
+export async function updateStylistDetails(
+    profileId: string,
+    data: Database["public"]["Tables"]["stylist_details"]["Update"]
+) {
+    try {
+        const supabase = await createClient();
+
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth
+            .getUser();
+        if (userError || !user) {
+            return { error: "User not authenticated", data: null };
+        }
+
+        // Ensure user can only update their own stylist details
+        if (user.id !== profileId) {
+            return { error: "Unauthorized", data: null };
+        }
+
+        // Check if user is a stylist
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", profileId)
+            .single();
+
+        if (!profile || profile.role !== "stylist") {
+            return { error: "User is not a stylist", data: null };
+        }
+
+        const { data: stylistDetails, error } = await supabase
+            .from("stylist_details")
+            .update(data)
+            .eq("profile_id", profileId)
+            .select()
+            .single();
+
+        if (error) {
+            return { error: error.message, data: null };
+        }
+
+        return { error: null, data: stylistDetails };
+    } catch (error) {
+        return {
+            error: error instanceof Error ? error.message : "An error occurred",
+            data: null,
+        };
+    }
+}
+
+export async function createStylistDetails(
+    profileId: string,
+    data: Database["public"]["Tables"]["stylist_details"]["Insert"]
+) {
+    try {
+        const supabase = await createClient();
+
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth
+            .getUser();
+        if (userError || !user) {
+            return { error: "User not authenticated", data: null };
+        }
+
+        // Ensure user can only create their own stylist details
+        if (user.id !== profileId) {
+            return { error: "Unauthorized", data: null };
+        }
+
+        // Check if user is a stylist
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", profileId)
+            .single();
+
+        if (!profile || profile.role !== "stylist") {
+            return { error: "User is not a stylist", data: null };
+        }
+
+        // Check if stylist details already exist
+        const { data: existingDetails } = await supabase
+            .from("stylist_details")
+            .select("profile_id")
+            .eq("profile_id", profileId)
+            .single();
+
+        if (existingDetails) {
+            return { error: "Stylist details already exist", data: null };
+        }
+
+        const { data: stylistDetails, error } = await supabase
+            .from("stylist_details")
+            .insert({
+                ...data,
+                profile_id: profileId,
+            })
+            .select()
+            .single();
+
+        if (error) {
+            return { error: error.message, data: null };
+        }
+
+        return { error: null, data: stylistDetails };
+    } catch (error) {
+        return {
+            error: error instanceof Error ? error.message : "An error occurred",
+            data: null,
+        };
+    }
+}
+
+export async function getStylistDetails(profileId: string) {
+    try {
+        const supabase = await createClient();
+
+        const { data: stylistDetails, error } = await supabase
+            .from("stylist_details")
+            .select("*")
+            .eq("profile_id", profileId)
+            .single();
+
+        if (error && error.code !== "PGRST116") {
+            // PGRST116 means no rows found, which is ok
+            return { error: error.message, data: null };
+        }
+
+        return { error: null, data: stylistDetails };
+    } catch (error) {
+        return {
+            error: error instanceof Error ? error.message : "An error occurred",
+            data: null,
+        };
+    }
+}
+
 export async function getStylistProfileWithServices(profileId: string) {
     try {
         const supabase = await createClient();

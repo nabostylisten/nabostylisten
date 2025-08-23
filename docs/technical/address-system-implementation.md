@@ -32,7 +32,11 @@ CREATE TABLE IF NOT EXISTS public.addresses (
 
 ### PostGIS Integration
 
-The system uses PostGIS extension for advanced geographic functionality:
+The system uses PostGIS extension for advanced geographic functionality. PostGIS is a spatial database extension for PostgreSQL that enables geographic queries and spatial indexing.
+
+#### PostGIS Schema Setup
+
+PostGIS is installed in a dedicated `gis` schema to maintain separation from application tables:
 
 ```sql
 -- Create a dedicated schema for PostGIS
@@ -46,6 +50,49 @@ GRANT USAGE ON SCHEMA gis TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA gis TO anon, authenticated, service_role;
 GRANT ALL ON ALL ROUTINES IN SCHEMA gis TO anon, authenticated, service_role;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA gis TO anon, authenticated, service_role;
+```
+
+#### Understanding PostGIS Geography Type
+
+The `location` column uses PostGIS's `geography(Point, 4326)` type:
+
+- **Geography vs Geometry**: We use `geography` type for real-world distance calculations on a spherical earth model
+- **Point Type**: Represents a single coordinate pair (longitude, latitude)
+- **SRID 4326**: Standard WGS84 coordinate system used by GPS and mapping services
+- **Storage Format**: Internally stored as binary (e.g., `0101000020E6100000...`) for efficiency
+
+#### Coordinate Format and Insertion
+
+**CRITICAL: PostGIS expects coordinates in LONGITUDE, LATITUDE order (X, Y), not the typical lat/lng order:**
+
+```sql
+-- Correct: POINT(longitude latitude)
+INSERT INTO addresses (location) VALUES ('POINT(10.7522 59.9139)'); -- Oslo coordinates
+
+-- From application code (notice the order):
+const longitude = 10.7522;
+const latitude = 59.9139;
+const pointString = `POINT(${longitude} ${latitude})`; -- No comma, just space
+```
+
+Common Norwegian city coordinates for reference:
+- Oslo: POINT(10.7522 59.9139)
+- Bergen: POINT(5.3221 60.3913)
+- Trondheim: POINT(10.3951 63.4305)
+- Stavanger: POINT(5.7332 58.9700)
+
+#### Extracting Coordinates from Geography
+
+When reading data, use PostGIS functions with the gis schema prefix:
+
+```sql
+-- Extract latitude (Y coordinate)
+SELECT gis.st_y(location::gis.geometry) as latitude FROM addresses;
+
+-- Extract longitude (X coordinate)  
+SELECT gis.st_x(location::gis.geometry) as longitude FROM addresses;
+
+-- Note: Cast to geometry type is required for st_x/st_y functions
 ```
 
 ### Geographic Functions

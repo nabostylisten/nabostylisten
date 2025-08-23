@@ -35,11 +35,26 @@ export default async function ProfilePage({
     redirect(`/profiler/${profileId}`);
   }
 
+  // Fetch stylist details if user is a stylist
+  let stylistDetails = null;
+  if (profile.role === "stylist") {
+    const { data } = await supabase
+      .from("stylist_details")
+      .select("*")
+      .eq("profile_id", profileId)
+      .single();
+    stylistDetails = data;
+  }
+
   return (
     <ProfileLayout profileId={profileId} userRole={profile.role}>
       <div className="flex flex-1 flex-col gap-4 p-4">
         <div className="max-w-2xl mx-auto w-full">
-          <ProfileForm profile={profile} isOwner={isOwner} />
+          <ProfileForm 
+            profile={profile} 
+            stylistDetails={stylistDetails}
+            isOwner={isOwner} 
+          />
         </div>
       </div>
     </ProfileLayout>

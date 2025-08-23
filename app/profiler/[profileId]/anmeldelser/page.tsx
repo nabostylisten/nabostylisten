@@ -30,10 +30,12 @@ export default async function AnmeldelserPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <ReviewsPageContent 
-        userId={profileId} 
-        userRole={profile?.role === 'stylist' ? 'stylist' : 'customer'} 
-      />
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        <ReviewsPageContent
+          userId={profileId}
+          userRole={profile?.role === "stylist" ? "stylist" : "customer"}
+        />
+      </div>
     </ProfileLayout>
   );
 }

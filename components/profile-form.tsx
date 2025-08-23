@@ -37,6 +37,7 @@ import { updateProfile } from "@/server/profile.actions";
 import type { Database } from "@/types/database.types";
 import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ProfileAddresses } from "@/components/addresses";
+import { StylistDetailsForm } from "@/components/stylist-details-form";
 
 // Form schema for profile updates
 const profileFormSchema = z.object({
@@ -48,10 +49,11 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 interface ProfileFormProps {
   profile: Database["public"]["Tables"]["profiles"]["Row"];
+  stylistDetails?: Database["public"]["Tables"]["stylist_details"]["Row"] | null;
   isOwner: boolean;
 }
 
-export function ProfileForm({ profile, isOwner }: ProfileFormProps) {
+export function ProfileForm({ profile, stylistDetails, isOwner }: ProfileFormProps) {
   const [isEditing, setIsEditing] = useState(false);
   const queryClient = useQueryClient();
 
@@ -297,6 +299,17 @@ export function ProfileForm({ profile, isOwner }: ProfileFormProps) {
       {isOwner && (
         <div className="mt-6">
           <ProfileAddresses />
+        </div>
+      )}
+
+      {/* Stylist Details Section - only for stylists */}
+      {isOwner && profile.role === "stylist" && (
+        <div className="mt-6">
+          <StylistDetailsForm
+            profileId={profile.id}
+            stylistDetails={stylistDetails}
+            isOwner={isOwner}
+          />
         </div>
       )}
     </>

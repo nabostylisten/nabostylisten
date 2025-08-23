@@ -8,6 +8,8 @@ import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import Image from "next/image";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
+import { getPublicUrl } from "@/lib/supabase/storage";
 
 type ReviewCardProps = {
   review: {
@@ -46,6 +48,12 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
   const reviewImages = review.media?.filter((m) => m.media_type === "review_image") || [];
   const displayPerson = viewType === "customer" ? review.stylist : review.customer;
   const services = review.booking?.booking_services?.map((bs) => bs.services?.title).filter(Boolean) || [];
+  
+  const supabase = createClient();
+  
+  const getImageUrl = (filePath: string) => {
+    return getPublicUrl(supabase, "review-media", filePath);
+  };
 
   return (
     <Card>
@@ -124,7 +132,7 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
                     className="relative w-16 h-16 rounded-md overflow-hidden"
                   >
                     <Image
-                      src={image.file_path}
+                      src={getImageUrl(image.file_path)}
                       alt="Anmeldelse bilde"
                       fill
                       className="object-cover"

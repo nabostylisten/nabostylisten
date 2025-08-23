@@ -333,7 +333,8 @@ async function main() {
     },
   ]);
 
-  // Create addresses
+  // Create addresses with proper PostGIS geography data
+  // Note: PostGIS expects POINT(longitude latitude) format
   await seed.addresses([
     // Stylist addresses
     {
@@ -343,6 +344,7 @@ async function main() {
       city: "Oslo",
       postal_code: "0154",
       country: "Norge",
+      location: "POINT(10.7494 59.9139)", // Oslo center coordinates
       is_primary: true,
     },
     {
@@ -352,6 +354,7 @@ async function main() {
       city: "Bergen",
       postal_code: "5003",
       country: "Norge",
+      location: "POINT(5.3260 60.3894)", // Bergen coordinates
       is_primary: true,
     },
     {
@@ -361,6 +364,7 @@ async function main() {
       city: "Oslo",
       postal_code: "0554",
       country: "Norge",
+      location: "POINT(10.7585 59.9295)", // Grünerløkka, Oslo coordinates
       is_primary: true,
     },
     // Customer addresses
@@ -371,6 +375,7 @@ async function main() {
       city: "Oslo",
       postal_code: "0190",
       country: "Norge",
+      location: "POINT(10.7608 59.9127)", // Grønland, Oslo coordinates
       is_primary: true,
     },
     {
@@ -380,6 +385,7 @@ async function main() {
       city: "Bergen",
       postal_code: "5014",
       country: "Norge",
+      location: "POINT(5.3247 60.3933)", // Bergen city center coordinates
       is_primary: true,
     },
   ]);
@@ -1086,6 +1092,7 @@ async function main() {
       city: "Oslo",
       postal_code: "0250",
       country: "Norge",
+      location: "POINT(10.6831 59.8897)", // Bygdøy, Oslo coordinates
       entry_instructions: "Ring på døren, kode 1234",
       is_primary: false,
     },

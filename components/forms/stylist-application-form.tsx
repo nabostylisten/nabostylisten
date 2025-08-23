@@ -139,7 +139,12 @@ export function StylistApplicationForm({
 
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationFormSchema),
-    defaultValues: getDefaultValues(),
+    defaultValues: {
+      ...getDefaultValues(),
+      address: {
+        country: "Norge",
+      },
+    },
   });
 
   const uploadImagesMutation = useMutation({

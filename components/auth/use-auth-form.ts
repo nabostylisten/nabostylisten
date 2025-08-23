@@ -29,6 +29,9 @@ export function useAuthForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [usePasswordFlow, setUsePasswordFlow] = useState(
+    process.env.NODE_ENV === "development",
+  );
   const router = useRouter();
 
   const resetForm = () => {
@@ -96,8 +99,11 @@ export function useAuthForm({
 
     // For signup mode, validate required fields
     if (mode === "signup") {
-      if (process.env.NODE_ENV === "development" && password.trim()) {
-        // In development with password, only email and password are required
+      if (
+        process.env.NODE_ENV === "development" && usePasswordFlow &&
+        password.trim()
+      ) {
+        // In development with password flow, only email and password are required
         if (!password.trim()) {
           setError("Passord er påkrevd");
           setIsLoading(false);
@@ -120,7 +126,10 @@ export function useAuthForm({
 
       if (mode === "signup") {
         // Development-only: Create user with email and password
-        if (process.env.NODE_ENV === "development" && password.trim()) {
+        if (
+          process.env.NODE_ENV === "development" && usePasswordFlow &&
+          password.trim()
+        ) {
           const { error } = await supabase.auth.signUp({
             email,
             password,
@@ -140,10 +149,12 @@ export function useAuthForm({
           }
 
           // In development, sign up should auto-confirm, so we can try to sign in immediately
-          const { error: signInError } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-          });
+          const { error: signInError } = await supabase.auth.signInWithPassword(
+            {
+              email,
+              password,
+            },
+          );
 
           if (!signInError) {
             setIsSuccess(true);
@@ -172,7 +183,10 @@ export function useAuthForm({
         }
       } else {
         // For login: Try password authentication first (development only)
-        if (process.env.NODE_ENV === "development" && password.trim()) {
+        if (
+          process.env.NODE_ENV === "development" && usePasswordFlow &&
+          password.trim()
+        ) {
           console.log("Trying password authentication");
           const { error: passwordError } = await supabase.auth
             .signInWithPassword({
@@ -192,7 +206,7 @@ export function useAuthForm({
           } else {
             // Show password error only in development
             setError(
-              passwordError.message || "Feil passord. Prøv på nytt."
+              passwordError.message || "Feil passord. Prøv på nytt.",
             );
             setIsLoading(false);
             return;
@@ -229,8 +243,10 @@ export function useAuthForm({
       // Only transition to code step if not using password auth or password failed
       // For signup with password in development, we already handled success/failure above
       if (
-        (process.env.NODE_ENV !== "development" || !password.trim()) &&
-        !(mode === "signup" && process.env.NODE_ENV === "development" && password.trim())
+        (process.env.NODE_ENV !== "development" || !usePasswordFlow ||
+          !password.trim()) &&
+        !(mode === "signup" && process.env.NODE_ENV === "development" &&
+          usePasswordFlow && password.trim())
       ) {
         setStep("code");
       }
@@ -253,6 +269,7 @@ export function useAuthForm({
     error,
     isLoading,
     isSuccess,
+    usePasswordFlow,
 
     // Actions
     setMode,
@@ -265,6 +282,7 @@ export function useAuthForm({
     setError,
     setIsLoading,
     setIsSuccess,
+    setUsePasswordFlow,
     resetForm,
     handleModeSwitch,
     handleSubmit,

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Eye, EyeOff } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Eye, EyeOff, TestTube2 } from "lucide-react";
 import { useAuthForm, type AuthMode } from "./use-auth-form";
 
 interface AuthFormProps {
@@ -46,6 +47,7 @@ export function AuthForm({
     error,
     isLoading,
     isSuccess,
+    usePasswordFlow,
     setEmail,
     setFullName,
     setPhoneNumber,
@@ -53,6 +55,7 @@ export function AuthForm({
     setOtpCode,
     setStep,
     setIsSuccess,
+    setUsePasswordFlow,
     handleModeSwitch,
     handleSubmit,
     handleVerifyOtp,
@@ -167,22 +170,62 @@ export function AuthForm({
 
   return (
     <div className="space-y-4">
+      {/* Development-only toggle for auth flow */}
+      {process.env.NODE_ENV === "development" && (
+        <div className="rounded-lg border-2 border-dashed border-orange-200 bg-orange-50/50 p-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <TestTube2 className="h-4 w-4 text-orange-600" />
+              <Label className="text-sm font-medium text-orange-700">
+                Utviklingsmodus
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Label
+                htmlFor="password-flow-toggle"
+                className="text-xs text-orange-600"
+              >
+                {usePasswordFlow ? "Passord-flyt" : "E-post-flyt"}
+              </Label>
+              <Switch
+                id="password-flow-toggle"
+                checked={usePasswordFlow}
+                onCheckedChange={setUsePasswordFlow}
+              />
+            </div>
+          </div>
+          <p className="mt-2 text-xs text-orange-600">
+            {usePasswordFlow
+              ? "Bruker passord for rask testing med seed-brukere"
+              : "Bruker e-post-bekreftelse for fullstendig flyt"}
+          </p>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-4">
         {mode === "signup" && (
           <div className="grid gap-2">
             <Label htmlFor="full-name" className="flex items-center gap-2">
               Fullt navn
-              {process.env.NODE_ENV === "development" && password && (
-                <span className="text-xs text-muted-foreground">
-                  (valgfritt i utvikling)
-                </span>
-              )}
+              {process.env.NODE_ENV === "development" &&
+                usePasswordFlow &&
+                password && (
+                  <span className="text-xs text-muted-foreground">
+                    (valgfritt i utvikling)
+                  </span>
+                )}
             </Label>
             <Input
               id="full-name"
               type="text"
               placeholder="Ola Nordmann"
-              required={!(process.env.NODE_ENV === "development" && password)}
+              required={
+                !(
+                  process.env.NODE_ENV === "development" &&
+                  usePasswordFlow &&
+                  password
+                )
+              }
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
             />
@@ -202,7 +245,7 @@ export function AuthForm({
         </div>
 
         {/* Development-only password field for testing */}
-        {process.env.NODE_ENV === "development" && (
+        {process.env.NODE_ENV === "development" && usePasswordFlow && (
           <div className="grid gap-2">
             <Label htmlFor="password" className="flex items-center gap-2">
               Passord
@@ -266,17 +309,25 @@ export function AuthForm({
           <div className="grid gap-2">
             <Label htmlFor="phone-number" className="flex items-center gap-2">
               Telefonnummer
-              {process.env.NODE_ENV === "development" && password && (
-                <span className="text-xs text-muted-foreground">
-                  (valgfritt i utvikling)
-                </span>
-              )}
+              {process.env.NODE_ENV === "development" &&
+                usePasswordFlow &&
+                password && (
+                  <span className="text-xs text-muted-foreground">
+                    (valgfritt i utvikling)
+                  </span>
+                )}
             </Label>
             <Input
               id="phone-number"
               type="tel"
               placeholder="+47 123 45 678"
-              required={!(process.env.NODE_ENV === "development" && password)}
+              required={
+                !(
+                  process.env.NODE_ENV === "development" &&
+                  usePasswordFlow &&
+                  password
+                )
+              }
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
             />

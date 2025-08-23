@@ -270,24 +270,6 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
       ],
     },
     {
-      title: "System og sikkerhet",
-      icon: <Shield className="w-5 h-5" />,
-      description: "Viktige varsler om kontosikkerhet og systemoppdateringer",
-      fields: [
-        {
-          key: "security_alerts",
-          label: "Sikkerhetsvarsler",
-          description:
-            "Få beskjed om pålogging og sikkerhetsrelaterte aktiviteter",
-        },
-        {
-          key: "system_updates",
-          label: "Systemoppdateringer",
-          description: "Få beskjed om vedlikehold og nye funksjoner",
-        },
-      ],
-    },
-    {
       title: "Leveringsinnstillinger",
       icon: <Settings className="w-5 h-5" />,
       description: "Velg hvordan du vil motta varsler",

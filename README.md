@@ -12,6 +12,7 @@
 - [ ] Setup Brevo Newsletter and add API key
 - [ ] **TODO: Integrate newsletter preferences with Brevo service** - The user preferences system includes newsletter/marketing preferences but these need to be properly integrated with the Brevo email marketing service for full functionality
 - [ ] Configure Auth Email Hook for custom OTP emails (see setup instructions below)
+- [ ] Implement the cron job plan
 
 ## Auth Email Hook Setup
 

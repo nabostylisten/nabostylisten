@@ -1,33 +1,70 @@
 "use server";
 
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { Resend } from "resend";
+import { WelcomeEmail } from "@/transactional/emails/welcome";
 
 export async function checkUserExists(email: string) {
   try {
-    const supabase = await createAdminClient();
+    const supabase = await createClient();
 
-    // Use admin client to list users with pagination and filter by email
-    // Since there's no direct getUserByEmail, we'll filter the results
-    const { data, error } = await supabase.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000, // Large enough to get all users
-    });
+    // Query the profiles table directly by email
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("id, email")
+      .eq("email", email)
+      .maybeSingle();
 
     if (error) {
-      console.error("Error listing users:", error);
+      console.error("Error checking user exists:", error);
       return { error: "Kunne ikke sjekke bruker", exists: false };
     }
 
-    // Check if any user has the provided email and is confirmed
-    const user = data.users.find((user) => 
-      user.email === email && 
-      user.email_confirmed_at !== null &&
-      user.deleted_at === null
-    );
-
-    return { exists: !!user, error: null };
+    return { exists: !!data, error: null };
   } catch (error) {
     console.error("Error checking user exists:", error);
     return { error: "En feil oppstod ved sjekk av bruker", exists: false };
+  }
+}
+
+export async function sendWelcomeEmail({
+  email,
+  userName,
+}: {
+  email: string;
+  userName?: string;
+}) {
+  try {
+    if (!process.env.RESEND_API_KEY) {
+      console.error("RESEND_API_KEY is not configured");
+      return { error: "Email service not configured", success: false };
+    }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
+
+    const { data, error } = await resend.emails.send({
+      // TODO: Change to production email after we have setup
+      // from: "Nabostylisten <noreply@nabostylisten.no>",
+      from: "Nabostylisten <noreply@magnusrodseth.no>",
+      to: [email],
+      subject: "Velkommen til Nabostylisten",
+      react: WelcomeEmail({
+        userName: userName || "Kjære kunde",
+      }),
+    });
+
+    if (error) {
+      console.error("Failed to send welcome email:", error);
+      return { error: "Failed to send welcome email", success: false };
+    }
+
+    console.log("Welcome email sent successfully:", data?.id);
+    return { success: true, emailId: data?.id };
+  } catch (error) {
+    console.error("Error sending welcome email:", error);
+    return {
+      error: "An error occurred while sending welcome email",
+      success: false,
+    };
   }
 }

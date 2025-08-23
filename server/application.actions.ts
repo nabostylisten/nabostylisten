@@ -7,7 +7,8 @@ import { uploadApplicationImage } from "@/server/files.actions";
 import { resend } from "@/lib/resend";
 import { StylistApplicationEmail } from "@/transactional/emails/stylist-application";
 import { ApplicationStatusUpdateEmail } from "@/transactional/emails/application-status-update";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { createServiceClient } from "@/lib/supabase/service";
+import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 
 export interface ApplicationFormData {
     // Personal information
@@ -181,6 +182,7 @@ export async function createApplication(data: ApplicationFormData) {
                 to: ["magnus.rodseth@gmail.com"], // Replace with actual admin email
                 subject: "Ny stylist-søknad mottatt",
                 react: StylistApplicationEmail({
+                    logoUrl: getNabostylistenLogoUrl("png"),
                     applicantName: data.fullName,
                     applicantEmail: data.email,
                     applicationId: applicationResult.id,
@@ -302,7 +304,7 @@ export async function updateApplicationStatus({
 }) {
     try {
         const supabase = await createClient();
-        const adminSupabaseClient = await createAdminClient();
+        const serviceSupabaseClient = await createServiceClient();
 
         // Check if user is admin
         const { data: userRole } = await supabase.rpc("get_my_role");
@@ -365,6 +367,7 @@ export async function updateApplicationStatus({
                     to: [application.email],
                     subject: "Søknadsstatus oppdatert - Avvist",
                     react: ApplicationStatusUpdateEmail({
+                        logoUrl: getNabostylistenLogoUrl("png"),
                         applicantName: application.full_name,
                         applicationId: application.id,
                         status,
@@ -382,7 +385,7 @@ export async function updateApplicationStatus({
             try {
                 // Create auth user with email
                 const { data: authUser, error: authError } =
-                    await adminSupabaseClient.auth
+                    await serviceSupabaseClient.auth
                         .admin.createUser({
                             email: application.email,
                             email_confirm: true, // Auto-confirm email since we're creating it programmatically
@@ -431,6 +434,7 @@ export async function updateApplicationStatus({
                         to: ["magnus.rodseth@gmail.com"],
                         subject: "Søknadsstatus oppdatert - Godkjent",
                         react: ApplicationStatusUpdateEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
                             applicantName: application.full_name,
                             applicationId: application.id,
                             status,

@@ -2962,6 +2962,48 @@ export type Database = {
           user_id: string
         }[]
       }
+      nearby_services: {
+        Args: {
+          at_customer_place?: boolean
+          at_stylist_place?: boolean
+          category_ids?: string[]
+          lat: number
+          long: number
+          max_price_ore?: number
+          min_price_ore?: number
+          radius_km?: number
+          search_term?: string
+          sort_by?: string
+          stylist_ids?: string[]
+        }
+        Returns: {
+          address_city: string
+          address_country: string
+          address_id: string
+          address_lat: number
+          address_lng: number
+          address_postal_code: string
+          address_street_address: string
+          average_rating: number
+          distance_meters: number
+          service_at_customer_place: boolean
+          service_at_stylist_place: boolean
+          service_created_at: string
+          service_currency: string
+          service_description: string
+          service_duration_minutes: number
+          service_id: string
+          service_is_published: boolean
+          service_price: number
+          service_title: string
+          stylist_bio: string
+          stylist_can_travel: boolean
+          stylist_full_name: string
+          stylist_has_own_place: boolean
+          stylist_id: string
+          total_reviews: number
+        }[]
+      }
     }
     Enums: {
       application_status: "applied" | "pending_info" | "rejected" | "approved"

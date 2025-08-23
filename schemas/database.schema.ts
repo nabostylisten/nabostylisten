@@ -1283,6 +1283,50 @@ export const nearbyAddressesReturnsSchema = z.array(
   }),
 );
 
+export const nearbyServicesArgsSchema = z.object({
+  at_customer_place: z.boolean().optional(),
+  at_stylist_place: z.boolean().optional(),
+  category_ids: z.array(z.string()).optional(),
+  lat: z.number(),
+  long: z.number(),
+  max_price_ore: z.number().optional(),
+  min_price_ore: z.number().optional(),
+  radius_km: z.number().optional(),
+  search_term: z.string().optional(),
+  sort_by: z.string().optional(),
+  stylist_ids: z.array(z.string()).optional(),
+});
+
+export const nearbyServicesReturnsSchema = z.array(
+  z.object({
+    address_city: z.string(),
+    address_country: z.string(),
+    address_id: z.string(),
+    address_lat: z.number(),
+    address_lng: z.number(),
+    address_postal_code: z.string(),
+    address_street_address: z.string(),
+    average_rating: z.number(),
+    distance_meters: z.number(),
+    service_at_customer_place: z.boolean(),
+    service_at_stylist_place: z.boolean(),
+    service_created_at: z.string(),
+    service_currency: z.string(),
+    service_description: z.string(),
+    service_duration_minutes: z.number(),
+    service_id: z.string(),
+    service_is_published: z.boolean(),
+    service_price: z.number(),
+    service_title: z.string(),
+    stylist_bio: z.string(),
+    stylist_can_travel: z.boolean(),
+    stylist_full_name: z.string(),
+    stylist_has_own_place: z.boolean(),
+    stylist_id: z.string(),
+    total_reviews: z.number(),
+  }),
+);
+
 export const chargesRowSchema = z.object({
   amount: z.number().nullable(),
   amount_refunded: z.number().nullable(),

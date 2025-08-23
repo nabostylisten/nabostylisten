@@ -165,12 +165,23 @@ export interface ClassNames {
 // Public services listing with search and filtering
 export interface ServiceFilters {
   search?: string;
-  categoryId?: string;
-  location?: string;
+  // Enhanced category filtering - multiple categories including subcategories
+  categories?: string[];
+  // Enhanced location filtering with coordinates and radius
+  location?: {
+    address: string;
+    coordinates?: { lat: number; lng: number };
+    radius?: number; // kilometers
+  };
+  // Service destination preferences
+  serviceDestination?: {
+    atCustomerPlace?: boolean;
+    atStylistPlace?: boolean;
+  };
   stylistIds?: string[];
-  minPrice?: number;
-  maxPrice?: number;
-  sortBy?: "price_asc" | "price_desc" | "rating_desc" | "newest";
+  minPrice?: string; // Store as string for form handling, converted to øre in backend
+  maxPrice?: string; // Store as string for form handling, converted to øre in backend
+  sortBy?: "newest" | "price_asc" | "price_desc" | "rating_desc" | "rating_asc" | "distance_asc";
   page?: number;
   limit?: number;
 }
@@ -178,9 +189,14 @@ export interface ServiceFilters {
 // URL search parameters (as they appear in the URL)
 export interface ServiceSearchParams {
   search?: string;
-  category?: string;
-  location?: string;
-  stylists?: string;
+  categories?: string; // Comma-separated category IDs
+  location?: string; // Address string
+  locationLat?: string; // Latitude coordinate
+  locationLng?: string; // Longitude coordinate 
+  locationRadius?: string; // Search radius in kilometers
+  atCustomerPlace?: string; // "true" | "false"
+  atStylistPlace?: string; // "true" | "false"
+  stylists?: string; // Comma-separated stylist IDs
   minPrice?: string;
   maxPrice?: string;
   sort?: string;
@@ -191,17 +207,34 @@ export interface ServiceSearchParams {
 export function searchParamsToFilters(
   searchParams: ServiceSearchParams,
 ): ServiceFilters {
+  const location = searchParams.location && (searchParams.locationLat && searchParams.locationLng) 
+    ? {
+        address: searchParams.location,
+        coordinates: {
+          lat: parseFloat(searchParams.locationLat),
+          lng: parseFloat(searchParams.locationLng),
+        },
+        radius: searchParams.locationRadius ? parseFloat(searchParams.locationRadius) : 10,
+      }
+    : searchParams.location 
+    ? { address: searchParams.location, radius: 10 }
+    : undefined;
+
+  const serviceDestination = (searchParams.atCustomerPlace || searchParams.atStylistPlace)
+    ? {
+        atCustomerPlace: searchParams.atCustomerPlace === "true",
+        atStylistPlace: searchParams.atStylistPlace === "true",
+      }
+    : undefined;
+
   return {
     search: searchParams.search,
-    categoryId: searchParams.category,
-    location: searchParams.location,
+    categories: searchParams.categories ? searchParams.categories.split(',') : undefined,
+    location,
+    serviceDestination,
     stylistIds: searchParams.stylists ? searchParams.stylists.split(',') : undefined,
-    minPrice: searchParams.minPrice
-      ? parseInt(searchParams.minPrice)
-      : undefined,
-    maxPrice: searchParams.maxPrice
-      ? parseInt(searchParams.maxPrice)
-      : undefined,
+    minPrice: searchParams.minPrice,
+    maxPrice: searchParams.maxPrice,
     sortBy: searchParams.sort as ServiceFilters["sortBy"] || "newest",
     page: searchParams.page ? parseInt(searchParams.page) : 1,
   };
@@ -255,11 +288,16 @@ export function filtersToSearchParams(
 ): ServiceSearchParams {
   return {
     search: filters.search,
-    category: filters.categoryId,
-    location: filters.location,
+    categories: filters.categories?.length ? filters.categories.join(',') : undefined,
+    location: filters.location?.address,
+    locationLat: filters.location?.coordinates?.lat.toString(),
+    locationLng: filters.location?.coordinates?.lng.toString(),
+    locationRadius: filters.location?.radius?.toString(),
+    atCustomerPlace: filters.serviceDestination?.atCustomerPlace?.toString(),
+    atStylistPlace: filters.serviceDestination?.atStylistPlace?.toString(),
     stylists: filters.stylistIds?.length ? filters.stylistIds.join(',') : undefined,
-    minPrice: filters.minPrice?.toString(),
-    maxPrice: filters.maxPrice?.toString(),
+    minPrice: filters.minPrice,
+    maxPrice: filters.maxPrice,
     sort: filters.sortBy === "newest" ? undefined : filters.sortBy,
     page: filters.page === 1 ? undefined : filters.page?.toString(),
   };

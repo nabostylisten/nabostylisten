@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AddressInput } from "@/components/ui/address-input";
+import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
 import { Search, Filter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -21,18 +22,29 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { X, Users, DollarSign } from "lucide-react";
+import { X, Users, DollarSign, MapPin } from "lucide-react";
 import type { ServiceFilters } from "@/types";
 
 interface ServiceFilterFormProps {
   categories?: Array<{
     id: string;
     name: string;
-    service_count: number;
+    description?: string | null;
+    parent_category_id?: string | null;
+    service_count?: number;
   }>;
   stylists?: Array<{
     id: string;
     full_name: string | null;
+  }>;
+  userAddresses?: Array<{
+    id: string;
+    nickname: string | null;
+    street_address: string;
+    city: string;
+    postal_code: string;
+    country: string;
+    is_primary: boolean;
   }>;
   mode?: "redirect" | "update"; // redirect to /tjenester or update current URL
 }
@@ -40,38 +52,82 @@ interface ServiceFilterFormProps {
 export function ServiceFilterForm({
   categories = [],
   stylists = [],
+  userAddresses = [],
   mode = "update",
 }: ServiceFilterFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  // Enhanced state management for new filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
-  const [location, setLocation] = useState(searchParams.get("location") || "");
-  const [selectedCategory, setSelectedCategory] = useState(
-    searchParams.get("category") || "all"
+  const [location, setLocation] = useState({
+    address: searchParams.get("location") || "",
+    coordinates:
+      searchParams.get("locationLat") && searchParams.get("locationLng")
+        ? {
+            lat: parseFloat(searchParams.get("locationLat")!),
+            lng: parseFloat(searchParams.get("locationLng")!),
+          }
+        : undefined,
+    radius: searchParams.get("locationRadius")
+      ? parseFloat(searchParams.get("locationRadius")!)
+      : 10,
+  });
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(
+    searchParams.get("categories")
+      ? searchParams.get("categories")!.split(",")
+      : []
   );
+
   const [selectedStylists, setSelectedStylists] = useState<string[]>(
     searchParams.get("stylists") ? searchParams.get("stylists")!.split(",") : []
   );
+
+  const [serviceDestination, setServiceDestination] = useState({
+    atCustomerPlace: searchParams.get("atCustomerPlace") === "true",
+    atStylistPlace: searchParams.get("atStylistPlace") === "true",
+  });
+
   const [sortBy, setSortBy] = useState<ServiceFilters["sortBy"]>(
     (searchParams.get("sort") as ServiceFilters["sortBy"]) || "newest"
   );
-  const [minPrice, setMinPrice] = useState(
-    searchParams.get("minPrice") || ""
-  );
-  const [maxPrice, setMaxPrice] = useState(
-    searchParams.get("maxPrice") || ""
-  );
+
+  const [minPrice, setMinPrice] = useState(searchParams.get("minPrice") || "");
+  const [maxPrice, setMaxPrice] = useState(searchParams.get("maxPrice") || "");
 
   const handleSearch = () => {
     startTransition(() => {
       const params = new URLSearchParams();
 
       if (search.trim()) params.set("search", search.trim());
-      if (location.trim()) params.set("location", location.trim());
-      if (selectedCategory && selectedCategory !== "all")
-        params.set("category", selectedCategory);
+
+      // Enhanced location parameters
+      if (location.address.trim()) {
+        params.set("location", location.address.trim());
+        if (location.coordinates) {
+          params.set("locationLat", location.coordinates.lat.toString());
+          params.set("locationLng", location.coordinates.lng.toString());
+        }
+        if (location.radius !== 10) {
+          params.set("locationRadius", location.radius.toString());
+        }
+      }
+
+      // Multiple categories
+      if (selectedCategories.length > 0) {
+        params.set("categories", selectedCategories.join(","));
+      }
+
+      // Service destination preferences
+      if (serviceDestination.atCustomerPlace) {
+        params.set("atCustomerPlace", "true");
+      }
+      if (serviceDestination.atStylistPlace) {
+        params.set("atStylistPlace", "true");
+      }
+
       if (selectedStylists.length > 0)
         params.set("stylists", selectedStylists.join(","));
       if (minPrice.trim()) params.set("minPrice", minPrice.trim());
@@ -91,9 +147,10 @@ export function ServiceFilterForm({
   const handleClearFilters = () => {
     startTransition(() => {
       setSearch("");
-      setLocation("");
-      setSelectedCategory("all");
+      setLocation({ address: "", coordinates: undefined, radius: 10 });
+      setSelectedCategories([]);
       setSelectedStylists([]);
+      setServiceDestination({ atCustomerPlace: false, atStylistPlace: false });
       setMinPrice("");
       setMaxPrice("");
       setSortBy("newest");
@@ -108,12 +165,36 @@ export function ServiceFilterForm({
 
   const hasActiveFilters =
     search ||
-    location ||
-    (selectedCategory && selectedCategory !== "all") ||
+    location.address ||
+    selectedCategories.length > 0 ||
     selectedStylists.length > 0 ||
+    serviceDestination.atCustomerPlace ||
+    serviceDestination.atStylistPlace ||
     minPrice ||
     maxPrice ||
     sortBy !== "newest";
+
+  const getFormattedServiceDestination = () => {
+    if (
+      serviceDestination.atCustomerPlace &&
+      !serviceDestination.atStylistPlace
+    ) {
+      return "Hjemme";
+    }
+    if (
+      serviceDestination.atCustomerPlace &&
+      serviceDestination.atStylistPlace
+    ) {
+      return "Begge";
+    }
+    if (
+      serviceDestination.atStylistPlace &&
+      !serviceDestination.atCustomerPlace
+    ) {
+      return "Hos stylist";
+    }
+    return "Begge";
+  };
 
   return (
     <Card>
@@ -130,36 +211,142 @@ export function ServiceFilterForm({
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
-          <div>
+          <div className="flex gap-2">
             <AddressInput
-              value={location}
-              onChange={setLocation}
+              value={location.address}
+              onChange={(address) =>
+                setLocation((prev) => ({ ...prev, address }))
+              }
+              onSelect={(suggestion) => {
+                if (suggestion.center) {
+                  setLocation((prev) => ({
+                    ...prev,
+                    address: suggestion.place_name,
+                    coordinates: {
+                      lat: suggestion.center[1],
+                      lng: suggestion.center[0],
+                    },
+                  }));
+                }
+              }}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              placeholder="Søk lokasjon..."
             />
+            {location.coordinates && (
+              <div className="flex items-center gap-2 min-w-0">
+                <Input
+                  type="number"
+                  value={location.radius}
+                  onChange={(e) =>
+                    setLocation((prev) => ({
+                      ...prev,
+                      radius: parseFloat(e.target.value) || 10,
+                    }))
+                  }
+                  min="1"
+                  max="50"
+                  className="w-16"
+                  placeholder="10"
+                />
+                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                  km
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Filters Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Filters Rows - Split into multiple rows for better responsiveness */}
+        <div className="space-y-4">
+          {/* First row: Categories and Service Destination */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Category Filter */}
           <div>
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Alle kategorier" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle kategorier</SelectItem>
-                {categories
-                  .filter((cat) => cat.service_count > 0)
-                  .map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name} ({category.service_count})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+            <ServiceCategoryCombobox
+              selectedCategories={selectedCategories}
+              onSelectedCategoriesChange={setSelectedCategories}
+              categories={categories}
+              placeholder="Velg kategorier..."
+            />
+          </div>
+
+          {/* Service Destination Filter */}
+          <div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <MapPin className="mr-2 h-4 w-4" />
+                  {!serviceDestination.atCustomerPlace &&
+                  !serviceDestination.atStylistPlace
+                    ? "Hvor?"
+                    : getFormattedServiceDestination()}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4">
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">
+                    Hvor skal tjenesten utføres?
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="atCustomerPlace"
+                        checked={serviceDestination.atCustomerPlace}
+                        onCheckedChange={(checked) =>
+                          setServiceDestination((prev) => ({
+                            ...prev,
+                            atCustomerPlace: !!checked,
+                          }))
+                        }
+                      />
+                      <label
+                        htmlFor="atCustomerPlace"
+                        className="text-sm cursor-pointer"
+                      >
+                        Hjemme hos meg
+                      </label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="atStylistPlace"
+                        checked={serviceDestination.atStylistPlace}
+                        onCheckedChange={(checked) =>
+                          setServiceDestination((prev) => ({
+                            ...prev,
+                            atStylistPlace: !!checked,
+                          }))
+                        }
+                      />
+                      <label
+                        htmlFor="atStylistPlace"
+                        className="text-sm cursor-pointer"
+                      >
+                        Hos stylist
+                      </label>
+                    </div>
+                  </div>
+                  {(serviceDestination.atCustomerPlace ||
+                    serviceDestination.atStylistPlace) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setServiceDestination({
+                          atCustomerPlace: false,
+                          atStylistPlace: false,
+                        })
+                      }
+                      className="w-full mt-2"
+                    >
+                      Fjern filter
+                    </Button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <Popover>
@@ -308,14 +495,99 @@ export function ServiceFilterForm({
                 <SelectItem value="newest">Nyeste først</SelectItem>
                 <SelectItem value="price_asc">Lavest pris først</SelectItem>
                 <SelectItem value="price_desc">Høyest pris først</SelectItem>
+                <SelectItem value="rating_desc">
+                  Høyest vurdering først
+                </SelectItem>
+                <SelectItem value="rating_asc">
+                  Lavest vurdering først
+                </SelectItem>
+                {location.coordinates && (
+                  <SelectItem value="distance_asc">Nærmest først</SelectItem>
+                )}
               </SelectContent>
             </Select>
           </div>
         </div>
 
         {/* Selected Filters Display */}
-        {(selectedStylists.length > 0 || minPrice || maxPrice) && (
+        {(selectedCategories.length > 0 ||
+          selectedStylists.length > 0 ||
+          location.coordinates ||
+          serviceDestination.atCustomerPlace ||
+          serviceDestination.atStylistPlace ||
+          minPrice ||
+          maxPrice) && (
           <div className="space-y-2">
+            {/* Selected Categories */}
+            {selectedCategories.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Valgte kategorier:
+                </span>
+                {selectedCategories.map((categoryId) => {
+                  const category = categories.find((c) => c.id === categoryId);
+                  return (
+                    <Badge
+                      key={categoryId}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
+                      {category?.name || "Ukjent"}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() =>
+                          setSelectedCategories(
+                            selectedCategories.filter((id) => id !== categoryId)
+                          )
+                        }
+                      />
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Location Filter */}
+            {location.coordinates && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground">Lokasjon:</span>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {location.address} ({location.radius}km)
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() =>
+                      setLocation({
+                        address: "",
+                        coordinates: undefined,
+                        radius: 10,
+                      })
+                    }
+                  />
+                </Badge>
+              </div>
+            )}
+
+            {/* Service Destination Filter */}
+            {(serviceDestination.atCustomerPlace ||
+              serviceDestination.atStylistPlace) && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground">Utføres:</span>
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {getFormattedServiceDestination()}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() =>
+                      setServiceDestination({
+                        atCustomerPlace: false,
+                        atStylistPlace: false,
+                      })
+                    }
+                  />
+                </Badge>
+              </div>
+            )}
+
+            {/* Selected Stylists */}
             {selectedStylists.length > 0 && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">
@@ -343,16 +615,16 @@ export function ServiceFilterForm({
                 })}
               </div>
             )}
+
+            {/* Price Range Filter */}
             {(minPrice || maxPrice) && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">
                   Prisområde:
                 </span>
-                <Badge
-                  variant="secondary"
-                  className="flex items-center gap-1"
-                >
-                  {minPrice ? `${minPrice} kr` : "0"} - {maxPrice ? `${maxPrice} kr` : "∞"}
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {minPrice ? `${minPrice} kr` : "0"} -{" "}
+                  {maxPrice ? `${maxPrice} kr` : "∞"}
                   <X
                     className="h-3 w-3 cursor-pointer"
                     onClick={() => {

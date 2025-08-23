@@ -778,6 +778,7 @@ export async function getServiceReviews(serviceId: string, limit = 10) {
     return { data: transformedReviews, error: null };
 }
 
+
 /**
  * Get review statistics for a specific service
  */

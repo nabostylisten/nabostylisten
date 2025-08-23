@@ -18,6 +18,7 @@ import {
   getServiceReviews,
   getServiceReviewStats,
 } from "@/server/service.actions";
+import { getStylistAverageRating } from "@/server/review.actions";
 import { ServiceDetailSkeleton } from "@/components/services/service-detail-skeleton";
 import { ServiceDetailSidebar } from "@/components/services/service-detail-sidebar";
 import Image from "next/image";
@@ -29,19 +30,29 @@ interface PageProps {
 }
 
 async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
-  const [
-    { data: service, error },
-    { data: reviews, error: reviewsError },
-    { data: reviewStats, error: reviewStatsError },
-  ] = await Promise.all([
-    getPublicService(serviceId),
-    getServiceReviews(serviceId, 5), // Get latest 5 reviews
-    getServiceReviewStats(serviceId),
-  ]);
-
+  // First get the service data
+  const { data: service, error } = await getPublicService(serviceId);
+  
   if (error || !service) {
     notFound();
   }
+
+  // Then get reviews and stylist rating in parallel
+  const [
+    { data: reviews, error: reviewsError },
+    { data: reviewStats, error: reviewStatsError },
+    stylistRatingResult,
+  ] = await Promise.all([
+    getServiceReviews(serviceId, 5), // Get latest 5 reviews
+    getServiceReviewStats(serviceId),
+    getStylistAverageRating(service.profiles?.id || ""),
+  ]);
+
+  const stylistRating = stylistRatingResult.error ? null : {
+    total_reviews: stylistRatingResult.count,
+    average_rating: stylistRatingResult.average,
+  };
+  const stylistRatingError = stylistRatingResult.error;
 
   const previewImage = service.media?.find((m) => m.is_preview_image);
   const primaryAddress = service.profiles?.addresses?.find(
@@ -157,9 +168,22 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg">
-                      {service.profiles?.full_name || "Ukjent stylist"}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-lg">
+                        {service.profiles?.full_name || "Ukjent stylist"}
+                      </h3>
+                      {!stylistRatingError && stylistRating && stylistRating.total_reviews > 0 && (
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span className="text-sm font-medium">
+                            {stylistRating.average_rating}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            ({stylistRating.total_reviews})
+                          </span>
+                        </div>
+                      )}
+                    </div>
                     {stylistDetails?.bio && (
                       <p className="text-sm text-muted-foreground mt-1">
                         {stylistDetails.bio}

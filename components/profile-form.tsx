@@ -15,6 +15,8 @@ import {
   Phone,
   Calendar,
   Shield,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react";
 
 // UI Components
@@ -32,8 +34,20 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 import { updateProfile } from "@/server/profile.actions";
+import { sendAccountDeletionConfirmationEmail } from "@/server/auth.actions";
 import type { Database } from "@/types/database.types";
 import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ProfileAddresses } from "@/components/addresses";
@@ -49,12 +63,20 @@ type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 interface ProfileFormProps {
   profile: Database["public"]["Tables"]["profiles"]["Row"];
-  stylistDetails?: Database["public"]["Tables"]["stylist_details"]["Row"] | null;
+  stylistDetails?:
+    | Database["public"]["Tables"]["stylist_details"]["Row"]
+    | null;
   isOwner: boolean;
 }
 
-export function ProfileForm({ profile, stylistDetails, isOwner }: ProfileFormProps) {
+export function ProfileForm({
+  profile,
+  stylistDetails,
+  isOwner,
+}: ProfileFormProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const queryClient = useQueryClient();
 
   const form = useForm<ProfileFormValues>({
@@ -80,6 +102,21 @@ export function ProfileForm({ profile, stylistDetails, isOwner }: ProfileFormPro
     },
   });
 
+  const deleteAccountMutation = useMutation({
+    mutationFn: ({ userId }: { userId: string }) =>
+      sendAccountDeletionConfirmationEmail({ userId }),
+    onSuccess: () => {
+      toast.success(
+        "Bekreftelseslenke sendt til din e-post! Sjekk innboksen din."
+      );
+      setIsDeleteDialogOpen(false);
+      setDeleteConfirmationText("");
+    },
+    onError: (error) => {
+      toast.error("Feil ved sending av bekreftelseslenke: " + error.message);
+    },
+  });
+
   const handleEdit = () => {
     if (isOwner) {
       setIsEditing(true);
@@ -97,6 +134,24 @@ export function ProfileForm({ profile, stylistDetails, isOwner }: ProfileFormPro
         id: profile.id,
         data: values,
       });
+    }
+  };
+
+  const deleteMyUserText = "slett min bruker";
+
+  const handleDeleteAccount = () => {
+    if (deleteConfirmationText !== deleteMyUserText) {
+      toast.error(`Du må skrive '${deleteMyUserText}' for å bekrefte sletting`);
+      return;
+    }
+
+    deleteAccountMutation.mutate({ userId: profile.id });
+  };
+
+  const handleDeleteDialogClose = (open: boolean) => {
+    setIsDeleteDialogOpen(open);
+    if (!open) {
+      setDeleteConfirmationText("");
     }
   };
 
@@ -311,6 +366,94 @@ export function ProfileForm({ profile, stylistDetails, isOwner }: ProfileFormPro
             isOwner={isOwner}
           />
         </div>
+      )}
+
+      {/* Danger Zone - only for profile owners and not during editing */}
+      {isOwner && !isEditing && (
+        <Card className="mt-6 border-destructive/20 bg-destructive/5">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="w-5 h-5" />
+              Slett konto
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Dette vil permanent slette kontoen din, alle dine data,
+                bestillinger, og samtaler. Denne handlingen kan ikke angres.
+              </p>
+
+              <AlertDialog
+                open={isDeleteDialogOpen}
+                onOpenChange={handleDeleteDialogClose}
+              >
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" className="w-fit">
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Slett konto
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+                      <AlertTriangle className="w-5 h-5" />
+                      Bekreft sletting av konto
+                    </AlertDialogTitle>
+                    <AlertDialogDescription className="text-left">
+                      <p className="mb-3 text-sm">
+                        Vi vil sende en <strong>bekreftelseslenke til din e-post</strong> som du må klikke på for å fullføre slettingen. 
+                        Dette er en ekstra sikkerhet for å sikre at det virkelig er deg som ønsker å slette kontoen.
+                      </p>
+                      
+                      <strong>Dette vil permanent slette:</strong>
+                      <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
+                        <li>Din personlige profil og kontoinformasjon</li>
+                        <li>Alle dine bestillinger og historikk</li>
+                        <li>Samtaler med stylister</li>
+                        <li>Anmeldelser og vurderinger du har gitt</li>
+                        <li>Lagrede betalingsmetoder og adresser</li>
+                      </ul>
+                      
+                      <p className="mt-3 font-medium text-destructive">
+                        Denne handlingen kan ikke angres etter at du har bekreftet via e-post.
+                      </p>
+                      
+                      <p className="mt-3 text-sm">
+                        Skriv <strong>"{deleteMyUserText}"</strong> for å sende bekreftelseslenke:
+                      </p>
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <div className="my-4">
+                    <Input
+                      value={deleteConfirmationText}
+                      onChange={(e) =>
+                        setDeleteConfirmationText(e.target.value)
+                      }
+                      placeholder="slett min bruker"
+                      className="border-destructive/50 focus:border-destructive"
+                    />
+                  </div>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                    <AlertDialogAction
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      onClick={handleDeleteAccount}
+                      disabled={
+                        deleteConfirmationText !== deleteMyUserText ||
+                        deleteAccountMutation.isPending
+                      }
+                    >
+                      {deleteAccountMutation.isPending
+                        ? "Sender bekreftelseslenke..."
+                        : "Send bekreftelseslenke"}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          </CardContent>
+        </Card>
       )}
     </>
   );

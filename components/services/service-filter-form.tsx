@@ -204,7 +204,7 @@ export function ServiceFilterForm({
           <div className="flex-1 relative">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Søk etter tjeneste eller kategori..."
+              placeholder="Søk etter tjeneste..."
               className="pl-10"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -260,252 +260,264 @@ export function ServiceFilterForm({
         <div className="space-y-4">
           {/* First row: Categories and Service Destination */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {/* Category Filter */}
-          <div>
-            <ServiceCategoryCombobox
-              selectedCategories={selectedCategories}
-              onSelectedCategoriesChange={setSelectedCategories}
-              categories={categories}
-              placeholder="Velg kategorier..."
-            />
+            {/* Category Filter */}
+            <div>
+              <ServiceCategoryCombobox
+                selectedCategories={selectedCategories}
+                onSelectedCategoriesChange={setSelectedCategories}
+                categories={categories}
+                placeholder="Velg kategorier..."
+              />
+            </div>
+
+            {/* Service Destination Filter */}
+            <div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <MapPin className="mr-2 h-4 w-4" />
+                    {!serviceDestination.atCustomerPlace &&
+                    !serviceDestination.atStylistPlace
+                      ? "Hvor?"
+                      : getFormattedServiceDestination()}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4">
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">
+                      Hvor skal tjenesten utføres?
+                    </h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="atCustomerPlace"
+                          checked={serviceDestination.atCustomerPlace}
+                          onCheckedChange={(checked) =>
+                            setServiceDestination((prev) => ({
+                              ...prev,
+                              atCustomerPlace: !!checked,
+                            }))
+                          }
+                        />
+                        <label
+                          htmlFor="atCustomerPlace"
+                          className="text-sm cursor-pointer"
+                        >
+                          Hjemme hos meg
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="atStylistPlace"
+                          checked={serviceDestination.atStylistPlace}
+                          onCheckedChange={(checked) =>
+                            setServiceDestination((prev) => ({
+                              ...prev,
+                              atStylistPlace: !!checked,
+                            }))
+                          }
+                        />
+                        <label
+                          htmlFor="atStylistPlace"
+                          className="text-sm cursor-pointer"
+                        >
+                          Hos stylist
+                        </label>
+                      </div>
+                    </div>
+                    {(serviceDestination.atCustomerPlace ||
+                      serviceDestination.atStylistPlace) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          setServiceDestination({
+                            atCustomerPlace: false,
+                            atStylistPlace: false,
+                          })
+                        }
+                        className="w-full mt-2"
+                      >
+                        Fjern filter
+                      </Button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
 
-          {/* Service Destination Filter */}
-          <div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  <MapPin className="mr-2 h-4 w-4" />
-                  {!serviceDestination.atCustomerPlace &&
-                  !serviceDestination.atStylistPlace
-                    ? "Hvor?"
-                    : getFormattedServiceDestination()}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4">
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">
-                    Hvor skal tjenesten utføres?
-                  </h4>
+          {/* Second row: Stylists and Price Range */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Stylists Filter */}
+            <div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    {selectedStylists.length === 0
+                      ? "Velg stylister..."
+                      : `${selectedStylists.length} stylist${selectedStylists.length > 1 ? "er" : ""} valgt`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4">
                   <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="atCustomerPlace"
-                        checked={serviceDestination.atCustomerPlace}
-                        onCheckedChange={(checked) =>
-                          setServiceDestination((prev) => ({
-                            ...prev,
-                            atCustomerPlace: !!checked,
-                          }))
-                        }
-                      />
-                      <label
-                        htmlFor="atCustomerPlace"
-                        className="text-sm cursor-pointer"
-                      >
-                        Hjemme hos meg
-                      </label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Checkbox
-                        id="atStylistPlace"
-                        checked={serviceDestination.atStylistPlace}
-                        onCheckedChange={(checked) =>
-                          setServiceDestination((prev) => ({
-                            ...prev,
-                            atStylistPlace: !!checked,
-                          }))
-                        }
-                      />
-                      <label
-                        htmlFor="atStylistPlace"
-                        className="text-sm cursor-pointer"
-                      >
-                        Hos stylist
-                      </label>
-                    </div>
-                  </div>
-                  {(serviceDestination.atCustomerPlace ||
-                    serviceDestination.atStylistPlace) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setServiceDestination({
-                          atCustomerPlace: false,
-                          atStylistPlace: false,
-                        })
-                      }
-                      className="w-full mt-2"
-                    >
-                      Fjern filter
-                    </Button>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  <Users className="mr-2 h-4 w-4" />
-                  {selectedStylists.length === 0
-                    ? "Velg stylister..."
-                    : `${selectedStylists.length} stylist${selectedStylists.length > 1 ? "er" : ""} valgt`}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4">
-                <div className="space-y-2">
-                  <h4 className="text-sm font-medium">
-                    Filtrer etter stylister
-                  </h4>
-                  <div className="max-h-48 overflow-y-auto space-y-2">
-                    {stylists
-                      .filter((stylist) => stylist.full_name)
-                      .map((stylist) => {
-                        const isSelected = selectedStylists.includes(
-                          stylist.id
-                        );
-                        return (
-                          <div
-                            key={stylist.id}
-                            className="flex items-center space-x-2"
-                          >
-                            <Checkbox
-                              id={stylist.id}
-                              checked={isSelected}
-                              onCheckedChange={(checked) => {
-                                if (checked) {
-                                  setSelectedStylists([
-                                    ...selectedStylists,
-                                    stylist.id,
-                                  ]);
-                                } else {
-                                  setSelectedStylists(
-                                    selectedStylists.filter(
-                                      (id) => id !== stylist.id
-                                    )
-                                  );
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={stylist.id}
-                              className="text-sm cursor-pointer"
+                    <h4 className="text-sm font-medium">
+                      Filtrer etter stylister
+                    </h4>
+                    <div className="max-h-48 overflow-y-auto space-y-2">
+                      {stylists
+                        .filter((stylist) => stylist.full_name)
+                        .map((stylist) => {
+                          const isSelected = selectedStylists.includes(
+                            stylist.id
+                          );
+                          return (
+                            <div
+                              key={stylist.id}
+                              className="flex items-center space-x-2"
                             >
-                              {stylist.full_name}
-                            </label>
-                          </div>
-                        );
-                      })}
-                  </div>
-                  {selectedStylists.length > 0 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedStylists([])}
-                      className="w-full mt-2"
-                    >
-                      Fjern alle
-                    </Button>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-          <div>
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full justify-start text-left font-normal"
-                >
-                  <DollarSign className="mr-2 h-4 w-4" />
-                  {!minPrice && !maxPrice
-                    ? "Prisområde..."
-                    : `${minPrice ? `${minPrice} kr` : "0"} - ${maxPrice ? `${maxPrice} kr` : "∞"}`}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-4">
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">Prisområde</h4>
-                  <div className="space-y-2">
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">
-                        Fra (kr)
-                      </label>
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        value={minPrice}
-                        onChange={(e) => setMinPrice(e.target.value)}
-                        min="0"
-                        step="50"
-                      />
+                              <Checkbox
+                                id={stylist.id}
+                                checked={isSelected}
+                                onCheckedChange={(checked) => {
+                                  if (checked) {
+                                    setSelectedStylists([
+                                      ...selectedStylists,
+                                      stylist.id,
+                                    ]);
+                                  } else {
+                                    setSelectedStylists(
+                                      selectedStylists.filter(
+                                        (id) => id !== stylist.id
+                                      )
+                                    );
+                                  }
+                                }}
+                              />
+                              <label
+                                htmlFor={stylist.id}
+                                className="text-sm cursor-pointer"
+                              >
+                                {stylist.full_name}
+                              </label>
+                            </div>
+                          );
+                        })}
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs text-muted-foreground">
-                        Til (kr)
-                      </label>
-                      <Input
-                        type="number"
-                        placeholder="5000"
-                        value={maxPrice}
-                        onChange={(e) => setMaxPrice(e.target.value)}
-                        min="0"
-                        step="50"
-                      />
-                    </div>
+                    {selectedStylists.length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedStylists([])}
+                        className="w-full mt-2"
+                      >
+                        Fjern alle
+                      </Button>
+                    )}
                   </div>
-                  {(minPrice || maxPrice) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setMinPrice("");
-                        setMaxPrice("");
-                      }}
-                      className="w-full mt-2"
-                    >
-                      Fjern prisfilter
-                    </Button>
-                  )}
-                </div>
-              </PopoverContent>
-            </Popover>
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* Price Range Filter */}
+            <div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start text-left font-normal"
+                  >
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    {!minPrice && !maxPrice
+                      ? "Prisområde..."
+                      : `${minPrice ? `${minPrice} kr` : "0"} - ${maxPrice ? `${maxPrice} kr` : "∞"}`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-80 p-4">
+                  <div className="space-y-4">
+                    <h4 className="text-sm font-medium">Prisområde</h4>
+                    <div className="space-y-2">
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">
+                          Fra (kr)
+                        </label>
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          value={minPrice}
+                          onChange={(e) => setMinPrice(e.target.value)}
+                          min="0"
+                          step="50"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs text-muted-foreground">
+                          Til (kr)
+                        </label>
+                        <Input
+                          type="number"
+                          placeholder="5000"
+                          value={maxPrice}
+                          onChange={(e) => setMaxPrice(e.target.value)}
+                          min="0"
+                          step="50"
+                        />
+                      </div>
+                    </div>
+                    {(minPrice || maxPrice) && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          setMinPrice("");
+                          setMaxPrice("");
+                        }}
+                        className="w-full mt-2"
+                      >
+                        Fjern prisfilter
+                      </Button>
+                    )}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
           </div>
-          <div>
-            <Select
-              value={sortBy}
-              onValueChange={(value) =>
-                setSortBy(value as ServiceFilters["sortBy"])
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sorter etter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Nyeste først</SelectItem>
-                <SelectItem value="price_asc">Lavest pris først</SelectItem>
-                <SelectItem value="price_desc">Høyest pris først</SelectItem>
-                <SelectItem value="rating_desc">
-                  Høyest vurdering først
-                </SelectItem>
-                <SelectItem value="rating_asc">
-                  Lavest vurdering først
-                </SelectItem>
-                {location.coordinates && (
-                  <SelectItem value="distance_asc">Nærmest først</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+
+          {/* Third row: Sorting */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+            <div className="sm:col-span-1">
+              <Select
+                value={sortBy}
+                onValueChange={(value) =>
+                  setSortBy(value as ServiceFilters["sortBy"])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sorter etter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Nyeste først</SelectItem>
+                  <SelectItem value="price_asc">Lavest pris først</SelectItem>
+                  <SelectItem value="price_desc">Høyest pris først</SelectItem>
+                  <SelectItem value="rating_desc">
+                    Høyest vurdering først
+                  </SelectItem>
+                  <SelectItem value="rating_asc">
+                    Lavest vurdering først
+                  </SelectItem>
+                  {location.coordinates && (
+                    <SelectItem value="distance_asc">Nærmest først</SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 

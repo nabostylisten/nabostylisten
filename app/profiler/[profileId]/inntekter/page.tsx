@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign } from "lucide-react";
 import { ProfileLayout } from "@/components/profile-layout";
 
-export default async function InntjeningPage({
+export default async function InntekterPage({
   params,
 }: {
   params: Promise<{ profileId: string }>;
@@ -36,7 +36,7 @@ export default async function InntjeningPage({
           <div className="flex items-center gap-3 mb-6">
             <DollarSign className="w-8 h-8" />
             <div>
-              <h1 className="text-3xl font-bold">Inntjening</h1>
+              <h1 className="text-3xl font-bold">Inntekter</h1>
               <p className="text-muted-foreground mt-1">
                 Oversikt over din inntjening og utbetalinger
               </p>
@@ -49,8 +49,8 @@ export default async function InntjeningPage({
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground">
-                Denne siden er under utvikling. Her vil du kunne se din
-                inntjening, utbetalingshistorikk og skatteopplysninger.
+                Denne siden er under utvikling. Her vil du kunne se din inntekt,
+                utbetalingshistorikk og skatteopplysninger.
               </p>
             </CardContent>
           </Card>

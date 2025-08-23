@@ -23,6 +23,7 @@ import {
 import { baseUrl } from "./utils";
 
 interface PaymentNotificationEmailProps {
+  recipientProfileId: string;
   recipientName: string;
   recipientRole: "customer" | "stylist";
   notificationType:
@@ -49,6 +50,7 @@ interface PaymentNotificationEmailProps {
 }
 
 export const PaymentNotificationEmail = ({
+  recipientProfileId = "12345",
   recipientName = "Anna Stylist",
   recipientRole = "stylist",
   notificationType = "payout_processed",
@@ -71,7 +73,6 @@ export const PaymentNotificationEmail = ({
       case "payment_received":
         return {
           title: "Betaling mottatt",
-          emoji: "✅",
           description:
             recipientRole === "customer"
               ? "Din betaling er bekreftet"
@@ -81,21 +82,18 @@ export const PaymentNotificationEmail = ({
       case "payout_processed":
         return {
           title: "Utbetaling behandlet",
-          emoji: "💰",
           description: "Din utbetaling er sendt til bankkontoen din",
           color: { bg: "#4a7c4a", text: "#ffffff" }, // success green
         };
       case "payout_pending":
         return {
           title: "Utbetaling venter",
-          emoji: "⏳",
           description: "Din utbetaling er under behandling",
           color: { bg: "#fee7dc", text: "#c2724a" }, // warning orange
         };
       case "payment_failed":
         return {
           title: "Betaling feilet",
-          emoji: "❌",
           description:
             recipientRole === "customer"
               ? "Din betaling kunne ikke gjennomføres"
@@ -105,7 +103,6 @@ export const PaymentNotificationEmail = ({
       default:
         return {
           title: "Betalingsvarsel",
-          emoji: "💳",
           description: "Oppdatering om betaling",
           color: { bg: "#9b8cc8", text: "#ffffff" }, // primary purple
         };
@@ -131,22 +128,6 @@ export const PaymentNotificationEmail = ({
             />
           </Section>
 
-          <Section
-            style={{
-              ...notificationBanner,
-              backgroundColor: config.color.bg,
-            }}
-          >
-            <Text
-              style={{
-                ...notificationText,
-                color: config.color.text,
-              }}
-            >
-              {config.emoji} {config.title}
-            </Text>
-          </Section>
-
           <Heading style={heading}>{config.description}</Heading>
 
           <Text style={paragraph}>
@@ -156,7 +137,7 @@ export const PaymentNotificationEmail = ({
 
           {/* Service Context */}
           <Section style={serviceContextSection}>
-            <Text style={contextHeader}>📋 Tjenesteinformasjon:</Text>
+            <Text style={contextHeader}>Tjenesteinformasjon:</Text>
             <div style={contextRow}>
               <Text style={contextLabel}>Tjeneste:</Text>
               <Text style={contextValue}>{serviceName}</Text>
@@ -174,7 +155,7 @@ export const PaymentNotificationEmail = ({
           {/* Payment Breakdown for Customers */}
           {recipientRole === "customer" && (
             <Section style={paymentSection}>
-              <Text style={sectionHeader}>💳 Betalingsdetaljer:</Text>
+              <Text style={sectionHeader}>Betalingsdetaljer:</Text>
 
               <div style={amountRow}>
                 <Text style={amountLabel}>Tjeneste:</Text>
@@ -202,7 +183,7 @@ export const PaymentNotificationEmail = ({
             (notificationType === "payout_processed" ||
               notificationType === "payout_pending") && (
               <Section style={payoutSection}>
-                <Text style={sectionHeader}>💰 Utbetalingsdetaljer:</Text>
+                <Text style={sectionHeader}>Utbetalingsdetaljer:</Text>
 
                 <div style={breakdownRow}>
                   <Text style={breakdownLabel}>Tjenestepris:</Text>
@@ -212,7 +193,7 @@ export const PaymentNotificationEmail = ({
                 </div>
 
                 <div style={breakdownRow}>
-                  <Text style={breakdownLabel}>Plattformavgift (15%):</Text>
+                  <Text style={breakdownLabel}>Plattformavgift (20%):</Text>
                   <Text style={breakdownValue}>
                     -{platformFee} {currency}
                   </Text>
@@ -239,8 +220,8 @@ export const PaymentNotificationEmail = ({
           {/* Failure Details */}
           {notificationType === "payment_failed" && failureReason && (
             <Section style={failureSection}>
-              <Text style={failureHeader}>⚠️ Årsak til feil:</Text>
-              <Text style={failureReason}>{failureReason}</Text>
+              <Text style={failureHeader}>Årsak til feil:</Text>
+              <Text>{failureReason}</Text>
               <Text style={failureAction}>
                 {recipientRole === "customer"
                   ? "Vennligst oppdater betalingsinformasjonen din og prøv igjen."
@@ -251,7 +232,7 @@ export const PaymentNotificationEmail = ({
 
           {/* Next Steps */}
           <Section style={nextStepsSection}>
-            <Text style={nextStepsHeader}>📋 Neste steg:</Text>
+            <Text style={nextStepsHeader}>Neste steg:</Text>
             {recipientRole === "customer" &&
               notificationType === "payment_received" && (
                 <Text style={nextStepsText}>
@@ -268,7 +249,6 @@ export const PaymentNotificationEmail = ({
                 <Text style={nextStepsText}>
                   • Pengene vil være tilgjengelig i bankkontoen din innen 1-3
                   virkedager
-                  <br />• Neste utbetaling: {nextPayoutDate}
                   <br />
                   • Se fullstendig utbetalingshistorikk i dashboardet
                   <br />• Kontakt support hvis pengene ikke kommer frem
@@ -292,7 +272,7 @@ export const PaymentNotificationEmail = ({
             {recipientRole === "customer" && (
               <Button
                 style={button}
-                href={`${baseUrl}/profiler/${recipientName}/mine-bookinger/${bookingId}`}
+                href={`${baseUrl}/profiler/${recipientProfileId}/mine-bookinger/${bookingId}`}
               >
                 Se booking
               </Button>
@@ -300,7 +280,7 @@ export const PaymentNotificationEmail = ({
             {recipientRole === "stylist" && (
               <Button
                 style={button}
-                href={`${baseUrl}/profiler/${recipientName}/utbetalinger`}
+                href={`${baseUrl}/profiler/${recipientProfileId}/inntekter`}
               >
                 Se utbetalingshistorikk
               </Button>
@@ -375,6 +355,11 @@ export const PaymentNotificationEmail = ({
 };
 
 PaymentNotificationEmail.PreviewProps = {
+  recipientProfileId: "12345",
+  serviceDate: "15. januar 2024",
+  totalAmount: 1000,
+  platformFee: 200,
+  stylistPayout: 800,
   recipientName: "Anna Stylist",
   recipientRole: "stylist" as const,
   notificationType: "payout_processed" as const,

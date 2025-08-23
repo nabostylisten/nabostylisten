@@ -214,6 +214,9 @@ export const NewReviewNotificationEmail = ({
 };
 
 NewReviewNotificationEmail.PreviewProps = {
+  stylistProfileId: "12345",
+  totalReviews: 47,
+  averageRating: 4.8,
   stylistName: "Anna Stylist",
   customerName: "Ola Nordmann",
   reviewId: "review_12345",

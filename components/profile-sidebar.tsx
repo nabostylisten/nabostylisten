@@ -35,12 +35,6 @@ const getSidebarItems = (userRole?: string) => {
       description: "Oversikt over bookinger",
     },
     {
-      title: "Tilgjengelighet",
-      href: "/tilgjengelighet",
-      icon: Calendar,
-      description: "Administrer kalender",
-    },
-    {
       title: "Chat",
       href: "/chat",
       icon: MessageCircle,
@@ -57,28 +51,32 @@ const getSidebarItems = (userRole?: string) => {
   // Add stylist-specific items
   if (userRole === "stylist") {
     baseItems.push({
+      title: "Tilgjengelighet",
+      href: "/tilgjengelighet",
+      icon: Calendar,
+      description: "Administrer kalender",
+    });
+    baseItems.push({
       title: "Mine tjenester",
       href: "/mine-tjenester",
       icon: Scissors,
       description: "Administrer dine tjenester",
     });
+    baseItems.push({
+      title: "Inntekter",
+      href: "/inntekter",
+      icon: DollarSign,
+      description: "Inntekter og utbetalinger",
+    });
   }
 
   // Add common items at the end
-  baseItems.push(
-    {
-      title: "Inntjening",
-      href: "/inntjening",
-      icon: DollarSign,
-      description: "Inntekter og utbetalinger",
-    },
-    {
-      title: "Preferanser",
-      href: "/preferanser",
-      icon: Settings,
-      description: "Innstillinger og preferanser",
-    }
-  );
+  baseItems.push({
+    title: "Preferanser",
+    href: "/preferanser",
+    icon: Settings,
+    description: "Innstillinger og preferanser",
+  });
 
   return baseItems;
 };

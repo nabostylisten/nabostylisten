@@ -100,7 +100,6 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
           booking_cancellations: preferences.booking_cancellations,
           booking_status_updates: preferences.booking_status_updates,
           chat_messages: preferences.chat_messages,
-          chat_message_sounds: preferences.chat_message_sounds,
           new_booking_requests: preferences.new_booking_requests,
           review_notifications: preferences.review_notifications,
           payment_notifications: preferences.payment_notifications,
@@ -126,7 +125,6 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
         booking_cancellations: preferences.booking_cancellations,
         booking_status_updates: preferences.booking_status_updates,
         chat_messages: preferences.chat_messages,
-        chat_message_sounds: preferences.chat_message_sounds,
         new_booking_requests: preferences.new_booking_requests,
         review_notifications: preferences.review_notifications,
         payment_notifications: preferences.payment_notifications,
@@ -157,7 +155,10 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
   };
 
   // Auto-submit when any field changes
-  const handleFieldChange = (field: keyof PreferencesFormValues, value: boolean) => {
+  const handleFieldChange = (
+    field: keyof PreferencesFormValues,
+    value: boolean
+  ) => {
     form.setValue(field, value);
     // Trigger form submission after a short delay to batch rapid changes
     setTimeout(() => {
@@ -175,7 +176,8 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
         {
           key: "newsletter_subscribed",
           label: "Nyhetsbrev",
-          description: "Motta vårt månedlige nyhetsbrev med tips og tilbud",
+          description:
+            "Motta vårt nyhetsbrev med tips og tilbud. Vi lover å ikke spamme deg.",
         },
         {
           key: "marketing_emails",
@@ -226,11 +228,6 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
           label: "Chat-meldinger",
           description: "Få e-postvarsler for nye chat-meldinger",
         },
-        {
-          key: "chat_message_sounds",
-          label: "Chat-lyder",
-          description: "Hør lyder når du mottar nye meldinger (i appen)",
-        },
       ],
     },
     {
@@ -261,7 +258,8 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
     {
       title: "Søknadsstatus",
       icon: <FileCheck className="w-5 h-5" />,
-      description: "Oppdateringer om søknadsstatusen din",
+      description:
+        "Oppdateringer om søknadsstatusen din dersom du søker om å bli stylist",
       fields: [
         {
           key: "application_status_updates",
@@ -299,16 +297,17 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
           label: "E-postvarsler",
           description: "Motta varsler via e-post",
         },
-        {
-          key: "sms_delivery",
-          label: "SMS-varsler",
-          description: "Motta viktige varsler via SMS",
-        },
-        {
-          key: "push_notifications",
-          label: "Push-varsler",
-          description: "Motta varsler i mobilappen (kommer snart)",
-        },
+        // TODO: Revisit this after potentially setting up Twilio SMS service
+        // {
+        //   key: "sms_delivery",
+        //   label: "SMS-varsler",
+        //   description: "Motta viktige varsler via SMS",
+        // },
+        // {
+        //   key: "push_notifications",
+        //   label: "Push-varsler",
+        //   description: "Motta varsler i mobilappen (kommer snart)",
+        // },
       ],
     },
   ];
@@ -343,9 +342,8 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
       {/* Header with submit button */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-lg font-semibold">Notification Preferences</h2>
           <p className="text-sm text-muted-foreground">
-            Changes are saved automatically
+            Endringer lagres automatisk
           </p>
         </div>
         <Button
@@ -353,71 +351,73 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
           disabled={updatePreferencesMutation.isPending}
           variant="outline"
         >
-          {updatePreferencesMutation.isPending ? "Lagrer..." : "Lagre preferanser"}
+          {updatePreferencesMutation.isPending
+            ? "Lagrer..."
+            : "Lagre preferanser"}
         </Button>
       </div>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           {preferenceSections.map((section) => {
-          // Filter fields based on user role
-          const visibleFields = section.fields.filter(
-            (field) => !field.roles || field.roles.includes(userRole)
-          );
+            // Filter fields based on user role
+            const visibleFields = section.fields.filter(
+              (field) => !field.roles || field.roles.includes(userRole)
+            );
 
-          // Skip section if no fields are visible
-          if (visibleFields.length === 0) {
-            return null;
-          }
+            // Skip section if no fields are visible
+            if (visibleFields.length === 0) {
+              return null;
+            }
 
-          return (
-            <Card key={section.title}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  {section.icon}
-                  {section.title}
-                </CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  {section.description}
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {visibleFields.map((field, index) => (
-                  <div key={field.key}>
-                    <FormField
-                      control={form.control}
-                      name={field.key}
-                      render={({ field: formField }) => (
-                        <FormItem className="flex items-center justify-between space-y-0">
-                          <div className="space-y-1">
-                            <FormLabel className="text-sm font-medium">
-                              {field.label}
-                            </FormLabel>
-                            <FormDescription className="text-sm text-muted-foreground">
-                              {field.description}
-                            </FormDescription>
-                          </div>
-                          <FormControl>
-                            <Switch
-                              checked={formField.value}
-                              onCheckedChange={(value) => {
-                                formField.onChange(value);
-                                handleFieldChange(field.key, value);
-                              }}
-                            />
-                          </FormControl>
-                        </FormItem>
+            return (
+              <Card key={section.title}>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    {section.icon}
+                    {section.title}
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    {section.description}
+                  </p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {visibleFields.map((field, index) => (
+                    <div key={field.key}>
+                      <FormField
+                        control={form.control}
+                        name={field.key}
+                        render={({ field: formField }) => (
+                          <FormItem className="flex items-center justify-between space-y-0">
+                            <div className="space-y-1">
+                              <FormLabel className="text-sm font-medium">
+                                {field.label}
+                              </FormLabel>
+                              <FormDescription className="text-sm text-muted-foreground">
+                                {field.description}
+                              </FormDescription>
+                            </div>
+                            <FormControl>
+                              <Switch
+                                checked={formField.value}
+                                onCheckedChange={(value) => {
+                                  formField.onChange(value);
+                                  handleFieldChange(field.key, value);
+                                }}
+                              />
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                      {index < visibleFields.length - 1 && (
+                        <Separator className="mt-4" />
                       )}
-                    />
-                    {index < visibleFields.length - 1 && (
-                      <Separator className="mt-4" />
-                    )}
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-          );
-        })}
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </form>
       </Form>
     </div>

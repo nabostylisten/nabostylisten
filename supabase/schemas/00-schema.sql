@@ -402,7 +402,6 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
 
     -- Chat and Communication
     chat_messages boolean DEFAULT true NOT NULL,
-    chat_message_sounds boolean DEFAULT true NOT NULL,
 
     -- Stylist-specific Notifications (for stylists)
     new_booking_requests boolean DEFAULT true NOT NULL,

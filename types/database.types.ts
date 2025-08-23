@@ -2796,7 +2796,6 @@ export type Database = {
           booking_confirmations: boolean
           booking_reminders: boolean
           booking_status_updates: boolean
-          chat_message_sounds: boolean
           chat_messages: boolean
           created_at: string
           email_delivery: boolean
@@ -2820,7 +2819,6 @@ export type Database = {
           booking_confirmations?: boolean
           booking_reminders?: boolean
           booking_status_updates?: boolean
-          chat_message_sounds?: boolean
           chat_messages?: boolean
           created_at?: string
           email_delivery?: boolean
@@ -2844,7 +2842,6 @@ export type Database = {
           booking_confirmations?: boolean
           booking_reminders?: boolean
           booking_status_updates?: boolean
-          chat_message_sounds?: boolean
           chat_messages?: boolean
           created_at?: string
           email_delivery?: boolean

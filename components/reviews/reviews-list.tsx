@@ -189,19 +189,9 @@ export function ReviewsList({
   return (
     <div className="space-y-6">
       {/* Header with stats */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <h2 className="text-xl font-semibold">
-            {viewType === "stylist"
-              ? "Mine anmeldelser"
-              : "Anmeldelser jeg har skrevet"}
-          </h2>
-
-          {data?.total ? (
-            <Badge variant="secondary">{data.total} totalt</Badge>
-          ) : null}
-        </div>
-      </div>
+      {data?.total ? (
+        <Badge variant="secondary">{data.total} totalt</Badge>
+      ) : null}
 
       {/* Filters */}
       {showFilters && (

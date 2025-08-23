@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
 
 interface SystemUpdateEmailProps {
   userName: string;
@@ -392,6 +393,22 @@ export const SystemUpdateEmail = ({
     </Html>
   );
 };
+
+SystemUpdateEmail.PreviewProps = {
+  userName: "Ola Nordmann",
+  updateType: "new_features" as const,
+  updateTitle: "Nye funksjoner: Favoritt-stylister og forbedret søk!",
+  updateDescription: "Vi har lagt til mulighet til å markere stylister som favoritter og kraftig forbedret søkefunksjonaliteten.",
+  effectiveDate: "20. januar 2024",
+  downtime: {
+    required: false,
+    duration: "Ingen nedetid",
+    startTime: "",
+  },
+  actionRequired: false,
+} as SystemUpdateEmailProps;
+
+export default SystemUpdateEmail;
 
 // Styled with Nabostylisten branded colors
 const main = {

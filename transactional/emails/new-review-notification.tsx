@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
 
 interface NewReviewNotificationEmailProps {
   stylistName: string;
@@ -248,6 +249,19 @@ export const NewReviewNotificationEmail = ({
     </Html>
   );
 };
+
+NewReviewNotificationEmail.PreviewProps = {
+  stylistName: "Anna Stylist",
+  customerName: "Ola Nordmann",
+  reviewId: "review_12345",
+  bookingId: "booking_67890",
+  rating: 5,
+  reviewText: "Fantastisk opplevelse! Anna var så profesjonell og jeg elsker den nye frisyren min. Kommer definitivt tilbake!",
+  serviceName: "Hårklipp og styling",
+  bookingDate: "10. januar 2024",
+} as NewReviewNotificationEmailProps;
+
+export default NewReviewNotificationEmail;
 
 // Styled with Nabostylisten branded colors
 const main = {

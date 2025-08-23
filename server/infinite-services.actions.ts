@@ -15,7 +15,7 @@ export interface InfiniteServicesResponse {
 export async function fetchInfiniteServices(
   filters: ServiceFilters = {},
   limit: number = 12,
-  offset: number = 0
+  offset: number = 0,
 ): Promise<InfiniteServicesResponse> {
   const supabase = await createClient();
 
@@ -67,7 +67,7 @@ export async function fetchInfiniteServices(
                 )
             )
         `,
-      { count: "exact" }
+      { count: "exact" },
     )
     .eq("is_published", true);
 
@@ -104,10 +104,10 @@ export async function fetchInfiniteServices(
 
   // Apply price filters
   if (minPrice !== undefined) {
-    query = query.gte("price", minPrice * 100); // Convert to øre
+    query = query.gte("price", minPrice);
   }
   if (maxPrice !== undefined) {
-    query = query.lte("price", maxPrice * 100); // Convert to øre
+    query = query.lte("price", maxPrice);
   }
 
   // Apply location filter (if provided, filter by city)

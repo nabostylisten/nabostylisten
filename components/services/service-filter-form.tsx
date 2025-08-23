@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { X, Users } from "lucide-react";
+import { X, Users, DollarSign } from "lucide-react";
 import type { ServiceFilters } from "@/types";
 
 interface ServiceFilterFormProps {
@@ -57,6 +57,12 @@ export function ServiceFilterForm({
   const [sortBy, setSortBy] = useState<ServiceFilters["sortBy"]>(
     (searchParams.get("sort") as ServiceFilters["sortBy"]) || "newest"
   );
+  const [minPrice, setMinPrice] = useState(
+    searchParams.get("minPrice") || ""
+  );
+  const [maxPrice, setMaxPrice] = useState(
+    searchParams.get("maxPrice") || ""
+  );
 
   const handleSearch = () => {
     startTransition(() => {
@@ -68,6 +74,8 @@ export function ServiceFilterForm({
         params.set("category", selectedCategory);
       if (selectedStylists.length > 0)
         params.set("stylists", selectedStylists.join(","));
+      if (minPrice.trim()) params.set("minPrice", minPrice.trim());
+      if (maxPrice.trim()) params.set("maxPrice", maxPrice.trim());
       if (sortBy !== "newest" && sortBy) params.set("sort", sortBy);
 
       const queryString = params.toString();
@@ -86,6 +94,8 @@ export function ServiceFilterForm({
       setLocation("");
       setSelectedCategory("all");
       setSelectedStylists([]);
+      setMinPrice("");
+      setMaxPrice("");
       setSortBy("newest");
 
       if (mode === "redirect") {
@@ -101,6 +111,8 @@ export function ServiceFilterForm({
     location ||
     (selectedCategory && selectedCategory !== "all") ||
     selectedStylists.length > 0 ||
+    minPrice ||
+    maxPrice ||
     sortBy !== "newest";
 
   return (
@@ -118,7 +130,7 @@ export function ServiceFilterForm({
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
             />
           </div>
-          <div className="flex-1">
+          <div>
             <AddressInput
               value={location}
               onChange={setLocation}
@@ -128,8 +140,8 @@ export function ServiceFilterForm({
         </div>
 
         {/* Filters Row */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div>
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}
@@ -149,7 +161,7 @@ export function ServiceFilterForm({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex-1">
+          <div>
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -221,7 +233,68 @@ export function ServiceFilterForm({
               </PopoverContent>
             </Popover>
           </div>
-          <div className="flex-1">
+          <div>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start text-left font-normal"
+                >
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  {!minPrice && !maxPrice
+                    ? "Prisområde..."
+                    : `${minPrice ? `${minPrice} kr` : "0"} - ${maxPrice ? `${maxPrice} kr` : "∞"}`}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-4">
+                <div className="space-y-4">
+                  <h4 className="text-sm font-medium">Prisområde</h4>
+                  <div className="space-y-2">
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        Fra (kr)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="0"
+                        value={minPrice}
+                        onChange={(e) => setMinPrice(e.target.value)}
+                        min="0"
+                        step="50"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs text-muted-foreground">
+                        Til (kr)
+                      </label>
+                      <Input
+                        type="number"
+                        placeholder="5000"
+                        value={maxPrice}
+                        onChange={(e) => setMaxPrice(e.target.value)}
+                        min="0"
+                        step="50"
+                      />
+                    </div>
+                  </div>
+                  {(minPrice || maxPrice) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setMinPrice("");
+                        setMaxPrice("");
+                      }}
+                      className="w-full mt-2"
+                    >
+                      Fjern prisfilter
+                    </Button>
+                  )}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
+          <div>
             <Select
               value={sortBy}
               onValueChange={(value) =>
@@ -240,32 +313,56 @@ export function ServiceFilterForm({
           </div>
         </div>
 
-        {/* Selected Stylists Display */}
-        {selectedStylists.length > 0 && (
-          <div className="flex flex-wrap gap-2">
-            <span className="text-sm text-muted-foreground">
-              Valgte stylister:
-            </span>
-            {selectedStylists.map((stylistId) => {
-              const stylist = stylists.find((s) => s.id === stylistId);
-              return (
+        {/* Selected Filters Display */}
+        {(selectedStylists.length > 0 || minPrice || maxPrice) && (
+          <div className="space-y-2">
+            {selectedStylists.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Valgte stylister:
+                </span>
+                {selectedStylists.map((stylistId) => {
+                  const stylist = stylists.find((s) => s.id === stylistId);
+                  return (
+                    <Badge
+                      key={stylistId}
+                      variant="secondary"
+                      className="flex items-center gap-1"
+                    >
+                      {stylist?.full_name || "Ukjent"}
+                      <X
+                        className="h-3 w-3 cursor-pointer"
+                        onClick={() =>
+                          setSelectedStylists(
+                            selectedStylists.filter((id) => id !== stylistId)
+                          )
+                        }
+                      />
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+            {(minPrice || maxPrice) && (
+              <div className="flex flex-wrap gap-2">
+                <span className="text-sm text-muted-foreground">
+                  Prisområde:
+                </span>
                 <Badge
-                  key={stylistId}
                   variant="secondary"
                   className="flex items-center gap-1"
                 >
-                  {stylist?.full_name || "Ukjent"}
+                  {minPrice ? `${minPrice} kr` : "0"} - {maxPrice ? `${maxPrice} kr` : "∞"}
                   <X
                     className="h-3 w-3 cursor-pointer"
-                    onClick={() =>
-                      setSelectedStylists(
-                        selectedStylists.filter((id) => id !== stylistId)
-                      )
-                    }
+                    onClick={() => {
+                      setMinPrice("");
+                      setMaxPrice("");
+                    }}
                   />
                 </Badge>
-              );
-            })}
+              </div>
+            )}
           </div>
         )}
 

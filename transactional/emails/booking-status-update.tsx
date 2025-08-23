@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, layoutStyles, colors, statusColors } from "../utils/styles";
 
 interface BookingStatusUpdateEmailProps {
   customerName: string;
@@ -58,10 +59,7 @@ export const BookingStatusUpdateEmail = ({
       : `Du har avlyst bookingen med ${customerName}. Kunden vil bli informert om avlysningen.`,
   };
 
-  const statusColors = {
-    confirmed: "#4a7c4a", // --accent-foreground (green)
-    cancelled: "#ff3333", // --destructive (red)
-  };
+  const emailStatusColors = statusColors;
 
   const previewText = `Booking ${statusLabels[status].toLowerCase()}: ${serviceName}`;
 
@@ -206,62 +204,54 @@ export const BookingStatusUpdateEmail = ({
   );
 };
 
-// Styled with Nabostylisten branded colors
-const main = {
-  backgroundColor: "#f8f6ff", // --background
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-};
+BookingStatusUpdateEmail.PreviewProps = {
+  customerName: "Ola Nordmann",
+  stylistName: "Anna Stylist",
+  bookingId: "booking_12345",
+  stylistId: "stylist_67890",
+  serviceName: "Hårklipp og styling",
+  bookingDate: "15. januar 2024",
+  bookingTime: "14:00 - 15:30",
+  status: "confirmed" as const,
+  message: "Ser frem til å møte deg! Ring hvis du har spørsmål.",
+  location: "Hjemme hos deg",
+  recipientType: "customer" as const,
+} as BookingStatusUpdateEmailProps;
 
-const container = {
-  margin: "0 auto",
-  padding: "40px 20px",
-  maxWidth: "600px",
-  backgroundColor: "#ffffff",
-  borderRadius: "12px",
-  boxShadow: "0 4px 6px rgba(69, 58, 107, 0.1)",
-};
+export default BookingStatusUpdateEmail;
 
-const logoContainer = {
-  marginBottom: "32px",
-  textAlign: "center" as const,
-};
-
-const logo = {
-  margin: "0 auto",
-};
-
-const heading = {
-  fontSize: "28px",
-  letterSpacing: "-0.5px",
-  lineHeight: "1.2",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 24px",
-  textAlign: "center" as const,
-};
-
-const paragraph = {
-  margin: "0 0 20px",
-  fontSize: "16px",
-  lineHeight: "1.6",
-  color: "#453a6b", // --foreground
-};
+// Using shared Nabostylisten branded styles
+const main = baseStyles.main;
+const container = baseStyles.container;
+const logoContainer = baseStyles.logoContainer;
+const logo = baseStyles.logo;
+const heading = baseStyles.heading;
+const paragraph = baseStyles.paragraph;
+const bookingDetailsSection = sectionStyles.infoSection;
+const sectionHeader = textStyles.sectionHeader;
+const detailRow = layoutStyles.detailRow;
+const detailLabel = textStyles.detailLabel;
+const detailValue = textStyles.detailValue;
+const messageSection = sectionStyles.messageSection;
+const messageLabel = textStyles.messageHeader;
+const messageText = textStyles.messageContent;
+const ctaSection = sectionStyles.actionSection;
+const button = buttonStyles.primary;
+const hr = baseStyles.hr;
+const footer = baseStyles.footer;
+const link = baseStyles.link;
 
 const statusSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "10px",
+  ...sectionStyles.infoSection,
   border: "2px solid",
-  borderColor: "#4a7c4a", // Will be overridden by status color
+  borderColor: colors.accentForeground, // Will be overridden by status color
   textAlign: "center" as const,
 };
 
 const statusLabel = {
   fontSize: "14px",
   fontWeight: "500",
-  color: "#6b6682", // --muted-foreground
+  color: colors.mutedForeground,
   margin: "0 0 8px",
   textTransform: "uppercase" as const,
   letterSpacing: "0.5px",
@@ -270,109 +260,6 @@ const statusLabel = {
 const statusValue = {
   fontSize: "20px",
   fontWeight: "600",
-  color: "#4a7c4a", // Will be overridden by status color
+  color: colors.accentForeground, // Will be overridden by status color
   margin: "0",
-};
-
-const bookingDetailsSection = {
-  margin: "32px 0",
-  padding: "24px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "10px",
-  border: "1px solid rgba(155, 140, 200, 0.3)", // --primary with transparency
-};
-
-const sectionHeader = {
-  fontSize: "18px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 16px",
-};
-
-const detailRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "12px",
-};
-
-const detailLabel = {
-  fontSize: "14px",
-  fontWeight: "500",
-  color: "#6b6682", // --muted-foreground
-  margin: "0",
-  flex: "0 0 100px",
-};
-
-const detailValue = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0",
-  textAlign: "right" as const,
-  flex: "1",
-};
-
-const messageSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#fee7dc", // --secondary
-  border: "2px solid #c2724a", // --secondary-foreground
-  borderRadius: "10px",
-};
-
-const messageLabel = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0 0 12px",
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.5px",
-};
-
-const messageText = {
-  fontSize: "16px",
-  lineHeight: "1.6",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0",
-};
-
-const ctaSection = {
-  margin: "32px 0",
-  textAlign: "center" as const,
-};
-
-const button = {
-  backgroundColor: "#9b8cc8", // --primary
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "14px 28px",
-  margin: "20px 0",
-  boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
-};
-
-const hr = {
-  borderColor: "#edeaf7", // --muted
-  margin: "40px 0 24px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-};
-
-const footer = {
-  color: "#6b6682", // --muted-foreground
-  fontSize: "13px",
-  lineHeight: "1.5",
-  margin: "0 0 8px",
-  textAlign: "center" as const,
-};
-
-const link = {
-  color: "#9b8cc8", // --primary
-  textDecoration: "none",
-  fontWeight: "500",
 };

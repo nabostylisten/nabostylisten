@@ -8,6 +8,7 @@ import {
   Preview,
   Text,
 } from "@react-email/components";
+import { baseStyles, colors, fontFamily } from "../utils/styles";
 
 interface NabostylistenOtpEmailProps {
   token?: string;
@@ -84,38 +85,18 @@ NabostylistenOtpEmail.PreviewProps = {
 
 export default NabostylistenOtpEmail;
 
-// Branded colors based on globals.css light theme
-const colors = {
-  background: "#fcf9fc", // --background: 253.3333 100% 98.2353%
-  foreground: "#4a3350", // --foreground: 254.0625 37.2093% 33.7255%
-  primary: "#8b7eb8", // --primary: 260 28.9157% 67.451%
-  primaryForeground: "#ffffff",
-  secondary: "#fae7d8", // --secondary: 16.1538 86.6667% 94.1176%
-  secondaryForeground: "#a3522f", // --secondary-foreground: 18.5185 65.8537% 48.2353%
-  accent: "#e8f5e8", // --accent: 106.9565 74.1935% 93.9216%
-  accentForeground: "#3d5a3e", // --accent-foreground: 106.8 28.7356% 34.1176%
-  muted: "#f5f2f7", // --muted: 253.3333 24.3243% 92.7451%
-  mutedForeground: "#6b5b73", // --muted-foreground: 255.3488 18.2979% 46.0784%
-  border: "#f5f2f7", // --border: 253.3333 24.3243% 92.7451%
-};
-
-const fontFamily = "Inter, ui-sans-serif, sans-serif, system-ui";
-
 const main = {
-  backgroundColor: colors.background,
-  fontFamily,
+  ...baseStyles.main,
   padding: "20px 0",
 };
 
 const container = {
+  ...baseStyles.container,
   paddingLeft: "20px",
   paddingRight: "20px",
-  margin: "0 auto",
   maxWidth: "580px",
-  backgroundColor: "#ffffff",
   borderRadius: "16px",
   border: `1px solid ${colors.border}`,
-  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)",
 };
 
 const headerSection = {
@@ -163,10 +144,7 @@ const subtitle = {
 };
 
 const text = {
-  color: colors.foreground,
-  fontFamily,
-  fontSize: "16px",
-  lineHeight: "24px",
+  ...baseStyles.paragraph,
   margin: "16px 0",
 };
 
@@ -215,19 +193,15 @@ const code = {
 };
 
 const footer = {
-  color: colors.mutedForeground,
-  fontFamily,
+  ...baseStyles.footer,
   fontSize: "14px",
   lineHeight: "20px",
-  margin: "0",
 };
 
 const footerLink = {
-  color: colors.primary,
-  fontFamily,
+  ...baseStyles.link,
   fontSize: "16px",
   fontWeight: "600",
-  textDecoration: "none",
 };
 
 const footerTagline = {

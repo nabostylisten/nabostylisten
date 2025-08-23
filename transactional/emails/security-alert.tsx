@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
 
 interface SecurityAlertEmailProps {
   userName: string;
@@ -353,6 +354,18 @@ export const SecurityAlertEmail = ({
     </Html>
   );
 };
+
+SecurityAlertEmail.PreviewProps = {
+  userName: "Ola Nordmann",
+  alertType: "suspicious_activity" as const,
+  timestamp: "15. januar 2024 kl 14:30",
+  ipAddress: "192.168.1.100",
+  location: "Oslo, Norge",
+  deviceInfo: "Chrome på MacOS",
+  actionRequired: true,
+} as SecurityAlertEmailProps;
+
+export default SecurityAlertEmail;
 
 // Styled with Nabostylisten branded colors
 const main = {

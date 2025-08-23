@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, layoutStyles, colors } from "../utils/styles";
 
 interface PaymentNotificationEmailProps {
   recipientName: string;
@@ -334,6 +335,22 @@ export const PaymentNotificationEmail = ({
     </Html>
   );
 };
+
+PaymentNotificationEmail.PreviewProps = {
+  recipientName: "Anna Stylist",
+  recipientRole: "stylist" as const,
+  notificationType: "payout_processed" as const,
+  bookingId: "booking_12345",
+  serviceName: "Hårklipp og styling",
+  customerName: "Ola Nordmann",
+  bookingDate: "15. januar 2024",
+  amount: 520,
+  currency: "NOK",
+  transactionId: "trans_67890",
+  paymentMethod: "Bank transfer",
+} as PaymentNotificationEmailProps;
+
+export default PaymentNotificationEmail;
 
 // Styled with Nabostylisten branded colors
 const main = {

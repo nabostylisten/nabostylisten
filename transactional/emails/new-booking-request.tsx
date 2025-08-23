@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, layoutStyles, urgencyColors, colors } from "../utils/styles";
 
 interface NewBookingRequestEmailProps {
   stylistName: string;
@@ -236,6 +237,24 @@ export const NewBookingRequestEmail = ({
     </Html>
   );
 };
+
+NewBookingRequestEmail.PreviewProps = {
+  stylistName: "Anna Stylist",
+  customerName: "Ola Nordmann",
+  bookingId: "booking_12345",
+  serviceName: "Hårklipp og styling",
+  requestedDate: "15. januar 2024",
+  requestedTime: "14:00 - 15:30",
+  location: "customer" as const,
+  customerAddress: "Storgata 1, 0001 Oslo",
+  messageFromCustomer: "Jeg ønsker en moderne frisyre som er lett å style. Har langt hår nå.",
+  totalPrice: 650,
+  currency: "NOK",
+  estimatedDuration: 90,
+  urgency: "medium" as const,
+} as NewBookingRequestEmailProps;
+
+export default NewBookingRequestEmail;
 
 // Styled with Nabostylisten branded colors
 const main = {

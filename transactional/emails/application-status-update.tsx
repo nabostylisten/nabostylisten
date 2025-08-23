@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, colors, statusColors } from "../utils/styles";
 
 interface ApplicationStatusUpdateEmailProps {
   applicantName: string;
@@ -125,61 +126,40 @@ export const ApplicationStatusUpdateEmail = ({
   );
 };
 
-// Styled with Nabostylisten branded colors
-const main = {
-  backgroundColor: "#f8f6ff", // --background
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-};
+ApplicationStatusUpdateEmail.PreviewProps = {
+  applicantName: "Ola Nordmann",
+  applicationId: "app_12345", 
+  status: "approved" as const,
+  message: "Gratulerer! Vi ser frem til å ha deg på plattformen.",
+} as ApplicationStatusUpdateEmailProps;
 
-const container = {
-  margin: "0 auto",
-  padding: "40px 20px",
-  maxWidth: "600px",
-  backgroundColor: "#ffffff",
-  borderRadius: "12px",
-  boxShadow: "0 4px 6px rgba(69, 58, 107, 0.1)",
-};
+export default ApplicationStatusUpdateEmail;
 
-const logoContainer = {
-  marginBottom: "32px",
-  textAlign: "center" as const,
-};
-
-const logo = {
-  margin: "0 auto",
-};
-
-const heading = {
-  fontSize: "28px",
-  letterSpacing: "-0.5px",
-  lineHeight: "1.2",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 24px",
-  textAlign: "center" as const,
-};
-
-const paragraph = {
-  margin: "0 0 20px",
-  fontSize: "16px",
-  lineHeight: "1.6",
-  color: "#453a6b", // --foreground
-};
+// Using shared Nabostylisten branded styles
+const main = baseStyles.main;
+const container = baseStyles.container;
+const logoContainer = baseStyles.logoContainer;
+const logo = baseStyles.logo;
+const heading = baseStyles.heading;
+const paragraph = baseStyles.paragraph;
+const messageSection = sectionStyles.messageSection;
+const messageLabel = textStyles.messageHeader;
+const messageText = textStyles.messageContent;
+const ctaSection = sectionStyles.actionSection;
+const button = buttonStyles.primary;
+const hr = baseStyles.hr;
+const footer = baseStyles.footer;
+const link = baseStyles.link;
 
 const statusSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "10px",
-  border: "1px solid rgba(155, 140, 200, 0.3)", // --primary with transparency
+  ...sectionStyles.infoSection,
   textAlign: "center" as const,
 };
 
 const statusLabel = {
   fontSize: "14px",
   fontWeight: "500",
-  color: "#6b6682", // --muted-foreground
+  color: colors.mutedForeground,
   margin: "0 0 8px",
   textTransform: "uppercase" as const,
   letterSpacing: "0.5px",
@@ -188,70 +168,6 @@ const statusLabel = {
 const statusValue = {
   fontSize: "20px",
   fontWeight: "600",
-  color: "#9b8cc8", // --primary
+  color: colors.primary,
   margin: "0",
-};
-
-const messageSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#fee7dc", // --secondary
-  border: "2px solid #c2724a", // --secondary-foreground
-  borderRadius: "10px",
-};
-
-const messageLabel = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0 0 12px",
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.5px",
-};
-
-const messageText = {
-  fontSize: "16px",
-  lineHeight: "1.6",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0",
-};
-
-const ctaSection = {
-  margin: "32px 0",
-  textAlign: "center" as const,
-};
-
-const button = {
-  backgroundColor: "#9b8cc8", // --primary
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "14px 28px",
-  margin: "20px 0",
-  boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
-};
-
-const hr = {
-  borderColor: "#edeaf7", // --muted
-  margin: "40px 0 24px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-};
-
-const footer = {
-  color: "#6b6682", // --muted-foreground
-  fontSize: "13px",
-  lineHeight: "1.5",
-  margin: "0 0 8px",
-  textAlign: "center" as const,
-};
-
-const link = {
-  color: "#9b8cc8", // --primary
-  textDecoration: "none",
-  fontWeight: "500",
 };

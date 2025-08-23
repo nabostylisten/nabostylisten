@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, layoutStyles, colors } from "../utils/styles";
 
 interface BookingReminderEmailProps {
   customerName: string;
@@ -184,33 +185,37 @@ export const BookingReminderEmail = ({
   );
 };
 
-// Styled with Nabostylisten branded colors
-const main = {
-  backgroundColor: "#f8f6ff", // --background
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-};
+BookingReminderEmail.PreviewProps = {
+  customerName: "Ola Nordmann",
+  stylistName: "Anna Stylist", 
+  bookingId: "booking_12345",
+  serviceName: "Hårklipp og styling",
+  bookingDate: "15. januar 2024",
+  bookingTime: "14:00 - 15:30",
+  location: "Hjemme hos deg",
+  address: "Storgata 1, 0001 Oslo", 
+  entryInstructions: "Ring på dørklokken. Hunden biter ikke!",
+  stylistPhone: "+47 123 45 678",
+  totalPrice: 650,
+  currency: "NOK",
+} as BookingReminderEmailProps;
 
-const container = {
-  margin: "0 auto",
-  padding: "40px 20px",
-  maxWidth: "600px",
-  backgroundColor: "#ffffff",
-  borderRadius: "12px",
-  boxShadow: "0 4px 6px rgba(69, 58, 107, 0.1)",
-};
+export default BookingReminderEmail;
 
-const logoContainer = {
-  marginBottom: "32px",
-  textAlign: "center" as const,
-};
+// Using shared Nabostylisten branded styles
+const main = baseStyles.main;
+const container = baseStyles.container;
+const logoContainer = baseStyles.logoContainer;
+const logo = baseStyles.logo;
+const heading = baseStyles.heading;
+const paragraph = baseStyles.paragraph;
+const hr = baseStyles.hr;
+const footer = baseStyles.footer;
+const link = baseStyles.link;
 
-const logo = {
-  margin: "0 auto",
-};
-
+// Specific styles for booking reminder
 const reminderBanner = {
-  backgroundColor: "#9b8cc8", // --primary
+  backgroundColor: colors.primary,
   borderRadius: "8px",
   padding: "12px 20px",
   textAlign: "center" as const,
@@ -218,7 +223,7 @@ const reminderBanner = {
 };
 
 const reminderText = {
-  color: "#ffffff",
+  color: colors.white,
   fontSize: "14px",
   fontWeight: "600",
   margin: "0",
@@ -226,172 +231,60 @@ const reminderText = {
   letterSpacing: "0.5px",
 };
 
-const heading = {
-  fontSize: "28px",
-  letterSpacing: "-0.5px",
-  lineHeight: "1.2",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 24px",
-  textAlign: "center" as const,
-};
-
-const paragraph = {
-  margin: "0 0 20px",
-  fontSize: "16px",
-  lineHeight: "1.6",
-  color: "#453a6b", // --foreground
-};
-
 const bookingDetailsSection = {
-  margin: "32px 0",
+  ...sectionStyles.infoSection,
   padding: "24px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "10px",
-  border: "1px solid #6b6682", // --muted-foreground with transparency
   borderColor: "rgba(107, 102, 130, 0.2)",
 };
 
-const sectionHeader = {
-  fontSize: "18px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 16px",
-};
-
-const detailRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "12px",
-};
-
-const detailLabel = {
-  fontSize: "14px",
-  fontWeight: "500",
-  color: "#6b6682", // --muted-foreground
-  margin: "0",
-  flex: "0 0 100px",
-};
+const sectionHeader = textStyles.sectionHeader;
+const detailRow = layoutStyles.detailRow;
+const detailLabel = textStyles.detailLabel;
 
 const detailValue = {
-  fontSize: "14px",
+  ...textStyles.detailValue,
   fontWeight: "400",
-  color: "#453a6b", // --foreground
-  margin: "0",
-  textAlign: "right" as const,
-  flex: "1",
 };
 
-const instructionsSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#fee7dc", // --secondary
-  border: "1px solid #c2724a", // --secondary-foreground
-  borderRadius: "10px",
-};
-
-const instructionsLabel = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0 0 12px",
-};
-
+const instructionsSection = sectionStyles.messageSection;
+const instructionsLabel = textStyles.messageHeader;
 const instructionsText = {
+  ...textStyles.messageContent,
   fontSize: "14px",
-  lineHeight: "1.6",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0",
+  fontStyle: "normal",
 };
 
 const contactSection = {
   margin: "32px 0",
   padding: "20px",
-  backgroundColor: "#e8f5e8", // --accent
-  border: "1px solid #4a7c4a", // --accent-foreground
+  backgroundColor: colors.accent,
+  border: `1px solid ${colors.accentForeground}`,
   borderRadius: "10px",
 };
 
 const contactHeader = {
   fontSize: "16px",
   fontWeight: "600",
-  color: "#4a7c4a", // --accent-foreground
+  color: colors.accentForeground,
   margin: "0 0 12px",
 };
 
 const contactText = {
   fontSize: "14px",
   lineHeight: "1.6",
-  color: "#4a7c4a", // --accent-foreground
+  color: colors.accentForeground,
   margin: "0 0 12px",
 };
 
 const contactNote = {
   fontSize: "12px",
-  color: "#4a7c4a", // --accent-foreground
+  color: colors.accentForeground,
   margin: "0",
   opacity: 0.8,
 };
 
-const tipsSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "10px",
-  border: "1px solid rgba(155, 140, 200, 0.3)", // --primary with transparency
-};
-
-const tipsHeader = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 12px",
-};
-
-const tipsText = {
-  fontSize: "13px",
-  lineHeight: "1.6",
-  color: "#6b6682", // --muted-foreground
-  margin: "0",
-};
-
-const ctaSection = {
-  margin: "32px 0",
-  textAlign: "center" as const,
-};
-
-const button = {
-  backgroundColor: "#9b8cc8", // --primary
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "14px 28px",
-  margin: "20px 0",
-  boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
-};
-
-const hr = {
-  borderColor: "#edeaf7", // --muted
-  margin: "40px 0 24px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-};
-
-const footer = {
-  color: "#6b6682", // --muted-foreground
-  fontSize: "13px",
-  lineHeight: "1.5",
-  margin: "0 0 8px",
-  textAlign: "center" as const,
-};
-
-const link = {
-  color: "#9b8cc8", // --primary
-  textDecoration: "none",
-  fontWeight: "500",
-};
+const tipsSection = sectionStyles.tipsSection;
+const tipsHeader = textStyles.tipsHeader;
+const tipsText = textStyles.tipsText;
+const ctaSection = sectionStyles.actionSection;
+const button = buttonStyles.primary;

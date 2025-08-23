@@ -13,6 +13,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
 
 interface StylistApplicationEmailProps {
   applicantName: string;
@@ -174,143 +175,42 @@ StylistApplicationEmail.PreviewProps = {
 
 export default StylistApplicationEmail;
 
-// Styled with Nabostylisten branded colors
-const main = {
-  backgroundColor: "#f8f6ff", // --background
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-};
-
-const container = {
-  margin: "0 auto",
-  padding: "40px 20px",
-  maxWidth: "600px",
-  backgroundColor: "#ffffff",
-  borderRadius: "12px",
-  boxShadow: "0 4px 6px rgba(69, 58, 107, 0.1)",
-};
-
-const logoContainer = {
-  textAlign: "center" as const,
-  marginBottom: "32px",
-};
-
-const logo = {
-  margin: "0 auto",
-};
-
-const heading = {
-  fontSize: "28px",
-  letterSpacing: "-0.5px",
-  lineHeight: "1.2",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  textAlign: "center" as const,
-  margin: "0 0 24px",
-};
-
-const subHeading = {
-  fontSize: "20px",
-  lineHeight: "1.4",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 16px",
-};
-
-const paragraph = {
-  fontSize: "16px",
-  lineHeight: "1.6",
-  color: "#453a6b", // --foreground
-  margin: "0 0 20px",
-};
-
-const infoSection = {
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "10px",
-  padding: "24px",
-  margin: "32px 0",
-  border: "1px solid rgba(155, 140, 200, 0.3)", // --primary with transparency
-};
+// Using shared Nabostylisten branded styles
+const main = baseStyles.main;
+const container = baseStyles.container;
+const logoContainer = baseStyles.logoContainer;
+const logo = baseStyles.logo;
+const heading = baseStyles.heading;
+const subHeading = baseStyles.subHeading;
+const paragraph = baseStyles.paragraph;
+const infoSection = sectionStyles.infoSection;
+const detailsSection = sectionStyles.detailsSection;
+const actionSection = sectionStyles.actionSection;
+const button = buttonStyles.primary;
+const link = baseStyles.link;
+const hr = baseStyles.hr;
 
 const infoLabel = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#6b6682", // --muted-foreground
-  margin: "0 0 4px",
+  ...textStyles.detailLabel,
   display: "inline-block",
   width: "100px",
+  margin: "0 0 4px",
 };
 
 const infoValue = {
   fontSize: "16px",
   fontWeight: "500",
-  color: "#453a6b", // --foreground
+  color: colors.foreground,
   margin: "0 0 12px",
   display: "inline-block",
 };
 
-const detailsSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#fee7dc", // --secondary
-  borderRadius: "10px",
-  border: "1px solid #c2724a", // --secondary-foreground
-};
-
-const detailLabel = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#c2724a", // --secondary-foreground
-  margin: "16px 0 4px",
-};
-
-const detailValue = {
-  fontSize: "16px",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0 0 12px",
-  fontWeight: "500",
-};
-
-const actionSection = {
-  textAlign: "center" as const,
-  margin: "32px 0",
-};
-
-const button = {
-  backgroundColor: "#9b8cc8", // --primary
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "16px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "14px 28px",
-  margin: "16px 0",
-  boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
-};
-
-const link = {
-  color: "#9b8cc8", // --primary
-  textDecoration: "none",
-  fontWeight: "500",
-};
-
-const hr = {
-  borderColor: "#edeaf7", // --muted
-  margin: "32px 0",
-  borderWidth: "1px",
-  borderStyle: "solid",
-};
+const detailLabel = textStyles.secondaryDetailLabel;
+const detailValue = textStyles.secondaryDetailValue;
 
 const footerSection = {
   textAlign: "center" as const,
   margin: "32px 0 0",
 };
 
-const footerText = {
-  fontSize: "13px",
-  lineHeight: "1.6",
-  color: "#6b6682", // --muted-foreground
-  margin: "0",
-};
+const footerText = baseStyles.footer;

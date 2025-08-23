@@ -12,6 +12,7 @@ import {
   Section,
   Text,
 } from "@react-email/components";
+import { baseStyles, sectionStyles, textStyles, buttonStyles, colors } from "../utils/styles";
 
 interface ChatMessageNotificationEmailProps {
   recipientName: string;
@@ -165,6 +166,19 @@ export const ChatMessageNotificationEmail = ({
     </Html>
   );
 };
+
+ChatMessageNotificationEmail.PreviewProps = {
+  recipientName: "Ola Nordmann",
+  senderName: "Anna Stylist",
+  senderRole: "stylist" as const,
+  message: "Hei! Jeg gleder meg til å se deg i morgen. Har du noen spesielle ønsker for frisyren?",
+  bookingId: "booking_12345",
+  serviceName: "Hårklipp og styling",
+  bookingDate: "15. januar 2024",
+  chatUrl: "https://nabostylisten.no/chat/123",
+} as ChatMessageNotificationEmailProps;
+
+export default ChatMessageNotificationEmail;
 
 // Styled with Nabostylisten branded colors
 const main = {

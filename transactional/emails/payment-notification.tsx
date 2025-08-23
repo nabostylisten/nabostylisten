@@ -23,6 +23,7 @@ import {
 import { baseUrl } from "./utils";
 
 interface PaymentNotificationEmailProps {
+  logoUrl: string;
   recipientProfileId: string;
   recipientName: string;
   recipientRole: "customer" | "stylist";
@@ -50,6 +51,7 @@ interface PaymentNotificationEmailProps {
 }
 
 export const PaymentNotificationEmail = ({
+  logoUrl,
   recipientProfileId = "12345",
   recipientName = "Anna Stylist",
   recipientRole = "stylist",
@@ -120,7 +122,7 @@ export const PaymentNotificationEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={logoUrl}
               width="120"
               height="36"
               alt="Nabostylisten"
@@ -355,6 +357,7 @@ export const PaymentNotificationEmail = ({
 };
 
 PaymentNotificationEmail.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
   recipientProfileId: "12345",
   serviceDate: "15. januar 2024",
   totalAmount: 1000,
@@ -365,9 +368,6 @@ PaymentNotificationEmail.PreviewProps = {
   notificationType: "payout_processed" as const,
   bookingId: "booking_12345",
   serviceName: "Hårklipp og styling",
-  customerName: "Ola Nordmann",
-  bookingDate: "15. januar 2024",
-  amount: 520,
   currency: "NOK",
   transactionId: "trans_67890",
   paymentMethod: "Bank transfer",

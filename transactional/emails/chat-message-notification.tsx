@@ -23,6 +23,7 @@ import { baseUrl } from "./utils";
 import { NotificationSettings } from "../components/notification-settings";
 
 interface ChatMessageNotificationEmailProps {
+  logoUrl: string;
   recipientProfileId: string;
   recipientName: string;
   senderName: string;
@@ -35,6 +36,7 @@ interface ChatMessageNotificationEmailProps {
 }
 
 export const ChatMessageNotificationEmail = ({
+  logoUrl,
   recipientProfileId = "12345",
   recipientName = "Ola Nordmann",
   senderName = "Anna Stylist",
@@ -60,7 +62,7 @@ export const ChatMessageNotificationEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={logoUrl}
               width="120"
               height="36"
               alt="Nabostylisten"
@@ -163,6 +165,8 @@ export const ChatMessageNotificationEmail = ({
 };
 
 ChatMessageNotificationEmail.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
+  recipientProfileId: "12345",
   recipientName: "Ola Nordmann",
   senderName: "Anna Stylist",
   senderRole: "stylist" as const,

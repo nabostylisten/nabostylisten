@@ -23,6 +23,7 @@ import { baseUrl } from "./utils";
 import { NotificationSettings } from "../components/notification-settings";
 
 interface NewReviewNotificationEmailProps {
+  logoUrl: string;
   stylistProfileId: string;
   stylistName: string;
   customerName: string;
@@ -37,6 +38,7 @@ interface NewReviewNotificationEmailProps {
 }
 
 export const NewReviewNotificationEmail = ({
+  logoUrl,
   stylistProfileId = "12345",
   stylistName = "Anna Stylist",
   customerName = "Ola Nordmann",
@@ -75,7 +77,7 @@ export const NewReviewNotificationEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={logoUrl}
               width="120"
               height="36"
               alt="Nabostylisten"
@@ -214,6 +216,7 @@ export const NewReviewNotificationEmail = ({
 };
 
 NewReviewNotificationEmail.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
   stylistProfileId: "12345",
   totalReviews: 47,
   averageRating: 4.8,
@@ -222,7 +225,7 @@ NewReviewNotificationEmail.PreviewProps = {
   reviewId: "review_12345",
   bookingId: "booking_67890",
   rating: 5,
-  reviewText:
+  comment:
     "Fantastisk opplevelse! Anna var så profesjonell og jeg elsker den nye frisyren min. Kommer definitivt tilbake!",
   serviceName: "Hårklipp og styling",
   bookingDate: "10. januar 2024",

@@ -25,6 +25,7 @@ import { baseUrl } from "./utils";
 import { NotificationSettings } from "../components/notification-settings";
 
 interface NewBookingRequestEmailProps {
+  logoUrl: string;
   stylistProfileId: string;
   stylistName: string;
   customerName: string;
@@ -42,6 +43,7 @@ interface NewBookingRequestEmailProps {
 }
 
 export const NewBookingRequestEmail = ({
+  logoUrl,
   stylistProfileId = "12345",
   stylistName = "Anna Stylist",
   customerName = "Ola Nordmann",
@@ -80,7 +82,7 @@ export const NewBookingRequestEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={logoUrl}
               width="120"
               height="36"
               alt="Nabostylisten"
@@ -200,6 +202,8 @@ export const NewBookingRequestEmail = ({
 };
 
 NewBookingRequestEmail.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
+  stylistProfileId: "12345",
   stylistName: "Anna Stylist",
   customerName: "Ola Nordmann",
   bookingId: "booking_12345",

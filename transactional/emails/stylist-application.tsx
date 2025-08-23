@@ -23,6 +23,7 @@ import {
 import { baseUrl } from "./utils";
 
 interface StylistApplicationEmailProps {
+  logoUrl: string;
   applicantName: string;
   applicantEmail: string;
   applicationId: string;
@@ -37,6 +38,7 @@ interface StylistApplicationEmailProps {
 }
 
 export const StylistApplicationEmail = ({
+  logoUrl,
   applicantName = "Ola Nordmann",
   applicantEmail = "ola@example.com",
   applicationId = "12345",
@@ -63,7 +65,7 @@ export const StylistApplicationEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={logoUrl}
               width="120"
               height="36"
               alt="Nabostylisten"
@@ -167,6 +169,7 @@ export const StylistApplicationEmail = ({
 };
 
 StylistApplicationEmail.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
   applicantName: "Ola Nordmann",
   applicantEmail: "ola@example.com",
   applicationId: "app_12345",

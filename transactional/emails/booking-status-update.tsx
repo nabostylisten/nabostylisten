@@ -24,6 +24,7 @@ import {
 import { baseUrl } from "./utils";
 
 interface BookingStatusUpdateEmailProps {
+  logoUrl: string;
   customerName: string;
   stylistName: string;
   bookingId: string;
@@ -38,6 +39,7 @@ interface BookingStatusUpdateEmailProps {
 }
 
 export const BookingStatusUpdateEmail = ({
+  logoUrl,
   customerName = "Ola Nordmann",
   stylistName = "Anna Stylist",
   bookingId = "12345",
@@ -78,7 +80,7 @@ export const BookingStatusUpdateEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={logoUrl}
               width="120"
               height="36"
               alt="Nabostylisten"
@@ -217,6 +219,7 @@ export const BookingStatusUpdateEmail = ({
 };
 
 BookingStatusUpdateEmail.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
   customerName: "Ola Nordmann",
   stylistName: "Anna Stylist",
   bookingId: "booking_12345",

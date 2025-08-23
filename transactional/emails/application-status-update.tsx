@@ -23,6 +23,7 @@ import {
 import { baseUrl } from "./utils";
 
 interface ApplicationStatusUpdateEmailProps {
+  logoUrl: string;
   applicantName: string;
   applicationId: string;
   status: "applied" | "pending_info" | "rejected" | "approved";
@@ -30,6 +31,7 @@ interface ApplicationStatusUpdateEmailProps {
 }
 
 export const ApplicationStatusUpdateEmail = ({
+  logoUrl,
   applicantName = "Ola Nordmann",
   applicationId = "12345",
   status = "approved",
@@ -61,7 +63,7 @@ export const ApplicationStatusUpdateEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={logoUrl}
               width="120"
               height="36"
               alt="Nabostylisten"
@@ -131,6 +133,7 @@ export const ApplicationStatusUpdateEmail = ({
 };
 
 ApplicationStatusUpdateEmail.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
   applicantName: "Ola Nordmann",
   applicationId: "app_12345",
   status: "approved" as const,

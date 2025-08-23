@@ -1,0 +1,1 @@
+GRANT USAGE ON SCHEMA gis TO anon, authenticated, service_role;

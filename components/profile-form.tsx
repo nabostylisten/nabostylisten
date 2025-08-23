@@ -36,6 +36,7 @@ import {
 import { updateProfile } from "@/server/profile.actions";
 import type { Database } from "@/types/database.types";
 import { CurrentUserAvatar } from "@/components/current-user-avatar";
+import { ProfileAddresses } from "@/components/addresses";
 
 // Form schema for profile updates
 const profileFormSchema = z.object({
@@ -301,6 +302,13 @@ export function ProfileForm({ profile, isOwner }: ProfileFormProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Address Management Section - only for profile owners */}
+      {isOwner && (
+        <div className="mt-6">
+          <ProfileAddresses />
+        </div>
+      )}
     </>
   );
 }

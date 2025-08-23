@@ -351,6 +351,7 @@ interface CreateBookingWithServicesInput {
         country: string;
         entryInstructions?: string;
     };
+    customerAddressId?: string; // ID of existing address from addresses table
 
     // Additional details
     messageToStylist?: string;
@@ -439,32 +440,50 @@ export async function createBookingWithServices(
                 .eq("id", discount.id);
         }
 
-        // 2. Create address if customer location is selected
+        // 2. Handle address for customer location
         let addressId: string | null = null;
 
-        if (input.location === "customer" && input.customerAddress) {
-            const { data: address, error: addressError } = await supabase
-                .from("addresses")
-                .insert({
-                    user_id: user.id,
-                    street_address: input.customerAddress.streetAddress,
-                    city: input.customerAddress.city,
-                    postal_code: input.customerAddress.postalCode,
-                    country: input.customerAddress.country,
-                    entry_instructions: input.customerAddress.entryInstructions,
-                    nickname: "Booking Address",
-                    is_primary: false,
-                    // TODO: Add location coordinates when Mapbox integration is complete
-                    // location: ...
-                })
-                .select()
-                .single();
+        if (input.location === "customer") {
+            if (input.customerAddressId) {
+                // Use existing address ID
+                addressId = input.customerAddressId;
+                
+                // Verify the address belongs to the user
+                const { data: existingAddress, error: verifyError } = await supabase
+                    .from("addresses")
+                    .select("id")
+                    .eq("id", input.customerAddressId)
+                    .eq("user_id", user.id)
+                    .single();
+                
+                if (verifyError || !existingAddress) {
+                    return { error: "Invalid address selected", data: null };
+                }
+            } else if (input.customerAddress) {
+                // Create a new address
+                const { data: address, error: addressError } = await supabase
+                    .from("addresses")
+                    .insert({
+                        user_id: user.id,
+                        street_address: input.customerAddress.streetAddress,
+                        city: input.customerAddress.city,
+                        postal_code: input.customerAddress.postalCode,
+                        country: input.customerAddress.country,
+                        entry_instructions: input.customerAddress.entryInstructions,
+                        nickname: "Booking Address",
+                        is_primary: false,
+                        // TODO: Add location coordinates when Mapbox integration is complete
+                        // location: ...
+                    })
+                    .select()
+                    .single();
 
-            if (addressError || !address) {
-                return { error: "Failed to create address", data: null };
+                if (addressError || !address) {
+                    return { error: "Failed to create address", data: null };
+                }
+
+                addressId = address.id;
             }
-
-            addressId = address.id;
         }
 
         // 3. Calculate final price after discount

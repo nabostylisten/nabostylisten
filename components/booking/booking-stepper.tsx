@@ -18,8 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BookingScheduler } from "@/components/booking/booking-scheduler";
+import { BookingAddressSelector } from "@/components/addresses";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
+import type { Database } from "@/types/database.types";
 
 const { Stepper } = defineStepper(
   {
@@ -48,11 +50,15 @@ const { Stepper } = defineStepper(
   }
 );
 
+type Address = Database["public"]["Tables"]["addresses"]["Row"];
+
 interface BookingData {
   startTime?: Date;
   endTime?: Date;
   location: "stylist" | "customer";
   customerAddress?: string;
+  customerAddressId?: string;
+  customerAddressDetails?: Address;
   messageToStylist?: string;
   discountCode?: string;
 }
@@ -96,7 +102,7 @@ export function BookingStepper({
           bookingData.location &&
           (bookingData.location === "stylist" ||
             (bookingData.location === "customer" &&
-              bookingData.customerAddress))
+              (bookingData.customerAddressId || bookingData.customerAddress)))
         );
       case "message-discount":
         return true; // Optional fields
@@ -234,51 +240,26 @@ export function BookingStepper({
       case "location-details":
         return (
           <Stepper.Panel>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MapPin className="w-5 h-5" />
-                  Hvor skal tjenesten utføres?
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <RadioGroup
-                  value={bookingData.location}
-                  onValueChange={(value) =>
-                    updateBookingData({
-                      location: value as "stylist" | "customer",
-                    })
-                  }
-                >
-                  {stylistHasOwnPlace && (
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="stylist" id="stylist" />
-                      <Label htmlFor="stylist">Hos stylisten</Label>
-                    </div>
-                  )}
-                  {stylistCanTravel && (
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="customer" id="customer" />
-                      <Label htmlFor="customer">Hjemme hos meg</Label>
-                    </div>
-                  )}
-                </RadioGroup>
-
-                {bookingData.location === "customer" && (
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Din adresse</Label>
-                    <Textarea
-                      id="address"
-                      placeholder="Skriv inn din adresse..."
-                      value={bookingData.customerAddress || ""}
-                      onChange={(e) =>
-                        updateBookingData({ customerAddress: e.target.value })
-                      }
-                    />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <BookingAddressSelector
+              stylistCanTravel={stylistCanTravel}
+              stylistHasOwnPlace={stylistHasOwnPlace}
+              location={bookingData.location}
+              onLocationChange={(location) => updateBookingData({ location })}
+              selectedAddressId={bookingData.customerAddressId}
+              onAddressSelect={(addressId, address) => 
+                updateBookingData({ 
+                  customerAddressId: addressId,
+                  customerAddressDetails: address,
+                  customerAddress: address ? 
+                    `${address.street_address}, ${address.postal_code} ${address.city}` : 
+                    undefined
+                })
+              }
+              customerInstructions={bookingData.messageToStylist}
+              onInstructionsChange={(instructions) => 
+                updateBookingData({ messageToStylist: instructions })
+              }
+            />
           </Stepper.Panel>
         );
 

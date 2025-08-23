@@ -485,7 +485,7 @@ EXECUTE FUNCTION public.broadcast_chat_message_changes();
 -- ================== PERMISSIONS ==================
 
 -- Grant access to the gis schema for PostGIS functions
-GRANT USAGE ON SCHEMA gis TO anon, authenticated;
+GRANT USAGE ON SCHEMA gis TO anon, authenticated, service_role;
 
 -- ================== FUNCTIONS ==================
 

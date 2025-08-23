@@ -32,6 +32,7 @@ export default function BookingPage() {
     endTime?: Date;
     location: "stylist" | "customer";
     customerAddress?: string;
+    customerAddressId?: string;
     messageToStylist?: string;
     discountCode?: string;
   }) => {
@@ -48,17 +49,23 @@ export default function BookingPage() {
 
       // Prepare address data if customer location is selected
       let customerAddressData = undefined;
-      if (bookingData.location === "customer" && bookingData.customerAddress) {
-        // Parse the address string (for now, we assume it's a full address)
-        // TODO: Integrate with Mapbox address autocomplete to get structured address
-        const addressParts = bookingData.customerAddress.split(',').map(part => part.trim());
-        customerAddressData = {
-          streetAddress: addressParts[0] || bookingData.customerAddress,
-          city: addressParts[1] || "Oslo", // Default to Oslo for now
-          postalCode: addressParts[2] || "0000",
-          country: "Norge",
-          entryInstructions: "", // Could be added as a separate field in the form
-        };
+      let addressId = undefined;
+      
+      if (bookingData.location === "customer") {
+        if (bookingData.customerAddressId) {
+          // Using an existing address from the user's saved addresses
+          addressId = bookingData.customerAddressId;
+        } else if (bookingData.customerAddress) {
+          // Fallback: Parse the address string if no address ID is provided
+          const addressParts = bookingData.customerAddress.split(',').map(part => part.trim());
+          customerAddressData = {
+            streetAddress: addressParts[0] || bookingData.customerAddress,
+            city: addressParts[1] || "Oslo", // Default to Oslo for now
+            postalCode: addressParts[2] || "0000",
+            country: "Norge",
+            entryInstructions: "",
+          };
+        }
       }
 
       // Create the booking
@@ -69,6 +76,7 @@ export default function BookingPage() {
         endTime: bookingData.endTime,
         location: bookingData.location,
         customerAddress: customerAddressData,
+        customerAddressId: addressId,
         messageToStylist: bookingData.messageToStylist,
         discountCode: bookingData.discountCode,
         totalPrice,

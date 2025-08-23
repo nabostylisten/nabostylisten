@@ -38,6 +38,7 @@ import {
 } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { Dropzone } from "@/components/ui/kibo-ui/dropzone";
+import { ApplicationAddressSection } from "@/components/addresses";
 
 import {
   createApplication,
@@ -349,90 +350,18 @@ export function StylistApplicationForm({
             </div>
 
             {/* Address Information */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Adresse</h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="address.streetAddress"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Gateadresse</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Storgata 1" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address.city"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>By</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Oslo" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="address.postalCode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Postnummer</FormLabel>
-                      <FormControl>
-                        <Input placeholder="0001" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="address.country"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Land</FormLabel>
-                      <FormControl>
-                        <Input {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              <FormField
-                control={form.control}
-                name="address.entryInstructions"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Adgangsinstruksjoner (valgfritt)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="F.eks. 'Ring på dørklokka', 'Bruk sideinngangen', etc."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      Hvis du har hjemmestudio, beskriv hvordan kunder kan finne
-                      deg
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <ApplicationAddressSection
+              onAddressChange={(address) => {
+                form.setValue("address.nickname", address.nickname);
+                form.setValue("address.streetAddress", address.streetAddress);
+                form.setValue("address.city", address.city);
+                form.setValue("address.postalCode", address.postalCode);
+                form.setValue("address.country", address.country);
+                form.setValue("address.entryInstructions", address.entryInstructions);
+              }}
+              defaultValues={form.getValues("address")}
+              error={form.formState.errors.address?.root?.message}
+            />
 
             {/* Professional Information */}
             <div className="space-y-6">

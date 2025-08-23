@@ -186,7 +186,7 @@ otp_expiry = 3600
 # Custom magic link email template (OTP)
 [auth.email.template.magic_link]
 subject = "Din innloggingskode til Nabostylisten"
-content_path = "./supabase/templates/nabostylisten-magic-link.html"
+content_path = "./supabase/templates/nabostylisten-otp-code.html"
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.

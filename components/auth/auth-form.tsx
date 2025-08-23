@@ -190,7 +190,13 @@ export function AuthForm({
               <Switch
                 id="password-flow-toggle"
                 checked={usePasswordFlow}
-                onCheckedChange={setUsePasswordFlow}
+                onCheckedChange={(checked) => {
+                  console.log("[AUTH_TOGGLE] Switching flow type", {
+                    from: usePasswordFlow ? "password" : "email",
+                    to: checked ? "password" : "email",
+                  });
+                  setUsePasswordFlow(checked);
+                }}
               />
             </div>
           </div>

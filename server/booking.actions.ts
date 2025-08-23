@@ -12,6 +12,7 @@ import { resend } from "@/lib/resend";
 import { BookingStatusUpdateEmail } from "@/transactional/emails/booking-status-update";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
+import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -447,15 +448,16 @@ export async function createBookingWithServices(
             if (input.customerAddressId) {
                 // Use existing address ID
                 addressId = input.customerAddressId;
-                
+
                 // Verify the address belongs to the user
-                const { data: existingAddress, error: verifyError } = await supabase
-                    .from("addresses")
-                    .select("id")
-                    .eq("id", input.customerAddressId)
-                    .eq("user_id", user.id)
-                    .single();
-                
+                const { data: existingAddress, error: verifyError } =
+                    await supabase
+                        .from("addresses")
+                        .select("id")
+                        .eq("id", input.customerAddressId)
+                        .eq("user_id", user.id)
+                        .single();
+
                 if (verifyError || !existingAddress) {
                     return { error: "Invalid address selected", data: null };
                 }
@@ -469,7 +471,8 @@ export async function createBookingWithServices(
                         city: input.customerAddress.city,
                         postal_code: input.customerAddress.postalCode,
                         country: input.customerAddress.country,
-                        entry_instructions: input.customerAddress.entryInstructions,
+                        entry_instructions:
+                            input.customerAddress.entryInstructions,
                         nickname: "Booking Address",
                         is_primary: false,
                         // TODO: Add location coordinates when Mapbox integration is complete
@@ -805,7 +808,10 @@ export async function updateBookingStatus({
 
     // Send email notifications to both customer and stylist about status change
     try {
-        if (booking.customer?.email && booking.stylist?.full_name && booking.stylist?.email) {
+        if (
+            booking.customer?.email && booking.stylist?.full_name &&
+            booking.stylist?.email
+        ) {
             // Prepare common email data
             const services = booking.booking_services?.map((bs) =>
                 bs.services
@@ -862,6 +868,7 @@ export async function updateBookingStatus({
                 to: ["magnus.rodseth@gmail.com"],
                 subject: customerEmailSubject,
                 react: BookingStatusUpdateEmail({
+                    logoUrl: getNabostylistenLogoUrl("png"),
                     ...emailProps,
                     recipientType: "customer",
                 }),
@@ -871,10 +878,11 @@ export async function updateBookingStatus({
             await resend.emails.send({
                 from: "Nabostylisten <no-reply@magnusrodseth.com>",
                 // to: [booking.stylist.email],
-                // TODO: Remove this when we actually ship to production  
+                // TODO: Remove this when we actually ship to production
                 to: ["magnus.rodseth@gmail.com"],
                 subject: stylistEmailSubject,
                 react: BookingStatusUpdateEmail({
+                    logoUrl: getNabostylistenLogoUrl("png"),
                     ...emailProps,
                     recipientType: "stylist",
                 }),

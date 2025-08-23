@@ -1293,15 +1293,24 @@ async function main() {
     const booking = bookings[i];
     // Pick 1-2 random services
     const numServices = Math.random() > 0.7 ? 2 : 1;
+    const usedServices = new Set();
 
     for (let j = 0; j < numServices; j++) {
-      const randomService =
-        services[Math.floor(Math.random() * services.length)];
-      if (randomService && booking) {
+      let attempts = 0;
+      let randomService;
+      
+      // Try to find a service we haven't already linked to this booking
+      do {
+        randomService = services[Math.floor(Math.random() * services.length)];
+        attempts++;
+      } while (usedServices.has(randomService?.id) && attempts < 10);
+      
+      if (randomService && booking && !usedServices.has(randomService.id)) {
         bookingServiceLinks.push({
           booking_id: booking.id,
           service_id: randomService.id,
         });
+        usedServices.add(randomService.id);
       }
     }
   }
@@ -1603,6 +1612,150 @@ async function main() {
 
   console.log(`-- Created ${reviews.length} reviews for completed bookings`);
 
+  // Ensure every service has at least 2-5 reviews by creating additional bookings if needed
+  console.log("-- Ensuring every service has reviews...");
+  
+  const servicesToEnsureReviews = [];
+  const additionalBookingsForReviews = [];
+  const additionalReviews = [];
+
+  // Check each service and create additional bookings/reviews if needed
+  for (const service of services) {
+    if (!service.is_published) continue; // Skip unpublished services
+    
+    // Count existing reviews for this service through booking_services
+    const serviceBookings = bookingServiceLinks.filter(link => link.service_id === service.id);
+    const existingReviews = reviews.filter(review => {
+      const reviewBooking = [...bookings, ...extraBookings].find(b => b.id === review.booking_id);
+      if (!reviewBooking) return false;
+      return serviceBookings.some(sb => sb.booking_id === reviewBooking.id);
+    });
+
+    const reviewsNeeded = Math.max(0, 3 - existingReviews.length); // Ensure at least 3 reviews per service
+    
+    if (reviewsNeeded > 0) {
+      console.log(`-- Service "${service.title}" needs ${reviewsNeeded} more reviews`);
+      
+      // Create additional completed bookings for this service
+      for (let i = 0; i < reviewsNeeded; i++) {
+        let randomCustomer;
+        let attempts = 0;
+        
+        // Try to find a customer that's not the same as the stylist
+        do {
+          randomCustomer = [...customerUsers, ...stylistUsers][
+            Math.floor(Math.random() * (customerUsers.length + stylistUsers.length))
+          ];
+          attempts++;
+        } while (randomCustomer.id === service.stylist_id && attempts < 10);
+        
+        // If we couldn't find a different customer, skip this booking
+        if (randomCustomer.id === service.stylist_id) continue;
+        
+        const randomDaysAgo = Math.floor(Math.random() * 90) + 10; // 10-100 days ago
+        const startTime = subDays(new Date(), randomDaysAgo);
+        const endTime = addMinutes(startTime, service.duration_minutes);
+        
+        const additionalBooking = {
+          customer_id: randomCustomer.id,
+          stylist_id: service.stylist_id,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+          message_to_stylist: [
+            "Gleder meg til denne tjenesten!",
+            "Første gang jeg prøver dette!",
+            "Hørt mye bra om deg!",
+            "Trenger en oppfriskning!",
+            "Anbefalt av en venninne!",
+          ][Math.floor(Math.random() * 5)],
+          status: "completed" as const,
+          total_price: service.price,
+          total_duration_minutes: service.duration_minutes,
+          stripe_payment_intent_id: `pi_ensure_reviews_${service.id}_${i}`,
+        };
+        
+        additionalBookingsForReviews.push(additionalBooking);
+        servicesToEnsureReviews.push(service);
+      }
+    }
+  }
+
+  // Create the additional bookings
+  let additionalServiceBookings = [];
+  if (additionalBookingsForReviews.length > 0) {
+    const { bookings: newBookings } = await seed.bookings(additionalBookingsForReviews);
+    additionalServiceBookings = newBookings;
+    
+    // Link these bookings to their specific services
+    const newBookingServiceLinks = [];
+    const existingLinks = new Set(bookingServiceLinks.map(link => `${link.booking_id}-${link.service_id}`));
+    
+    for (let i = 0; i < newBookings.length; i++) {
+      const booking = newBookings[i];
+      const service = servicesToEnsureReviews[i]; // Direct 1:1 mapping
+      
+      if (service && booking.id) {
+        const linkKey = `${booking.id}-${service.id}`;
+        if (!existingLinks.has(linkKey)) {
+          newBookingServiceLinks.push({
+            booking_id: booking.id,
+            service_id: service.id,
+          });
+          existingLinks.add(linkKey);
+        }
+      }
+    }
+    
+    if (newBookingServiceLinks.length > 0) {
+      await seed.booking_services(newBookingServiceLinks);
+    }
+
+    // Create reviews for these additional bookings
+    const additionalReviewComments = [
+      "Fantastisk opplevelse! Akkurat det jeg trengte.",
+      "Så fornøyd med resultatet. Kommer definitivt tilbake!",
+      "Profesjonell og hyggelig service. Anbefales på det sterkeste!",
+      "Utrolig dyktig! Resultatet overgikk mine forventninger.",
+      "Perfekt! Nøyaktig som jeg ønsket meg.",
+      "Så bra service og kvalitet. Veldig imponert!",
+      "Flott jobb! Føler meg som en helt ny person.",
+      "Kunne ikke vært mer fornøyd. Takk for en super opplevelse!",
+      "Excellent work! Professional and friendly.",
+      "Amazing results! Will definitely recommend to friends.",
+      "Perfect service from start to finish!",
+      "So happy with the outcome. Great attention to detail!",
+      "Wonderful experience! Very skilled and caring.",
+      "Outstanding quality! Exceeded all my expectations.",
+      "Brilliant work! Could not ask for better service.",
+    ];
+
+    for (const booking of additionalServiceBookings) {
+      if (booking.id && booking.customer_id && booking.stylist_id) {
+        const rating = [3, 4, 4, 4, 5, 5, 5, 5][Math.floor(Math.random() * 8)]; // Weighted towards higher ratings
+        const comment = additionalReviewComments[
+          Math.floor(Math.random() * additionalReviewComments.length)
+        ];
+
+        additionalReviews.push({
+          booking_id: booking.id,
+          customer_id: booking.customer_id,
+          stylist_id: booking.stylist_id,
+          rating,
+          comment,
+        });
+      }
+    }
+
+    // Create the additional reviews
+    if (additionalReviews.length > 0) {
+      await seed.reviews(additionalReviews);
+      console.log(`-- Created ${additionalReviews.length} additional reviews to ensure service coverage`);
+    }
+  }
+
+  const totalReviews = reviews.length + additionalReviews.length;
+  console.log(`-- Total reviews created: ${totalReviews}`);
+
   // Create some review images for variety
   const reviewImagesUrls = [
     "https://images.unsplash.com/photo-1560869713-c9e73ac4e93f?w=400", // hair result
@@ -1641,7 +1794,8 @@ async function main() {
   console.log("--   Customer 1: kari.nordmann@example.com (6 bookings)");
   console.log("--   Customer 2: ole.hansen@example.com (2 bookings)");
   console.log("--   All stylists have reviews both received and written");
-  console.log(`--   Total reviews: ${reviews.length}`);
+  console.log(`--   Total reviews: ${totalReviews}`);
+  console.log(`--   Every published service has at least 3 reviews`);
 
   process.exit(0);
 }

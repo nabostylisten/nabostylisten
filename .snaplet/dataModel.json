@@ -809,6 +809,226 @@
       ],
       "uniqueConstraints": []
     },
+    "booking_notes": {
+      "id": "public.booking_notes",
+      "schemaName": "public",
+      "tableName": "booking_notes",
+      "fields": [
+        {
+          "id": "public.booking_notes.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.created_at",
+          "name": "created_at",
+          "columnName": "created_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.updated_at",
+          "name": "updated_at",
+          "columnName": "updated_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.booking_id",
+          "name": "booking_id",
+          "columnName": "booking_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.stylist_id",
+          "name": "stylist_id",
+          "columnName": "stylist_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.content",
+          "name": "content",
+          "columnName": "content",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.category",
+          "name": "category",
+          "columnName": "category",
+          "type": "booking_note_category",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.customer_visible",
+          "name": "customer_visible",
+          "columnName": "customer_visible",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.next_appointment_suggestion",
+          "name": "next_appointment_suggestion",
+          "columnName": "next_appointment_suggestion",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.tags",
+          "name": "tags",
+          "columnName": "tags",
+          "type": "text[]",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.booking_notes.duration_minutes",
+          "name": "duration_minutes",
+          "columnName": "duration_minutes",
+          "type": "int4",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "bookings",
+          "type": "bookings",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "booking_notesTobookings",
+          "relationFromFields": [
+            "booking_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "profiles",
+          "type": "profiles",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "booking_notesToprofiles",
+          "relationFromFields": [
+            "stylist_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "media",
+          "type": "media",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "mediaTobooking_notes",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "booking_notes_pkey",
+          "fields": [
+            "id"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
     "booking_services": {
       "id": "public.booking_services",
       "schemaName": "public",
@@ -1200,6 +1420,20 @@
             "id"
           ],
           "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "booking_notes",
+          "type": "booking_notes",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "booking_notesTobookings",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
           "isId": false,
           "isGenerated": false,
           "sequence": false,
@@ -2858,6 +3092,20 @@
           "maxLength": null
         },
         {
+          "id": "public.media.booking_note_id",
+          "name": "booking_note_id",
+          "columnName": "booking_note_id",
+          "type": "uuid",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "applications",
           "type": "applications",
           "isRequired": false,
@@ -2865,6 +3113,24 @@
           "relationName": "mediaToapplications",
           "relationFromFields": [
             "application_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "booking_notes",
+          "type": "booking_notes",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "mediaTobooking_notes",
+          "relationFromFields": [
+            "booking_note_id"
           ],
           "relationToFields": [
             "id"
@@ -4376,20 +4642,6 @@
           "maxLength": null
         },
         {
-          "id": "public.profiles.subscribed_to_newsletter",
-          "name": "subscribed_to_newsletter",
-          "columnName": "subscribed_to_newsletter",
-          "type": "bool",
-          "isRequired": true,
-          "kind": "scalar",
-          "isList": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": true,
-          "isId": false,
-          "maxLength": null
-        },
-        {
           "name": "users",
           "type": "users",
           "isRequired": true,
@@ -4427,6 +4679,20 @@
           "isRequired": false,
           "kind": "object",
           "relationName": "applicationsToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "booking_notes",
+          "type": "booking_notes",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "booking_notesToprofiles",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -4581,6 +4847,20 @@
           "isRequired": false,
           "kind": "object",
           "relationName": "stylist_unavailabilityToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "user_preferences",
+          "type": "user_preferences",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "user_preferencesToprofiles",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -8042,6 +8322,341 @@
         }
       ]
     },
+    "user_preferences": {
+      "id": "public.user_preferences",
+      "schemaName": "public",
+      "tableName": "user_preferences",
+      "fields": [
+        {
+          "id": "public.user_preferences.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.user_id",
+          "name": "user_id",
+          "columnName": "user_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.created_at",
+          "name": "created_at",
+          "columnName": "created_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.updated_at",
+          "name": "updated_at",
+          "columnName": "updated_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.newsletter_subscribed",
+          "name": "newsletter_subscribed",
+          "columnName": "newsletter_subscribed",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.marketing_emails",
+          "name": "marketing_emails",
+          "columnName": "marketing_emails",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.promotional_sms",
+          "name": "promotional_sms",
+          "columnName": "promotional_sms",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.booking_confirmations",
+          "name": "booking_confirmations",
+          "columnName": "booking_confirmations",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.booking_reminders",
+          "name": "booking_reminders",
+          "columnName": "booking_reminders",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.booking_cancellations",
+          "name": "booking_cancellations",
+          "columnName": "booking_cancellations",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.booking_status_updates",
+          "name": "booking_status_updates",
+          "columnName": "booking_status_updates",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.chat_messages",
+          "name": "chat_messages",
+          "columnName": "chat_messages",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.new_booking_requests",
+          "name": "new_booking_requests",
+          "columnName": "new_booking_requests",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.review_notifications",
+          "name": "review_notifications",
+          "columnName": "review_notifications",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.payment_notifications",
+          "name": "payment_notifications",
+          "columnName": "payment_notifications",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.application_status_updates",
+          "name": "application_status_updates",
+          "columnName": "application_status_updates",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.security_alerts",
+          "name": "security_alerts",
+          "columnName": "security_alerts",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.system_updates",
+          "name": "system_updates",
+          "columnName": "system_updates",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.email_delivery",
+          "name": "email_delivery",
+          "columnName": "email_delivery",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.sms_delivery",
+          "name": "sms_delivery",
+          "columnName": "sms_delivery",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.user_preferences.push_notifications",
+          "name": "push_notifications",
+          "columnName": "push_notifications",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "profiles",
+          "type": "profiles",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "user_preferencesToprofiles",
+          "relationFromFields": [
+            "user_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "user_preferences_pkey",
+          "fields": [
+            "id"
+          ],
+          "nullNotDistinct": false
+        },
+        {
+          "name": "user_preferences_user_id_key",
+          "fields": [
+            "user_id"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
     "users": {
       "id": "auth.users",
       "schemaName": "auth",
@@ -8766,6 +9381,29 @@
         }
       ]
     },
+    "booking_note_category": {
+      "schemaName": "public",
+      "values": [
+        {
+          "name": "customer_preferences"
+        },
+        {
+          "name": "follow_up"
+        },
+        {
+          "name": "issues"
+        },
+        {
+          "name": "other"
+        },
+        {
+          "name": "results"
+        },
+        {
+          "name": "service_notes"
+        }
+      ]
+    },
     "booking_status": {
       "schemaName": "public",
       "values": [
@@ -8817,6 +9455,9 @@
         },
         {
           "name": "avatar"
+        },
+        {
+          "name": "booking_note_image"
         },
         {
           "name": "chat_image"

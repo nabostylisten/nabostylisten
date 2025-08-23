@@ -155,6 +155,11 @@ USING (
   )
 );
 
+-- Allow anonymous users to view booking_services for public review display
+CREATE POLICY "Anyone can view booking services for reviews." ON public.booking_services
+FOR SELECT TO anon, authenticated
+USING ( true );
+
 -- Customers can add services to their own new bookings.
 CREATE POLICY "Customers can add services to bookings." ON public.booking_services
 FOR INSERT TO authenticated

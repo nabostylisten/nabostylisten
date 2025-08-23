@@ -324,9 +324,9 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
             .from("service_service_categories")
             .select("service_id")
             .eq("category_id", categoryId);
-        
+
         if (serviceIds && serviceIds.length > 0) {
-            const ids = serviceIds.map(item => item.service_id);
+            const ids = serviceIds.map((item) => item.service_id);
             query = query.in("id", ids);
         } else {
             // No services in this category, return empty result
@@ -398,8 +398,8 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
         media: service.media?.map((media) => ({
             ...media,
             // Use file_path as URL if it's already a full URL (Unsplash), otherwise use Supabase storage
-            publicUrl: media.file_path.startsWith('http') 
-                ? media.file_path 
+            publicUrl: media.file_path.startsWith("http")
+                ? media.file_path
                 : getPublicUrl(supabase, "service-media", media.file_path),
         })),
     }));
@@ -414,7 +414,9 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
     };
 }
 
-export type PublicServiceData = Awaited<ReturnType<typeof getPublicService>>["data"];
+export type PublicServiceData = Awaited<
+    ReturnType<typeof getPublicService>
+>["data"];
 
 export async function getPublicService(serviceId: string) {
     const supabase = await createClient();
@@ -473,8 +475,8 @@ export async function getPublicService(serviceId: string) {
         media: data.media?.map((media) => ({
             ...media,
             // Use file_path as URL if it's already a full URL (Unsplash), otherwise use Supabase storage
-            publicUrl: media.file_path.startsWith('http') 
-                ? media.file_path 
+            publicUrl: media.file_path.startsWith("http")
+                ? media.file_path
                 : getPublicUrl(supabase, "service-media", media.file_path),
         })),
     };
@@ -723,7 +725,23 @@ export async function getServiceImages(serviceId: string) {
 export async function getServiceReviews(serviceId: string, limit = 10) {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    // Use raw SQL query - convert the working SQL to RPC or use the simpler approach
+    // First get all booking IDs for this service
+    const { data: bookingServiceData, error: bsError } = await supabase
+        .from("booking_services")
+        .select("booking_id")
+        .eq("service_id", serviceId);
+
+    console.log("booking_services data:", bookingServiceData, bsError);
+
+    if (bsError || !bookingServiceData || bookingServiceData.length === 0) {
+        return { data: [], error: bsError };
+    }
+
+    const bookingIds = bookingServiceData.map((bs) => bs.booking_id);
+
+    // Now get reviews for those bookings
+    const { data: reviewsData, error: reviewsError } = await supabase
         .from("reviews")
         .select(`
             id,
@@ -733,24 +751,20 @@ export async function getServiceReviews(serviceId: string, limit = 10) {
             profiles!reviews_customer_id_fkey (
                 id,
                 full_name
-            ),
-            bookings!inner (
-                id,
-                booking_services!inner (
-                    service_id
-                )
             )
         `)
-        .eq("bookings.booking_services.service_id", serviceId)
+        .in("booking_id", bookingIds)
         .order("created_at", { ascending: false })
         .limit(limit);
 
-    if (error) {
-        return { data: null, error };
+    console.log("reviews data:", reviewsData, reviewsError);
+
+    if (reviewsError) {
+        return { data: null, error: reviewsError };
     }
 
-    // Transform the data to a more usable format
-    const transformedReviews = data?.map((review) => ({
+    // Transform the data
+    const transformedReviews = reviewsData?.map((review) => ({
         id: review.id,
         rating: review.rating,
         comment: review.comment || "",
@@ -758,6 +772,8 @@ export async function getServiceReviews(serviceId: string, limit = 10) {
         customer_name: review.profiles?.full_name || "Anonym kunde",
         customer_initial: review.profiles?.full_name?.charAt(0) || "?",
     })) || [];
+
+    console.log("transformedReviews:", transformedReviews);
 
     return { data: transformedReviews, error: null };
 }
@@ -768,17 +784,30 @@ export async function getServiceReviews(serviceId: string, limit = 10) {
 export async function getServiceReviewStats(serviceId: string) {
     const supabase = await createClient();
 
+    // First get all booking IDs for this service
+    const { data: bookingServiceData, error: bsError } = await supabase
+        .from("booking_services")
+        .select("booking_id")
+        .eq("service_id", serviceId);
+
+    if (bsError || !bookingServiceData || bookingServiceData.length === 0) {
+        return {
+            data: {
+                total_reviews: 0,
+                average_rating: 0,
+                rating_distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+            },
+            error: null,
+        };
+    }
+
+    const bookingIds = bookingServiceData.map((bs) => bs.booking_id);
+
+    // Get ratings for those bookings
     const { data, error } = await supabase
         .from("reviews")
-        .select(`
-            rating,
-            bookings!inner (
-                booking_services!inner (
-                    service_id
-                )
-            )
-        `)
-        .eq("bookings.booking_services.service_id", serviceId);
+        .select("rating")
+        .in("booking_id", bookingIds);
 
     if (error) {
         return { data: null, error };
@@ -802,8 +831,9 @@ export async function getServiceReviewStats(serviceId: string) {
     }
 
     const totalReviews = data.length;
-    const averageRating = data.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
-    
+    const averageRating = data.reduce((sum, review) => sum + review.rating, 0) /
+        totalReviews;
+
     const ratingDistribution = data.reduce((acc, review) => {
         acc[review.rating as keyof typeof acc]++;
         return acc;

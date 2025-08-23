@@ -9,17 +9,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  MapPin,
-  Star,
-  Clock,
-  CheckCircle,
-  User,
-} from "lucide-react";
+import { MapPin, Star, Clock, CheckCircle, User } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getPublicService, getServiceReviews, getServiceReviewStats } from "@/server/service.actions";
+import {
+  getPublicService,
+  getServiceReviews,
+  getServiceReviewStats,
+} from "@/server/service.actions";
 import { ServiceDetailSkeleton } from "@/components/services/service-detail-skeleton";
 import { ServiceDetailSidebar } from "@/components/services/service-detail-sidebar";
 import Image from "next/image";
@@ -34,12 +32,16 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
   const [
     { data: service, error },
     { data: reviews, error: reviewsError },
-    { data: reviewStats, error: reviewStatsError }
+    { data: reviewStats, error: reviewStatsError },
   ] = await Promise.all([
     getPublicService(serviceId),
     getServiceReviews(serviceId, 5), // Get latest 5 reviews
-    getServiceReviewStats(serviceId)
+    getServiceReviewStats(serviceId),
   ]);
+
+  console.log("reviews", reviews);
+  console.log("reviewStats", reviewStats);
+  console.log({ reviewStatsError, reviewsError });
 
   if (error || !service) {
     notFound();
@@ -75,8 +77,10 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
   const formatReviewDate = (dateString: string) => {
     const reviewDate = new Date(dateString);
     const now = new Date();
-    const diffInDays = Math.floor((now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24));
-    
+    const diffInDays = Math.floor(
+      (now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
     if (diffInDays === 0) return "I dag";
     if (diffInDays === 1) return "I går";
     if (diffInDays < 7) return `${diffInDays} dager siden`;
@@ -179,9 +183,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                     </div>
                   </div>
                   <Button variant="outline" asChild>
-                    <Link
-                      href={`/profiler/${service.profiles?.id}`}
-                    >
+                    <Link href={`/profiler/${service.profiles?.id}`}>
                       <User className="w-4 h-4 mr-2" />
                       Se profil
                     </Link>
@@ -244,7 +246,11 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                           </span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          ({reviewStats.total_reviews} {reviewStats.total_reviews === 1 ? 'anmeldelse' : 'anmeldelser'})
+                          ({reviewStats.total_reviews}{" "}
+                          {reviewStats.total_reviews === 1
+                            ? "anmeldelse"
+                            : "anmeldelser"}
+                          )
                         </span>
                       </div>
                     )}
@@ -261,7 +267,9 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                         </Avatar>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium">{review.customer_name}</span>
+                            <span className="font-medium">
+                              {review.customer_name}
+                            </span>
                             <div className="flex">
                               {[...Array(review.rating)].map((_, i) => (
                                 <Star
@@ -277,18 +285,21 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                         </div>
                       </div>
                       {review.comment && (
-                        <p className="text-muted-foreground">{review.comment}</p>
+                        <p className="text-muted-foreground">
+                          {review.comment}
+                        </p>
                       )}
                       {index < reviews.length - 1 && (
                         <Separator className="mt-6" />
                       )}
                     </div>
                   ))}
-                  {reviewStats && reviewStats.total_reviews > reviews.length && (
-                    <Button variant="outline" className="w-full">
-                      Se alle {reviewStats.total_reviews} anmeldelser
-                    </Button>
-                  )}
+                  {reviewStats &&
+                    reviewStats.total_reviews > reviews.length && (
+                      <Button variant="outline" className="w-full">
+                        Se alle {reviewStats.total_reviews} anmeldelser
+                      </Button>
+                    )}
                 </CardContent>
               </Card>
             ) : (

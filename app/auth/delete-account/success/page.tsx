@@ -6,12 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Home, Mail } from "lucide-react";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/client";
 
 export default function AccountDeletionSuccessPage() {
   const router = useRouter();
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
+    // Sign out the user from the client to clear local auth state
+    const signOutUser = async () => {
+      try {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch (signOutError) {
+        // Continue anyway since account is deleted
+      }
+    };
+
+    signOutUser();
+
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {

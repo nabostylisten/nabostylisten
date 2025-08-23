@@ -138,14 +138,6 @@ export function DeleteAccountConfirmation() {
         return;
       }
 
-      // Sign out the user from the client to clear local auth state
-      try {
-        const supabase = createClient();
-        await supabase.auth.signOut();
-      } catch (signOutError) {
-        // Continue anyway since account is deleted
-      }
-
       // Redirect to success page
       if (result.redirectTo) {
         router.push(result.redirectTo);

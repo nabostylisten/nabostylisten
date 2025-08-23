@@ -102,13 +102,6 @@ export const AccountDeletionConfirmationEmail = ({
               </Text>
             </div>
 
-            {/* Active bookings warning */}
-            <Section style={activeBookingsWarning}>
-              <Text style={warningText}>
-                Hvis du har aktive bestillinger vil disse bli kansellert og
-                stylisten vil bli varslet.
-              </Text>
-            </Section>
           </Section>
 
           {/* Confirmation CTA */}
@@ -276,9 +269,9 @@ const deletionText = {
 const activeBookingsWarning = {
   marginTop: "16px",
   padding: "12px",
-  backgroundColor: colors.destructive + "15",
+  backgroundColor: colors.muted,
   borderRadius: "6px",
-  border: `1px solid ${colors.destructive}60`,
+  border: `1px solid ${colors.mutedForeground}30`,
 };
 
 const warningText = {

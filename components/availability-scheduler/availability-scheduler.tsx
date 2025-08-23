@@ -82,7 +82,7 @@ type Unavailability =
   Database["public"]["Tables"]["stylist_unavailability"]["Row"];
 type RecurringUnavailability =
   Database["public"]["Tables"]["stylist_recurring_unavailability"]["Row"];
-type RecurringException = 
+type RecurringException =
   Database["public"]["Tables"]["recurring_unavailability_exceptions"]["Row"];
 type RecurringUnavailabilityWithExceptions = RecurringUnavailability & {
   exceptions: RecurringException[];
@@ -120,9 +120,13 @@ export function AvailabilityScheduler({
   const [showAddWorkDay, setShowAddWorkDay] = useState(false);
   const [selectedGrayCell, setSelectedGrayCell] = useState<Date | null>(null);
   const [showManageUnavailable, setShowManageUnavailable] = useState(false);
-  const [selectedRedCell, setSelectedRedCell] = useState<{ date: Date; hour: number } | null>(null);
+  const [selectedRedCell, setSelectedRedCell] = useState<{
+    date: Date;
+    hour: number;
+  } | null>(null);
   const [showEditSeries, setShowEditSeries] = useState(false);
-  const [editingSeries, setEditingSeries] = useState<RecurringUnavailability | null>(null);
+  const [editingSeries, setEditingSeries] =
+    useState<RecurringUnavailability | null>(null);
   const [showHelp, setShowHelp] = useState(false);
 
   // Work schedule state
@@ -229,7 +233,10 @@ export function AvailabilityScheduler({
 
   // Update recurring unavailability mutation
   const updateRecurringMutation = useMutation({
-    mutationFn: ({ id, data }: {
+    mutationFn: ({
+      id,
+      data,
+    }: {
       id: string;
       data: {
         title: string;
@@ -285,7 +292,7 @@ export function AvailabilityScheduler({
   // Handle removing work day
   const handleRemoveWorkDay = useCallback(
     (dayOfWeek: DayOfWeek) => {
-      const newWorkDays = workDays.filter(day => day !== dayOfWeek);
+      const newWorkDays = workDays.filter((day) => day !== dayOfWeek);
       updateRulesMutation.mutate({
         workDays: newWorkDays,
         startTime,
@@ -297,28 +304,28 @@ export function AvailabilityScheduler({
     [workDays, startTime, endTime, updateRulesMutation]
   );
 
-  // Handle removing unavailability  
+  // Handle removing unavailability
   const handleRemoveUnavailability = useCallback(() => {
     if (!selectedRedCell || !unavailability?.data) return;
-    
+
     const slotStart = new Date(selectedRedCell.date);
     slotStart.setHours(selectedRedCell.hour, 0, 0, 0);
     const slotEnd = new Date(selectedRedCell.date);
     slotEnd.setHours(selectedRedCell.hour + 1, 0, 0, 0);
-    
+
     // Find the specific unavailability entry that overlaps with this time slot
     const unavailabilityToRemove = unavailability.data.find((u) => {
       const unavailStart = new Date(u.start_time);
       const unavailEnd = new Date(u.end_time);
       return slotStart < unavailEnd && slotEnd > unavailStart;
     });
-    
+
     if (unavailabilityToRemove) {
       removeUnavailabilityMutation.mutate(unavailabilityToRemove.id);
     } else {
       toast.error("Kunne ikke finne utilgjengelighet å fjerne");
     }
-    
+
     setShowManageUnavailable(false);
     setSelectedRedCell(null);
   }, [selectedRedCell, unavailability, removeUnavailabilityMutation]);
@@ -342,8 +349,18 @@ export function AvailabilityScheduler({
 
   // Handle rescheduling a recurring instance
   const handleRescheduleRecurringInstance = useCallback(
-    (seriesId: string, originalStartTime: Date, newStartTime: Date, newEndTime: Date) => {
-      addRecurringException(seriesId, originalStartTime, newStartTime, newEndTime)
+    (
+      seriesId: string,
+      originalStartTime: Date,
+      newStartTime: Date,
+      newEndTime: Date
+    ) => {
+      addRecurringException(
+        seriesId,
+        originalStartTime,
+        newStartTime,
+        newEndTime
+      )
         .then(() => {
           queryClient.invalidateQueries({
             queryKey: ["recurring-unavailability", stylistId],
@@ -360,7 +377,8 @@ export function AvailabilityScheduler({
   // Handle editing recurring series
   const handleEditRecurringSeries = useCallback(async (seriesId: string) => {
     try {
-      const { data: series, error } = await getRecurringUnavailabilityById(seriesId);
+      const { data: series, error } =
+        await getRecurringUnavailabilityById(seriesId);
       if (error || !series) {
         toast.error("Kunne ikke hente seriedata");
         return;
@@ -385,7 +403,9 @@ export function AvailabilityScheduler({
       for (const recurring of recurringUnavailability.data) {
         // Check if this slot matches a recurring pattern
         const seriesStart = new Date(recurring.series_start_date);
-        const seriesEnd = recurring.series_end_date ? new Date(recurring.series_end_date) : null;
+        const seriesEnd = recurring.series_end_date
+          ? new Date(recurring.series_end_date)
+          : null;
 
         if (date < seriesStart || (seriesEnd && date > seriesEnd)) continue;
 
@@ -403,8 +423,12 @@ export function AvailabilityScheduler({
         }
 
         if (rrule.includes("FREQ=WEEKLY")) {
-          const [startHour, startMinute] = recurring.start_time.split(":").map(Number);
-          const [endHour, endMinute] = recurring.end_time.split(":").map(Number);
+          const [startHour, startMinute] = recurring.start_time
+            .split(":")
+            .map(Number);
+          const [endHour, endMinute] = recurring.end_time
+            .split(":")
+            .map(Number);
 
           const recurringStart = new Date(date);
           recurringStart.setHours(startHour, startMinute, 0, 0);
@@ -511,7 +535,7 @@ export function AvailabilityScheduler({
               originalRecurringEnd.setHours(endHour, endMinute, 0, 0);
 
               // Check for exceptions to this specific instance
-              const exception = recurring.exceptions?.find(ex => {
+              const exception = recurring.exceptions?.find((ex) => {
                 const originalStart = new Date(ex.original_start_time);
                 return (
                   originalStart.getFullYear() === date.getFullYear() &&
@@ -535,7 +559,10 @@ export function AvailabilityScheduler({
                 }
               } else {
                 // No exception, use original recurring times
-                return slotStart < originalRecurringEnd && slotEnd > originalRecurringStart;
+                return (
+                  slotStart < originalRecurringEnd &&
+                  slotEnd > originalRecurringStart
+                );
               }
             }
 
@@ -619,7 +646,7 @@ export function AvailabilityScheduler({
               originalRecurringEnd.setHours(endHour, endMinute, 0, 0);
 
               // Check for exceptions to this specific instance
-              const exception = recurring.exceptions?.find(ex => {
+              const exception = recurring.exceptions?.find((ex) => {
                 const originalStart = new Date(ex.original_start_time);
                 return (
                   originalStart.getFullYear() === date.getFullYear() &&
@@ -640,13 +667,16 @@ export function AvailabilityScheduler({
                   const newStart = new Date(exception.new_start_time);
                   const newEnd = new Date(exception.new_end_time);
                   if (slotStart < newEnd && slotEnd > newStart) {
-                    return `${recurring.title} (Flyttet til ${newStart.getHours().toString().padStart(2, '0')}:${newStart.getMinutes().toString().padStart(2, '0')})`;
+                    return `${recurring.title} (Flyttet til ${newStart.getHours().toString().padStart(2, "0")}:${newStart.getMinutes().toString().padStart(2, "0")})`;
                   }
                   return null;
                 }
               } else {
                 // No exception, check original times
-                if (slotStart < originalRecurringEnd && slotEnd > originalRecurringStart) {
+                if (
+                  slotStart < originalRecurringEnd &&
+                  slotEnd > originalRecurringStart
+                ) {
                   return recurring.title;
                 }
                 return null;
@@ -727,14 +757,17 @@ export function AvailabilityScheduler({
     addRecurringMutation.mutate(data);
   };
 
-  const handleUpdateRecurring = (id: string, data: {
-    title: string;
-    startTime: string;
-    endTime: string;
-    rrule: string;
-    startDate: Date;
-    endDate?: Date;
-  }) => {
+  const handleUpdateRecurring = (
+    id: string,
+    data: {
+      title: string;
+      startTime: string;
+      endTime: string;
+      rrule: string;
+      startDate: Date;
+      endDate?: Date;
+    }
+  ) => {
     updateRecurringMutation.mutate({ id, data });
   };
 
@@ -821,6 +854,7 @@ export function AvailabilityScheduler({
                 <PopoverContent className="w-auto p-0">
                   <CalendarComponent
                     mode="single"
+                    captionLayout="dropdown"
                     selected={selectedDate}
                     onSelect={(date) => {
                       if (date) {
@@ -829,6 +863,8 @@ export function AvailabilityScheduler({
                       }
                     }}
                     weekStartsOn={1}
+                    startMonth={new Date(new Date().getFullYear() - 2, 0)}
+                    endMonth={new Date(new Date().getFullYear() + 2, 11)}
                   />
                 </PopoverContent>
               </Popover>
@@ -1062,16 +1098,29 @@ export function AvailabilityScheduler({
         selectedDate={selectedRedCell?.date || null}
         selectedHour={selectedRedCell?.hour || null}
         unavailabilityReason={
-          selectedRedCell ? getUnavailabilityTooltip(selectedRedCell.date, selectedRedCell.hour) || undefined : undefined
+          selectedRedCell
+            ? getUnavailabilityTooltip(
+                selectedRedCell.date,
+                selectedRedCell.hour
+              ) || undefined
+            : undefined
         }
         isRecurring={
-          selectedRedCell ? !!getRecurringInfo(selectedRedCell.date, selectedRedCell.hour) : false
+          selectedRedCell
+            ? !!getRecurringInfo(selectedRedCell.date, selectedRedCell.hour)
+            : false
         }
         recurringTitle={
-          selectedRedCell ? getRecurringInfo(selectedRedCell.date, selectedRedCell.hour)?.title || undefined : undefined
+          selectedRedCell
+            ? getRecurringInfo(selectedRedCell.date, selectedRedCell.hour)
+                ?.title || undefined
+            : undefined
         }
         seriesId={
-          selectedRedCell ? getRecurringInfo(selectedRedCell.date, selectedRedCell.hour)?.seriesId : undefined
+          selectedRedCell
+            ? getRecurringInfo(selectedRedCell.date, selectedRedCell.hour)
+                ?.seriesId
+            : undefined
         }
         onRemoveFromWorkDays={handleRemoveWorkDay}
         onRemoveUnavailability={handleRemoveUnavailability}
@@ -1097,10 +1146,7 @@ export function AvailabilityScheduler({
       />
 
       {/* Help dialog */}
-      <HelpDialog
-        open={showHelp}
-        onOpenChange={setShowHelp}
-      />
+      <HelpDialog open={showHelp} onOpenChange={setShowHelp} />
     </div>
   );
 }

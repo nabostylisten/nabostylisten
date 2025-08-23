@@ -27,7 +27,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { CalendarIcon, Clock } from "lucide-react";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import { BookingNoteImageUpload } from "./booking-note-image-upload";
 import { BookingNoteImageCarousel } from "./booking-note-image-carousel";
 import {
@@ -35,6 +43,7 @@ import {
   updateBookingNote,
 } from "@/server/booking-note.actions";
 import type { Database } from "@/types/database.types";
+import { ScrollArea } from "../ui/scroll-area";
 
 type BookingNote = Database["public"]["Tables"]["booking_notes"]["Row"] & {
   stylist: {
@@ -81,6 +90,30 @@ const COMMON_TAGS = [
   "Trenger oppfølging",
   "Anbefal produkter",
 ];
+
+// Helper function to parse datetime-local string to date and time
+const parseDateTime = (datetimeString: string) => {
+  if (!datetimeString) return { date: undefined, time: "" };
+
+  const date = new Date(datetimeString);
+  const formattedTime = date.toTimeString().slice(0, 8); // HH:MM:SS format
+
+  return {
+    date: date,
+    time: formattedTime,
+  };
+};
+
+// Helper function to combine date and time into datetime-local string
+const combineDateTime = (date: Date | undefined, time: string) => {
+  if (!date || !time) return "";
+
+  const [hours, minutes, seconds = "00"] = time.split(":");
+  const combined = new Date(date);
+  combined.setHours(parseInt(hours), parseInt(minutes), parseInt(seconds));
+
+  return combined.toISOString().slice(0, 16); // Format for datetime-local input
+};
 
 interface BookingNoteFormProps {
   bookingId: string;
@@ -220,117 +253,237 @@ export function BookingNoteForm({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <ScrollArea className="h-full">
-      <div className="py-2 space-y-2">
+    <ScrollArea className="h-[700px] flex-1">
+      <div className="py-2 space-y-6 pr-4">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Content and Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="content"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Notater *</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Skriv dine notater her..."
-                        className="min-h-[100px]"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            {/* Content */}
+            <FormField
+              control={form.control}
+              name="content"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notater *</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Skriv dine notater her..."
+                      className="min-h-[100px]"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Kategori</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Velg kategori" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {CATEGORY_OPTIONS.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="customer_visible"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">
-                        Synlig for kunde
-                      </FormLabel>
-                      <FormDescription>
-                        La kunden se dette notatet
-                      </FormDescription>
-                    </div>
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="category"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Kategori</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
                     <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Velg kategori" />
+                      </SelectTrigger>
                     </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <SelectContent>
+                      {CATEGORY_OPTIONS.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Customer Visibility */}
+            <FormField
+              control={form.control}
+              name="customer_visible"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Synlig for kunde
+                    </FormLabel>
+                    <FormDescription>
+                      La kunden se dette notatet
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <Separator />
 
             {/* Timing */}
             <div className="space-y-4">
               <h3 className="text-sm font-semibold">Tidspunkter</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4">
                 <FormField
                   control={form.control}
                   name="actual_start_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Faktisk starttid</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Hvis forskjellig fra booket tid
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const { date: startDate, time: startTime } = parseDateTime(
+                      field.value
+                    );
+
+                    return (
+                      <FormItem>
+                        <FormLabel>Faktisk starttid</FormLabel>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full justify-start font-normal",
+                                      !startDate && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {startDate
+                                      ? format(startDate, "dd.MM.yyyy")
+                                      : "Velg dato"}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  mode="single"
+                                  selected={startDate}
+                                  onSelect={(date) => {
+                                    const combined = combineDateTime(
+                                      date,
+                                      startTime
+                                    );
+                                    field.onChange(combined);
+                                  }}
+                                  autoFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div className="flex-1">
+                            <div className="relative">
+                              <Clock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="time"
+                                value={startTime}
+                                onChange={(e) => {
+                                  const combined = combineDateTime(
+                                    startDate,
+                                    e.target.value
+                                  );
+                                  field.onChange(combined);
+                                }}
+                                className="pl-8"
+                                step="60"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <FormDescription>
+                          Hvis forskjellig fra booket tid
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
 
                 <FormField
                   control={form.control}
                   name="actual_end_time"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Faktisk sluttid</FormLabel>
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <FormDescription>
-                        Hvis forskjellig fra booket tid
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                  render={({ field }) => {
+                    const { date: endDate, time: endTime } = parseDateTime(
+                      field.value
+                    );
+
+                    return (
+                      <FormItem>
+                        <FormLabel>Faktisk sluttid</FormLabel>
+                        <div className="flex gap-2">
+                          <div className="flex-1">
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <FormControl>
+                                  <Button
+                                    variant="outline"
+                                    className={cn(
+                                      "w-full justify-start font-normal",
+                                      !endDate && "text-muted-foreground"
+                                    )}
+                                  >
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {endDate
+                                      ? format(endDate, "dd.MM.yyyy")
+                                      : "Velg dato"}
+                                  </Button>
+                                </FormControl>
+                              </PopoverTrigger>
+                              <PopoverContent
+                                className="w-auto p-0"
+                                align="start"
+                              >
+                                <Calendar
+                                  mode="single"
+                                  selected={endDate}
+                                  onSelect={(date) => {
+                                    const combined = combineDateTime(
+                                      date,
+                                      endTime
+                                    );
+                                    field.onChange(combined);
+                                  }}
+                                  autoFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
+                          <div className="flex-1">
+                            <div className="relative">
+                              <Clock className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                type="time"
+                                value={endTime}
+                                onChange={(e) => {
+                                  const combined = combineDateTime(
+                                    endDate,
+                                    e.target.value
+                                  );
+                                  field.onChange(combined);
+                                }}
+                                className="pl-8"
+                                step="60"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <FormDescription>
+                          Hvis forskjellig fra booket tid
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    );
+                  }}
                 />
               </div>
             </div>

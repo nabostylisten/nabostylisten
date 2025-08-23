@@ -58,7 +58,8 @@ export function BookingDetailsContent({
 }: BookingDetailsContentProps) {
   const router = useRouter();
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const [isBookingNotesDialogOpen, setIsBookingNotesDialogOpen] = useState(false);
+  const [isBookingNotesDialogOpen, setIsBookingNotesDialogOpen] =
+    useState(false);
   const [editingNote, setEditingNote] = useState<any>(null);
 
   const {
@@ -477,8 +478,8 @@ export function BookingDetailsContent({
                   <FileText className="w-5 h-5" />
                   Bookingnotater
                 </CardTitle>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsBookingNotesDialogOpen(true)}
                 >
                   <FileText className="w-4 h-4 mr-2" />
@@ -497,8 +498,9 @@ export function BookingDetailsContent({
                   <AlertCircle className="w-5 h-5 mr-2" />
                   <span>Feil ved lasting av notater</span>
                 </div>
-              ) : bookingNotesResponse?.data && bookingNotesResponse.data.length > 0 ? (
-                <ScrollArea className="h-[400px] w-full rounded-md border p-4">
+              ) : bookingNotesResponse?.data &&
+                bookingNotesResponse.data.length > 0 ? (
+                <ScrollArea className="h-[42rem] w-full rounded-md border p-4">
                   <div className="space-y-4">
                     {bookingNotesResponse.data.map((note) => (
                       <BookingNoteCard
@@ -515,11 +517,14 @@ export function BookingDetailsContent({
               ) : (
                 <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                   <FileText className="w-12 h-12 mb-4 opacity-50" />
-                  <h3 className="text-lg font-medium mb-2">Ingen notater ennå</h3>
+                  <h3 className="text-lg font-medium mb-2">
+                    Ingen notater ennå
+                  </h3>
                   <p className="text-sm text-center mb-4">
-                    Opprett ditt første bookingnotat for å dokumentere tjenesten og dele informasjon med kunden.
+                    Opprett ditt første bookingnotat for å dokumentere tjenesten
+                    og dele informasjon med kunden.
                   </p>
-                  <Button 
+                  <Button
                     variant="outline"
                     onClick={() => setIsBookingNotesDialogOpen(true)}
                   >
@@ -530,7 +535,6 @@ export function BookingDetailsContent({
             </CardContent>
           </Card>
         )}
-
       </div>
 
       {/* Status Dialog for Stylists */}

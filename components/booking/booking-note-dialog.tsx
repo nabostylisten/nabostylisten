@@ -13,6 +13,7 @@ import { BookingNoteForm } from "./booking-note-form";
 import { BookingNoteList } from "./booking-note-list";
 import { FileText, List } from "lucide-react";
 import type { Database } from "@/types/database.types";
+import { ScrollArea } from "../ui/scroll-area";
 
 type BookingNote = Database["public"]["Tables"]["booking_notes"]["Row"] & {
   stylist: {
@@ -72,27 +73,32 @@ export function BookingNoteDialog({
             {isEditing ? "Rediger bookingnotat" : "Bookingnotater"}
           </DialogTitle>
           <DialogDescription>
-            {isEditing 
+            {isEditing
               ? "Oppdater ditt bookingnotat med detaljer og bilder fra tjenesten."
-              : "Administrer bookingnotater for å dokumentere tjenesten og dele viktig informasjon med kunden."
-            }
+              : "Administrer bookingnotater for å dokumentere tjenesten og dele viktig informasjon med kunden."}
           </DialogDescription>
         </DialogHeader>
 
         {isEditing ? (
           // Edit mode - only show the form
-          <div className="flex-1 overflow-hidden">
-            <BookingNoteForm
-              bookingId={bookingId}
-              stylistId={stylistId}
-              editingNote={editingNote}
-              onSuccess={handleFormSuccess}
-              onCancel={handleClose}
-            />
-          </div>
+          <ScrollArea className="h-[600px] flex-1">
+            <div className="pr-4">
+              <BookingNoteForm
+                bookingId={bookingId}
+                stylistId={stylistId}
+                editingNote={editingNote}
+                onSuccess={handleFormSuccess}
+                onCancel={handleClose}
+              />
+            </div>
+          </ScrollArea>
         ) : (
           // Normal mode - show tabs
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="flex-1 flex flex-col"
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list" className="flex items-center gap-2">
                 <List className="w-4 h-4" />

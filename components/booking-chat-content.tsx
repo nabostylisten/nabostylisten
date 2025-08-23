@@ -11,10 +11,12 @@ import {
   createChatMessage,
   markChatMessagesAsRead,
   getChatMessageImages,
+  getPreviousBookingsBetweenUsers,
 } from "@/server/chat.actions";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 import { ChatMessage } from "@/hooks/use-realtime-chat";
+import { PreviousBookingsAlert } from "@/components/chat/previous-bookings-alert";
 
 interface BookingChatContentProps {
   bookingId: string;
@@ -35,6 +37,10 @@ interface BookingChatContentProps {
     };
   }>;
   messagesError?: string | null;
+  // New props for previous bookings functionality
+  stylistId?: string;
+  customerId?: string;
+  isCurrentUserStylist?: boolean;
 }
 
 export function BookingChatContent({
@@ -48,9 +54,24 @@ export function BookingChatContent({
   bookingStatus,
   initialMessages,
   messagesError,
+  stylistId,
+  customerId,
+  isCurrentUserStylist = false,
 }: BookingChatContentProps) {
   const [convertedMessages, setConvertedMessages] = useState<ChatMessage[]>([]);
   const processedMessageIds = useRef<Set<string>>(new Set());
+
+  // Check for previous bookings between stylist and customer (only for stylists)
+  const { data: previousBookingsResponse } = useQuery({
+    queryKey: ["previous-bookings-check", stylistId, customerId, bookingId],
+    queryFn: () => 
+      stylistId && customerId 
+        ? getPreviousBookingsBetweenUsers(stylistId, customerId, bookingId)
+        : Promise.resolve({ data: [], error: null }),
+    enabled: isCurrentUserStylist && !!stylistId && !!customerId,
+  });
+
+  const hasPreviousBookings = (previousBookingsResponse?.data?.length || 0) > 0;
 
   // Load images for messages and convert to ChatMessage format
   useEffect(() => {
@@ -273,6 +294,17 @@ export function BookingChatContent({
             Feil ved lasting av meldinger: {messagesError}
           </p>
         </div>
+      )}
+
+      {/* Previous Bookings Alert (only for stylists) */}
+      {isCurrentUserStylist && stylistId && customerId && (
+        <PreviousBookingsAlert
+          stylistId={stylistId}
+          customerId={customerId}
+          customerName={partnerName}
+          currentBookingId={bookingId}
+          hasPreviousBookings={hasPreviousBookings}
+        />
       )}
 
       {/* Chat Container */}

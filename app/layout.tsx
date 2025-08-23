@@ -18,6 +18,11 @@ export const metadata: Metadata = {
   title: "Nabostylisten - Book din stylist hjemme",
   description:
     "Norges ledende platform for å booke skjønnhetstjenester hjemme eller på salong. Finn din perfekte stylist i dag.",
+  applicationName: "Nabostylisten",
+  appleWebApp: {
+    title: "Nabostylisten",
+    statusBarStyle: "black-translucent",
+  },
 };
 
 const inter = Inter({
@@ -51,6 +56,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="no" suppressHydrationWarning className="scroll-smooth">
+      <head>
+        <meta name="apple-mobile-web-app-title" content="Nabostylisten" />
+      </head>
       <body
         className={cn(
           ptSerif.variable,

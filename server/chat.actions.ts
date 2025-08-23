@@ -77,6 +77,86 @@ export async function getChatsByProfileId(profileId: string) {
   return { error: null, data: chats };
 }
 
+export async function getChatsByRole(profileId: string, role: 'customer' | 'stylist') {
+  const supabase = await createClient();
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user || user.id !== profileId) {
+    return { error: "Unauthorized", data: null };
+  }
+
+  // Get bookings where user has the specified role
+  let bookingsQuery = supabase
+    .from("bookings")
+    .select("id");
+
+  if (role === 'customer') {
+    bookingsQuery = bookingsQuery.eq('customer_id', profileId);
+  } else {
+    bookingsQuery = bookingsQuery.eq('stylist_id', profileId);
+  }
+
+  const { data: userBookings, error: bookingsError } = await bookingsQuery;
+
+  if (bookingsError) {
+    return { error: bookingsError.message, data: null };
+  }
+
+  if (!userBookings || userBookings.length === 0) {
+    return { error: null, data: [] };
+  }
+
+  const bookingIds = userBookings.map(b => b.id);
+
+  // Get all chats for those bookings with unread message counts
+  const { data: chats, error } = await supabase
+    .from("chats")
+    .select(`
+      id,
+      booking_id,
+      created_at,
+      updated_at,
+      bookings!inner (
+        id,
+        customer_id,
+        stylist_id,
+        start_time,
+        status,
+        customer:profiles!customer_id (
+          id,
+          full_name
+        ),
+        stylist:profiles!stylist_id (
+          id,
+          full_name
+        ),
+        booking_services (
+          services (
+            title
+          )
+        )
+      ),
+      chat_messages (
+        id,
+        is_read,
+        sender_id,
+        created_at
+      )
+    `)
+    .in('booking_id', bookingIds)
+    .order("updated_at", { ascending: false });
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  return { error: null, data: chats };
+}
+
 export async function getChatByBookingId(bookingId: string) {
   const supabase = await createClient();
 
@@ -419,4 +499,90 @@ export async function getChatMessageImages(messageId: string) {
   );
 
   return { error: null, data: imagesWithUrls };
+}
+
+export async function getPreviousBookingsBetweenUsers(stylistId: string, customerId: string, currentBookingId?: string) {
+  const supabase = await createClient();
+
+  // Get current user
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Unauthorized", data: null };
+  }
+
+  // Verify user is either the stylist or customer in question
+  if (user.id !== stylistId && user.id !== customerId) {
+    return { error: "Unauthorized", data: null };
+  }
+
+  // Get previous bookings between this stylist and customer
+  let query = supabase
+    .from("bookings")
+    .select(`
+      id,
+      customer_id,
+      stylist_id,
+      start_time,
+      end_time,
+      status,
+      total_price,
+      total_duration_minutes,
+      message_to_stylist,
+      discount_applied,
+      customer:profiles!customer_id (
+        id,
+        full_name,
+        email,
+        role
+      ),
+      stylist:profiles!stylist_id (
+        id,
+        full_name,
+        email,
+        role
+      ),
+      addresses (
+        street_address,
+        city,
+        postal_code,
+        entry_instructions
+      ),
+      discounts (
+        code,
+        discount_percentage,
+        discount_amount
+      ),
+      booking_services (
+        services (
+          id,
+          title,
+          description,
+          price,
+          currency,
+          duration_minutes
+        )
+      ),
+      chats (
+        id
+      )
+    `)
+    .eq('customer_id', customerId)
+    .eq('stylist_id', stylistId)
+    .order('start_time', { ascending: false });
+
+  // Exclude current booking if provided
+  if (currentBookingId) {
+    query = query.neq('id', currentBookingId);
+  }
+
+  const { data: bookings, error } = await query;
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  return { error: null, data: bookings };
 }

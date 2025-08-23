@@ -253,6 +253,16 @@ USING (
   )
 );
 
+-- Users can create chats for bookings they are part of.
+CREATE POLICY "Users can create chats for their bookings." ON public.chats
+FOR INSERT TO authenticated
+WITH CHECK (
+  booking_id IN (
+    SELECT id FROM public.bookings 
+    WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
+  )
+);
+
 -- Users can view messages in chats they are a part of.
 CREATE POLICY "Users can view messages in their own chats." ON public.chat_messages
 FOR SELECT TO authenticated

@@ -78,15 +78,13 @@ export default async function BookingDetailsPage({
 
   // Check if we should show review reminder alert
   const isCustomer = booking.customer_id === user.id;
-  const shouldShowReviewReminder = 
-    booking.status === "completed" && 
-    isCustomer && 
-    !existingReview;
+  const shouldShowReviewReminder =
+    booking.status === "completed" && isCustomer && !existingReview;
 
   // Prepare data for review reminder
-  const serviceTitles = booking.booking_services
-    ?.map((bs) => bs.services?.title)
-    .filter(Boolean) || [];
+  const serviceTitles =
+    booking.booking_services?.map((bs) => bs.services?.title).filter(Boolean) ||
+    [];
 
   return (
     <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
@@ -96,6 +94,7 @@ export default async function BookingDetailsPage({
             bookingId={bookingId}
             stylistName={booking.stylist?.full_name || "Stylisten"}
             serviceTitles={serviceTitles}
+            bookingDate={booking.created_at}
           />
         )}
         <BookingDetailsContent

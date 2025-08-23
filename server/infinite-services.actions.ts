@@ -326,13 +326,13 @@ async function transformNearbyServiceToServiceWithRelations(
       id: nearbyService.stylist_id,
       full_name: nearbyService.stylist_full_name,
       stylist_details: nearbyService.stylist_bio
-        ? [{
+        ? {
           bio: nearbyService.stylist_bio,
           can_travel: nearbyService.stylist_can_travel,
           has_own_place: nearbyService.stylist_has_own_place,
           travel_distance_km: null, // Not available from RPC
-        }]
-        : [],
+        }
+        : null,
       addresses: [{
         id: nearbyService.address_id,
         city: nearbyService.address_city,

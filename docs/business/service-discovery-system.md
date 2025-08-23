@@ -50,11 +50,19 @@ The service discovery system is the core of Nabostylisten's marketplace function
 4. **Filter Application Process**
 
    - **Search Term**: Free-text search across service titles and descriptions
-   - **Location Filter**: Geographic filtering by city (e.g., "Oslo", "Bergen")
-   - **Category Selection**: Filter by beauty service categories with service counts
+   - **Geographic Location Filter**: Precise coordinate-based search using Mapbox geocoding
+     - Address autocomplete with location suggestions
+     - Configurable search radius (1-50km)
+     - PostGIS-powered distance calculations for accurate proximity matching
+   - **Category Selection**: Multi-select filtering by beauty service categories with service counts
+   - **Service Destination**: Filter by where services are performed
+     - At customer's place (hjemme hos meg)
+     - At stylist's location (hos stylist)
+     - Both options available
    - **Stylist Selection**: Multi-select filtering by specific stylists
-   - **Price Sorting**: Sort by price (ascending/descending) or recency
-   - **Real-time Feedback**: Active filters display shows current search state
+   - **Price Range Filtering**: Min/max price range selection in Norwegian kroner
+   - **Advanced Sorting**: Multiple sorting options including distance-based sorting
+   - **Real-time Feedback**: Active filters display with removable badges shows current search state
 
 5. **Infinite Scroll Browsing**
 
@@ -126,12 +134,27 @@ The system uses a sophisticated hybrid approach:
 ### Search and Filtering Logic
 
 - **Search Priority**: Matches in service titles rank higher than description matches
-- **Category Filtering**: Shows service count per category to guide user selection
-- **Location Matching**: Exact city name matching (future: proximity-based search)
-- **Price Handling**: All prices stored in øre (Norwegian cents) for precision
+- **Category Filtering**: Multi-select with service count display per category to guide user selection
+- **Geographic Search**:
+  - Dual-mode system: traditional city-based search and modern coordinate-based proximity search
+  - PostGIS `nearby_services` function for efficient spatial queries
+  - Automatic fallback from geographic to traditional search when coordinates unavailable
+- **Service Destination Logic**: Independent filters for customer location vs stylist location services
+- **Price Handling**: All prices stored in øre (Norwegian cents) for precision, with range filtering
 - **Sorting Options**:
   - Newest first (default) - based on service creation date
   - Price ascending/descending - based on service base price
+  - Rating ascending/descending - based on average customer ratings
+  - Distance ascending - available only with geographic coordinates (proximity-based)
+
+### Geographic Search Architecture
+
+- **Address Input**: Mapbox Geocoding API integration for address autocomplete
+- **Coordinate Storage**: Precise latitude/longitude coordinates stored with user selections
+- **Radius Configuration**: User-configurable search radius from 1-50 kilometers
+- **PostGIS Integration**: Native PostgreSQL geographic queries using `ST_DWithin` for distance calculations
+- **Performance Optimization**: Spatial indexing on address coordinates for fast proximity searches
+- **Fallback Strategy**: Automatic fallback to traditional text-based city search when coordinates unavailable
 
 ### Location Services
 
@@ -210,10 +233,11 @@ The system uses a sophisticated hybrid approach:
 
 ### Advanced Search Features
 
-- **Proximity-Based Search**: Replace exact city matching with distance-based filtering
+- ✅ **Proximity-Based Search**: Implemented with PostGIS coordinate-based filtering and configurable radius
+- ✅ **Price Range Filtering**: Implemented with min/max price range selectors
+- ✅ **Advanced Sorting**: Rating-based sorting and distance sorting implemented
 - **Availability Integration**: Show real-time stylist availability in search results
-- **Price Range Filtering**: Min/max price range selectors instead of just sorting
-- **Advanced Sorting**: Rating-based sorting, distance sorting, availability sorting
+- **Advanced Location Features**: Travel distance validation, multi-location stylists
 
 ### Personalization Features
 
@@ -248,8 +272,8 @@ The system uses a sophisticated hybrid approach:
 
 ### External Services
 
-- **Supabase**: Database queries and real-time capabilities
-- **Mapbox**: Future location and proximity features
+- **Supabase**: Database queries, PostGIS spatial extensions, and real-time capabilities
+- **Mapbox**: Geocoding API for address autocomplete and coordinate resolution
 - **Vercel**: Hosting and edge function deployment
 
 This service discovery system represents a sophisticated, scalable solution for marketplace service browsing that balances user experience, performance, and business objectives while providing a foundation for future enhancements and growth.

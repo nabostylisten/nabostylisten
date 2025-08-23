@@ -116,10 +116,13 @@ The user preferences system provides comprehensive control over how users receiv
 ### Integration Requirements
 
 #### Newsletter System (Brevo)
-- **Bidirectional Sync**: Newsletter preference changes update Brevo subscription
-- **Segmentation**: User data flows to marketing automation
-- **Compliance**: Unsubscribe links honor platform preferences
-- **Attribution**: Track subscription source and modification history
+- **TODO: IMPLEMENTATION REQUIRED** - The following Brevo integrations need to be implemented:
+  - **Bidirectional Sync**: Newsletter preference changes update Brevo subscription
+  - **Segmentation**: User data flows to marketing automation
+  - **Compliance**: Unsubscribe links honor platform preferences
+  - **Attribution**: Track subscription source and modification history
+  - **Marketing Email Preferences**: promotional_sms and marketing_emails need full Brevo integration
+  - **Newsletter Subscription Flow**: Complete end-to-end newsletter signup and management
 
 #### Notification Delivery
 - **Preference Checking**: All notification systems query preferences before sending

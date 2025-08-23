@@ -174,22 +174,25 @@ StylistApplicationEmail.PreviewProps = {
 
 export default StylistApplicationEmail;
 
-// Styles
+// Styled with Nabostylisten branded colors
 const main = {
-  backgroundColor: "#ffffff",
+  backgroundColor: "#f8f6ff", // --background
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
 };
 
 const container = {
   margin: "0 auto",
-  padding: "20px 0 48px",
-  maxWidth: "580px",
+  padding: "40px 20px",
+  maxWidth: "600px",
+  backgroundColor: "#ffffff",
+  borderRadius: "12px",
+  boxShadow: "0 4px 6px rgba(69, 58, 107, 0.1)",
 };
 
 const logoContainer = {
   textAlign: "center" as const,
-  margin: "0 0 40px",
+  marginBottom: "32px",
 };
 
 const logo = {
@@ -197,40 +200,42 @@ const logo = {
 };
 
 const heading = {
-  fontSize: "32px",
-  lineHeight: "1.3",
-  fontWeight: "700",
-  color: "#484848",
+  fontSize: "28px",
+  letterSpacing: "-0.5px",
+  lineHeight: "1.2",
+  fontWeight: "600",
+  color: "#453a6b", // --foreground
   textAlign: "center" as const,
-  margin: "0 0 20px",
+  margin: "0 0 24px",
 };
 
 const subHeading = {
   fontSize: "20px",
   lineHeight: "1.4",
   fontWeight: "600",
-  color: "#484848",
+  color: "#453a6b", // --foreground
   margin: "0 0 16px",
 };
 
 const paragraph = {
   fontSize: "16px",
   lineHeight: "1.6",
-  color: "#484848",
-  margin: "0 0 16px",
+  color: "#453a6b", // --foreground
+  margin: "0 0 20px",
 };
 
 const infoSection = {
-  backgroundColor: "#f6f9fc",
-  borderRadius: "8px",
+  backgroundColor: "#edeaf7", // --muted
+  borderRadius: "10px",
   padding: "24px",
-  margin: "0 0 24px",
+  margin: "32px 0",
+  border: "1px solid rgba(155, 140, 200, 0.3)", // --primary with transparency
 };
 
 const infoLabel = {
   fontSize: "14px",
   fontWeight: "600",
-  color: "#6b7280",
+  color: "#6b6682", // --muted-foreground
   margin: "0 0 4px",
   display: "inline-block",
   width: "100px",
@@ -238,62 +243,74 @@ const infoLabel = {
 
 const infoValue = {
   fontSize: "16px",
-  color: "#484848",
+  fontWeight: "500",
+  color: "#453a6b", // --foreground
   margin: "0 0 12px",
   display: "inline-block",
 };
 
 const detailsSection = {
-  margin: "0 0 24px",
+  margin: "32px 0",
+  padding: "20px",
+  backgroundColor: "#fee7dc", // --secondary
+  borderRadius: "10px",
+  border: "1px solid #c2724a", // --secondary-foreground
 };
 
 const detailLabel = {
   fontSize: "14px",
   fontWeight: "600",
-  color: "#6b7280",
+  color: "#c2724a", // --secondary-foreground
   margin: "16px 0 4px",
 };
 
 const detailValue = {
   fontSize: "16px",
-  color: "#484848",
-  margin: "0 0 8px",
+  color: "#c2724a", // --secondary-foreground
+  margin: "0 0 12px",
+  fontWeight: "500",
 };
 
 const actionSection = {
   textAlign: "center" as const,
-  margin: "0 0 24px",
+  margin: "32px 0",
 };
 
 const button = {
-  backgroundColor: "#007ee6",
+  backgroundColor: "#9b8cc8", // --primary
   borderRadius: "8px",
-  color: "#fff",
+  color: "#ffffff",
   fontSize: "16px",
   fontWeight: "600",
   textDecoration: "none",
   textAlign: "center" as const,
   display: "inline-block",
-  padding: "12px 24px",
+  padding: "14px 28px",
   margin: "16px 0",
+  boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
 };
 
 const link = {
-  color: "#007ee6",
-  textDecoration: "underline",
+  color: "#9b8cc8", // --primary
+  textDecoration: "none",
+  fontWeight: "500",
 };
 
 const hr = {
-  borderColor: "#cccccc",
-  margin: "20px 0",
+  borderColor: "#edeaf7", // --muted
+  margin: "32px 0",
+  borderWidth: "1px",
+  borderStyle: "solid",
 };
 
 const footerSection = {
   textAlign: "center" as const,
+  margin: "32px 0 0",
 };
 
 const footerText = {
-  fontSize: "14px",
+  fontSize: "13px",
   lineHeight: "1.6",
-  color: "#6b7280",
+  color: "#6b6682", // --muted-foreground
+  margin: "0",
 };

@@ -125,8 +125,9 @@ export const ApplicationStatusUpdateEmail = ({
   );
 };
 
+// Styled with Nabostylisten branded colors
 const main = {
-  backgroundColor: "#fafafa",
+  backgroundColor: "#f8f6ff", // --background
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
 };
@@ -137,7 +138,7 @@ const container = {
   maxWidth: "600px",
   backgroundColor: "#ffffff",
   borderRadius: "12px",
-  boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)",
+  boxShadow: "0 4px 6px rgba(69, 58, 107, 0.1)",
 };
 
 const logoContainer = {
@@ -154,7 +155,7 @@ const heading = {
   letterSpacing: "-0.5px",
   lineHeight: "1.2",
   fontWeight: "600",
-  color: "#1a1a1a",
+  color: "#453a6b", // --foreground
   margin: "0 0 24px",
   textAlign: "center" as const,
 };
@@ -163,45 +164,46 @@ const paragraph = {
   margin: "0 0 20px",
   fontSize: "16px",
   lineHeight: "1.6",
-  color: "#374151",
+  color: "#453a6b", // --foreground
 };
 
 const statusSection = {
   margin: "32px 0",
   padding: "20px",
-  backgroundColor: "#f9fafb",
+  backgroundColor: "#edeaf7", // --muted
   borderRadius: "10px",
-  border: "1px solid #e5e7eb",
+  border: "1px solid rgba(155, 140, 200, 0.3)", // --primary with transparency
+  textAlign: "center" as const,
 };
 
 const statusLabel = {
   fontSize: "14px",
   fontWeight: "500",
-  color: "#6b7280",
+  color: "#6b6682", // --muted-foreground
   margin: "0 0 8px",
   textTransform: "uppercase" as const,
   letterSpacing: "0.5px",
 };
 
 const statusValue = {
-  fontSize: "18px",
+  fontSize: "20px",
   fontWeight: "600",
-  color: "#1f2937",
+  color: "#9b8cc8", // --primary
   margin: "0",
 };
 
 const messageSection = {
   margin: "32px 0",
   padding: "20px",
-  backgroundColor: "#fef3c7",
-  border: "1px solid #f59e0b",
+  backgroundColor: "#fee7dc", // --secondary
+  border: "2px solid #c2724a", // --secondary-foreground
   borderRadius: "10px",
 };
 
 const messageLabel = {
   fontSize: "14px",
   fontWeight: "600",
-  color: "#92400e",
+  color: "#c2724a", // --secondary-foreground
   margin: "0 0 12px",
   textTransform: "uppercase" as const,
   letterSpacing: "0.5px",
@@ -210,7 +212,7 @@ const messageLabel = {
 const messageText = {
   fontSize: "16px",
   lineHeight: "1.6",
-  color: "#92400e",
+  color: "#c2724a", // --secondary-foreground
   margin: "0",
 };
 
@@ -220,7 +222,7 @@ const ctaSection = {
 };
 
 const button = {
-  backgroundColor: "#10b981",
+  backgroundColor: "#9b8cc8", // --primary
   borderRadius: "8px",
   color: "#ffffff",
   fontSize: "16px",
@@ -230,26 +232,26 @@ const button = {
   display: "inline-block",
   padding: "14px 28px",
   margin: "20px 0",
-  boxShadow: "0 2px 4px rgba(16, 185, 129, 0.2)",
+  boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
 };
 
 const hr = {
-  borderColor: "#e5e7eb",
+  borderColor: "#edeaf7", // --muted
   margin: "40px 0 24px",
   borderWidth: "1px",
   borderStyle: "solid",
 };
 
 const footer = {
-  color: "#6b7280",
-  fontSize: "14px",
+  color: "#6b6682", // --muted-foreground
+  fontSize: "13px",
   lineHeight: "1.5",
   margin: "0 0 8px",
   textAlign: "center" as const,
 };
 
 const link = {
-  color: "#10b981",
+  color: "#9b8cc8", // --primary
   textDecoration: "none",
   fontWeight: "500",
 };

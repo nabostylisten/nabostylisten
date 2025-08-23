@@ -177,7 +177,7 @@ async function main() {
     phone_number: string;
   };
 
-  // Define test users
+  // Define test users - more stylists across Norway's main cities
   const testUsers: AuthUser[] = [
     {
       email: "admin@nabostylisten.no",
@@ -185,6 +185,7 @@ async function main() {
       role: "admin",
       phone_number: "+4712345678",
     },
+    // Oslo stylists (2)
     {
       email: "maria.hansen@example.com",
       full_name: "Maria Hansen",
@@ -192,17 +193,64 @@ async function main() {
       phone_number: "+4790123456",
     },
     {
+      email: "sophia.larsen@example.com",
+      full_name: "Sophia Larsen",
+      role: "stylist",
+      phone_number: "+4792345678",
+    },
+    // Bergen stylists (2)
+    {
       email: "emma.nilsen@example.com",
       full_name: "Emma Nilsen",
       role: "stylist",
       phone_number: "+4791234567",
     },
     {
-      email: "sophia.larsen@example.com",
-      full_name: "Sophia Larsen",
+      email: "lisa.berg@example.com",
+      full_name: "Lisa Berg",
       role: "stylist",
-      phone_number: "+4792345678",
+      phone_number: "+4795123456",
     },
+    // Trondheim stylists (2)
+    {
+      email: "anna.johansen@example.com",
+      full_name: "Anna Johansen",
+      role: "stylist",
+      phone_number: "+4796234567",
+    },
+    {
+      email: "ingrid.solberg@example.com",
+      full_name: "Ingrid Solberg",
+      role: "stylist",
+      phone_number: "+4797345678",
+    },
+    // Stavanger stylists (2)
+    {
+      email: "camilla.eriksen@example.com",
+      full_name: "Camilla Eriksen",
+      role: "stylist",
+      phone_number: "+4798456789",
+    },
+    {
+      email: "thea.andersen@example.com",
+      full_name: "Thea Andersen",
+      role: "stylist",
+      phone_number: "+4799567890",
+    },
+    // Kristiansand stylists (2)
+    {
+      email: "marte.kristiansen@example.com",
+      full_name: "Marte Kristiansen",
+      role: "stylist",
+      phone_number: "+4790678901",
+    },
+    {
+      email: "sara.pedersen@example.com",
+      full_name: "Sara Pedersen",
+      role: "stylist",
+      phone_number: "+4791789012",
+    },
+    // Customers
     {
       email: "kari.nordmann@example.com",
       full_name: "Kari Nordmann",
@@ -214,6 +262,18 @@ async function main() {
       full_name: "Ole Hansen",
       role: "customer",
       phone_number: "+4794567890",
+    },
+    {
+      email: "per.jensen@example.com",
+      full_name: "Per Jensen",
+      role: "customer",
+      phone_number: "+4792890123",
+    },
+    {
+      email: "anne.olsen@example.com",
+      full_name: "Anne Olsen",
+      role: "customer",
+      phone_number: "+4793901234",
     },
   ];
 
@@ -297,13 +357,14 @@ async function main() {
   );
 
   // Get user references for seeding related data
-  const stylistUsers = allUsers.slice(1, 4); // Maria, Emma, Sophia
-  const customerUsers = allUsers.slice(4, 6); // Kari, Ole
+  const stylistUsers = allUsers.slice(1, 11); // All 10 stylists
+  const customerUsers = allUsers.slice(11, 15); // All 4 customers
 
   // Create stylist details (profiles will exist due to trigger)
   await seed.stylist_details([
+    // Oslo stylists
     {
-      profile_id: stylistUsers[0].id,
+      profile_id: stylistUsers[0].id, // Maria Hansen
       bio:
         "Erfaren frisør med over 10 års erfaring. Spesialiserer meg på moderne klipp og fargeteknikker.",
       can_travel: true,
@@ -312,17 +373,7 @@ async function main() {
       instagram_profile: "@mariahansen_hair",
     },
     {
-      profile_id: stylistUsers[1].id,
-      bio:
-        "Makeup artist og negletekniker. Elsker å skape unike looks for mine kunder!",
-      can_travel: true,
-      has_own_place: false,
-      travel_distance_km: 20,
-      instagram_profile: "@emma_beauty",
-      tiktok_profile: "@emmabeautyoslo",
-    },
-    {
-      profile_id: stylistUsers[2].id,
+      profile_id: stylistUsers[1].id, // Sophia Larsen
       bio:
         "Spesialist på bryn og vipper. Sertifisert lash technician med fokus på naturlige resultater.",
       can_travel: false,
@@ -331,34 +382,104 @@ async function main() {
       instagram_profile: "@sophialashes",
       facebook_profile: "sophialarsenlashes",
     },
+    // Bergen stylists
+    {
+      profile_id: stylistUsers[2].id, // Emma Nilsen
+      bio:
+        "Makeup artist og negletekniker. Elsker å skape unike looks for mine kunder!",
+      can_travel: true,
+      has_own_place: false,
+      travel_distance_km: 20,
+      instagram_profile: "@emma_beauty",
+      tiktok_profile: "@emmabeautybergen",
+    },
+    {
+      profile_id: stylistUsers[3].id, // Lisa Berg
+      bio:
+        "Profesjonell hårfrisør og fargeekspert. Brenner for å skape fantastiske frisyrer som passer din stil.",
+      can_travel: true,
+      has_own_place: true,
+      travel_distance_km: 25,
+      instagram_profile: "@lisaberg_hair",
+    },
+    // Trondheim stylists
+    {
+      profile_id: stylistUsers[4].id, // Anna Johansen
+      bio:
+        "Spesialiserer meg på bryllup og festmakeup. Over 8 års erfaring med å få folk til å skinne!",
+      can_travel: true,
+      has_own_place: true,
+      travel_distance_km: 30,
+      instagram_profile: "@anna_makeup_trondheim",
+      facebook_profile: "annamakeup",
+    },
+    {
+      profile_id: stylistUsers[5].id, // Ingrid Solberg
+      bio:
+        "Sertifisert negletekniker med fokus på gel og akryl. Elsker kreative design og nail art!",
+      can_travel: false,
+      has_own_place: true,
+      travel_distance_km: null,
+      instagram_profile: "@ingrid_nails",
+    },
+    // Stavanger stylists
+    {
+      profile_id: stylistUsers[6].id, // Camilla Eriksen
+      bio:
+        "Hårfrisør med spesialisering innen balayage og moderne fargeteknikker. La meg hjelpe deg finne din perfekte look!",
+      can_travel: true,
+      has_own_place: true,
+      travel_distance_km: 20,
+      instagram_profile: "@camilla_hair_stavanger",
+      tiktok_profile: "@camillahair",
+    },
+    {
+      profile_id: stylistUsers[7].id, // Thea Andersen
+      bio:
+        "Vippeextensions og brynforming er min spesialitet. Fokus på naturlig skjønnhet og holdbare resultater.",
+      can_travel: true,
+      has_own_place: false,
+      travel_distance_km: 15,
+      instagram_profile: "@thea_lashes",
+    },
+    // Kristiansand stylists
+    {
+      profile_id: stylistUsers[8].id, // Marte Kristiansen
+      bio:
+        "Allsidig stylist med erfaring innen hår, makeup og negler. Jeg hjelper deg å se din beste ut!",
+      can_travel: true,
+      has_own_place: true,
+      travel_distance_km: 25,
+      instagram_profile: "@marte_beauty_krs",
+      youtube_profile: "martebeauty",
+    },
+    {
+      profile_id: stylistUsers[9].id, // Sara Pedersen
+      bio:
+        "Spesialist på festfrisyrer og updos. Perfekt for bryllup, ball og andre spesielle anledninger.",
+      can_travel: true,
+      has_own_place: true,
+      travel_distance_km: 20,
+      instagram_profile: "@sara_hair_kristiansand",
+    },
   ]);
 
   // Create addresses with proper PostGIS geography data
   // Note: PostGIS expects POINT(longitude latitude) format
   await seed.addresses([
-    // Stylist addresses
+    // Oslo stylists addresses
     {
-      user_id: stylistUsers[0].id,
+      user_id: stylistUsers[0].id, // Maria Hansen
       nickname: "Salong",
       street_address: "Storgata 15",
       city: "Oslo",
       postal_code: "0154",
       country: "Norge",
-      location: "POINT(10.7494 59.9139)", // Oslo center coordinates
+      location: "POINT(10.746 59.913)", // Oslo center coordinates
       is_primary: true,
     },
     {
-      user_id: stylistUsers[1].id,
-      nickname: "Hjemmekontor",
-      street_address: "Løkkeveien 8",
-      city: "Bergen",
-      postal_code: "5003",
-      country: "Norge",
-      location: "POINT(5.3260 60.3894)", // Bergen coordinates
-      is_primary: true,
-    },
-    {
-      user_id: stylistUsers[2].id,
+      user_id: stylistUsers[1].id, // Sophia Larsen
       nickname: "Studio",
       street_address: "Markveien 35",
       city: "Oslo",
@@ -367,9 +488,93 @@ async function main() {
       location: "POINT(10.7585 59.9295)", // Grünerløkka, Oslo coordinates
       is_primary: true,
     },
-    // Customer addresses
+    // Bergen stylists addresses
     {
-      user_id: customerUsers[0].id,
+      user_id: stylistUsers[2].id, // Emma Nilsen
+      nickname: "Hjemmekontor",
+      street_address: "Løkkeveien 8",
+      city: "Bergen",
+      postal_code: "5003",
+      country: "Norge",
+      location: "POINT(5.324 60.393)", // Bergen coordinates
+      is_primary: true,
+    },
+    {
+      user_id: stylistUsers[3].id, // Lisa Berg
+      nickname: "Salong",
+      street_address: "Strandgaten 55",
+      city: "Bergen",
+      postal_code: "5004",
+      country: "Norge",
+      location: "POINT(5.3260 60.3894)", // Bergen city center
+      is_primary: true,
+    },
+    // Trondheim stylists addresses
+    {
+      user_id: stylistUsers[4].id, // Anna Johansen
+      nickname: "Studio",
+      street_address: "Munkegata 20",
+      city: "Trondheim",
+      postal_code: "7011",
+      country: "Norge",
+      location: "POINT(10.395 63.43)", // Trondheim coordinates
+      is_primary: true,
+    },
+    {
+      user_id: stylistUsers[5].id, // Ingrid Solberg
+      nickname: "Neglesalong",
+      street_address: "Olav Tryggvasons gate 14",
+      city: "Trondheim",
+      postal_code: "7013",
+      country: "Norge",
+      location: "POINT(10.3950 63.4305)", // Trondheim center
+      is_primary: true,
+    },
+    // Stavanger stylists addresses
+    {
+      user_id: stylistUsers[6].id, // Camilla Eriksen
+      nickname: "Hårstudio",
+      street_address: "Klubbgaten 5",
+      city: "Stavanger",
+      postal_code: "4006",
+      country: "Norge",
+      location: "POINT(5.733 58.97)", // Stavanger coordinates
+      is_primary: true,
+    },
+    {
+      user_id: stylistUsers[7].id, // Thea Andersen
+      nickname: "Skjønnhetssalong",
+      street_address: "Øvre Holmegate 15",
+      city: "Stavanger",
+      postal_code: "4008",
+      country: "Norge",
+      location: "POINT(5.7330 58.9700)", // Stavanger center
+      is_primary: true,
+    },
+    // Kristiansand stylists addresses
+    {
+      user_id: stylistUsers[8].id, // Marte Kristiansen
+      nickname: "Beauty Studio",
+      street_address: "Markens gate 33",
+      city: "Kristiansand",
+      postal_code: "4611",
+      country: "Norge",
+      location: "POINT(8.00 58.1472)", // Kristiansand coordinates
+      is_primary: true,
+    },
+    {
+      user_id: stylistUsers[9].id, // Sara Pedersen
+      nickname: "Hårsalong",
+      street_address: "Dronningens gate 15",
+      city: "Kristiansand",
+      postal_code: "4608",
+      country: "Norge",
+      location: "POINT(7.9956 58.1467)", // Kristiansand center
+      is_primary: true,
+    },
+    // Customer addresses - distributed across cities
+    {
+      user_id: customerUsers[0].id, // Kari Nordmann
       nickname: "Hjemme",
       street_address: "Grønlandsleiret 44",
       city: "Oslo",
@@ -379,13 +584,33 @@ async function main() {
       is_primary: true,
     },
     {
-      user_id: customerUsers[1].id,
+      user_id: customerUsers[1].id, // Ole Hansen
       nickname: "Leilighet",
       street_address: "Torgallmenningen 8",
       city: "Bergen",
       postal_code: "5014",
       country: "Norge",
       location: "POINT(5.3247 60.3933)", // Bergen city center coordinates
+      is_primary: true,
+    },
+    {
+      user_id: customerUsers[2].id, // Per Jensen
+      nickname: "Hjem",
+      street_address: "Prinsens gate 44",
+      city: "Trondheim",
+      postal_code: "7012",
+      country: "Norge",
+      location: "POINT(10.3951 63.4297)", // Trondheim coordinates
+      is_primary: true,
+    },
+    {
+      user_id: customerUsers[3].id, // Anne Olsen
+      nickname: "Leilighet",
+      street_address: "Kirkegata 20",
+      city: "Stavanger",
+      postal_code: "4005",
+      country: "Norge",
+      location: "POINT(5.7315 58.9690)", // Stavanger coordinates
       is_primary: true,
     },
   ]);
@@ -836,7 +1061,47 @@ async function main() {
     await seed.media(mediaData);
   }
 
-  // Create availability rules for stylists
+  // Create availability rules for all stylists
+  const availabilityRules = [];
+  
+  // Create availability for all 10 stylists with varied schedules
+  const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+  
+  for (let i = 0; i < stylistUsers.length; i++) {
+    const stylist = stylistUsers[i];
+    
+    // Most stylists work weekdays
+    for (const day of weekdays) {
+      // Vary the hours slightly for each stylist
+      const startHour = 8 + (i % 3); // 8, 9, or 10 AM start
+      const endHour = 17 + (i % 3); // 17, 18, or 19 PM end
+      
+      // Skip some days for variety (every 3rd stylist skips Wednesday)
+      if (i % 3 === 0 && day === "wednesday") continue;
+      
+      availabilityRules.push({
+        stylist_id: stylist.id,
+        day_of_week: day as Database["public"]["Enums"]["day_of_week"],
+        start_time: `${startHour.toString().padStart(2, '0')}:00`,
+        end_time: `${endHour.toString().padStart(2, '0')}:00`,
+      });
+    }
+    
+    // About 70% work Saturdays
+    if (i % 10 < 7) {
+      availabilityRules.push({
+        stylist_id: stylist.id,
+        day_of_week: "saturday" as Database["public"]["Enums"]["day_of_week"],
+        start_time: `${(10 + (i % 2)).toString().padStart(2, '0')}:00`, // 10 or 11 AM
+        end_time: `${(15 + (i % 2)).toString().padStart(2, '0')}:00`, // 15 or 16 PM
+      });
+    }
+  }
+  
+  await seed.stylist_availability_rules(availabilityRules);
+  
+  // Keep the original specific rules commented for reference
+  /*
   await seed.stylist_availability_rules([
     // Maria - Monday to Friday, 9-17, Saturday 10-15
     {
@@ -934,6 +1199,7 @@ async function main() {
       end_time: "16:00",
     },
   ]);
+  */
 
   // Create one-off unavailability periods
   const nextWeek = addDays(new Date(), 7);

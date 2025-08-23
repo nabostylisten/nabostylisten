@@ -211,6 +211,7 @@ export function searchParamsToFilters(
 export interface ReviewFilters {
   search?: string;
   rating?: number;
+  reviewerIds?: string[]; // customer IDs for "stylist" view, stylist IDs for "customer" view
   sortBy?: "newest" | "oldest" | "highest" | "lowest";
   page?: number;
   limit?: number;

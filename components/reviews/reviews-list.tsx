@@ -23,8 +23,37 @@ import {
 } from "@/components/ui/pagination";
 import { ReviewCard } from "./review-card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getStylistReviews, getCustomerReviews } from "@/server/review.actions";
-import { Search, Star, Filter, X } from "lucide-react";
+import {
+  getStylistReviews,
+  getCustomerReviews,
+  getReviewers,
+} from "@/server/review.actions";
+import {
+  Search,
+  Star,
+  Filter,
+  X,
+  Users,
+  Check,
+  ChevronsUpDown,
+  ChevronRight,
+} from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import type { ReviewFilters } from "@/types";
 
 interface ReviewsListProps {
@@ -44,6 +73,7 @@ export function ReviewsList({
   const [filters, setFilters] = useState<ReviewFilters>({
     search: "",
     rating: undefined,
+    reviewerIds: [],
     sortBy: "newest",
     page: 1,
     limit,
@@ -52,6 +82,9 @@ export function ReviewsList({
   // Debounced search state
   const [searchInput, setSearchInput] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useDebouncedState("", 250);
+
+  // Popover state
+  const [reviewerPopoverOpen, setReviewerPopoverOpen] = useState(false);
 
   // Update filters when debounced search changes
   useEffect(() => {
@@ -82,6 +115,16 @@ export function ReviewsList({
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
 
+  // Query reviewers for combobox
+  const { data: reviewers } = useQuery({
+    queryKey: ["reviewers", userId, viewType],
+    queryFn: async () => {
+      const result = await getReviewers(userId, viewType);
+      return result.data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   const handlePageChange = (page: number) => {
     updateFilters({ page });
   };
@@ -100,12 +143,25 @@ export function ReviewsList({
     updateFilters({ sortBy: value as ReviewFilters["sortBy"], page: 1 });
   };
 
+  const handleReviewerToggle = (reviewerId: string) => {
+    const currentIds = filters.reviewerIds || [];
+    const newIds = currentIds.includes(reviewerId)
+      ? currentIds.filter((id) => id !== reviewerId)
+      : [...currentIds, reviewerId];
+
+    updateFilters({
+      reviewerIds: newIds.length > 0 ? newIds : undefined,
+      page: 1,
+    });
+  };
+
   const handleClearFilters = () => {
     setSearchInput("");
     setDebouncedSearch("");
     setFilters({
       search: "",
       rating: undefined,
+      reviewerIds: [],
       sortBy: "newest",
       page: 1,
       limit,
@@ -115,8 +171,8 @@ export function ReviewsList({
   const hasActiveFilters =
     (filters.search && filters.search.length > 0) ||
     filters.rating ||
+    (filters.reviewerIds && filters.reviewerIds.length > 0) ||
     (filters.sortBy && filters.sortBy !== "newest");
-
 
   if (error) {
     return (
@@ -181,6 +237,91 @@ export function ReviewsList({
               </SelectContent>
             </Select>
 
+            {/* Reviewer Filter */}
+            <Popover
+              open={reviewerPopoverOpen}
+              onOpenChange={setReviewerPopoverOpen}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={reviewerPopoverOpen}
+                  className="w-full sm:w-48 justify-between"
+                >
+                  <div className="flex items-center">
+                    <Users className="mr-2 h-4 w-4" />
+                    {filters.reviewerIds && filters.reviewerIds.length > 0
+                      ? `${filters.reviewerIds.length} valgt`
+                      : viewType === "stylist"
+                        ? "Velg kunder..."
+                        : "Velg stylister..."}
+                  </div>
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-80 p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder={`Søk ${viewType === "stylist" ? "kunder" : "stylister"}...`}
+                  />
+                  <CommandList>
+                    {!reviewers || reviewers.length === 0 ? (
+                      <CommandEmpty>
+                        Ingen {viewType === "stylist" ? "kunder" : "stylister"}{" "}
+                        funnet.
+                      </CommandEmpty>
+                    ) : (
+                      <>
+                        <CommandEmpty>
+                          Ingen{" "}
+                          {viewType === "stylist" ? "kunder" : "stylister"}{" "}
+                          funnet.
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <ScrollArea className="h-40">
+                            {reviewers.map((reviewer) => {
+                              const isSelected =
+                                filters.reviewerIds?.includes(reviewer.value) ||
+                                false;
+                              return (
+                                <CommandItem
+                                  key={reviewer.value}
+                                  value={reviewer.value}
+                                  onSelect={() =>
+                                    handleReviewerToggle(reviewer.value)
+                                  }
+                                >
+                                  {isSelected ? (
+                                    <Check className={cn("mr-2 h-4 w-4")} />
+                                  ) : (
+                                    <ChevronRight className="mr-2 h-4 w-4" />
+                                  )}
+                                  {reviewer.label}
+                                </CommandItem>
+                              );
+                            })}
+                          </ScrollArea>
+                        </CommandGroup>
+                        <CommandSeparator />
+                        <CommandGroup>
+                          <CommandItem
+                            onSelect={() => {
+                              updateFilters({ reviewerIds: [], page: 1 });
+                              setReviewerPopoverOpen(false);
+                            }}
+                          >
+                            <X className="mr-2 h-4 w-4" />
+                            Fjern alle valgte
+                          </CommandItem>
+                        </CommandGroup>
+                      </>
+                    )}
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
+
             {/* Sort */}
             <Select
               value={filters.sortBy || "newest"}
@@ -221,6 +362,19 @@ export function ReviewsList({
                     onClick={() =>
                       updateFilters({ rating: undefined, page: 1 })
                     }
+                  />
+                </Badge>
+              )}
+              {filters.reviewerIds && filters.reviewerIds.length > 0 && (
+                <Badge variant="secondary" className="flex items-center gap-1">
+                  {filters.reviewerIds.length === 1
+                    ? reviewers?.find(
+                        (r) => r.value === filters.reviewerIds?.[0]
+                      )?.label || "Valgt person"
+                    : `${filters.reviewerIds.length} ${viewType === "stylist" ? "kunder" : "stylister"}`}
+                  <X
+                    className="h-3 w-3 cursor-pointer"
+                    onClick={() => updateFilters({ reviewerIds: [], page: 1 })}
                   />
                 </Badge>
               )}

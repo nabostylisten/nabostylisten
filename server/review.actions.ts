@@ -147,7 +147,7 @@ export async function getStylistReviews(
 ) {
     const supabase = await createClient();
 
-    const { page = 1, limit = 10, search, rating, sortBy = "newest" } = options;
+    const { page = 1, limit = 10, search, rating, reviewerIds, sortBy = "newest" } = options;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
@@ -192,6 +192,11 @@ export async function getStylistReviews(
     if (rating) {
         reviewsQuery = reviewsQuery.eq("rating", rating);
         countQuery = countQuery.eq("rating", rating);
+    }
+
+    if (reviewerIds && reviewerIds.length > 0) {
+        reviewsQuery = reviewsQuery.in("customer_id", reviewerIds);
+        countQuery = countQuery.in("customer_id", reviewerIds);
     }
 
     // Apply sorting
@@ -261,7 +266,7 @@ export async function getCustomerReviews(
         };
     }
 
-    const { page = 1, limit = 10, search, rating, sortBy = "newest" } = options;
+    const { page = 1, limit = 10, search, rating, reviewerIds, sortBy = "newest" } = options;
     const from = (page - 1) * limit;
     const to = from + limit - 1;
 
@@ -306,6 +311,11 @@ export async function getCustomerReviews(
     if (rating) {
         reviewsQuery = reviewsQuery.eq("rating", rating);
         countQuery = countQuery.eq("rating", rating);
+    }
+
+    if (reviewerIds && reviewerIds.length > 0) {
+        reviewsQuery = reviewsQuery.in("stylist_id", reviewerIds);
+        countQuery = countQuery.in("stylist_id", reviewerIds);
     }
 
     // Apply sorting
@@ -541,4 +551,76 @@ export async function deleteReviewImage(imageId: string) {
     }
 
     return { error: null, data: { id: imageId } };
+}
+
+export async function getReviewers(userId: string, viewType: "customer" | "stylist") {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError || user.id !== userId) {
+        return { error: "Unauthorized access", data: null };
+    }
+
+    if (viewType === "stylist") {
+        // Get customers who have reviewed this stylist
+        const { data, error } = await supabase
+            .from("reviews")
+            .select(`
+                customer_id,
+                customer:profiles!reviews_customer_id_fkey(
+                    id,
+                    full_name
+                )
+            `)
+            .eq("stylist_id", userId)
+            .not("customer", "is", null);
+
+        if (error) {
+            return { error: error.message, data: null };
+        }
+
+        // Remove duplicates and format for combobox
+        const uniqueCustomers = data
+            .filter((review, index, self) => 
+                index === self.findIndex(r => r.customer_id === review.customer_id)
+            )
+            .map(review => ({
+                value: review.customer_id,
+                label: review.customer?.full_name || "Unknown Customer"
+            }))
+            .filter(customer => customer.label !== "Unknown Customer");
+
+        return { error: null, data: uniqueCustomers };
+    } else {
+        // Get stylists this customer has reviewed
+        const { data, error } = await supabase
+            .from("reviews")
+            .select(`
+                stylist_id,
+                stylist:profiles!reviews_stylist_id_fkey(
+                    id,
+                    full_name
+                )
+            `)
+            .eq("customer_id", userId)
+            .not("stylist", "is", null);
+
+        if (error) {
+            return { error: error.message, data: null };
+        }
+
+        // Remove duplicates and format for combobox
+        const uniqueStylists = data
+            .filter((review, index, self) => 
+                index === self.findIndex(r => r.stylist_id === review.stylist_id)
+            )
+            .map(review => ({
+                value: review.stylist_id,
+                label: review.stylist?.full_name || "Unknown Stylist"
+            }))
+            .filter(stylist => stylist.label !== "Unknown Stylist");
+
+        return { error: null, data: uniqueStylists };
+    }
 }

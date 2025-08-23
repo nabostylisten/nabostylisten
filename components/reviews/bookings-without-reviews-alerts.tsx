@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getCompletedBookingsWithoutReviews } from "@/server/review.actions";
 import { ReviewReminderAlert } from "./review-reminder-alert";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 interface BookingsWithoutReviewsAlertsProps {
@@ -38,24 +39,26 @@ export function BookingsWithoutReviewsAlerts({
 
   return (
     <div className={cn("max-w-6xl mx-auto w-full", className)}>
-      <div className="space-y-4">
-        {bookings.map((booking) => {
-          const serviceTitles =
-            booking.booking_services
-              ?.map((bs) => bs.services?.title)
-              .filter(Boolean) || [];
+      <ScrollArea className="h-48">
+        <div className="space-y-4">
+          {bookings.map((booking) => {
+            const serviceTitles =
+              booking.booking_services
+                ?.map((bs) => bs.services?.title)
+                .filter(Boolean) || [];
 
-          return (
-            <ReviewReminderAlert
-              key={booking.id}
-              bookingId={booking.id}
-              stylistName={booking.stylist?.full_name || "Stylisten"}
-              serviceTitles={serviceTitles}
-              bookingDate={booking.start_time}
-            />
-          );
-        })}
-      </div>
+            return (
+              <ReviewReminderAlert
+                key={booking.id}
+                bookingId={booking.id}
+                stylistName={booking.stylist?.full_name || "Stylisten"}
+                serviceTitles={serviceTitles}
+                bookingDate={booking.start_time}
+              />
+            );
+          })}
+        </div>
+      </ScrollArea>
     </div>
   );
 }

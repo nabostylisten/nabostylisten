@@ -20,7 +20,7 @@ import {
   layoutStyles,
   colors,
 } from "./utils/styles";
-import { baseUrl } from "./utils";
+import { baseUrl, getNabostylistenLogoUrl } from "./utils";
 
 interface BookingReminderEmailProps {
   customerName: string;
@@ -61,7 +61,7 @@ export const BookingReminderEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/static/nabostylisten-logo.png`}
+              src={getNabostylistenLogoUrl()}
               width="120"
               height="36"
               alt="Nabostylisten"

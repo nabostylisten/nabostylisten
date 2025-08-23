@@ -30,6 +30,17 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 - **Review Lists**: Paginated, filterable, and searchable review displays
 - **Review Cards**: Rich display including photos, ratings, and booking context
 
+### Review Filtering and Search
+
+- **Text Search**: Real-time search through review comments with debounced input (250ms delay)
+- **Rating Filter**: Filter reviews by specific star rating (1-5 stars)
+- **Reviewer Filter**: Multi-select filter to show reviews from specific customers or stylists
+- **Sort Options**: Sort reviews by newest, oldest, highest rating, or lowest rating
+- **Active Filter Display**: Visual badges showing all active filters with individual clear options
+- **Bulk Clear**: Single button to reset all filters to default state
+- **Persistent Filters**: Filters remain active while browsing through pagination
+- **No Results State**: Helpful guidance when filters return no results
+
 ### Review Management
 
 - **Customer View**: List of all reviews they've written across bookings
@@ -61,6 +72,34 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
    - Add or remove images from published reviews
    - Update ratings and comments
    - Delete entire reviews if needed
+
+### Review Discovery and Filtering
+
+1. **Browse Reviews**: Access reviews through "Anmeldelser" page or stylist profiles
+2. **Search Reviews**: Type keywords to search through review comments
+   - Debounced search (250ms) for optimal performance
+   - Real-time results as you type
+   - Case-insensitive matching
+3. **Filter by Rating**: Select specific star ratings (1-5 stars)
+   - View only 5-star reviews to see best experiences
+   - Filter lower ratings to understand improvement areas
+4. **Filter by Reviewer**: 
+   - **For Stylists**: Filter by specific customers who reviewed you
+   - **For Customers**: Filter by specific stylists you've reviewed
+   - Multi-select capability for viewing multiple reviewers
+   - Searchable dropdown with all available reviewers
+5. **Sort Results**: Arrange reviews by preference
+   - Newest first (default)
+   - Oldest first
+   - Highest rating first
+   - Lowest rating first
+6. **Manage Filters**:
+   - View all active filters as visual badges
+   - Remove individual filters with one click
+   - Clear all filters with bulk reset button
+7. **Navigate Results**: Browse filtered results with pagination
+   - Filters persist across pages
+   - Page count adjusts based on filtered results
 
 ### Stylist Review Monitoring
 
@@ -152,6 +191,9 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 - Review edit frequency and update patterns
 - Image deletion and management usage
 - Review deletion rate and reasons
+- Filter usage frequency and most common filter combinations
+- Search query patterns and success rates
+- Reviewer filter adoption rate
 
 ### Quality Metrics
 
@@ -228,6 +270,19 @@ The Reviews and Ratings System enables customers to leave detailed feedback abou
 - ✅ **Review Deletion**: Complete review removal with confirmation dialog
 - ✅ **Form Prepopulation**: Existing review data automatically loaded for editing
 - ✅ **Real-time Updates**: Immediate UI updates after modifications
+
+### Advanced Filtering and Search
+
+- ✅ **Comment Search**: Full-text search through review comments with debouncing
+- ✅ **Rating Filters**: Filter reviews by exact star rating (1-5 stars)
+- ✅ **Reviewer Filters**: Multi-select filtering by review authors
+- ✅ **Smart Sort Options**: Sort by date (newest/oldest) or rating (highest/lowest)
+- ✅ **Active Filter Badges**: Visual display of all active filters with quick removal
+- ✅ **Bulk Filter Reset**: Clear all filters with single action
+- ✅ **Adaptive Reviewer Lists**: Different reviewer options based on user role (customer vs stylist)
+- ✅ **Searchable Dropdowns**: Find specific reviewers quickly in filter interface
+- ✅ **No Layout Shift**: Filter components always visible for consistent UI
+- ✅ **Performance Optimized**: TanStack Query caching for fast filter operations
 
 ## Future Enhancements
 

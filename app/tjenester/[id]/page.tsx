@@ -19,7 +19,7 @@ import {
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { getPublicService } from "@/server/service.actions";
+import { getPublicService, getServiceReviews, getServiceReviewStats } from "@/server/service.actions";
 import { ServiceDetailSkeleton } from "@/components/services/service-detail-skeleton";
 import { ServiceDetailSidebar } from "@/components/services/service-detail-sidebar";
 import Image from "next/image";
@@ -31,7 +31,15 @@ interface PageProps {
 }
 
 async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
-  const { data: service, error } = await getPublicService(serviceId);
+  const [
+    { data: service, error },
+    { data: reviews, error: reviewsError },
+    { data: reviewStats, error: reviewStatsError }
+  ] = await Promise.all([
+    getPublicService(serviceId),
+    getServiceReviews(serviceId, 5), // Get latest 5 reviews
+    getServiceReviewStats(serviceId)
+  ]);
 
   if (error || !service) {
     notFound();
@@ -63,24 +71,20 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
   const serviceIncludes = service.includes || [];
   const serviceRequirements = service.requirements || [];
 
-  const mockReviews = [
-    {
-      id: "1",
-      author: "Sara K.",
-      rating: 5,
-      comment:
-        "Fantastisk resultat! Super profesjonell og gjorde en utrolig jobb.",
-      date: "2 dager siden",
-    },
-    {
-      id: "2",
-      author: "Maria H.",
-      rating: 5,
-      comment:
-        "Så fornøyd med resultatet! Kommer definitivt til å booke igjen.",
-      date: "1 uke siden",
-    },
-  ];
+  // Helper function to format review dates
+  const formatReviewDate = (dateString: string) => {
+    const reviewDate = new Date(dateString);
+    const now = new Date();
+    const diffInDays = Math.floor((now.getTime() - reviewDate.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays === 0) return "I dag";
+    if (diffInDays === 1) return "I går";
+    if (diffInDays < 7) return `${diffInDays} dager siden`;
+    if (diffInDays < 14) return "1 uke siden";
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} uker siden`;
+    if (diffInDays < 60) return "1 måned siden";
+    return `${Math.floor(diffInDays / 30)} måneder siden`;
+  };
 
   return (
     <div className="min-h-screen pt-20 pb-12">
@@ -226,47 +230,84 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
             )}
 
             {/* Reviews */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Nylige anmeldelser</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {mockReviews.map((review, index) => (
-                  <div key={review.id}>
-                    <div className="flex items-center gap-3 mb-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarFallback className="text-xs">
-                          {review.author[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{review.author}</span>
-                          <div className="flex">
-                            {[...Array(review.rating)].map((_, i) => (
-                              <Star
-                                key={i}
-                                className="w-4 h-4 fill-yellow-400 text-yellow-400"
-                              />
-                            ))}
-                          </div>
+            {reviews && reviews.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between">
+                    <span>Anmeldelser</span>
+                    {reviewStats && reviewStats.total_reviews > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">
+                            {reviewStats.average_rating}
+                          </span>
                         </div>
                         <span className="text-sm text-muted-foreground">
-                          {review.date}
+                          ({reviewStats.total_reviews} {reviewStats.total_reviews === 1 ? 'anmeldelse' : 'anmeldelser'})
                         </span>
                       </div>
-                    </div>
-                    <p className="text-muted-foreground">{review.comment}</p>
-                    {index < mockReviews.length - 1 && (
-                      <Separator className="mt-6" />
                     )}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {reviews.map((review, index) => (
+                    <div key={review.id}>
+                      <div className="flex items-center gap-3 mb-2">
+                        <Avatar className="w-8 h-8">
+                          <AvatarFallback className="text-xs">
+                            {review.customer_initial}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{review.customer_name}</span>
+                            <div className="flex">
+                              {[...Array(review.rating)].map((_, i) => (
+                                <Star
+                                  key={i}
+                                  className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                                />
+                              ))}
+                            </div>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {formatReviewDate(review.created_at)}
+                          </span>
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-muted-foreground">{review.comment}</p>
+                      )}
+                      {index < reviews.length - 1 && (
+                        <Separator className="mt-6" />
+                      )}
+                    </div>
+                  ))}
+                  {reviewStats && reviewStats.total_reviews > reviews.length && (
+                    <Button variant="outline" className="w-full">
+                      Se alle {reviewStats.total_reviews} anmeldelser
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Anmeldelser</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8">
+                    <p className="text-muted-foreground mb-4">
+                      Denne tjenesten har ingen anmeldelser ennå.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Vær den første til å booke og dele din opplevelse!
+                    </p>
                   </div>
-                ))}
-                <Button variant="outline" className="w-full">
-                  Se alle anmeldelser
-                </Button>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Booking Sidebar */}

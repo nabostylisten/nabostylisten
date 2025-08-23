@@ -55,10 +55,6 @@ export function StylistPublicProfile({
     return `${hours}t ${remainingMinutes}min`;
   };
 
-  // Get experience years (mock for now)
-  const experienceYears =
-    new Date().getFullYear() - new Date(profile.created_at).getFullYear();
-
   return (
     <div className="min-h-screen pt-20 pb-12">
       <div className="container mx-auto px-6 lg:px-12">
@@ -96,12 +92,6 @@ export function StylistPublicProfile({
                     <div className="flex items-center gap-2 text-muted-foreground">
                       <MapPin className="w-4 h-4" />
                       {primaryAddress.city}
-                    </div>
-                  )}
-                  {experienceYears > 0 && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Award className="w-4 h-4" />
-                      {experienceYears} års erfaring
                     </div>
                   )}
                 </div>

@@ -716,3 +716,105 @@ export async function getServiceImages(serviceId: string) {
         };
     }
 }
+
+/**
+ * Get reviews for a specific service
+ */
+export async function getServiceReviews(serviceId: string, limit = 10) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("reviews")
+        .select(`
+            id,
+            rating,
+            comment,
+            created_at,
+            profiles!reviews_customer_id_fkey (
+                id,
+                full_name
+            ),
+            bookings!inner (
+                id,
+                booking_services!inner (
+                    service_id
+                )
+            )
+        `)
+        .eq("bookings.booking_services.service_id", serviceId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+    if (error) {
+        return { data: null, error };
+    }
+
+    // Transform the data to a more usable format
+    const transformedReviews = data?.map((review) => ({
+        id: review.id,
+        rating: review.rating,
+        comment: review.comment || "",
+        created_at: review.created_at,
+        customer_name: review.profiles?.full_name || "Anonym kunde",
+        customer_initial: review.profiles?.full_name?.charAt(0) || "?",
+    })) || [];
+
+    return { data: transformedReviews, error: null };
+}
+
+/**
+ * Get review statistics for a specific service
+ */
+export async function getServiceReviewStats(serviceId: string) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from("reviews")
+        .select(`
+            rating,
+            bookings!inner (
+                booking_services!inner (
+                    service_id
+                )
+            )
+        `)
+        .eq("bookings.booking_services.service_id", serviceId);
+
+    if (error) {
+        return { data: null, error };
+    }
+
+    if (!data || data.length === 0) {
+        return {
+            data: {
+                total_reviews: 0,
+                average_rating: 0,
+                rating_distribution: {
+                    5: 0,
+                    4: 0,
+                    3: 0,
+                    2: 0,
+                    1: 0,
+                },
+            },
+            error: null,
+        };
+    }
+
+    const totalReviews = data.length;
+    const averageRating = data.reduce((sum, review) => sum + review.rating, 0) / totalReviews;
+    
+    const ratingDistribution = data.reduce((acc, review) => {
+        acc[review.rating as keyof typeof acc]++;
+        return acc;
+    }, { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 });
+
+    return {
+        data: {
+            total_reviews: totalReviews,
+            average_rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
+            rating_distribution: ratingDistribution,
+        },
+        error: null,
+    };
+}

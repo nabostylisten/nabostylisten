@@ -9,6 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Button } from "../ui/button";
+import { CurvedArrow } from "../ui/curved-arrow";
+import { WindingArrow } from "../ui/winding-arrow";
 import Link from "next/link";
 
 const steps = [
@@ -50,44 +52,66 @@ export function HowItWorks() {
         </p>
       </div>
 
-      <div className="space-y-12">
+      <div className="space-y-2">
         {steps.map((step, index) => {
           const isEven = index % 2 === 0;
+          const isLast = index === steps.length - 1;
 
           return (
-            <BlurFade key={step.number} delay={index * 0.1} inView>
-              <div
-                className={`flex flex-col lg:flex-row items-center gap-8 ${
-                  !isEven ? "lg:flex-row-reverse" : ""
-                }`}
-              >
-                {/* Step Number and Icon */}
-                <div className="flex-shrink-0">
-                  <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center relative">
-                    <div className="text-primary">{step.icon}</div>
-                    <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
-                      {step.number}
+            <div key={step.number}>
+              <BlurFade delay={index * 0.1} inView>
+                <div
+                  className={`flex flex-col lg:flex-row items-center gap-8 ${
+                    !isEven ? "lg:flex-row-reverse" : ""
+                  }`}
+                >
+                  {/* Step Number and Icon */}
+                  <div className="flex-shrink-0">
+                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center relative">
+                      <div className="text-primary">{step.icon}</div>
+                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                        {step.number}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Content */}
-                <div className="flex-1">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-xl md:text-2xl">
-                        {step.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <p className="text-muted-foreground leading-relaxed">
-                        {step.description}
-                      </p>
-                    </CardContent>
-                  </Card>
+                  {/* Content */}
+                  <div className="flex-1">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-xl md:text-2xl">
+                          {step.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <p className="text-muted-foreground leading-relaxed">
+                          {step.description}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 </div>
-              </div>
-            </BlurFade>
+              </BlurFade>
+
+              {/* Arrow between steps (except after last step) */}
+              {!isLast && (
+                <BlurFade delay={(index + 1) * 0.1} inView>
+                  <div className={`flex justify-center my-2 ${index % 2 === 0 ? 'ml-12' : 'mr-12'}`}>
+                    {index % 2 === 0 ? (
+                      <CurvedArrow
+                        className="text-primary/60"
+                        mirrored={!isEven}
+                      />
+                    ) : (
+                      <WindingArrow
+                        className="text-primary/60"
+                        mirrored={!isEven}
+                      />
+                    )}
+                  </div>
+                </BlurFade>
+              )}
+            </div>
           );
         })}
       </div>

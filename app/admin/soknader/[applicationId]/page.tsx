@@ -63,8 +63,9 @@ const getStatusBadge = (status: Application["status"]) => {
 export default async function ApplicationDetailPage({
   params,
 }: {
-  params: { applicationId: string };
+  params: Promise<{ applicationId: string }>;
 }) {
+  const { applicationId } = await params;
   const supabase = await createClient();
 
   // Check if user is authenticated
@@ -96,7 +97,7 @@ export default async function ApplicationDetailPage({
   const { data: application, error: applicationError } = await supabase
     .from("applications")
     .select("*")
-    .eq("id", params.applicationId)
+    .eq("id", applicationId)
     .single();
 
   if (applicationError || !application) {
@@ -107,7 +108,7 @@ export default async function ApplicationDetailPage({
   const { data: media } = await supabase
     .from("media")
     .select("*")
-    .eq("application_id", params.applicationId)
+    .eq("application_id", applicationId)
     .eq("media_type", "application_image");
 
   const applicationData = application as Application;

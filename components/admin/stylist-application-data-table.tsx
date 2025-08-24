@@ -101,23 +101,23 @@ export function StylistApplicationDataTable() {
   const tabs: { value: string; label: React.ReactNode }[] = [
     {
       value: "all",
-      label: `Alle (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.all})`,
+      label: `Alle (${isLoading ? "..." : statusCounts.all})`,
     },
     {
       value: "applied",
-      label: `Nye søknader (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.applied})`,
+      label: `Nye søknader (${isLoading ? "..." : statusCounts.applied})`,
     },
     {
       value: "pending_info",
-      label: `Venter på info (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.pending_info})`,
+      label: `Venter på info (${isLoading ? "..." : statusCounts.pending_info})`,
     },
     {
       value: "approved",
-      label: `Godkjente (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.approved})`,
+      label: `Godkjente (${isLoading ? "..." : statusCounts.approved})`,
     },
     {
       value: "rejected",
-      label: `Avviste (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.rejected})`,
+      label: `Avviste (${isLoading ? "..." : statusCounts.rejected})`,
     },
   ];
 
@@ -147,26 +147,24 @@ export function StylistApplicationDataTable() {
             </div>
           ) : (
             <>
-              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
-                <div className="flex items-center space-x-2">
-                  <Input
-                    placeholder="Søk etter navn eller e-post..."
-                    value={
-                      (table
-                        .getColumn("full_name")
-                        ?.getFilterValue() as string) ?? ""
-                    }
-                    onChange={(event) => {
-                      table
-                        .getColumn("full_name")
-                        ?.setFilterValue(event.target.value);
-                    }}
-                    className="w-64"
-                  />
-                </div>
+              <div className="flex items-center justify-between py-4">
+                <Input
+                  placeholder="Søk etter navn eller e-post..."
+                  value={
+                    (table
+                      .getColumn("full_name")
+                      ?.getFilterValue() as string) ?? ""
+                  }
+                  onChange={(event) => {
+                    table
+                      .getColumn("full_name")
+                      ?.setFilterValue(event.target.value);
+                  }}
+                  className="max-w-sm"
+                />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="ml-auto">
+                    <Button variant="outline">
                       <Settings2 className="mr-2 h-4 w-4" />
                       Kolonner
                     </Button>
@@ -191,7 +189,7 @@ export function StylistApplicationDataTable() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="overflow-hidden rounded-md border">
+              <div className="rounded-md border">
                 <Table>
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -241,12 +239,12 @@ export function StylistApplicationDataTable() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0 py-4">
-                <div className="text-sm text-muted-foreground">
+              <div className="flex items-center justify-end space-x-2 py-4">
+                <div className="flex-1 text-sm text-muted-foreground">
                   {table.getFilteredRowModel().rows.length} av {data.length}{" "}
                   søknad(er).
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="space-x-2">
                   <Button
                     variant="outline"
                     size="sm"

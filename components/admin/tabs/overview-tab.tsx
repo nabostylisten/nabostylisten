@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge";
 export default function OverviewTab() {
   const [userGrowthPeriod, setUserGrowthPeriod] = useState<TimePeriod>("last_30_days");
 
-  const { platformKPIs, recentActivity, isLoading: overviewLoading } = useOverviewData();
+  const { platformKPIs, recentActivity } = useOverviewData();
   
   const { data: userTrends, isLoading: userTrendsLoading } = useUserGrowthTrends(userGrowthPeriod);
 
@@ -37,18 +37,6 @@ export default function OverviewTab() {
     }
   };
 
-  if (overviewLoading) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <ChartCardSkeleton />
-          <ChartCardSkeleton />
-          <ChartCardSkeleton />
-          <ChartCardSkeleton />
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -59,48 +47,76 @@ export default function OverviewTab() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <ChartCard
-          label="Totale brukere"
-          value={platformKPIs.data?.users.total}
-          icon="users"
-        />
-        <ChartCard
-          label="Aktive bookinger denne måneden"
-          value={platformKPIs.data?.activeBookingsThisMonth}
-          icon="calendar"
-        />
-        <ChartCard
-          label="Omsetning denne måneden"
-          value={platformKPIs.data?.revenueThisMonth}
-          unit="kr"
-          icon="dollarSign"
-        />
-        <ChartCard
-          label="Ventende søknader"
-          value={platformKPIs.data?.pendingApplications}
-          icon="shoppingBag"
-        />
+        {platformKPIs.isLoading ? (
+          <ChartCardSkeleton />
+        ) : (
+          <ChartCard
+            label="Totale brukere"
+            value={platformKPIs.data?.users.total}
+            icon="users"
+          />
+        )}
+        {platformKPIs.isLoading ? (
+          <ChartCardSkeleton />
+        ) : (
+          <ChartCard
+            label="Aktive bookinger denne måneden"
+            value={platformKPIs.data?.activeBookingsThisMonth}
+            icon="calendar"
+          />
+        )}
+        {platformKPIs.isLoading ? (
+          <ChartCardSkeleton />
+        ) : (
+          <ChartCard
+            label="Omsetning denne måneden"
+            value={platformKPIs.data?.revenueThisMonth}
+            unit="kr"
+            icon="dollarSign"
+          />
+        )}
+        {platformKPIs.isLoading ? (
+          <ChartCardSkeleton />
+        ) : (
+          <ChartCard
+            label="Ventende søknader"
+            value={platformKPIs.data?.pendingApplications}
+            icon="shoppingBag"
+          />
+        )}
       </div>
 
       <Separator />
 
       {/* User Breakdown */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <ChartCard
-          label="Kunder"
-          value={platformKPIs.data?.users.customers}
-          icon="users"
-        />
-        <ChartCard
-          label="Stylister"
-          value={platformKPIs.data?.users.stylists}
-          icon="star"
-        />
-        <ChartCard
-          label="Administratorer"
-          value={platformKPIs.data?.users.admins}
-          icon="users"
-        />
+        {platformKPIs.isLoading ? (
+          <ChartCardSkeleton />
+        ) : (
+          <ChartCard
+            label="Kunder"
+            value={platformKPIs.data?.users.customers}
+            icon="users"
+          />
+        )}
+        {platformKPIs.isLoading ? (
+          <ChartCardSkeleton />
+        ) : (
+          <ChartCard
+            label="Stylister"
+            value={platformKPIs.data?.users.stylists}
+            icon="star"
+          />
+        )}
+        {platformKPIs.isLoading ? (
+          <ChartCardSkeleton />
+        ) : (
+          <ChartCard
+            label="Administratorer"
+            value={platformKPIs.data?.users.admins}
+            icon="users"
+          />
+        )}
       </div>
 
       <Separator />
@@ -123,7 +139,22 @@ export default function OverviewTab() {
             <p className="text-sm text-muted-foreground">Nyeste aktivitet på plattformen</p>
           </CardHeader>
           <CardContent>
-            {recentActivity.data && recentActivity.data.length > 0 ? (
+            {recentActivity.isLoading ? (
+              <div className="space-y-4">
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <div key={index} className="flex items-center justify-between border-b pb-2">
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-muted rounded animate-pulse w-3/4"></div>
+                      <div className="h-3 bg-muted rounded animate-pulse w-1/2"></div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="h-4 bg-muted rounded animate-pulse w-16"></div>
+                      <div className="h-6 bg-muted rounded animate-pulse w-20"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : recentActivity.data && recentActivity.data.length > 0 ? (
               <div className="space-y-4">
                 {recentActivity.data.map((activity, index) => (
                   <div key={`${activity.type}-${activity.id}-${index}`} className="flex items-center justify-between border-b pb-2">

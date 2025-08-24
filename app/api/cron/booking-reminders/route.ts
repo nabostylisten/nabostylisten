@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
         stylist:profiles!stylist_id(id, email, full_name, phone_number),
         services:booking_services(
           service:services(
-            name,
+            title,
             duration_minutes
           )
         ),
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
         const bookingTime = `${bookingStartTime} - ${bookingEndTime}`;
 
         // Get service names
-        const serviceNames = booking.services?.map(bs => bs.service?.name).filter(Boolean) || [];
+        const serviceNames = booking.services?.map(bs => bs.service?.title).filter(Boolean) || [];
 
         // Determine location and address
         const location = booking.address_id ? "Hjemme hos deg" : "Hos stylisten";

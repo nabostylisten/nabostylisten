@@ -361,7 +361,7 @@ async function sendAccountDeletedNotificationEmail({
       "[DELETE_NOTIFICATION] Failed to send notification email:",
       error,
     );
-    throw new Error("Failed to send notification email: " + error.message);
+    throw new Error("Failed to send notification email: " + error);
   }
 
   console.log(

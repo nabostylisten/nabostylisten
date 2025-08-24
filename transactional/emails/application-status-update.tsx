@@ -104,7 +104,8 @@ export const ApplicationStatusUpdateEmail = ({
             </Section>
           )}
 
-          {status === "pending_info" && (
+          {/* TODO: This is not correct behavior if we have pending info. Pending info is just the admin sending a regular email to the stylist asking for more documentation. */}
+          {/* {status === "pending_info" && (
             <Section style={ctaSection}>
               <Text style={paragraph}>
                 Vennligst logg inn på din konto for å se hvilken informasjon vi
@@ -114,7 +115,7 @@ export const ApplicationStatusUpdateEmail = ({
                 Se søknadsdetaljer
               </Button>
             </Section>
-          )}
+          )} */}
 
           <Hr style={hr} />
 

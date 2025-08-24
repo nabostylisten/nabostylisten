@@ -104,6 +104,8 @@ export async function createAccountOnboardingLink({
   return await createStripeAccountOnboardingLink({ stripeAccountId });
 }
 
+export type GetStripeAccountStatusResult = Awaited<ReturnType<typeof getStripeAccountStatus>>;
+
 /**
  * Get Stripe account status for a stylist
  * Server action wrapper around service function

@@ -1940,6 +1940,7 @@ export type Database = {
       }
       applications: {
         Row: {
+          address_geometry: unknown | null
           address_nickname: string | null
           birth_date: string
           city: string
@@ -1960,6 +1961,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          address_geometry?: unknown | null
           address_nickname?: string | null
           birth_date: string
           city: string
@@ -1980,6 +1982,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          address_geometry?: unknown | null
           address_nickname?: string | null
           birth_date?: string
           city?: string

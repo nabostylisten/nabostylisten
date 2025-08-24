@@ -1,17 +1,13 @@
 "use client";
 
-import { MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
-import { AddressCombobox } from "./address-combobox";
-import { AddressDialog } from "./address-dialog";
+import { MapPin, X } from "lucide-react";
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
-import { getAddress } from "@/server/addresses.actions";
-import type { Database } from "@/types/database.types";
-
-type Address = Database["public"]["Tables"]["addresses"]["Row"];
+import { AddressInput } from "@/components/ui/address-input";
+import type { MapboxSuggestion } from "@/types";
 
 interface ApplicationAddressSectionProps {
   onAddressChange: (address: {
@@ -21,6 +17,7 @@ interface ApplicationAddressSectionProps {
     postalCode: string;
     country: string;
     entryInstructions?: string;
+    geometry?: [number, number]; // [lng, lat] from Mapbox
   }) => void;
   defaultValues?: {
     nickname?: string;
@@ -38,125 +35,240 @@ export function ApplicationAddressSection({
   defaultValues,
   error,
 }: ApplicationAddressSectionProps) {
-  const [selectedAddressId, setSelectedAddressId] = useState<string>();
-  const [showAddDialog, setShowAddDialog] = useState(false);
-  const [customInstructions, setCustomInstructions] = useState(
-    defaultValues?.entryInstructions || ""
-  );
-
-  // Fetch selected address details
-  const { data: addressData } = useQuery({
-    queryKey: ["address", selectedAddressId],
-    queryFn: () => selectedAddressId ? getAddress(selectedAddressId) : null,
-    enabled: !!selectedAddressId,
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressData, setAddressData] = useState({
+    nickname: defaultValues?.nickname || "",
+    streetAddress: defaultValues?.streetAddress || "",
+    city: defaultValues?.city || "",
+    postalCode: defaultValues?.postalCode || "",
+    country: defaultValues?.country || "Norge",
+    entryInstructions: defaultValues?.entryInstructions || "",
+    geometry: undefined as [number, number] | undefined,
   });
 
-  const selectedAddress = addressData?.data;
+  // Helper function to parse Mapbox response (copied from address-form.tsx)
+  const parseMapboxResponse = (suggestion: MapboxSuggestion) => {
+    const placeNameParts = suggestion.place_name
+      .split(",")
+      .map((s: string) => s.trim());
+    const context = suggestion.context || [];
 
-  // Update parent form when address changes
-  useEffect(() => {
-    if (selectedAddress) {
-      onAddressChange({
-        nickname: selectedAddress.nickname || undefined,
-        streetAddress: selectedAddress.street_address,
-        city: selectedAddress.city,
-        postalCode: selectedAddress.postal_code,
-        country: selectedAddress.country,
-        entryInstructions: customInstructions || selectedAddress.entry_instructions || undefined,
-      });
+    // Extract components from context
+    let postalCode = "";
+    let city = "";
+    let country = "Norge";
+
+    for (const item of context) {
+      if (item.id.startsWith("postcode")) {
+        postalCode = item.text;
+      } else if (item.id.startsWith("place")) {
+        city = item.text;
+      } else if (item.id.startsWith("country")) {
+        country = item.text;
+      }
     }
-  }, [selectedAddress, customInstructions, onAddressChange]);
 
-  const handleAddressSelect = (addressId: string) => {
-    setSelectedAddressId(addressId);
+    // Construct the full street address: street name + house number
+    let street = suggestion.text;
+    if (suggestion.address) {
+      street = `${suggestion.text} ${suggestion.address}`;
+    }
+
+    // Fallback to first part of place_name if no proper street/address fields
+    if (!street) {
+      street = placeNameParts[0] || "";
+    }
+
+    // Fallback to parsing from place_name if context doesn't have all info
+    if (!city && placeNameParts.length > 1) {
+      // Try to find city from place_name
+      const possibleCity = placeNameParts.find(
+        (part: string) =>
+          !part.match(/^\d{4}/) && part !== street && part !== country
+      );
+      if (possibleCity) city = possibleCity;
+    }
+
+    if (!postalCode && placeNameParts.length > 1) {
+      // Look for 4-digit postal code
+      const possiblePostal = placeNameParts.find((part: string) =>
+        part.match(/^\d{4}/)
+      );
+      if (possiblePostal) postalCode = possiblePostal;
+    }
+
+    return {
+      street,
+      city,
+      postalCode,
+      country,
+      geometry: suggestion.center, // [lng, lat]
+    };
   };
 
-  const handleAddressCreated = (addressId: string) => {
-    setSelectedAddressId(addressId);
-    setShowAddDialog(false);
+  const handleAddressSelect = (suggestion: MapboxSuggestion) => {
+    const parsed = parseMapboxResponse(suggestion);
+    const newAddressData = {
+      ...addressData,
+      streetAddress: parsed.street,
+      city: parsed.city,
+      postalCode: parsed.postalCode,
+      country: parsed.country,
+      geometry: parsed.geometry,
+    };
+    setAddressData(newAddressData);
+
+    // Notify parent immediately
+    onAddressChange({
+      nickname: newAddressData.nickname || undefined,
+      streetAddress: newAddressData.streetAddress,
+      city: newAddressData.city,
+      postalCode: newAddressData.postalCode,
+      country: newAddressData.country,
+      entryInstructions: newAddressData.entryInstructions || undefined,
+      geometry: newAddressData.geometry,
+    });
+  };
+
+  const handleFieldChange = (
+    field: keyof typeof addressData,
+    value: string
+  ) => {
+    const newAddressData = { ...addressData, [field]: value };
+    setAddressData(newAddressData);
+
+    // Notify parent of changes (except geometry which comes from Mapbox)
+    onAddressChange({
+      nickname: newAddressData.nickname || undefined,
+      streetAddress: newAddressData.streetAddress,
+      city: newAddressData.city,
+      postalCode: newAddressData.postalCode,
+      country: newAddressData.country,
+      entryInstructions: newAddressData.entryInstructions || undefined,
+      geometry: newAddressData.geometry,
+    });
+  };
+
+  const clearMapboxSelection = () => {
+    const newAddressData = {
+      ...addressData,
+      geometry: undefined,
+    };
+    setAddressData(newAddressData);
+    setAddressQuery("");
+
+    // Notify parent
+    onAddressChange({
+      nickname: newAddressData.nickname || undefined,
+      streetAddress: newAddressData.streetAddress,
+      city: newAddressData.city,
+      postalCode: newAddressData.postalCode,
+      country: newAddressData.country,
+      entryInstructions: newAddressData.entryInstructions || undefined,
+      geometry: undefined,
+    });
   };
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-semibold flex items-center gap-2">
-        <MapPin className="h-5 w-5" />
-        Din adresse
-      </h3>
-
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label>Velg en eksisterende adresse eller legg til ny</Label>
-          <AddressCombobox
-            value={selectedAddressId}
+          <Label>Søk etter din adresse</Label>
+          <AddressInput
+            value={addressQuery}
+            onChange={setAddressQuery}
             onSelect={handleAddressSelect}
-            placeholder="Velg adresse..."
+            placeholder="Skriv inn din adresse..."
           />
-          {error && (
-            <p className="text-sm text-destructive">{error}</p>
-          )}
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <p className="text-xs text-muted-foreground">
+            Start å skrive adressen din, så vil du få forslag fra Mapbox
+          </p>
         </div>
 
-        {selectedAddress && (
-          <div className="p-4 bg-muted rounded-lg space-y-2">
-            <p className="font-medium">
-              {selectedAddress.nickname || "Valgt adresse"}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {selectedAddress.street_address}
-            </p>
-            <p className="text-sm text-muted-foreground">
-              {selectedAddress.postal_code} {selectedAddress.city}, {selectedAddress.country}
-            </p>
-            {selectedAddress.entry_instructions && (
-              <p className="text-xs text-muted-foreground mt-2">
-                <span className="font-medium">Adgangsinstruksjoner:</span>{" "}
-                {selectedAddress.entry_instructions}
-              </p>
-            )}
-          </div>
-        )}
-
-        {selectedAddress && (
+        {/* Manual address fields */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="custom-instructions">
-              Ekstra adgangsinstruksjoner for kunder (valgfritt)
-            </Label>
-            <Textarea
-              id="custom-instructions"
-              placeholder="F.eks. 'Ring på dørklokka merket med etternavn', 'Parkering tilgjengelig i bakgården', etc."
-              value={customInstructions}
-              onChange={(e) => setCustomInstructions(e.target.value)}
+            <Label htmlFor="nickname">Adresse-kallenavn (valgfritt)</Label>
+            <Input
+              id="nickname"
+              placeholder="F.eks. 'Hjemme', 'Salon', etc."
+              value={addressData.nickname}
+              onChange={(e) => handleFieldChange("nickname", e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">
-              Disse instruksjonene vil bli vist til kunder når de booker hjemmebesøk hos deg
-            </p>
           </div>
-        )}
 
-        {!selectedAddressId && (
-          <div className="flex items-center justify-center py-8 border-2 border-dashed border-muted-foreground/25 rounded-lg">
-            <div className="text-center">
-              <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-sm text-muted-foreground mb-4">
-                Du må velge eller legge til en adresse for å fortsette
-              </p>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setShowAddDialog(true)}
-              >
-                Legg til adresse
-              </Button>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="street-address">Gateadresse *</Label>
+            <Input
+              id="street-address"
+              placeholder="Gatenavn og nummer"
+              value={addressData.streetAddress}
+              onChange={(e) =>
+                handleFieldChange("streetAddress", e.target.value)
+              }
+              disabled={!!addressData.geometry}
+              required
+            />
           </div>
-        )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="postal-code">Postnummer *</Label>
+            <Input
+              id="postal-code"
+              placeholder="0123"
+              value={addressData.postalCode}
+              onChange={(e) => handleFieldChange("postalCode", e.target.value)}
+              disabled={!!addressData.geometry}
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="city">By *</Label>
+            <Input
+              id="city"
+              placeholder="Oslo"
+              value={addressData.city}
+              onChange={(e) => handleFieldChange("city", e.target.value)}
+              disabled={!!addressData.geometry}
+              required
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="country">Land *</Label>
+          <Input
+            id="country"
+            placeholder="Norge"
+            value={addressData.country}
+            onChange={(e) => handleFieldChange("country", e.target.value)}
+            disabled={!!addressData.geometry}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="entry-instructions">
+            Adgangsinstruksjoner for kunder (valgfritt)
+          </Label>
+          <Textarea
+            id="entry-instructions"
+            placeholder="F.eks. 'Ring på dørklokka merket med etternavn', 'Parkering tilgjengelig i bakgården', etc."
+            value={addressData.entryInstructions}
+            onChange={(e) =>
+              handleFieldChange("entryInstructions", e.target.value)
+            }
+          />
+          <p className="text-xs text-muted-foreground">
+            Disse instruksjonene vil bli vist til kunder når de booker
+            hjemmebesøk hos deg
+          </p>
+        </div>
       </div>
-
-      <AddressDialog
-        open={showAddDialog}
-        onOpenChange={setShowAddDialog}
-        onSuccess={handleAddressCreated}
-      />
     </div>
   );
 }

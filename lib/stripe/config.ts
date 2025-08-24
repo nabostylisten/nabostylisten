@@ -16,6 +16,13 @@ export const getStripePublishableKey = () => {
 
 // Stripe Connect configuration for Norwegian marketplace
 export const STRIPE_CONNECT_CONFIG: Stripe.AccountCreateParams = {
+  business_profile: {
+    estimated_worker_count: 1,
+    url: 'https://www.nabostylisten.no',
+    support_email: 'kontakt@nabostylisten.no',
+    support_url: 'https://www.nabostylisten.no/kontakt',
+  },
+  business_type: 'individual',
   country: 'NO' as const,
   default_currency: 'nok' as const,
   capabilities: {

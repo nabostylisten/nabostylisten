@@ -123,6 +123,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
     postal_code text NOT NULL,
     country text NOT NULL,
     entry_instructions text,
+    address_geometry gis.geography(Point, 4326),
 
     -- Professional Information
     professional_experience text NOT NULL,

@@ -17,13 +17,44 @@ import type { Database } from "@/types/database.types";
  */
 export async function createStripeConnectedAccount({
   email,
+  name,
+  address,
 }: {
   email: string;
+  name: string;
+address: {
+  addressLine1: string;
+  addressLine2: string;
+  city: string;
+  state: string;
+  postalCode: string;
+  country: string;
+},
 }) {
+  const firstName = name.split(" ")[0];
+  const lastName = name.split(" ").slice(1).join(" ");
   try {
     const account = await stripe.accounts.create({
       ...STRIPE_CONNECT_CONFIG,
       email,
+      business_profile: {
+        ...STRIPE_CONNECT_CONFIG.business_profile,
+        name,
+      },
+      individual:{
+        ...STRIPE_CONNECT_CONFIG.individual,
+        first_name: firstName,
+        last_name: lastName,
+        address: {
+          line1: address.addressLine1,
+          line2: address.addressLine2,
+          city: address.city,
+          state: address.state,
+          postal_code: address.postalCode,
+          country: address.country,
+        },
+        email,
+      }
     });
 
     return {

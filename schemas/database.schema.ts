@@ -195,6 +195,7 @@ export const applicationCategoriesRelationshipsSchema = z.tuple([
 ]);
 
 export const applicationsRowSchema = z.object({
+  address_geometry: z.unknown().nullable(),
   address_nickname: z.string().nullable(),
   birth_date: z.string(),
   city: z.string(),
@@ -216,6 +217,7 @@ export const applicationsRowSchema = z.object({
 });
 
 export const applicationsInsertSchema = z.object({
+  address_geometry: z.unknown().optional().nullable(),
   address_nickname: z.string().optional().nullable(),
   birth_date: z.string(),
   city: z.string(),
@@ -237,6 +239,7 @@ export const applicationsInsertSchema = z.object({
 });
 
 export const applicationsUpdateSchema = z.object({
+  address_geometry: z.unknown().optional().nullable(),
   address_nickname: z.string().optional().nullable(),
   birth_date: z.string().optional(),
   city: z.string().optional(),

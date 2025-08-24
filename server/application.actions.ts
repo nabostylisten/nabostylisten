@@ -11,6 +11,7 @@ import { StylistOnboardingEmail } from "@/transactional/emails/stylist-onboardin
 import { createServiceClient } from "@/lib/supabase/service";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
+import { getCountryCode } from "@/lib/country-utils";
 // Note: We import Stripe service functions directly to use with serviceSupabaseClient
 // import { createConnectedAccount, createStripeCustomer } from "@/server/stripe.actions";
 
@@ -693,6 +694,11 @@ export async function updateApplicationStatus({
 
                     // Import the service function directly and use the service client
                     const { createConnectedAccountWithDatabase } = await import("@/lib/stripe/connect");
+                    
+                    // Convert country name to ISO code for Stripe
+                    const countryCode = getCountryCode(application.country);
+                    console.log(`[STRIPE_CONNECT] Converting country "${application.country}" to ISO code "${countryCode}"`);
+                    
                     const stripeResult = await createConnectedAccountWithDatabase({
                         supabaseClient: serviceSupabaseClient, // Use service client for admin operations
                         profileId: authUser.user.id,
@@ -704,7 +710,7 @@ export async function updateApplicationStatus({
                             city: application.city,
                             state: "", // Norway doesn't have states like US
                             postalCode: application.postal_code,
-                            country: application.country,
+                            country: countryCode, // Use ISO code instead of country name
                         },
                     });
 

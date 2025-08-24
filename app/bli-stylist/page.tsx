@@ -12,6 +12,7 @@ import {
 import { CheckCircle, Users, Calendar, CreditCard } from "lucide-react";
 import Link from "next/link";
 import { StylistApplicationForm } from "@/components/forms/stylist-application-form";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default function BliStylistPage() {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
@@ -63,7 +64,8 @@ export default function BliStylistPage() {
     <div className="min-h-screen pt-20 pb-12">
       <div className="container mx-auto px-6 lg:px-12">
         {/* Hero Section */}
-        <div className="text-center py-16">
+        <BlurFade duration={0.5} inView>
+          <div className="text-center py-16">
           <h1 className="text-4xl lg:text-6xl font-bold mb-6">
             Bli en del av
             <span className="text-primary"> Nabostylisten</span>
@@ -82,9 +84,11 @@ export default function BliStylistPage() {
             </Button>
           </div>
         </div>
+        </BlurFade>
 
         {/* Benefits Section */}
-        <div className="py-16">
+        <BlurFade delay={0.1} duration={0.5} inView>
+          <div className="py-16">
           <h2 className="text-3xl font-bold text-center mb-12">
             Hvorfor velge Nabostylisten?
           </h2>
@@ -104,9 +108,11 @@ export default function BliStylistPage() {
             ))}
           </div>
         </div>
+        </BlurFade>
 
         {/* Requirements Section */}
-        <div id="requirements" className="py-16">
+        <BlurFade delay={0.15} duration={0.5} inView>
+          <div id="requirements" className="py-16">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">
               Krav for å bli stylist
@@ -129,10 +135,12 @@ export default function BliStylistPage() {
             </Card>
           </div>
         </div>
+        </BlurFade>
 
         {/* Application Form Section */}
         {showApplicationForm && (
-          <div id="application-form" className="py-16">
+          <BlurFade delay={0.2} duration={0.5} inView>
+            <div id="application-form" className="py-16">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Søk som stylist</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
@@ -142,10 +150,12 @@ export default function BliStylistPage() {
             </div>
             <StylistApplicationForm onSuccess={handleApplicationSuccess} />
           </div>
+          </BlurFade>
         )}
 
         {/* Pricing Section - TODO */}
-        <div className="py-16">
+        <BlurFade delay={0.25} duration={0.5} inView>
+          <div className="py-16">
           <div className="max-w-3xl mx-auto">
             <h2 className="text-3xl font-bold text-center mb-12">
               Vår forretningsmodell
@@ -181,10 +191,12 @@ export default function BliStylistPage() {
             </Card>
           </div>
         </div>
+        </BlurFade>
 
         {/* CTA Section */}
         {!showApplicationForm && (
-          <div className="py-16 text-center">
+          <BlurFade delay={0.3} duration={0.5} inView>
+            <div className="py-16 text-center">
             <div className="bg-primary/5 rounded-lg p-12">
               <h2 className="text-3xl font-bold mb-6">
                 Klar til å starte din reise?
@@ -204,6 +216,7 @@ export default function BliStylistPage() {
               </div>
             </div>
           </div>
+          </BlurFade>
         )}
       </div>
     </div>

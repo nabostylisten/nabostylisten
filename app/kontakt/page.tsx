@@ -16,6 +16,26 @@ import { Separator } from "@/components/ui/separator";
 import { Mail, Phone, MapPin, Clock, Send } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { BlurFade } from "@/components/magicui/blur-fade";
+
+const CONTACT_INFO = {
+  email: "kontakt@nabostylisten.no",
+  phone: "+47 123 45 678",
+  address: {
+    company: "Nabostylisten AS",
+    street: "Storgata 1",
+    postalCode: "0001",
+    city: "Oslo",
+    country: "Norge",
+  },
+  hours: {
+    weekdays: "09:00 - 17:00",
+    saturday: "10:00 - 15:00",
+    sunday: "Stengt",
+    phoneHours: "Man-fre 09:00-17:00",
+  },
+  responseTime: "24 timer",
+};
 
 const KontaktPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,7 +68,6 @@ const KontaktPage = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const contactEmail = "kontakt@nabostylisten.no";
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,13 +75,17 @@ const KontaktPage = () => {
       <div className="bg-gradient-to-br from-primary/5 to-secondary/5">
         <div className="container mx-auto px-6 py-16">
           <div className="text-center max-w-3xl mx-auto">
-            <h1 className="text-4xl font-bold tracking-tight mb-4">
-              Kontakt oss
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8">
-              Har du spørsmål eller trenger hjelp? Vi er her for deg! Send oss
-              en melding og vi svarer så fort som mulig.
-            </p>
+            <BlurFade delay={0.1} duration={0.5} inView>
+              <h1 className="text-4xl font-bold tracking-tight mb-4">
+                Kontakt oss
+              </h1>
+            </BlurFade>
+            <BlurFade delay={0.2} duration={0.5} inView>
+              <p className="text-lg text-muted-foreground mb-8">
+                Har du spørsmål eller trenger hjelp? Vi er her for deg! Send oss
+                en melding og vi svarer så fort som mulig.
+              </p>
+            </BlurFade>
           </div>
         </div>
       </div>
@@ -70,7 +93,8 @@ const KontaktPage = () => {
       <div className="container mx-auto px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}
-          <Card>
+          <BlurFade delay={0.1} duration={0.5} inView>
+            <Card>
             <CardHeader>
               <CardTitle>Send oss en melding</CardTitle>
               <CardDescription>
@@ -157,166 +181,187 @@ const KontaktPage = () => {
                 </Button>
               </form>
             </CardContent>
-          </Card>
+            </Card>
+          </BlurFade>
 
           {/* Contact Information */}
-          <div className="space-y-8">
-            <div>
-              <h2 className="text-2xl font-semibold mb-6">
-                Kontaktinformasjon
-              </h2>
-              <p className="text-muted-foreground mb-8">
-                Du kan også nå oss direkte via e-post eller telefon. Vi svarer
-                vanligvis innen 24 timer på hverdager.
-              </p>
-            </div>
+          <BlurFade delay={0.2} duration={0.5} inView>
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-2xl font-semibold mb-6">
+                  Kontaktinformasjon
+                </h2>
+                <p className="text-muted-foreground mb-8">
+                  Du kan også nå oss direkte via e-post eller telefon. Vi svarer
+                  vanligvis innen {CONTACT_INFO.responseTime} på hverdager.
+                </p>
+              </div>
 
-            <div className="space-y-6">
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Mail className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">E-post</h3>
-                      <Link
-                        href={`mailto:${contactEmail}`}
-                        className="text-muted-foreground hover:text-secondary"
-                      >
-                        {contactEmail}
-                      </Link>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Svarer vanligvis innen 24 timer
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Phone className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Telefon</h3>
-                      <p className="text-muted-foreground">+47 123 45 678</p>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Man-fre 09:00-17:00
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <MapPin className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Adresse</h3>
-                      <p className="text-muted-foreground">
-                        Nabostylisten AS
-                        <br />
-                        Storgata 1<br />
-                        0001 Oslo, Norge
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="pt-6">
-                  <div className="flex items-start space-x-4">
-                    <div className="p-2 bg-primary/10 rounded-lg">
-                      <Clock className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold mb-1">Åpningstider</h3>
-                      <div className="text-muted-foreground space-y-1">
-                        <p>Mandag - Fredag: 09:00 - 17:00</p>
-                        <p>Lørdag: 10:00 - 15:00</p>
-                        <p>Søndag: Stengt</p>
+              <div className="space-y-6">
+                <BlurFade delay={0.1} duration={0.5} inView>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Mail className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-1">E-post</h3>
+                          <Link
+                            href={`mailto:${CONTACT_INFO.email}`}
+                            className="text-muted-foreground hover:text-secondary"
+                          >
+                            {CONTACT_INFO.email}
+                          </Link>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Svarer vanligvis innen {CONTACT_INFO.responseTime}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
+                </BlurFade>
+
+                <BlurFade delay={0.2} duration={0.5} inView>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Phone className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-1">Telefon</h3>
+                          <p className="text-muted-foreground">{CONTACT_INFO.phone}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {CONTACT_INFO.hours.phoneHours}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </BlurFade>
+
+                <BlurFade delay={0.3} duration={0.5} inView>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <MapPin className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-1">Adresse</h3>
+                          <p className="text-muted-foreground">
+                            {CONTACT_INFO.address.company}
+                            <br />
+                            {CONTACT_INFO.address.street}<br />
+                            {CONTACT_INFO.address.postalCode} {CONTACT_INFO.address.city}, {CONTACT_INFO.address.country}
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </BlurFade>
+
+                <BlurFade delay={0.4} duration={0.5} inView>
+                  <Card>
+                    <CardContent className="pt-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Clock className="w-5 h-5 text-primary" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold mb-1">Åpningstider</h3>
+                          <div className="text-muted-foreground space-y-1">
+                            <p>Mandag - Fredag: {CONTACT_INFO.hours.weekdays}</p>
+                            <p>Lørdag: {CONTACT_INFO.hours.saturday}</p>
+                            <p>Søndag: {CONTACT_INFO.hours.sunday}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </BlurFade>
+              </div>
             </div>
-          </div>
+          </BlurFade>
         </div>
 
         <Separator className="my-12" />
 
         {/* FAQ Section */}
         <div className="max-w-4xl mx-auto">
-          <h2 className="text-2xl font-semibold text-center mb-8">
-            Ofte stilte spørsmål
-          </h2>
+          <BlurFade delay={0.1} duration={0.5} inView>
+            <h2 className="text-2xl font-semibold text-center mb-8">
+              Ofte stilte spørsmål
+            </h2>
+          </BlurFade>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Hvordan fungerer booking?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Du kan enkelt booke tjenester ved å søke etter stylister i
-                  ditt område, velge en tjeneste og tid som passer deg, og
-                  betale direkte på plattformen.
-                </p>
-              </CardContent>
-            </Card>
+            <BlurFade delay={0.1} duration={0.5} inView>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Hvordan fungerer booking?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Du kan enkelt booke tjenester ved å søke etter stylister i
+                    ditt område, velge en tjeneste og tid som passer deg, og
+                    betale direkte på plattformen.
+                  </p>
+                </CardContent>
+              </Card>
+            </BlurFade>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Hva hvis jeg må avlyse?
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Du kan avlyse bookinger opptil 24 timer før avtalen uten
-                  kostnad. Avlysninger senere enn dette kan medføre gebyr.
-                </p>
-              </CardContent>
-            </Card>
+            <BlurFade delay={0.2} duration={0.5} inView>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Hva hvis jeg må avlyse?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Du kan avlyse bookinger opptil 24 timer før avtalen uten
+                    kostnad. Avlysninger senere enn dette kan medføre gebyr.
+                  </p>
+                </CardContent>
+              </Card>
+            </BlurFade>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">
-                  Hvordan blir jeg stylist?
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-4">
-                <p className="text-muted-foreground">
-                  Søk om å bli stylist via vårt søknadsskjema. Vi går gjennom
-                  alle søknader og tar kontakt for videre prosessering.
-                </p>
-                <Button asChild>
-                  <Link href="/bli-stylist">Søk om å bli stylist</Link>
-                </Button>
-              </CardContent>
-            </Card>
+            <BlurFade delay={0.3} duration={0.5} inView>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">
+                    Hvordan blir jeg stylist?
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-4">
+                  <p className="text-muted-foreground">
+                    Søk om å bli stylist via vårt søknadsskjema. Vi går gjennom
+                    alle søknader og tar kontakt for videre prosessering.
+                  </p>
+                  <Button asChild>
+                    <Link href="/bli-stylist">Søk om å bli stylist</Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </BlurFade>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Er betalingen sikker?</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-muted-foreground">
-                  Ja, vi bruker Stripe for sikker betalingsbehandling. Alle
-                  transaksjoner er krypterte og følger internasjonale
-                  sikkerhetsstandarder.
-                </p>
-              </CardContent>
-            </Card>
+            <BlurFade delay={0.4} duration={0.5} inView>
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Er betalingen sikker?</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Ja, vi bruker Stripe for sikker betalingsbehandling. Alle
+                    transaksjoner er krypterte og følger internasjonale
+                    sikkerhetsstandarder.
+                  </p>
+                </CardContent>
+              </Card>
+            </BlurFade>
           </div>
         </div>
       </div>

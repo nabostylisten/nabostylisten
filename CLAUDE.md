@@ -240,7 +240,55 @@ nabostylisten/
 
 - Use `Spinner` component from `components/ui/kibo-ui/spinner/index.tsx`
 - Implement proper loading states with React Suspense
-- Show skeleton loaders for list items and cards, based on `Skeleton` component from `components/ui/skeleton.tsx`.
+- Show skeleton loaders for list items and cards, based on `Skeleton` component from `components/ui/skeleton.tsx`
+
+### Animation Standards
+
+Use the BlurFade component from `@/components/magicui/blur-fade` for consistent page animations.
+
+**Component Location**: `components/magicui/blur-fade.tsx`
+
+**Preferred Settings**:
+
+- **Duration**: `0.5` seconds (good balance between smooth and snappy)
+- **Delays**: Keep minimal for responsive feel
+  - Single elements: `0.1` - `0.25` seconds
+  - List items: Use index-based delays (`index * 0.1`) - this pattern is encouraged
+  - Sequential sections: `0.12`, `0.15`, `0.2`, `0.25` seconds
+
+**Usage Examples**:
+
+```tsx
+// Single element
+<BlurFade duration={0.5} inView>
+  <Card>Content</Card>
+</BlurFade>
+
+// With small delay
+<BlurFade delay={0.1} duration={0.5} inView>
+  <Section>Content</Section>
+</BlurFade>
+
+// List items with staggered animation (preferred for lists)
+{items.map((item, index) => (
+  <BlurFade key={item.id} delay={index * 0.1} duration={0.5} inView>
+    <ItemCard item={item} />
+  </BlurFade>
+))}
+
+// Loading states
+<BlurFade duration={0.5} inView>
+  <LoadingSkeleton />
+</BlurFade>
+```
+
+**Guidelines**:
+
+- Always use `inView` prop for performance
+- Keep durations consistent across the app (prefer 0.5s)
+- Use index-based delays for list animations
+- Add BlurFade to loading states and skeleton components
+- Avoid delays longer than 0.25s for individual elements
 
 ### Error Handling
 

@@ -10,6 +10,7 @@ import { useEffect, useState } from "react";
 import { BookingStepper } from "@/components/booking";
 import { createBookingWithServices } from "@/server/booking.actions";
 import { toast } from "sonner";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default function BookingPage() {
   const router = useRouter();
@@ -123,19 +124,22 @@ export default function BookingPage() {
   return (
     <div className="min-h-screen pt-20 px-6 lg:px-12">
       <div className="max-w-6xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => router.back()}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Tilbake
-          </Button>
-          <h1 className="text-3xl font-bold">Booking</h1>
-        </div>
+        <BlurFade duration={0.5} inView>
+          <div className="flex items-center gap-4 mb-8">
+            <Button variant="ghost" onClick={() => router.back()}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Tilbake
+            </Button>
+            <h1 className="text-3xl font-bold">Booking</h1>
+          </div>
+        </BlurFade>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Booking Steps */}
           <div className="lg:col-span-2 space-y-6">
             {/* Cart Summary */}
-            <Card>
+            <BlurFade delay={0.1} duration={0.5} inView>
+              <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <User className="w-5 h-5" />
@@ -190,24 +194,28 @@ export default function BookingPage() {
                   </div>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </BlurFade>
 
             {/* Booking Stepper */}
             {currentStylist && (
-              <BookingStepper
+              <BlurFade delay={0.15} duration={0.5} inView>
+                <BookingStepper
                 stylistId={currentStylist.id}
                 serviceDurationMinutes={totalDurationMinutes}
                 stylistCanTravel={true} // TODO: Get from stylist details
                 stylistHasOwnPlace={true} // TODO: Get from stylist details
                 onComplete={handleBookingComplete}
                 isProcessing={isProcessingBooking}
-              />
+                />
+              </BlurFade>
             )}
           </div>
 
           {/* Order Summary */}
           <div>
-            <Card className="sticky top-24">
+            <BlurFade delay={0.2} duration={0.5} inView>
+              <Card className="sticky top-24">
               <CardHeader>
                 <CardTitle>Bestillingssammendrag</CardTitle>
               </CardHeader>
@@ -237,7 +245,8 @@ export default function BookingPage() {
                   <span>{totalPrice.toFixed(2)} NOK</span>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </BlurFade>
           </div>
         </div>
       </div>

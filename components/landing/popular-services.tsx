@@ -110,8 +110,8 @@ async function PopularServicesContent() {
           <ServiceCard key={service.id} service={service} />
         ))}
       </Marquee>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background"></div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/6 lg:w-1/10 bg-gradient-to-r from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/6 lg:w-1/10 bg-gradient-to-l from-background"></div>
       <div className="mt-8 pointer-events-auto">
         <Button asChild className="group">
           <Link href="/tjenester">

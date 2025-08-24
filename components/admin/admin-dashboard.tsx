@@ -3,14 +3,14 @@
 import { Suspense, useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  BarChart3, 
-  Users, 
+import {
+  BarChart3,
+  Users,
   Calendar,
   Package,
   DollarSign,
   Settings,
-  Activity
+  Activity,
 } from "lucide-react";
 
 // Import tab components
@@ -29,7 +29,9 @@ function UsersTab() {
         <CardContent className="p-6">
           <div className="text-center">
             <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Brukeroversikt kommer snart</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Brukeroversikt kommer snart
+            </h3>
             <p className="text-muted-foreground">
               Her vil du kunne se detaljert statistikk om kunder og stylister.
             </p>
@@ -51,7 +53,9 @@ function BookingsTab() {
         <CardContent className="p-6">
           <div className="text-center">
             <Calendar className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Bookingoversikt kommer snart</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Bookingoversikt kommer snart
+            </h3>
             <p className="text-muted-foreground">
               Her vil du kunne analysere bookingmønstre og trender.
             </p>
@@ -73,7 +77,9 @@ function ServicesTab() {
         <CardContent className="p-6">
           <div className="text-center">
             <Package className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Tjenesteoversikt kommer snart</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Tjenesteoversikt kommer snart
+            </h3>
             <p className="text-muted-foreground">
               Her vil du kunne se statistikk for alle tjenester på plattformen.
             </p>
@@ -95,7 +101,9 @@ function RevenueTab() {
         <CardContent className="p-6">
           <div className="text-center">
             <DollarSign className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Omsetningsoversikt kommer snart</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Omsetningsoversikt kommer snart
+            </h3>
             <p className="text-muted-foreground">
               Her vil du kunne analysere plattformens finansielle ytelse.
             </p>
@@ -117,7 +125,9 @@ function OperationsTab() {
         <CardContent className="p-6">
           <div className="text-center">
             <Activity className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Driftsoversikt kommer snart</h3>
+            <h3 className="text-lg font-semibold mb-2">
+              Driftsoversikt kommer snart
+            </h3>
             <p className="text-muted-foreground">
               Her vil du kunne overvåke plattformens driftsstatus.
             </p>
@@ -150,7 +160,7 @@ const tabs = [
   },
   {
     value: "users",
-    label: "Brukere", 
+    label: "Brukere",
     icon: Users,
     component: UsersTab,
   },
@@ -186,7 +196,7 @@ export default function AdminDashboard() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Administrator Dashboard</h1>
+        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
         <p className="text-muted-foreground">
           Velkommen til administrator-panelet for Nabostylisten
         </p>
@@ -198,9 +208,9 @@ export default function AdminDashboard() {
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (
-                <TabsTrigger 
-                  key={tab.value} 
-                  value={tab.value} 
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
                   className="flex flex-col gap-1 py-2 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
                 >
                   <Icon className="h-4 w-4" />

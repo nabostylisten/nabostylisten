@@ -121,12 +121,6 @@ export default async function ApplicationDetailPage({
                 Gjennomgå søknad fra {applicationData.full_name}
               </p>
             </div>
-            <Button asChild>
-              <Link href="/admin/soknader">
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Tilbake til søknader
-              </Link>
-            </Button>
           </div>
         </div>
 

@@ -9,8 +9,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Button } from "../ui/button";
-import { CurvedArrow } from "../ui/curved-arrow";
-import { WindingArrow } from "../ui/winding-arrow";
+import { CurvedArrow } from "./arrows/curved-arrow";
+import { WindingArrow } from "./arrows/winding-arrow";
 import Link from "next/link";
 
 const steps = [
@@ -56,6 +56,7 @@ export function HowItWorks() {
         {steps.map((step, index) => {
           const isEven = index % 2 === 0;
           const isLast = index === steps.length - 1;
+          const everyThird = index % 3 === 0;
 
           return (
             <div key={step.number}>
@@ -96,11 +97,13 @@ export function HowItWorks() {
               {/* Arrow between steps (except after last step) */}
               {!isLast && (
                 <BlurFade delay={(index + 1) * 0.1} inView>
-                  <div className={`flex justify-center my-2 ${index % 2 === 0 ? 'ml-12' : 'mr-12'}`}>
+                  <div
+                    className={`flex justify-center my-2 ${index % 2 === 0 ? "ml-12" : "mr-12"}`}
+                  >
                     {index % 2 === 0 ? (
                       <CurvedArrow
                         className="text-primary/60"
-                        mirrored={!isEven}
+                        mirrored={everyThird}
                       />
                     ) : (
                       <WindingArrow

@@ -235,7 +235,14 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
     setSortBy("newest");
     setMinPrice("");
     setMaxPrice("");
-    updateFilters({});
+    // Clear all filters and trigger immediate search
+    updateFilters({
+      search: undefined,
+      categories: undefined,
+      sortBy: undefined,
+      minPrice: undefined,
+      maxPrice: undefined,
+    });
   };
   
   const hasActiveFilters = 

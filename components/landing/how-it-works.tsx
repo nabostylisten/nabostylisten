@@ -35,7 +35,7 @@ const steps = [
   {
     number: "4",
     icon: <MessageCircle className="w-8 h-8" />,
-    title: "Chat og nyt",
+    title: "Planlegg med din stylist",
     description: "Kommuniser direkte med stylisten din via chat.",
   },
 ];

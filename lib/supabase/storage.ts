@@ -185,6 +185,31 @@ export async function downloadFile(
 }
 
 /**
+ * Helper function to extract bucket and path from file_path stored in database
+ * File paths are stored as: "bucket_name/path/to/file.ext"
+ */
+export function parseFilePath(filePath: string): { bucket: string; path: string } {
+    const firstSlashIndex = filePath.indexOf('/');
+    if (firstSlashIndex === -1) {
+        // If no slash, assume it's in a default bucket
+        return { bucket: 'service-media', path: filePath };
+    }
+    
+    const bucket = filePath.substring(0, firstSlashIndex);
+    const path = filePath.substring(firstSlashIndex + 1);
+    
+    return { bucket, path };
+}
+
+/**
+ * Get public URL from file_path stored in database
+ */
+export function getPublicUrlFromPath(supabase: SupabaseClient, filePath: string): string {
+    const { bucket, path } = parseFilePath(filePath);
+    return getPublicUrl(supabase, bucket, path);
+}
+
+/**
  * Generate a unique filename with timestamp
  */
 export function generateUniqueFilename(originalName: string): string {

@@ -66,10 +66,9 @@ export async function getPopularServices(limit: number = 10) {
       .from("services")
       .select(`
         *,
-        profiles!services_stylist_id_fkey (
+        profiles!stylist_id (
           id,
-          full_name,
-          business_name
+          full_name
         ),
         service_service_categories (
           service_categories (

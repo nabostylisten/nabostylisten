@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Home, Mail } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import BlurFade from "@/components/magicui/blur-fade";
 
 export default function AccountDeletionSuccessPage() {
   const router = useRouter();
@@ -42,7 +43,8 @@ export default function AccountDeletionSuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
-        <Card>
+        <BlurFade duration={0.5} inView>
+          <Card>
           <CardHeader className="text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 dark:bg-green-950 rounded-full flex items-center justify-center mb-4">
               <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
@@ -113,6 +115,7 @@ export default function AccountDeletionSuccessPage() {
             </div>
           </CardContent>
         </Card>
+        </BlurFade>
       </div>
     </div>
   );

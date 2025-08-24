@@ -12,6 +12,7 @@ import {
   Settings,
   Activity,
 } from "lucide-react";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 // Import tab components
 import OverviewTab from "./tabs/overview-tab";
@@ -195,43 +196,45 @@ export default function AdminDashboard() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-muted-foreground">
-          Velkommen til administrator-panelet for Nabostylisten
-        </p>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex w-full items-center justify-center md:justify-start mb-6">
-          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto p-1">
-            {tabs.map((tab) => {
-              const Icon = tab.icon;
-              return (
-                <TabsTrigger
-                  key={tab.value}
-                  value={tab.value}
-                  className="flex flex-col gap-1 py-2 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="text-xs font-medium">{tab.label}</span>
-                </TabsTrigger>
-              );
-            })}
-          </TabsList>
+      <BlurFade delay={0.1} duration={0.5} inView>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Velkommen til administrator-panelet for Nabostylisten
+          </p>
         </div>
+      </BlurFade>
 
-        {tabs.map((tab) => {
-          const Component = tab.component;
-          return (
-            <TabsContent key={tab.value} value={tab.value} className="mt-0">
-              <Suspense fallback={<DashboardSkeleton />}>
+      <BlurFade delay={0.15} duration={0.5} inView>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <div className="flex w-full items-center justify-center md:justify-start mb-6">
+            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto p-1">
+              {tabs.map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <TabsTrigger
+                    key={tab.value}
+                    value={tab.value}
+                    className="flex flex-col gap-1 py-2 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
+                  >
+                    <Icon className="h-4 w-4" />
+                    <span className="text-xs font-medium">{tab.label}</span>
+                  </TabsTrigger>
+                );
+              })}
+            </TabsList>
+          </div>
+
+          {tabs.map((tab) => {
+            const Component = tab.component;
+            return (
+              <TabsContent key={tab.value} value={tab.value} className="mt-0">
                 <Component />
-              </Suspense>
-            </TabsContent>
-          );
-        })}
-      </Tabs>
+              </TabsContent>
+            );
+          })}
+        </Tabs>
+      </BlurFade>
     </div>
   );
 }

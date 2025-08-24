@@ -1,7 +1,7 @@
 "use client";
 
 import { ColumnDef } from "@tanstack/react-table";
-import { MoreHorizontal, ArrowUpDown, Mail } from "lucide-react";
+import { MoreHorizontal, ArrowUpDown, Mail, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 
@@ -27,6 +27,7 @@ export const getColumnDisplayName = (columnId: string): string => {
     status: "Status",
     price_range_from: "Prisintervall",
     created_at: "Søknadsdato",
+    view_details: "Detaljer",
     actions: "Handlinger",
   };
   
@@ -174,6 +175,22 @@ export const columns: ColumnDef<StylistApplication>[] = [
     cell: ({ row }) => {
       const date = new Date(row.getValue("created_at"));
       return format(date, "PPP", { locale: nb });
+    },
+  },
+  {
+    id: "view_details",
+    header: getColumnDisplayName("view_details"),
+    cell: ({ row }) => {
+      const application = row.original;
+
+      return (
+        <Button variant="outline" size="sm" asChild>
+          <Link href={`/admin/soknader/${application.id}`}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Se mer
+          </Link>
+        </Button>
+      );
     },
   },
   {

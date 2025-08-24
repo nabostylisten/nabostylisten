@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/permissions";
 import { AdminLayout } from "@/components/admin-layout";
 import { ServiceCategoriesClient } from "./service-categories-client";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default async function AdminTjenesterPage() {
   const supabase = await createClient();
@@ -41,14 +42,18 @@ export default async function AdminTjenesterPage() {
   return (
     <AdminLayout>
       <div className="container mx-auto px-4 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Tjenestekategorier</h1>
-          <p className="text-muted-foreground">
-            Administrer kategorier for tjenester på plattformen
-          </p>
-        </div>
+        <BlurFade delay={0.1} duration={0.5} inView>
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold mb-2">Tjenestekategorier</h1>
+            <p className="text-muted-foreground">
+              Administrer kategorier for tjenester på plattformen
+            </p>
+          </div>
+        </BlurFade>
 
-        <ServiceCategoriesClient categories={categories || []} />
+        <BlurFade delay={0.15} duration={0.5} inView>
+          <ServiceCategoriesClient categories={categories || []} />
+        </BlurFade>
       </div>
     </AdminLayout>
   );

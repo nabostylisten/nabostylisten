@@ -60,7 +60,7 @@ export function HowItWorks() {
 
           return (
             <div key={step.number}>
-              <BlurFade delay={index * 0.1} inView>
+              <BlurFade delay={index * 0.1} duration={0.5} inView>
                 <div
                   className={`flex flex-col lg:flex-row items-center gap-8 ${
                     !isEven ? "lg:flex-row-reverse" : ""
@@ -96,7 +96,7 @@ export function HowItWorks() {
 
               {/* Arrow between steps (except after last step) */}
               {!isLast && (
-                <BlurFade delay={(index + 1) * 0.1} inView>
+                <BlurFade delay={(index + 1) * 0.1} duration={0.5} inView>
                   <div
                     className={`flex justify-center my-2 ${index % 2 === 0 ? "ml-12" : "mr-12"}`}
                   >
@@ -120,7 +120,7 @@ export function HowItWorks() {
       </div>
 
       {/* CTA */}
-      <BlurFade delay={0.4} inView>
+      <BlurFade delay={0.4} duration={0.5} inView>
         <div className="text-center pt-8">
           <h3 className="text-lg mb-6 font-fraunces">
             Klar til å prøve? Kom i gang på under 2 minutter!

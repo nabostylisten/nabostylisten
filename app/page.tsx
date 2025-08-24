@@ -27,7 +27,7 @@ async function ServiceFilterSection() {
   const stylists = stylistsResult.error ? [] : stylistsResult.data || [];
 
   return (
-    <BlurFade duration={0.6} inView inViewMargin="-10px">
+    <BlurFade duration={0.5} inView inViewMargin="-10px">
       <div className="max-w-7xl mx-auto">
         <ServiceFilterForm
           categories={categories}
@@ -46,7 +46,7 @@ export default async function Home() {
         <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
           {/* Hero Section */}
           <div className="text-center space-y-8 pt-20">
-            <BlurFade duration={0.8} inView>
+            <BlurFade duration={0.5} inView>
               <div className="space-y-4">
                 <h1 className="text-4xl md:text-6xl font-bold font-fraunces">
                   Nabostylisten
@@ -68,7 +68,7 @@ export default async function Home() {
               </div>
             </BlurFade>
 
-            <BlurFade delay={0.2} duration={0.8} inView>
+            <BlurFade delay={0.1} duration={0.5} inView>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Button size="lg" asChild>
                   <Link href="/tjenester">Se tjenester</Link>
@@ -80,17 +80,19 @@ export default async function Home() {
             </BlurFade>
 
             {/* Separator */}
-            <div className="flex items-center gap-4">
-              <Separator className="flex-1" />
-              <span className="text-muted-foreground text-sm font-medium">
-                eller
-              </span>
-              <Separator className="flex-1" />
-            </div>
+            <BlurFade delay={0.12} duration={0.5} inView>
+              <div className="flex items-center gap-4">
+                <Separator className="flex-1" />
+                <span className="text-muted-foreground text-sm font-medium">
+                  eller
+                </span>
+                <Separator className="flex-1" />
+              </div>
+            </BlurFade>
 
             {/* Service Filter Form */}
             <div className="pb-8">
-              <BlurFade delay={0.3} duration={0.8} inView>
+              <BlurFade delay={0.15} duration={0.5} inView>
                 <div className="text-center mb-8">
                   <h2 className="text-2xl md:text-3xl font-bold font-fraunces mb-4">
                     Søk etter tjenester
@@ -103,22 +105,24 @@ export default async function Home() {
               </BlurFade>
               <Suspense
                 fallback={
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="animate-pulse space-y-4">
-                        <div className="flex gap-4">
-                          <div className="flex-1 h-10 bg-muted rounded"></div>
-                          <div className="flex-1 h-10 bg-muted rounded"></div>
+                  <BlurFade duration={0.5} inView>
+                    <Card>
+                      <CardContent className="p-6">
+                        <div className="animate-pulse space-y-4">
+                          <div className="flex gap-4">
+                            <div className="flex-1 h-10 bg-muted rounded"></div>
+                            <div className="flex-1 h-10 bg-muted rounded"></div>
+                          </div>
+                          <div className="flex gap-4">
+                            <div className="flex-1 h-10 bg-muted rounded"></div>
+                            <div className="flex-1 h-10 bg-muted rounded"></div>
+                            <div className="flex-1 h-10 bg-muted rounded"></div>
+                          </div>
+                          <div className="h-10 bg-muted rounded"></div>
                         </div>
-                        <div className="flex gap-4">
-                          <div className="flex-1 h-10 bg-muted rounded"></div>
-                          <div className="flex-1 h-10 bg-muted rounded"></div>
-                          <div className="flex-1 h-10 bg-muted rounded"></div>
-                        </div>
-                        <div className="h-10 bg-muted rounded"></div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                      </CardContent>
+                    </Card>
+                  </BlurFade>
                 }
               >
                 <ServiceFilterSection />

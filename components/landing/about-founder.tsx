@@ -17,7 +17,7 @@ const FOUNDER_CONFIG = {
 
 export function AboutFounder() {
   return (
-    <BlurFade delay={0.2} inView>
+    <BlurFade delay={0.1} duration={0.5} inView>
       <Card className="overflow-hidden">
         <CardContent className="p-0">
           <div className="flex flex-col lg:flex-row">

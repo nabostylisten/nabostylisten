@@ -25,7 +25,7 @@ const mediaLogos = [
 
 export function MediaMentions() {
   return (
-    <BlurFade delay={0.6} duration={0.8} inView>
+    <BlurFade delay={0.15} duration={0.5} inView>
       <div className="space-y-8">
         <div className="text-center">
           <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">

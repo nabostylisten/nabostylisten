@@ -44,7 +44,7 @@ async function StatsContent() {
   return (
     <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
       {statItems.map((stat, index) => (
-        <BlurFade key={stat.label} delay={index * 0.1} inView>
+        <BlurFade key={stat.label} delay={index * 0.1} duration={0.5} inView>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
@@ -66,7 +66,7 @@ async function StatsContent() {
 
 export function StatsSection() {
   return (
-    <BlurFade delay={0.7} duration={0.8} inView>
+    <BlurFade delay={0.2} duration={0.5} inView>
       <div className="space-y-8">
         <div className="text-center">
           <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">

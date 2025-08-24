@@ -8,7 +8,7 @@ import { brandColors } from "@/lib/brand";
 
 export function StylistCTA() {
   return (
-    <BlurFade delay={1.0} duration={0.8} inView>
+    <BlurFade delay={0.25} duration={0.5} inView>
       <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
         <CardContent className="p-12 text-center">
           <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">

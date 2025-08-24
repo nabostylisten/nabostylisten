@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/chart";
 import { BaseChartProps, TimePeriodSelector } from "@/lib/charts/components";
 import { getDateFormatter, getPeriodLabel } from "@/lib/charts/time-periods";
-import { Users, UserPlus, Star } from "lucide-react";
+import { Users } from "lucide-react";
 import * as React from "react";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
@@ -28,20 +28,13 @@ interface UserTrendsStackedAreaChartProps extends BaseChartProps {
 }
 
 const chartConfig = {
-  total: {
-    label: "Totalt",
-    color: "var(--chart-1)",
-    icon: Users,
-  },
   customers: {
     label: "Kunder",
     color: "var(--chart-2)",
-    icon: UserPlus,
   },
   stylists: {
     label: "Stylister",
     color: "var(--chart-3)",
-    icon: Star,
   },
 } satisfies ChartConfig;
 

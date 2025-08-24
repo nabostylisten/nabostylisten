@@ -35,8 +35,11 @@ async function PopularServicesContent() {
 
   const ServiceCard = ({ service }: { service: PopularService }) => {
     const previewImage = service.media?.find((m) => m.is_preview_image);
-    const imageUrl = previewImage ? getPublicUrlFromPath(supabase, previewImage.file_path) : null;
-    const category = service.service_service_categories?.[0]?.service_categories;
+    const imageUrl = previewImage
+      ? getPublicUrlFromPath(supabase, previewImage.file_path)
+      : null;
+    const category =
+      service.service_service_categories?.[0]?.service_categories;
 
     return (
       <Link href={`/tjenester/${service.id}`}>
@@ -96,12 +99,12 @@ async function PopularServicesContent() {
 
   return (
     <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden py-4">
-      <Marquee pauseOnHover className="[--duration:20s] [--gap:1rem]">
+      <Marquee pauseOnHover className="[--duration:40s] [--gap:1rem]">
         {firstRow.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}
       </Marquee>
-      <Marquee reverse pauseOnHover className="[--duration:20s] [--gap:1rem]">
+      <Marquee reverse pauseOnHover className="[--duration:40s] [--gap:1rem]">
         {secondRow.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}

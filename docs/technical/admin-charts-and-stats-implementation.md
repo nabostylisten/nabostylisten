@@ -18,7 +18,7 @@ await requireAdmin();
 export async function getPlatformKPIs() {
   await requireAdmin();
   const supabase = await createClient();
-  
+
   // Query logic with proper error handling
   try {
     // Database queries
@@ -29,15 +29,17 @@ export async function getPlatformKPIs() {
 }
 ```
 
-#### Key Features:
+#### Key Features
+
 - **Admin Middleware**: `requireAdmin()` validates user role before any data access
 - **Error Handling**: Consistent error handling and logging
 - **Data Aggregation**: Efficient queries with proper joins and aggregations
 - **Type Safety**: All actions return properly typed data
 
-#### Available Actions by Category:
+#### Available Actions by Category
 
 **Overview Tab:**
+
 - `getPlatformKPIs()` - Core platform metrics
 - `getUserGrowthTrends(period, customRange)` - User registration trends
 - `getBookingVolumeTrends(period, customRange)` - Booking volume over time
@@ -45,14 +47,17 @@ export async function getPlatformKPIs() {
 - `getRecentActivity(limit)` - Latest platform activity
 
 **Users Tab:**
+
 - `getCustomerStats()` - Customer analytics and lifetime value
 - `getStylistStats()` - Stylist performance metrics
 
 **Bookings Tab:**
+
 - `getBookingStats(period, customRange)` - Booking analytics
 - `getBookingsByServiceCategory()` - Category distribution
 
 **Services Tab:**
+
 - `getServiceStats()` - Service catalog analytics
 - `getTopServices(limit)` - Most popular services
 
@@ -77,7 +82,8 @@ export function useOverviewData() {
 }
 ```
 
-#### Features:
+#### Features
+
 - **Caching Strategy**: 5-minute stale time for most queries, 1 minute for activity feeds
 - **Background Refetching**: Automatic data updates without user intervention
 - **Loading States**: Granular loading states for different data sets
@@ -88,6 +94,7 @@ export function useOverviewData() {
 #### Base Components (`/components/charts/`)
 
 **ChartCard** (`/components/charts/chart-card.tsx`):
+
 ```typescript
 interface ChartCardProps {
   label: string;
@@ -102,12 +109,14 @@ interface ChartCardProps {
 ```
 
 Features:
+
 - Norwegian currency formatting (NOK)
 - Trend indicators with directional arrows
 - Icon support from Lucide
 - Loading and empty states
 
 **Chart Skeletons** (`/components/charts/chart-skeletons.tsx`):
+
 - `ChartCardSkeleton` - For metric cards
 - `ChartSkeleton` - For chart containers
 - `TableSkeleton` - For data tables
@@ -126,7 +135,7 @@ const chartConfig = {
     icon: UserPlus,
   },
   stylists: {
-    label: "Stylister", 
+    label: "Stylister",
     color: "hsl(var(--chart-3))",
     icon: Star,
   },
@@ -134,6 +143,7 @@ const chartConfig = {
 ```
 
 Features:
+
 - **Theme Integration**: Uses CSS custom properties from `globals.css`
 - **Responsive Design**: Proper responsive container with min-height
 - **Accessibility**: Screen reader support and keyboard navigation
@@ -143,26 +153,29 @@ Features:
 
 ### 4. Time Period System (`/lib/charts/`)
 
-#### Time Period Types (`time-periods.ts`):
+#### Time Period Types (`time-periods.ts`)
+
 ```typescript
 export type TimePeriod =
-  | 'last_7_days'
-  | 'last_30_days' 
-  | 'last_3_months'
-  | 'last_6_months'
-  | 'last_year'
-  | 'this_month'
-  | 'this_year'
-  | 'custom';
+  | "last_7_days"
+  | "last_30_days"
+  | "last_3_months"
+  | "last_6_months"
+  | "last_year"
+  | "this_month"
+  | "this_year"
+  | "custom";
 ```
 
-#### Date Utilities (`date-utils.ts`):
+#### Date Utilities (`date-utils.ts`)
+
 - `getDateRange(period, customRange)` - Convert period to actual dates
 - `groupDataByPeriod(data, dateField, period, aggregator)` - Group data by time periods
 - `fillMissingPeriods(data, period, defaultValue, endDate)` - Fill gaps in time series
 - `calculateTrend(data, valueField)` - Calculate percentage trends
 
-#### Features:
+#### Features
+
 - **Norwegian Localization**: All date formatting uses `nb-NO` locale
 - **Flexible Aggregation**: Custom aggregation functions for different data types
 - **Gap Filling**: Automatically fills missing periods with zero values
@@ -195,7 +208,7 @@ Charts automatically adapt to light/dark themes without additional configuration
 ## Data Flow Architecture
 
 ```
-Database Query (Supabase) 
+Database Query (Supabase)
   ↓
 Server Action (with admin validation)
   ↓
@@ -217,7 +230,7 @@ Chart Component (with theme integration)
 ## Error Handling Strategy
 
 1. **Server Level**: Database errors logged and re-thrown with context
-2. **Hook Level**: TanStack Query provides automatic retry and error states  
+2. **Hook Level**: TanStack Query provides automatic retry and error states
 3. **Component Level**: Graceful fallbacks with empty states
 4. **User Level**: Informative error messages in Norwegian
 
@@ -226,6 +239,7 @@ Chart Component (with theme integration)
 To add a new chart component:
 
 1. **Create Server Action**:
+
 ```typescript
 export async function getNewMetric() {
   await requireAdmin();
@@ -234,6 +248,7 @@ export async function getNewMetric() {
 ```
 
 2. **Add Hook**:
+
 ```typescript
 export function useNewMetric() {
   return useQuery({
@@ -245,6 +260,7 @@ export function useNewMetric() {
 ```
 
 3. **Create Chart Component**:
+
 ```typescript
 const chartConfig = {
   metric: {

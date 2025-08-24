@@ -17,6 +17,22 @@ import {
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
 
+// Utility function to map column IDs to Norwegian display names
+export const getColumnDisplayName = (columnId: string): string => {
+  const columnNames: Record<string, string> = {
+    full_name: "Navn",
+    email: "E-post", 
+    phone_number: "Telefon",
+    city: "By",
+    status: "Status",
+    price_range_from: "Prisintervall",
+    created_at: "Søknadsdato",
+    actions: "Handlinger",
+  };
+  
+  return columnNames[columnId] || columnId;
+};
+
 export type StylistApplication = {
   id: string;
   full_name: string;
@@ -58,7 +74,7 @@ export const columns: ColumnDef<StylistApplication>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Navn
+          {getColumnDisplayName("full_name")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -72,7 +88,7 @@ export const columns: ColumnDef<StylistApplication>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          E-post
+          {getColumnDisplayName("email")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -98,7 +114,7 @@ export const columns: ColumnDef<StylistApplication>[] = [
   },
   {
     accessorKey: "phone_number",
-    header: "Telefon",
+    header: getColumnDisplayName("phone_number"),
   },
   {
     accessorKey: "city",
@@ -108,7 +124,7 @@ export const columns: ColumnDef<StylistApplication>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          By
+          {getColumnDisplayName("city")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -122,7 +138,7 @@ export const columns: ColumnDef<StylistApplication>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Status
+          {getColumnDisplayName("status")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );
@@ -134,7 +150,7 @@ export const columns: ColumnDef<StylistApplication>[] = [
   },
   {
     accessorKey: "price_range_from",
-    header: "Prisintervall",
+    header: getColumnDisplayName("price_range_from"),
     cell: ({ row }) => {
       const from = row.getValue("price_range_from") as number;
       const to = row.original.price_range_to;
@@ -150,7 +166,7 @@ export const columns: ColumnDef<StylistApplication>[] = [
           variant="ghost"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
-          Søknadsdato
+          {getColumnDisplayName("created_at")}
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
       );

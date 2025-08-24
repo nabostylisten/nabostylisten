@@ -4,7 +4,7 @@ import { StylistApplicationDataTable } from "@/components/admin/stylist-applicat
 export default function ApplicationsPage() {
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-8 max-w-full">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -18,7 +18,9 @@ export default function ApplicationsPage() {
           </div>
         </div>
 
-        <StylistApplicationDataTable />
+        <div className="min-w-0 w-full">
+          <StylistApplicationDataTable />
+        </div>
       </div>
     </AdminLayout>
   );

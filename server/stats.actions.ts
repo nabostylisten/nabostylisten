@@ -12,6 +12,7 @@ export async function getPlatformStats() {
       servicesResult,
       categoriesResult,
       bookingsResult,
+      ratingsResult,
     ] = await Promise.all([
       // Count stylists (profiles with role = 'stylist')
       supabase
@@ -35,7 +36,19 @@ export async function getPlatformStats() {
         .from("bookings")
         .select("*", { count: "exact", head: true })
         .eq("status", "confirmed"),
+      
+      // Get average rating from reviews
+      supabase
+        .from("reviews")
+        .select("rating"),
     ]);
+
+    // Calculate average rating
+    let averageRating = 0;
+    if (ratingsResult.data && ratingsResult.data.length > 0) {
+      const totalRating = ratingsResult.data.reduce((sum, review) => sum + review.rating, 0);
+      averageRating = totalRating / ratingsResult.data.length;
+    }
 
     return {
       data: {
@@ -43,6 +56,7 @@ export async function getPlatformStats() {
         services: servicesResult.count || 0,
         categories: categoriesResult.count || 0,
         bookings: bookingsResult.count || 0,
+        averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
       },
       error: null,
     };

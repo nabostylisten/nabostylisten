@@ -57,6 +57,7 @@ export default async function Home() {
                     action="underline"
                     color={brandColors.dark.secondary}
                     animationDuration={1500}
+                    delay={500}
                   >
                     skjønnhetstjenester
                   </Highlighter>

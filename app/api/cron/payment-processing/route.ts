@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
-import { resend } from "@/lib/resend";
+import { sendEmail } from "@/lib/resend-utils";
 import { PaymentNotificationEmail } from "@/transactional/emails/payment-notification";
 import { format, addHours } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -107,8 +107,7 @@ export async function POST(request: NextRequest) {
                 ?.map(bs => bs.service?.title || bs.service?.name)
                 .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
-              await resend.emails.send({
-                from: "Nabostylisten <no-reply@nabostylisten.no>",
+              const { error: customerPaymentEmailError } = await sendEmail({
                 to: [booking.customer.email],
                 subject: `Betaling bekreftet - ${serviceName}`,
                 react: PaymentNotificationEmail({
@@ -126,6 +125,10 @@ export async function POST(request: NextRequest) {
                   transactionId: `booking_${booking.id}`, // TODO: Use actual Stripe transaction ID
                 }),
               });
+
+              if (customerPaymentEmailError) {
+                console.error(`[PAYMENT_PROCESSING] Failed to send customer email for booking ${booking.id}:`, customerPaymentEmailError);
+              }
 
               emailsSent++;
               console.log(`[PAYMENT_PROCESSING] Sent payment confirmation to customer ${booking.customer.email}`);
@@ -156,8 +159,7 @@ export async function POST(request: NextRequest) {
 
               // TODO: Only send payout notification after service completion
               // For now, we'll send a payment received notification to stylist
-              await resend.emails.send({
-                from: "Nabostylisten <no-reply@nabostylisten.no>",
+              const { error: stylistPaymentEmailError } = await sendEmail({
                 to: [booking.stylist.email],
                 subject: `Betaling mottatt - ${serviceName}`,
                 react: PaymentNotificationEmail({
@@ -178,6 +180,10 @@ export async function POST(request: NextRequest) {
                   payoutMethod: "Bankkonto", // TODO: Get actual payout method from Stripe Connect
                 }),
               });
+
+              if (stylistPaymentEmailError) {
+                console.error(`[PAYMENT_PROCESSING] Failed to send stylist email for booking ${booking.id}:`, stylistPaymentEmailError);
+              }
 
               emailsSent++;
               console.log(`[PAYMENT_PROCESSING] Sent payment notification to stylist ${booking.stylist.email}`);

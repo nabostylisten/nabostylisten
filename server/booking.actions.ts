@@ -8,7 +8,7 @@ import {
     discountsInsertSchema,
 } from "@/schemas/database.schema";
 import type { BookingFilters, DatabaseTables } from "@/types";
-import { resend } from "@/lib/resend";
+import { sendEmail } from "@/lib/resend-utils";
 import { BookingStatusUpdateEmail } from "@/transactional/emails/booking-status-update";
 import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
 import { format } from "date-fns";
@@ -639,11 +639,8 @@ export async function createBookingWithServices(
                         }
                     }
 
-                    await resend.emails.send({
-                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                        // to: [stylist.email],
-                        // TODO: Remove this when we actually ship to production
-                        to: ["magnus.rodseth@gmail.com"],
+                    const { error: newBookingEmailError } = await sendEmail({
+                        to: [stylist.email],
                         subject: `Ny bookingforespørsel fra ${customer.full_name || 'kunde'}`,
                         react: NewBookingRequestEmail({
                             logoUrl: getNabostylistenLogoUrl("png"),
@@ -663,6 +660,10 @@ export async function createBookingWithServices(
                             urgency: "medium" as const,
                         }),
                     });
+
+                    if (newBookingEmailError) {
+                        console.error("Error sending new booking request email:", newBookingEmailError);
+                    }
                 }
             }
         } catch (emailError) {
@@ -843,11 +844,8 @@ export async function cancelBooking(bookingId: string, reason?: string) {
 
                 // Send email to customer (only if they want notifications)
                 if (canSendToCustomer) {
-                    await resend.emails.send({
-                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                        // to: [fullBooking.customer.email],
-                        // TODO: Remove this when we actually ship to production
-                        to: ["magnus.rodseth@gmail.com"],
+                    const { error: customerEmailError } = await sendEmail({
+                        to: [fullBooking.customer.email],
                         subject: customerEmailSubject,
                         react: BookingStatusUpdateEmail({
                             logoUrl: getNabostylistenLogoUrl("png"),
@@ -855,15 +853,16 @@ export async function cancelBooking(bookingId: string, reason?: string) {
                             recipientType: "customer",
                         }),
                     });
+
+                    if (customerEmailError) {
+                        console.error("Error sending customer cancellation email:", customerEmailError);
+                    }
                 }
 
                 // Send email to stylist (only if they want notifications)
                 if (canSendToStylist) {
-                    await resend.emails.send({
-                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                        // to: [fullBooking.stylist.email],
-                        // TODO: Remove this when we actually ship to production
-                        to: ["magnus.rodseth@gmail.com"],
+                    const { error: stylistEmailError } = await sendEmail({
+                        to: [fullBooking.stylist.email],
                         subject: stylistEmailSubject,
                         react: BookingStatusUpdateEmail({
                             logoUrl: getNabostylistenLogoUrl("png"),
@@ -871,6 +870,10 @@ export async function cancelBooking(bookingId: string, reason?: string) {
                             recipientType: "stylist",
                         }),
                     });
+
+                    if (stylistEmailError) {
+                        console.error("Error sending stylist cancellation email:", stylistEmailError);
+                    }
                 }
             }
         }
@@ -1061,11 +1064,8 @@ export async function updateBookingStatus({
 
             // Send email to customer (only if they want notifications)
             if (canSendToCustomer) {
-                await resend.emails.send({
-                    from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                    // to: [booking.customer.email],
-                    // TODO: Remove this when we actually ship to production
-                    to: ["magnus.rodseth@gmail.com"],
+                const { error: customerEmailError } = await sendEmail({
+                    to: [booking.customer.email],
                     subject: customerEmailSubject,
                     react: BookingStatusUpdateEmail({
                         logoUrl: getNabostylistenLogoUrl("png"),
@@ -1073,15 +1073,16 @@ export async function updateBookingStatus({
                         recipientType: "customer",
                     }),
                 });
+
+                if (customerEmailError) {
+                    console.error("Error sending customer status update email:", customerEmailError);
+                }
             }
 
             // Send email to stylist (only if they want notifications)
             if (canSendToStylist) {
-                await resend.emails.send({
-                    from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                    // to: [booking.stylist.email],
-                    // TODO: Remove this when we actually ship to production
-                    to: ["magnus.rodseth@gmail.com"],
+                const { error: stylistEmailError } = await sendEmail({
+                    to: [booking.stylist.email],
                     subject: stylistEmailSubject,
                     react: BookingStatusUpdateEmail({
                         logoUrl: getNabostylistenLogoUrl("png"),
@@ -1089,6 +1090,10 @@ export async function updateBookingStatus({
                         recipientType: "stylist",
                     }),
                 });
+
+                if (stylistEmailError) {
+                    console.error("Error sending stylist status update email:", stylistEmailError);
+                }
             }
         }
     } catch (emailError) {

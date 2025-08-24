@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/resend-utils";
 import { WelcomeEmail } from "@/transactional/emails/welcome";
 import { AccountDeletionConfirmationEmail } from "@/transactional/emails/account-deletion-confirmation";
 import { AccountDeletedNotificationEmail } from "@/transactional/emails/account-deleted-notification";
@@ -46,14 +46,8 @@ export async function sendWelcomeEmail({
       return { error: "Email service not configured", success: false };
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { data, error } = await resend.emails.send({
-      // TODO: Change to production email after we have setup
-      // from: "Nabostylisten <noreply@nabostylisten.no>",
-      from: "Nabostylisten <no-reply@magnusrodseth.com>",
-      // to: [email],
-      to: ["magnus.rodseth@gmail.com"],
+    const { error } = await sendEmail({
+      to: [email],
       subject: "Velkommen til Nabostylisten",
       react: WelcomeEmail({
         userName: userName || "Kjære kunde",
@@ -66,7 +60,7 @@ export async function sendWelcomeEmail({
       return { error: "Failed to send welcome email", success: false };
     }
 
-    return { success: true, emailId: data?.id };
+    return { success: true };
   } catch (error) {
     console.error("[WELCOME_EMAIL] Error sending welcome email:", error);
     return {
@@ -186,13 +180,8 @@ export async function sendAccountDeletionConfirmationEmail({
       return { error: "Email service not configured", success: false };
     }
 
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    const { data, error } = await resend.emails.send({
-      from: "Nabostylisten <no-reply@magnusrodseth.com>",
-      // For development - send to test email
-      to: ["magnus.rodseth@gmail.com"],
-      // to: [profile.email], // Uncomment for production
+    const { error } = await sendEmail({
+      to: [profile.email],
       subject: "Bekreft sletting av konto - Nabostylisten",
       react: AccountDeletionConfirmationEmail({
         userName: profile.full_name || "Kjære kunde",
@@ -212,11 +201,10 @@ export async function sendAccountDeletionConfirmationEmail({
     console.log(
       "[DELETE_ACCOUNT] Deletion confirmation email sent successfully:",
       {
-        emailId: data?.id,
         recipient: profile.email,
       },
     );
-    return { success: true, emailId: data?.id };
+    return { success: true };
   } catch (error) {
     console.error(
       "[DELETE_ACCOUNT] Error sending deletion confirmation email:",
@@ -359,13 +347,8 @@ async function sendAccountDeletedNotificationEmail({
     throw new Error("Email service not configured");
   }
 
-  const resend = new Resend(process.env.RESEND_API_KEY);
-
-  const { data, error } = await resend.emails.send({
-    from: "Nabostylisten <no-reply@magnusrodseth.com>",
-    // For development - send to test email
-    to: ["magnus.rodseth@gmail.com"],
-    // to: [userEmail], // Uncomment for production
+  const { error } = await sendEmail({
+    to: [userEmail],
     subject: "Konto slettet - Nabostylisten",
     react: AccountDeletedNotificationEmail({
       userName: userName || "Kjære tidligere kunde",
@@ -384,7 +367,6 @@ async function sendAccountDeletedNotificationEmail({
   console.log(
     "[DELETE_NOTIFICATION] Account deleted notification email sent successfully:",
     {
-      emailId: data?.id,
       recipient: userEmail,
     },
   );

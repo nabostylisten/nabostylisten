@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { resend } from "@/lib/resend";
+import { sendEmail } from "@/lib/resend-utils";
 import { BookingReminderEmail } from "@/transactional/emails/booking-reminder";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
 import { format, addHours } from "date-fns";
@@ -97,8 +97,7 @@ export async function POST(request: NextRequest) {
           : undefined;
 
         // Send reminder email
-        const { error: emailError } = await resend.emails.send({
-          from: "Nabostylisten <no-reply@nabostylisten.no>",
+        const { error: emailError } = await sendEmail({
           to: [booking.customer.email],
           subject: `Påminnelse: ${serviceNames[0] || "Din time"} i morgen`,
           react: BookingReminderEmail({

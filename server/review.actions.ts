@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { DatabaseTables, ReviewFilters } from "@/types";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
-import { resend } from "@/lib/resend";
+import { sendEmail } from "@/lib/resend-utils";
 import { NewReviewNotificationEmail } from "@/transactional/emails/new-review-notification";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -122,8 +122,7 @@ export async function createReview(
                     .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
                 // Send notification email
-                await resend.emails.send({
-                    from: "Nabostylisten <no-reply@nabostylisten.no>",
+                const { error: reviewEmailError } = await sendEmail({
                     to: [fullBookingData.stylist.email],
                     subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
                     react: NewReviewNotificationEmail({
@@ -141,6 +140,10 @@ export async function createReview(
                         averageRating: averageRating,
                     }),
                 });
+
+                if (reviewEmailError) {
+                    console.error("Error sending review notification email:", reviewEmailError);
+                }
 
                 console.log(`[REVIEW_NOTIFICATION] Sent review notification for review ${result.data.id} to ${fullBookingData.stylist.email}`);
             }
@@ -583,8 +586,7 @@ export async function upsertReview(
                         .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
                     // Send notification email
-                    await resend.emails.send({
-                        from: "Nabostylisten <no-reply@nabostylisten.no>",
+                    const { error: reviewEmailError } = await sendEmail({
                         to: [fullBookingData.stylist.email],
                         subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
                         react: NewReviewNotificationEmail({
@@ -602,6 +604,10 @@ export async function upsertReview(
                             averageRating: averageRating,
                         }),
                     });
+
+                    if (reviewEmailError) {
+                        console.error("Error sending review notification email:", reviewEmailError);
+                    }
 
                     console.log(`[REVIEW_NOTIFICATION] Sent review notification for review ${result.data.id} to ${fullBookingData.stylist.email}`);
                 }

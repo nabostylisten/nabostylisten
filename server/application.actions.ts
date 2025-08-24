@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { applicationsInsertSchema } from "@/schemas/database.schema";
 import type { Database } from "@/types/database.types";
 import { uploadApplicationImage } from "@/server/files.actions";
-import { resend } from "@/lib/resend";
+import { sendEmail } from "@/lib/resend-utils";
 import { StylistApplicationEmail } from "@/transactional/emails/stylist-application";
 import { ApplicationStatusUpdateEmail } from "@/transactional/emails/application-status-update";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -177,10 +177,8 @@ export async function createApplication(data: ApplicationFormData) {
 
         // Send email notification to admin
         try {
-            // TODO: Update this
-            await resend.emails.send({
-                from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                to: ["magnus.rodseth@gmail.com"], // Replace with actual admin email
+            const { error: emailError } = await sendEmail({
+                to: [process.env.ADMIN_EMAIL || "magnus.rodseth@gmail.com"], // Admin email
                 subject: "Ny stylist-søknad mottatt",
                 react: StylistApplicationEmail({
                     logoUrl: getNabostylistenLogoUrl("png"),
@@ -197,6 +195,10 @@ export async function createApplication(data: ApplicationFormData) {
                     },
                 }),
             });
+
+            if (emailError) {
+                console.error("Error sending admin notification email:", emailError);
+            }
         } catch (emailError) {
             console.error("Error sending notification email:", emailError);
             // Don't throw here, the application was created successfully
@@ -374,23 +376,23 @@ export async function updateApplicationStatus({
             }
 
             if (canSendEmail) {
-                try {
-                    await resend.emails.send({
-                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                        to: [application.email],
-                        subject: "Søknadsstatus oppdatert - Avvist",
-                        react: ApplicationStatusUpdateEmail({
-                            logoUrl: getNabostylistenLogoUrl("png"),
-                            applicantName: application.full_name,
-                            applicationId: application.id,
-                            status,
-                            message,
-                        }),
-                    });
-                    console.log(`[APPLICATION_STATUS] Sent rejection email to ${application.email}`);
-                } catch (emailError) {
+                const { error: emailError } = await sendEmail({
+                    to: [application.email],
+                    subject: "Søknadsstatus oppdatert - Avvist",
+                    react: ApplicationStatusUpdateEmail({
+                        logoUrl: getNabostylistenLogoUrl("png"),
+                        applicantName: application.full_name,
+                        applicationId: application.id,
+                        status,
+                        message,
+                    }),
+                });
+
+                if (emailError) {
                     console.error("Error sending rejection email:", emailError);
                     throw new Error("Kunne ikke sende avvisnings-e-post");
+                } else {
+                    console.log(`[APPLICATION_STATUS] Sent rejection email to ${application.email}`);
                 }
             } else {
                 console.log(`[APPLICATION_STATUS] Skipping rejection email for user ${application.user_id} - preferences disabled`);
@@ -452,24 +454,24 @@ export async function updateApplicationStatus({
                 );
 
                 if (canSendApprovalEmail) {
-                    try {
-                        await resend.emails.send({
-                            from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                            to: [application.email], // Send to the actual applicant email
-                            subject: "Søknadsstatus oppdatert - Godkjent",
-                            react: ApplicationStatusUpdateEmail({
-                                logoUrl: getNabostylistenLogoUrl("png"),
-                                applicantName: application.full_name,
-                                applicationId: application.id,
-                                status,
-                                message: message ||
-                                    "Din søknad er godkjent! Du kan nå logge inn på platformen.",
-                            }),
-                        });
-                        console.log(`[APPLICATION_STATUS] Sent approval email to ${application.email}`);
-                    } catch (emailError) {
+                    const { error: emailError } = await sendEmail({
+                        to: [application.email], // Send to the actual applicant email
+                        subject: "Søknadsstatus oppdatert - Godkjent",
+                        react: ApplicationStatusUpdateEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            applicantName: application.full_name,
+                            applicationId: application.id,
+                            status,
+                            message: message ||
+                                "Din søknad er godkjent! Du kan nå logge inn på platformen.",
+                        }),
+                    });
+
+                    if (emailError) {
                         console.error("Error sending approval email:", emailError);
                         // Don't throw here, the user was created successfully
+                    } else {
+                        console.log(`[APPLICATION_STATUS] Sent approval email to ${application.email}`);
                     }
                 } else {
                     console.log(`[APPLICATION_STATUS] Skipping approval email for user ${authUser.user.id} - preferences disabled`);

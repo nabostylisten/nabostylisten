@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { checkUserExists, sendWelcomeEmail } from "@/server/auth.actions";
+import { subscribeUserToNewsletterAfterSignup } from "@/server/preferences.actions";
 
 export type AuthMode = "login" | "signup";
 export type AuthStep = "email" | "code";
@@ -72,7 +73,7 @@ export function useAuthForm({
 
       if (error) throw error;
 
-      // Check if this is a new user signup and send welcome email
+      // Check if this is a new user signup and send welcome email + newsletter subscription
       if (data.user && mode === "signup") {
         // Get user profile to check if welcome email should be sent
         const { data: profile } = await supabase
@@ -94,6 +95,11 @@ export function useAuthForm({
               userId: data.user.id,
             }).catch((error) => {
               console.error("[AUTH_FORM] Failed to send welcome email:", error);
+            });
+
+            // Subscribe to newsletter if user preferences allow it
+            await subscribeUserToNewsletterAfterSignup(data.user.id).catch((error) => {
+              console.error("[AUTH_FORM] Failed to subscribe to newsletter:", error);
             });
           }
         }

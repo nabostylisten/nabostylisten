@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { subscribeToNewsletter } from "@/lib/newsletter";
+import { subscribeToNewsletter, initializeBrevoClient, addContactToBrevo } from "@/lib/newsletter";
 import type { Database } from "@/types/database.types";
 
 type UserPreferences = Database["public"]["Tables"]["user_preferences"]["Row"];
@@ -114,14 +114,50 @@ export async function updateUserPreferences(
               nameParts.slice(1).join(" ") || undefined,
             );
           }
+        } else {
+          // User unsubscribed from newsletter - remove from Brevo
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("email")
+            .eq("id", userId)
+            .single();
+
+          if (profile?.email) {
+            await unsubscribeFromNewsletter(profile.email);
+          }
         }
-        // Note: We don't unsubscribe from Brevo when newsletter_subscribed is false
-        // as the user might want to remain in the system for other communications
       } catch (newsletterError) {
         // Log the error but don't fail the preferences update
         console.error(
           "Error syncing newsletter subscription:",
           newsletterError,
+        );
+      }
+    }
+
+    // Sync marketing emails with Brevo if marketing_emails changed
+    if (updates.marketing_emails !== undefined && updatedPreferences) {
+      try {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name, email")
+          .eq("id", userId)
+          .single();
+
+        if (profile?.email) {
+          if (updates.marketing_emails) {
+            // Subscribe to marketing emails
+            await subscribeToMarketingEmails(profile.email, profile.full_name || undefined);
+          } else {
+            // Unsubscribe from marketing emails  
+            await unsubscribeFromMarketingEmails(profile.email);
+          }
+        }
+      } catch (marketingError) {
+        // Log the error but don't fail the preferences update
+        console.error(
+          "Error syncing marketing email subscription:",
+          marketingError,
         );
       }
     }
@@ -171,4 +207,166 @@ export async function shouldReceiveNotification(
     console.error("Error checking notification preference:", error);
     return false; // Default to not sending notification on error
   }
+}
+
+// =============== NEWSLETTER & MARKETING EMAIL MANAGEMENT ===============
+
+/**
+ * Subscribe user to newsletter automatically after signup
+ * This should be called BEFORE redirecting the user after successful signup
+ */
+export async function subscribeUserToNewsletterAfterSignup(
+  userId: string,
+): Promise<ActionResult<void>> {
+  try {
+    const supabase = await createClient();
+
+    // Get user preferences first to check if newsletter_subscribed is true
+    const { data: preferences } = await getUserPreferences(userId);
+    if (!preferences?.newsletter_subscribed) {
+      return { data: undefined }; // User doesn't want newsletter, skip
+    }
+
+    // Get user profile for email and name
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", userId)
+      .single();
+
+    if (!profile?.email) {
+      return { error: "User email not found" };
+    }
+
+    const nameParts = profile.full_name?.split(" ") || [];
+    await subscribeToNewsletter(
+      profile.email,
+      nameParts[0] || undefined,
+      nameParts.slice(1).join(" ") || undefined,
+    );
+
+    return { data: undefined };
+  } catch (error) {
+    return {
+      error: `Error subscribing to newsletter: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
+    };
+  }
+}
+
+/**
+ * Unsubscribe user from newsletter
+ */
+export async function unsubscribeFromNewsletter(
+  email: string,
+): Promise<void> {
+  try {
+    const contactsApi = initializeBrevoClient();
+    await contactsApi.deleteContact(email);
+    console.log(`Successfully unsubscribed ${email} from newsletter`);
+  } catch (error) {
+    console.error(`Error unsubscribing ${email} from newsletter:`, error);
+    // Don't throw - we don't want to fail preference updates for Brevo errors
+  }
+}
+
+/**
+ * Subscribe user to marketing emails
+ * This is separate from newsletter and might use different Brevo lists
+ */
+export async function subscribeToMarketingEmails(
+  email: string,
+  fullName?: string,
+): Promise<void> {
+  try {
+    const nameParts = fullName?.split(" ") || [];
+    await addContactToBrevo({
+      email,
+      firstName: nameParts[0] || undefined,
+      lastName: nameParts.slice(1).join(" ") || undefined,
+      attributes: {
+        SOURCE: "marketing_preference",
+        MARKETING_SUBSCRIBED_AT: new Date().toISOString(),
+        MARKETING_EMAILS: "true",
+      },
+    });
+    console.log(`Successfully subscribed ${email} to marketing emails`);
+  } catch (error) {
+    console.error(`Error subscribing ${email} to marketing emails:`, error);
+    throw error; // Let the caller handle this error
+  }
+}
+
+/**
+ * Unsubscribe user from marketing emails
+ * We update the contact attributes instead of deleting to preserve other subscriptions
+ */
+export async function unsubscribeFromMarketingEmails(
+  email: string,
+): Promise<void> {
+  try {
+    const contactsApi = initializeBrevoClient();
+    
+    // Update contact attributes to mark as unsubscribed from marketing
+    await contactsApi.updateContact(email, {
+      attributes: {
+        MARKETING_EMAILS: "false",
+        MARKETING_UNSUBSCRIBED_AT: new Date().toISOString(),
+      },
+    });
+    
+    console.log(`Successfully unsubscribed ${email} from marketing emails`);
+  } catch (error) {
+    console.error(`Error unsubscribing ${email} from marketing emails:`, error);
+    // Don't throw - we don't want to fail preference updates for Brevo errors
+  }
+}
+
+// =============== SMS NOTIFICATIONS (FUTURE IMPLEMENTATION) ===============
+
+/**
+ * Subscribe user to promotional SMS
+ * TODO: Implement SMS service integration (likely Twilio)
+ */
+export async function subscribeToPromotionalSMS(
+  phoneNumber: string,
+  userId: string,
+): Promise<ActionResult<void>> {
+  // TODO: Implement SMS service integration
+  console.log(`TODO: Subscribe ${phoneNumber} (user: ${userId}) to promotional SMS`);
+  return { 
+    error: "SMS notifications not yet implemented. Will integrate with Twilio or similar service." 
+  };
+}
+
+/**
+ * Unsubscribe user from promotional SMS
+ * TODO: Implement SMS service integration (likely Twilio)
+ */
+export async function unsubscribeFromPromotionalSMS(
+  phoneNumber: string,
+  userId: string,
+): Promise<ActionResult<void>> {
+  // TODO: Implement SMS service integration
+  console.log(`TODO: Unsubscribe ${phoneNumber} (user: ${userId}) from promotional SMS`);
+  return { 
+    error: "SMS notifications not yet implemented. Will integrate with Twilio or similar service." 
+  };
+}
+
+/**
+ * Send promotional SMS
+ * TODO: Implement SMS service integration (likely Twilio)
+ */
+export async function sendPromotionalSMS(
+  phoneNumber: string,
+  message: string,
+  userId?: string,
+): Promise<ActionResult<void>> {
+  // TODO: Implement SMS service integration
+  console.log(`TODO: Send SMS to ${phoneNumber}: "${message}" (user: ${userId})`);
+  return { 
+    error: "SMS notifications not yet implemented. Will integrate with Twilio or similar service." 
+  };
 }

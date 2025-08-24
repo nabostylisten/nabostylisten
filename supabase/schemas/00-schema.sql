@@ -440,7 +440,7 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
     -- Delivery Preferences
     email_delivery boolean DEFAULT true NOT NULL,
     sms_delivery boolean DEFAULT true NOT NULL,
-    push_notifications boolean DEFAULT false NOT NULL -- Future: for mobile app
+    push_notifications boolean DEFAULT true NOT NULL -- Future: for mobile app
 );
 
 -- ================== TRIGGERS AND FUNCTIONS ==================
@@ -475,6 +475,7 @@ BEGIN
     user_role := 'customer'::public.user_role;
   END;
 
+  -- Insert the user profile
   INSERT INTO public.profiles (
     id,
     email,
@@ -488,6 +489,56 @@ BEGIN
     NEW.raw_user_meta_data->>'phone_number',
     user_role
   );
+
+  -- Insert default user preferences
+  INSERT INTO public.user_preferences (
+    user_id,
+    -- Newsletter and Marketing (defaults from schema)
+    newsletter_subscribed,
+    marketing_emails,
+    promotional_sms,
+    -- Booking Notifications (defaults from schema)
+    booking_confirmations,
+    booking_reminders,
+    booking_cancellations,
+    booking_status_updates,
+    -- Chat and Communication (defaults from schema)
+    chat_messages,
+    -- Stylist-specific Notifications (defaults from schema)
+    new_booking_requests,
+    review_notifications,
+    payment_notifications,
+    -- Application Updates (defaults from schema)
+    application_status_updates,
+    -- Delivery Preferences (defaults from schema)
+    email_delivery,
+    sms_delivery,
+    push_notifications
+  ) VALUES (
+    NEW.id,
+    -- Newsletter and Marketing
+    true, -- newsletter_subscribed
+    true,  -- marketing_emails
+    true, -- promotional_sms
+    -- Booking Notifications
+    true,  -- booking_confirmations
+    true,  -- booking_reminders
+    true,  -- booking_cancellations
+    true,  -- booking_status_updates
+    -- Chat and Communication
+    true,  -- chat_messages
+    -- Stylist-specific Notifications
+    true,  -- new_booking_requests
+    true,  -- review_notifications
+    true,  -- payment_notifications
+    -- Application Updates
+    true,  -- application_status_updates
+    -- Delivery Preferences
+    true,  -- email_delivery
+    true, -- sms_delivery
+    true-- push_notifications
+  );
+
   RETURN NEW;
 END;
 $$ language 'plpgsql' SECURITY DEFINER SET search_path = public;

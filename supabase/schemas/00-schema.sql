@@ -416,9 +416,9 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
 
     -- Newsletter and Marketing
-    newsletter_subscribed boolean DEFAULT false NOT NULL,
+    newsletter_subscribed boolean DEFAULT true NOT NULL,
     marketing_emails boolean DEFAULT true NOT NULL,
-    promotional_sms boolean DEFAULT false NOT NULL,
+    promotional_sms boolean DEFAULT true NOT NULL,
 
     -- Booking Notifications
     booking_confirmations boolean DEFAULT true NOT NULL,
@@ -439,7 +439,7 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
 
     -- Delivery Preferences
     email_delivery boolean DEFAULT true NOT NULL,
-    sms_delivery boolean DEFAULT false NOT NULL,
+    sms_delivery boolean DEFAULT true NOT NULL,
     push_notifications boolean DEFAULT false NOT NULL -- Future: for mobile app
 );
 

@@ -116,7 +116,7 @@ export default function FAQPage() {
               </BlurFade>
             ) : (
               filteredFaqs.map((faq, index) => (
-                <BlurFade key={faq.id} delay={index * 0.1} duration={0.5}>
+                <BlurFade key={faq.id} delay={index * 0.05} duration={0.5}>
                   <Card>
                     <Collapsible
                       open={openItems.includes(faq.id)}

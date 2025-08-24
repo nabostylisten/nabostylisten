@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
 import { ServicesPageClient } from "./services-page-client";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default async function MineTjenesterPage({
   params,
@@ -33,36 +34,11 @@ export default async function MineTjenesterPage({
     redirect(`/profiler/${profileId}`);
   }
 
-  // Fetch user's services with category and media information
-  const { data: services } = await supabase
-    .from("services")
-    .select(
-      `
-      *,
-      service_service_categories (
-        service_categories (
-          id,
-          name,
-          description
-        )
-      ),
-      media (
-        id,
-        file_path,
-        media_type,
-        is_preview_image,
-        created_at
-      )
-    `
-    )
-    .eq("stylist_id", profileId)
-    .order("created_at", { ascending: false });
-
   return (
     <ProfileLayout profileId={profileId} userRole={profile.role}>
       <div className="flex flex-1 flex-col gap-4 p-4">
-        <div className="max-w-4xl mx-auto w-full">
-          <ServicesPageClient services={services || []} profileId={profileId} />
+        <div className="max-w-6xl mx-auto w-full">
+          <ServicesPageClient profileId={profileId} />
         </div>
       </div>
     </ProfileLayout>

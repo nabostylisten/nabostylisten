@@ -720,6 +720,158 @@ export async function getServiceImages(serviceId: string) {
 }
 
 /**
+ * Get filtered services for a stylist (used in mine-tjenester page)
+ */
+export async function getFilteredStylistServices(stylistId: string, filters: ServiceFilters = {}) {
+    const supabase = await createClient();
+
+    // Get current user to verify they can access this stylist's services
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+        return { error: "Authentication required", data: null };
+    }
+
+    if (user.id !== stylistId) {
+        return { error: "Unauthorized access", data: null };
+    }
+
+    const {
+        search,
+        categories,
+        serviceDestination,
+        minPrice,
+        maxPrice,
+        sortBy = "newest",
+        page = 1,
+        limit = 12,
+    } = filters;
+
+    let query = supabase
+        .from("services")
+        .select(
+            `
+            *,
+            service_service_categories (
+                service_categories (
+                    id,
+                    name,
+                    description
+                )
+            ),
+            media (
+                id,
+                file_path,
+                media_type,
+                is_preview_image,
+                created_at
+            )
+        `,
+            { count: "exact" },
+        )
+        .eq("stylist_id", stylistId);
+
+    // Apply search filter
+    if (search) {
+        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+    }
+
+    // Apply category filter
+    if (categories && categories.length > 0) {
+        const { data: serviceIds } = await supabase
+            .from("service_service_categories")
+            .select("service_id")
+            .in("category_id", categories);
+
+        if (serviceIds && serviceIds.length > 0) {
+            const ids = serviceIds.map((item) => item.service_id);
+            query = query.in("id", ids);
+        } else {
+            return { 
+                data: [], 
+                error: null, 
+                count: 0,
+                totalPages: 0,
+                currentPage: page,
+                hasMore: false,
+            };
+        }
+    }
+
+    // Apply service destination filter
+    if (serviceDestination?.atCustomerPlace && !serviceDestination?.atStylistPlace) {
+        query = query.eq("at_customer_place", true);
+    } else if (serviceDestination?.atStylistPlace && !serviceDestination?.atCustomerPlace) {
+        query = query.eq("at_stylist_place", true);
+    }
+
+    // Apply price filters
+    if (minPrice) {
+        query = query.gte("price", parseFloat(minPrice));
+    }
+    if (maxPrice) {
+        query = query.lte("price", parseFloat(maxPrice));
+    }
+
+    // Apply sorting
+    switch (sortBy) {
+        case "price_asc":
+            query = query.order("price", { ascending: true });
+            break;
+        case "price_desc":
+            query = query.order("price", { ascending: false });
+            break;
+        case "newest":
+            query = query.order("created_at", { ascending: false });
+            break;
+        default:
+            query = query.order("created_at", { ascending: false });
+    }
+
+    // Apply pagination
+    const from = (page - 1) * limit;
+    const to = from + limit - 1;
+    query = query.range(from, to);
+
+    const { data, error, count } = await query;
+
+    if (error) {
+        return { error: error.message, data: null };
+    }
+
+    if (!data) {
+        return { 
+            data: [], 
+            error: null, 
+            count: 0,
+            totalPages: 0,
+            currentPage: page,
+            hasMore: false,
+        };
+    }
+
+    // Add public URLs for media
+    const servicesWithUrls = data.map((service) => ({
+        ...service,
+        media: service.media?.map((media) => ({
+            ...media,
+            publicUrl: media.file_path.startsWith("http")
+                ? media.file_path
+                : getPublicUrl(supabase, "service-media", media.file_path),
+        })),
+    }));
+
+    return {
+        data: servicesWithUrls,
+        error: null,
+        count: count || 0,
+        totalPages: count ? Math.ceil(count / limit) : 0,
+        currentPage: page,
+        hasMore: count ? page * limit < count : false,
+    };
+}
+
+/**
  * Get reviews for a specific service
  */
 export async function getServiceReviews(serviceId: string, limit = 10) {

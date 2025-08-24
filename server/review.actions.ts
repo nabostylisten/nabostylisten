@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { DatabaseTables, ReviewFilters } from "@/types";
 import { shouldReceiveNotificationServerSide } from "@/server/preferences.actions";
-import { sendEmail } from "@/lib/resend-utils";
+import { Resend } from "resend";
 import { NewReviewNotificationEmail } from "@/transactional/emails/new-review-notification";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -12,186 +12,6 @@ import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 export async function getReview(id: string) {
     const supabase = await createClient();
     return await supabase.from("reviews").select("*").eq("id", id);
-}
-
-export async function createReview(
-    review: DatabaseTables["reviews"]["Insert"],
-) {
-    const supabase = await createClient();
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (!user || userError) {
-        return { error: "User not authenticated", data: null };
-    }
-
-    // Verify that the user is the customer of the booking
-    const { data: booking, error: bookingError } = await supabase
-        .from("bookings")
-        .select("customer_id, stylist_id, status")
-        .eq("id", review.booking_id)
-        .single();
-
-    if (bookingError || !booking) {
-        return { error: "Booking not found", data: null };
-    }
-
-    if (booking.customer_id !== user.id) {
-        return { error: "Not authorized to review this booking", data: null };
-    }
-
-    if (booking.status !== "completed") {
-        return { error: "Can only review completed bookings", data: null };
-    }
-
-    // Check if review already exists for this booking
-    const { data: existingReview } = await supabase
-        .from("reviews")
-        .select("id")
-        .eq("booking_id", review.booking_id)
-        .single();
-
-    if (existingReview) {
-        return { error: "Review already exists for this booking", data: null };
-    }
-
-    // Set customer_id and stylist_id from booking
-    const reviewData = {
-        ...review,
-        customer_id: booking.customer_id,
-        stylist_id: booking.stylist_id,
-    };
-
-    const result = await supabase.from("reviews").insert(reviewData).select().single();
-
-    console.log({result});
-
-    if (result.error || !result.data) {
-        return result;
-    }
-
-    // Send email notification to stylist if they want review notifications
-    try {
-        // Check if stylist wants review notifications
-        const canSendNotification = await shouldReceiveNotificationServerSide(
-            booking.stylist_id,
-            "review_notifications"
-        );
-
-        console.log("canSendNotification", canSendNotification);
-
-        if (canSendNotification) {
-            // Get additional data for email
-            const { data: fullBookingData } = await supabase
-                .from("bookings")
-                .select(`
-                    *,
-                    booking_services(
-                        services(
-                            title
-                        )
-                    ),
-                    customer:profiles!customer_id(
-                        full_name,
-                        email
-                    ),
-                    stylist:profiles!stylist_id(
-                        id,
-                        full_name,
-                        email
-                    )
-                `)
-                .eq("id", review.booking_id)
-                .single();
-
-            console.log({fullBookingData});
-
-            if (fullBookingData?.stylist?.email) {
-                // Get stylist's review statistics
-                const { data: reviewStats } = await supabase
-                    .from("reviews")
-                    .select("rating")
-                    .eq("stylist_id", booking.stylist_id);
-
-                const totalReviews = reviewStats?.length || 1;
-                const averageRating = reviewStats?.length 
-                    ? Number((reviewStats.reduce((sum, r) => sum + r.rating, 0) / reviewStats.length).toFixed(1))
-                    : result.data.rating;
-
-                // Format booking date
-                const bookingDate = format(new Date(fullBookingData.start_time), "d. MMMM yyyy", { locale: nb });
-
-                // Get service name
-                const serviceName = fullBookingData.booking_services
-                    ?.map(bs => bs.services?.title)
-                    .filter(Boolean)[0] || 'Tjeneste';
-
-                // Send notification email
-                const { error: reviewEmailError } = await sendEmail({
-                    to: [fullBookingData.stylist.email],
-                    subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
-                    react: NewReviewNotificationEmail({
-                        logoUrl: getNabostylistenLogoUrl(),
-                        stylistProfileId: booking.stylist_id,
-                        stylistName: fullBookingData.stylist.full_name || "Stylist",
-                        customerName: fullBookingData.customer?.full_name || "Kunde",
-                        reviewId: result.data.id,
-                        bookingId: review.booking_id,
-                        serviceName: serviceName,
-                        bookingDate: bookingDate,
-                        rating: result.data.rating as 1 | 2 | 3 | 4 | 5,
-                        comment: result.data.comment || undefined,
-                        totalReviews: totalReviews,
-                        averageRating: averageRating,
-                    }),
-                });
-
-                if (reviewEmailError) {
-                    console.error("Error sending review notification email:", reviewEmailError);
-                }
-
-                console.log(`[REVIEW_NOTIFICATION] Sent review notification for review ${result.data.id} to ${fullBookingData.stylist.email}`);
-            }
-        } else {
-            console.log(`[REVIEW_NOTIFICATION] Skipping review notification for stylist ${booking.stylist_id} - preferences disabled`);
-        }
-    } catch (error) {
-        // Don't fail the review creation if email notification fails
-        console.error("[REVIEW_NOTIFICATION] Failed to send review notification:", error);
-    }
-
-    return result;
-}
-
-export async function updateReview(
-    id: string,
-    review: DatabaseTables["reviews"]["Update"],
-) {
-    const supabase = await createClient();
-
-    // Get current user
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (!user || userError) {
-        return { error: "User not authenticated", data: null };
-    }
-
-    // Verify that the user is the author of the review
-    const { data: existingReview, error: reviewError } = await supabase
-        .from("reviews")
-        .select("customer_id")
-        .eq("id", id)
-        .single();
-
-    if (reviewError || !existingReview) {
-        return { error: "Review not found", data: null };
-    }
-
-    if (existingReview.customer_id !== user.id) {
-        return { error: "Not authorized to update this review", data: null };
-    }
-
-    return await supabase.from("reviews").update(review).eq("id", id).select()
-        .single();
 }
 
 export async function deleteReview(id: string) {
@@ -588,12 +408,14 @@ export async function upsertReview(
                         ?.map(bs => bs.services?.title)
                         .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
-                    // Send notification email
-                    const { error: reviewEmailError } = await sendEmail({
-                        to: [fullBookingData.stylist.email],
+                    // Send notification email directly with Resend
+                    const resend = new Resend(process.env.RESEND_API_KEY);
+                    const { error: reviewEmailError } = await resend.emails.send({
+                        from: "Nabostylisten <noreply@magnusrodseth.com>",
+                        to: ["magnus.rodseth@gmail.com"],
                         subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
                         react: NewReviewNotificationEmail({
-                            logoUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo-email.png`,
+                            logoUrl: getNabostylistenLogoUrl(),
                             stylistProfileId: booking.stylist_id,
                             stylistName: fullBookingData.stylist.full_name || "Stylist",
                             customerName: fullBookingData.customer?.full_name || "Kunde",

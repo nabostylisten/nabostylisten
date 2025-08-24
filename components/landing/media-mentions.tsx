@@ -1,5 +1,27 @@
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { Card } from "@/components/ui/card";
 import Image from "next/image";
+
+const mediaLogos = [
+  {
+    src: "/publicity/e24.png",
+    alt: "E24",
+    width: 120,
+    height: 60,
+  },
+  {
+    src: "/publicity/elle.png",
+    alt: "Elle",
+    width: 100,
+    height: 60,
+  },
+  {
+    src: "/publicity/melk-og-honning.png",
+    alt: "Melk og Honning",
+    width: 140,
+    height: 60,
+  },
+];
 
 export function MediaMentions() {
   return (
@@ -13,28 +35,18 @@ export function MediaMentions() {
             Nabostylisten har blitt omtalt i flere av Norges ledende medier
           </p>
         </div>
-        <div className="flex justify-center items-center gap-8 lg:gap-16 flex-wrap">
-          <Image
-            src="/publicity/e24.png"
-            alt="E24"
-            width={120}
-            height={60}
-            className="opacity-70 hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
-          />
-          <Image
-            src="/publicity/elle.png"
-            alt="Elle"
-            width={100}
-            height={60}
-            className="opacity-70 hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
-          />
-          <Image
-            src="/publicity/melk-og-honning.png"
-            alt="Melk og Honning"
-            width={140}
-            height={60}
-            className="opacity-70 hover:opacity-100 transition-opacity grayscale hover:grayscale-0"
-          />
+        <div className="flex justify-center items-center gap-6 lg:gap-8 flex-wrap">
+          {mediaLogos.map((logo, index) => (
+            <Card key={logo.alt} className="p-4 bg-primary/10">
+              <Image
+                src={logo.src}
+                alt={logo.alt}
+                width={logo.width}
+                height={logo.height}
+                className="opacity-80 hover:opacity-100 transition-opacity dark:invert"
+              />
+            </Card>
+          ))}
         </div>
       </div>
     </BlurFade>

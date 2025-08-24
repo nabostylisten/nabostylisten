@@ -38,25 +38,25 @@ async function PopularServicesContent() {
     const category = service.service_service_categories?.[0]?.service_categories;
 
     return (
-      <Card className="w-[350px] cursor-pointer hover:shadow-lg transition-shadow">
+      <figure className="relative h-full w-[350px] cursor-pointer overflow-hidden rounded-xl border p-4 border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05] dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15] transition-colors">
         {imageUrl && (
-          <div className="relative h-48 w-full">
+          <div className="relative h-48 w-full mb-4">
             <Image
               src={imageUrl}
               alt={service.title}
               fill
-              className="object-cover rounded-t-lg"
+              className="object-cover rounded-lg"
             />
           </div>
         )}
-        <CardHeader>
+        <div className="space-y-3">
           <div className="flex justify-between items-start">
             <div className="flex-1">
-              <CardTitle className="text-lg line-clamp-1">
+              <h3 className="text-lg font-semibold line-clamp-1">
                 {service.title}
-              </CardTitle>
+              </h3>
               {category && (
-                <Badge variant="outline" className="mt-1">
+                <Badge variant="outline" className="mt-1 text-xs">
                   {category.name}
                 </Badge>
               )}
@@ -68,9 +68,7 @@ async function PopularServicesContent() {
               </p>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-1">
               <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
               <span className="font-medium">
@@ -79,28 +77,28 @@ async function PopularServicesContent() {
                   : "Ny"}
               </span>
               {service.total_reviews > 0 && (
-                <span className="text-sm text-muted-foreground">
+                <span className="text-muted-foreground">
                   ({service.total_reviews})
                 </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-muted-foreground">
               {service.profiles?.full_name}
             </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </figure>
     );
   };
 
   return (
     <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
-      <Marquee pauseOnHover className="[--duration:40s]">
+      <Marquee pauseOnHover className="[--duration:20s]">
         {firstRow.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}
       </Marquee>
-      <Marquee reverse pauseOnHover className="[--duration:40s]">
+      <Marquee reverse pauseOnHover className="[--duration:20s]">
         {secondRow.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}

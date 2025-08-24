@@ -1,62 +1,68 @@
-import { 
-  Search, 
-  ShoppingCart, 
-  Calendar, 
-  MessageCircle, 
-  ArrowRight 
+import {
+  Search,
+  ShoppingCart,
+  Calendar,
+  MessageCircle,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { Button } from "../ui/button";
+import Link from "next/link";
 
 const steps = [
   {
     number: "1",
     icon: <Search className="w-8 h-8" />,
     title: "Søk og oppdag",
-    description: "Bla gjennom hundrevis av tjenester fra profesjonelle stylister i ditt område. Filtrer på kategori, pris, lokasjon og mer.",
+    description:
+      "Bla gjennom hundrevis av tjenester fra profesjonelle stylister i ditt område. Filtrer på kategori, pris, lokasjon og mer.",
     features: [
       "Geografisk søk med radius",
-      "Kategoribasert filtrering", 
+      "Kategoribasert filtrering",
       "Pris- og tilgjengelighetsfiltre",
-      "Rangering etter anmeldelser"
-    ]
+      "Rangering etter anmeldelser",
+    ],
   },
   {
-    number: "2", 
+    number: "2",
     icon: <ShoppingCart className="w-8 h-8" />,
     title: "Legg til i handlekurv",
-    description: "Velg tjenester fra samme stylist og legg dem i handlekurven. Du kan bestille flere tjenester i samme avtale.",
+    description:
+      "Velg tjenester fra samme stylist og legg dem i handlekurven. Du kan bestille flere tjenester i samme avtale.",
     features: [
       "En stylist per bestilling",
-      "Juster antall tjenester", 
+      "Juster antall tjenester",
       "Se totalpris med en gang",
-      "Handlekurv lagres automatisk"
-    ]
+      "Handlekurv lagres automatisk",
+    ],
   },
   {
     number: "3",
-    icon: <Calendar className="w-8 h-8" />, 
+    icon: <Calendar className="w-8 h-8" />,
     title: "Book og betal",
-    description: "Velg ønsket tid og sted for behandlingen. Betal trygt gjennom vår plattform - beløpet trekkes 24 timer før avtalen.",
+    description:
+      "Velg ønsket tid og sted for behandlingen. Betal trygt gjennom vår plattform - beløpet trekkes 24 timer før avtalen.",
     features: [
       "Interaktiv kalender med ledig tid",
       "Velg hjemme hos deg eller hos stylist",
-      "Sikker betaling gjennom Stripe", 
-      "Bekreftelse via e-post og SMS"
-    ]
+      "Sikker betaling gjennom Stripe",
+      "Bekreftelse via e-post og SMS",
+    ],
   },
   {
     number: "4",
     icon: <MessageCircle className="w-8 h-8" />,
-    title: "Chat og nyt",
-    description: "Kommuniser direkt med stylisten din gjennom vår innebygde chat. Del spesielle ønsker, bilder og oppfølgingsspørsmål.",
+    title: "Planlegg med stylisten",
+    description:
+      "Kommuniser direkte med stylisten din gjennom vår innebygde chat. Del spesielle ønsker, bilder og oppfølgingsspørsmål.",
     features: [
       "Sanntidschat med bildeoverføring",
       "Avtaledetaljer og endringer",
       "Automatiske påminnelser",
-      "Anmeldelser og oppfølging"
-    ]
-  }
+      "Anmeldelser og oppfølging",
+    ],
+  },
 ];
 
 export function HowItWorks() {
@@ -78,9 +84,7 @@ export function HowItWorks() {
               {/* Step Number and Icon */}
               <div className="flex-shrink-0 relative">
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center relative">
-                  <div className="text-primary">
-                    {step.icon}
-                  </div>
+                  <div className="text-primary">{step.icon}</div>
                   <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
                     {step.number}
                   </div>
@@ -111,7 +115,10 @@ export function HowItWorks() {
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {step.features.map((feature, featureIndex) => (
-                        <div key={featureIndex} className="flex items-center gap-2 text-sm">
+                        <div
+                          key={featureIndex}
+                          className="flex items-center gap-2 text-sm"
+                        >
                           <div className="w-2 h-2 bg-primary rounded-full flex-shrink-0" />
                           <span>{feature}</span>
                         </div>
@@ -128,16 +135,16 @@ export function HowItWorks() {
       {/* CTA */}
       <BlurFade delay={0.4} inView>
         <div className="text-center pt-8">
-          <p className="text-lg text-muted-foreground mb-6">
+          <h3 className="text-lg text-muted-foreground mb-6 font-fraunces">
             Klar til å prøve? Kom i gang på under 2 minutter!
-          </p>
+          </h3>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Card className="p-1 bg-gradient-to-r from-primary/10 to-primary/5">
-              <button className="w-full px-6 py-3 bg-primary text-primary-foreground rounded-lg font-semibold hover:bg-primary/90 transition-colors">
+            <Button asChild>
+              <Link href="/tjenester">
                 Se alle tjenester
                 <ArrowRight className="inline-block ml-2 w-4 h-4" />
-              </button>
-            </Card>
+              </Link>
+            </Button>
           </div>
         </div>
       </BlurFade>

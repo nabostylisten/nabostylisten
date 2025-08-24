@@ -4,20 +4,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles } from "lucide-react";
 import Link from "next/link";
+import { brandColors } from "@/lib/brand";
 
 export function StylistCTA() {
   return (
     <BlurFade delay={1.0} duration={0.8} inView>
       <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
         <CardContent className="p-12 text-center">
-          <Sparkles className="w-12 h-12 text-primary mx-auto mb-4" />
           <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">
             Er du vår neste stylist?
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             Bli en del av Norges raskest voksende plattform for
             skjønnhetstjenester. Start din egen virksomhet med{" "}
-            <Highlighter action="underline" color="#4a7c4a">
+            <Highlighter
+              action="underline"
+              color={brandColors.dark.secondary}
+              animationDuration={1500}
+            >
               full fleksibilitet
             </Highlighter>{" "}
             og støtte fra oss.

@@ -15,6 +15,7 @@ import { StatsSection } from "@/components/landing/stats-section";
 import { MediaMentions } from "@/components/landing/media-mentions";
 import { FAQPreview } from "@/components/landing/faq-preview";
 import { StylistCTA } from "@/components/landing/stylist-cta";
+import { brandColors } from "@/lib/brand";
 
 async function ServiceFilterSection() {
   const [categoriesResult, stylistsResult] = await Promise.all([
@@ -52,7 +53,11 @@ export default async function Home() {
                 </h1>
                 <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
                   Din lokale markedsplass for{" "}
-                  <Highlighter action="underline" color="#9b8cc8">
+                  <Highlighter
+                    action="underline"
+                    color={brandColors.dark.secondary}
+                    animationDuration={1500}
+                  >
                     skjønnhetstjenester
                   </Highlighter>
                 </p>
@@ -131,7 +136,7 @@ export default async function Home() {
           <MediaMentions />
 
           {/* Stats Section */}
-          <StatsSection />
+          {/* <StatsSection /> */}
 
           {/* FAQ Section */}
           <FAQPreview />

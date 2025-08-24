@@ -38,7 +38,7 @@ export function AboutFounder() {
             {/* Content Section */}
             <div className="lg:w-2/3 p-8 lg:p-12 flex flex-col justify-center">
               <div className="mb-6">
-                <Quote className="w-8 h-8 text-primary mb-4" />
+                <Quote className="w-8 h-8 text-primary dark:text-secondary mb-4" />
                 <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">
                   Om grunnleggeren
                 </h2>

@@ -56,9 +56,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="no" suppressHydrationWarning className="scroll-smooth">
-      <head>
-        <meta name="apple-mobile-web-app-title" content="Nabostylisten" />
-      </head>
       <body
         className={cn(
           ptSerif.variable,

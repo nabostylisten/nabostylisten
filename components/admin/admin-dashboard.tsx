@@ -194,7 +194,7 @@ export default function AdminDashboard() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex w-full items-center justify-center md:justify-start mb-6">
-          <TabsList className="grid grid-cols-3 md:grid-cols-6 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto p-1">
             {tabs.map((tab) => {
               const Icon = tab.icon;
               return (

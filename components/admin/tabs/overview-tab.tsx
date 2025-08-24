@@ -4,29 +4,21 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { TimePeriod } from "@/lib/charts/time-periods";
-import { TimePeriodSelector } from "@/lib/charts/components";
 import ChartCard from "@/components/charts/chart-card";
 import { ChartCardSkeleton } from "@/components/charts/chart-skeletons";
 import {
   useOverviewData,
   useUserGrowthTrends,
-  useBookingVolumeTrends,
-  useRevenueOverview,
 } from "@/hooks/admin/use-admin-data";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
-import { getDateFormatter } from "@/lib/charts/time-periods";
+import UserTrendsStackedAreaChart from "@/components/charts/user-trends/stacked-area-chart";
 import { Badge } from "@/components/ui/badge";
 
 export default function OverviewTab() {
   const [userGrowthPeriod, setUserGrowthPeriod] = useState<TimePeriod>("last_30_days");
-  const [bookingPeriod, setBookingPeriod] = useState<TimePeriod>("last_30_days");
-  const [revenuePeriod, setRevenuePeriod] = useState<TimePeriod>("last_30_days");
 
   const { platformKPIs, recentActivity, isLoading: overviewLoading } = useOverviewData();
   
   const { data: userTrends, isLoading: userTrendsLoading } = useUserGrowthTrends(userGrowthPeriod);
-  const { data: bookingTrends, isLoading: bookingTrendsLoading } = useBookingVolumeTrends(bookingPeriod);
-  const { data: revenueTrends, isLoading: revenueTrendsLoading } = useRevenueOverview(revenuePeriod);
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
@@ -116,58 +108,13 @@ export default function OverviewTab() {
       {/* Charts */}
       <div className="space-y-6">
         {/* User Growth Trends */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div>
-              <CardTitle>Brukervekst</CardTitle>
-              <p className="text-sm text-muted-foreground">Nye registreringer over tid</p>
-            </div>
-            <TimePeriodSelector 
-              value={userGrowthPeriod} 
-              onValueChange={(period) => setUserGrowthPeriod(period)} 
-            />
-          </CardHeader>
-          <CardContent>
-            {userTrendsLoading ? (
-              <div className="h-[300px] w-full animate-pulse rounded-md bg-muted" />
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={userTrends || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="date" 
-                    tickFormatter={getDateFormatter(userGrowthPeriod)}
-                  />
-                  <YAxis />
-                  <Area 
-                    type="monotone" 
-                    dataKey="total" 
-                    stackId="1" 
-                    stroke="#3b82f6" 
-                    fill="#3b82f6" 
-                    fillOpacity={0.6}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="customers" 
-                    stackId="2" 
-                    stroke="#10b981" 
-                    fill="#10b981" 
-                    fillOpacity={0.6}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="stylists" 
-                    stackId="3" 
-                    stroke="#f59e0b" 
-                    fill="#f59e0b" 
-                    fillOpacity={0.6}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            )}
-          </CardContent>
-        </Card>
+        <UserTrendsStackedAreaChart
+          data={userTrends || []}
+          isLoading={userTrendsLoading}
+          onPeriodChange={(period) => setUserGrowthPeriod(period)}
+          currentPeriod={userGrowthPeriod}
+          showControls={true}
+        />
 
         {/* Recent Activity */}
         <Card>

@@ -1,7 +1,14 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent, ChartLegend, ChartLegendContent } from "@/components/ui/chart";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 import { BaseChartProps, TimePeriodSelector } from "@/lib/charts/components";
 import { getDateFormatter, getPeriodLabel } from "@/lib/charts/time-periods";
 import { Users, UserPlus, Star } from "lucide-react";
@@ -23,17 +30,17 @@ interface UserTrendsStackedAreaChartProps extends BaseChartProps {
 const chartConfig = {
   total: {
     label: "Totalt",
-    color: "hsl(var(--chart-1))",
+    color: "var(--chart-1)",
     icon: Users,
   },
   customers: {
     label: "Kunder",
-    color: "hsl(var(--chart-2))",
+    color: "var(--chart-2)",
     icon: UserPlus,
   },
   stylists: {
-    label: "Stylister", 
-    color: "hsl(var(--chart-3))",
+    label: "Stylister",
+    color: "var(--chart-3)",
     icon: Star,
   },
 } satisfies ChartConfig;
@@ -59,7 +66,9 @@ export default function UserTrendsStackedAreaChart({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
             <CardTitle>{title}</CardTitle>
-            <p className="text-sm text-muted-foreground">Nye registreringer over tid</p>
+            <p className="text-sm text-muted-foreground">
+              Nye registreringer over tid
+            </p>
           </div>
         </CardHeader>
         <CardContent>
@@ -75,12 +84,14 @@ export default function UserTrendsStackedAreaChart({
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div>
             <CardTitle>{title}</CardTitle>
-            <p className="text-sm text-muted-foreground">Nye registreringer over tid</p>
+            <p className="text-sm text-muted-foreground">
+              Nye registreringer over tid
+            </p>
           </div>
           {showControls && (
-            <TimePeriodSelector 
-              value={timeRange} 
-              onValueChange={handlePeriodChange} 
+            <TimePeriodSelector
+              value={timeRange}
+              onValueChange={handlePeriodChange}
             />
           )}
         </CardHeader>
@@ -89,7 +100,7 @@ export default function UserTrendsStackedAreaChart({
             <div className="text-center">
               <Users className="mx-auto mb-2 h-12 w-12" />
               <p className="mb-2">Ingen data tilgjengelig for denne perioden</p>
-              <p className="text-sm">Pr�v � velge en annen tidsperiode</p>
+              <p className="text-sm">Prøv å velge en annen tidsperiode</p>
             </div>
           </div>
         </CardContent>
@@ -107,9 +118,9 @@ export default function UserTrendsStackedAreaChart({
           </p>
         </div>
         {showControls && (
-          <TimePeriodSelector 
-            value={timeRange} 
-            onValueChange={handlePeriodChange} 
+          <TimePeriodSelector
+            value={timeRange}
+            onValueChange={handlePeriodChange}
           />
         )}
       </CardHeader>
@@ -133,21 +144,17 @@ export default function UserTrendsStackedAreaChart({
               tickMargin={8}
               tickFormatter={getDateFormatter(timeRange)}
             />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-            />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
             <ChartTooltip
               cursor={false}
               content={
-                <ChartTooltipContent 
+                <ChartTooltipContent
                   indicator="dot"
                   labelFormatter={(value: string) => {
                     const date = new Date(value);
                     return date.toLocaleDateString("nb-NO", {
                       weekday: "long",
-                      month: "long", 
+                      month: "long",
                       day: "numeric",
                       year: "numeric",
                     });

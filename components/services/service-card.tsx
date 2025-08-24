@@ -82,19 +82,12 @@ export function ServiceCard({ service }: ServiceCardProps) {
   const categories =
     service.service_service_categories?.map((ssc) => ssc.service_categories) ||
     [];
-  const stylistDetails = service.profiles?.stylist_details;
 
   // Fetch stylist rating
-  const { data: rating } = useStylistRating(service.profiles?.id);
+  const { data: rating, isLoading: isRatingLoading } = useStylistRating(
+    service.profiles?.id
+  );
 
-  // Format price from øre to NOK
-  const formatPrice = (priceInOre: number) => {
-    return new Intl.NumberFormat("no-NO", {
-      style: "currency",
-      currency: "NOK",
-      minimumFractionDigits: 0,
-    }).format(priceInOre / 100);
-  };
 
   // Format duration
   const formatDuration = (minutes: number) => {
@@ -199,13 +192,12 @@ export function ServiceCard({ service }: ServiceCardProps) {
                 <div className="text-sm text-muted-foreground">
                   av {service.profiles.full_name}
                 </div>
-                {rating && rating.count > 0 && (
-                  <RatingDisplay
-                    average={rating.average}
-                    count={rating.count}
-                    size="sm"
-                  />
-                )}
+                <RatingDisplay
+                  average={rating?.average || 0}
+                  count={rating?.count || 0}
+                  size="sm"
+                  isLoading={isRatingLoading}
+                />
               </div>
             )}
             <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">

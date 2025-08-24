@@ -13,6 +13,7 @@ import {
   Scissors,
   Star,
 } from "lucide-react";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 interface ProfileSidebarProps {
   profileId: string;
@@ -93,28 +94,29 @@ export const ProfileSidebar = ({
     <aside className={cn("w-64 bg-background p-2", className)}>
       <div className="flex flex-col gap-4">
         <nav className="flex flex-col gap-2">
-          {sidebarItems.map((item) => {
+          {sidebarItems.map((item, index) => {
             const href = `/profiler/${profileId}${item.href}`;
             const isActive = pathname === href;
             const Icon = item.icon;
 
             return (
-              <Link
-                key={item.href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
-                  isActive && "bg-accent text-accent-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                <div className="flex flex-col">
-                  <span className="font-medium">{item.title}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {item.description}
-                  </span>
-                </div>
-              </Link>
+              <BlurFade key={item.href} delay={index * 0.05} duration={0.5}>
+                <Link
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-accent hover:text-accent-foreground",
+                    isActive && "bg-accent text-accent-foreground"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <div className="flex flex-col">
+                    <span className="font-medium">{item.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {item.description}
+                    </span>
+                  </div>
+                </Link>
+              </BlurFade>
             );
           })}
         </nav>

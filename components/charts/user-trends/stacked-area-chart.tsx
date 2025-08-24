@@ -118,16 +118,10 @@ export default function UserTrendsStackedAreaChart({
         )}
       </CardHeader>
       <CardContent>
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={chartConfig} className="aspect-auto h-[350px] w-full">
           <AreaChart
             data={data}
-            margin={{
-              left: 12,
-              right: 12,
-              top: 12,
-              bottom: 12,
-            }}
-            height={400}
+            margin={{ top: 10, right: 30, left: 20, bottom: 0 }}
           >
             <CartesianGrid vertical={false} strokeDasharray="3 3" />
             <XAxis
@@ -137,7 +131,12 @@ export default function UserTrendsStackedAreaChart({
               tickMargin={8}
               tickFormatter={getDateFormatter(timeRange)}
             />
-            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+            <YAxis
+              tickLine={false}
+              axisLine={false}
+              tickMargin={8}
+              width={60}
+            />
             <ChartTooltip
               cursor={false}
               content={
@@ -196,16 +195,16 @@ export default function UserTrendsStackedAreaChart({
             </defs>
             <Area
               dataKey="customers"
-              type="natural"
-              fill="url(#fillCustomers)"
+              type="basis"
+              fill="var(--color-customers)"
               fillOpacity={0.4}
               stroke="var(--color-customers)"
               stackId="a"
             />
             <Area
               dataKey="stylists"
-              type="natural"
-              fill="url(#fillStylists)"
+              type="basis"
+              fill="var(--color-stylists)"
               fillOpacity={0.4}
               stroke="var(--color-stylists)"
               stackId="a"

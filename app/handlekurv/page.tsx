@@ -22,6 +22,7 @@ import { useState, useEffect } from "react";
 import { AuthDialog } from "@/components/auth-dialog";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default function CartPage() {
   const router = useRouter();
@@ -70,27 +71,31 @@ export default function CartPage() {
     return (
       <div className="min-h-screen pt-20 px-6 lg:px-12">
         <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" onClick={() => router.back()}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Tilbake
-            </Button>
-          </div>
-
-          <Card className="text-center py-12">
-            <CardContent>
-              <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h2 className="text-2xl font-semibold mb-2">Handlekurven er tom</h2>
-              <p className="text-muted-foreground mb-6">
-                Du har ingen tjenester i handlekurven din for øyeblikket.
-              </p>
-              <Button asChild>
-                <Link href="/tjenester">
-                  Utforsk tjenester
-                </Link>
+          <BlurFade duration={0.5} inView>
+            <div className="flex items-center gap-4 mb-8">
+              <Button variant="ghost" onClick={() => router.back()}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Tilbake
               </Button>
-            </CardContent>
-          </Card>
+            </div>
+          </BlurFade>
+
+          <BlurFade delay={0.1} duration={0.5} inView>
+            <Card className="text-center py-12">
+              <CardContent>
+                <ShoppingCart className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                <h2 className="text-2xl font-semibold mb-2">Handlekurven er tom</h2>
+                <p className="text-muted-foreground mb-6">
+                  Du har ingen tjenester i handlekurven din for øyeblikket.
+                </p>
+                <Button asChild>
+                  <Link href="/tjenester">
+                    Utforsk tjenester
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </BlurFade>
         </div>
       </div>
     );
@@ -116,18 +121,21 @@ export default function CartPage() {
   return (
     <div className="min-h-screen pt-20 px-6 lg:px-12">
       <div className="max-w-4xl mx-auto">
-        <div className="flex items-center gap-4 mb-8">
-          <Button variant="ghost" onClick={() => router.back()}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Tilbake
-          </Button>
-          <h1 className="text-3xl font-bold">Handlekurv</h1>
-        </div>
+        <BlurFade duration={0.5} inView>
+          <div className="flex items-center gap-4 mb-8">
+            <Button variant="ghost" onClick={() => router.back()}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Tilbake
+            </Button>
+            <h1 className="text-3xl font-bold">Handlekurv</h1>
+          </div>
+        </BlurFade>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2">
-            <Card>
+            <BlurFade delay={0.1} duration={0.5} inView>
+              <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
@@ -234,12 +242,14 @@ export default function CartPage() {
                   </div>
                 ))}
               </CardContent>
-            </Card>
+              </Card>
+            </BlurFade>
           </div>
 
           {/* Order Summary */}
           <div>
-            <Card>
+            <BlurFade delay={0.15} duration={0.5} inView>
+              <Card>
               <CardHeader>
                 <CardTitle>Sammendrag</CardTitle>
               </CardHeader>
@@ -275,7 +285,8 @@ export default function CartPage() {
                   </Button>
                 </div>
               </CardContent>
-            </Card>
+              </Card>
+            </BlurFade>
           </div>
         </div>
 

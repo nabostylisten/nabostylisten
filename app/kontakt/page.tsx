@@ -78,8 +78,11 @@ const KontaktPage = () => {
                 mulig.
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <CardContent className="flex flex-col h-[650px]">
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col h-full gap-6"
+              >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="name">Navn *</Label>
@@ -121,7 +124,7 @@ const KontaktPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2 flex-1 flex flex-col">
                   <Label htmlFor="message">Melding *</Label>
                   <Textarea
                     id="message"
@@ -130,7 +133,7 @@ const KontaktPage = () => {
                       handleInputChange("message", e.target.value)
                     }
                     placeholder="Skriv din melding her..."
-                    rows={6}
+                    className="flex-1 resize-none"
                     required
                   />
                 </div>

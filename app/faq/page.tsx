@@ -19,121 +19,17 @@ import {
   Search,
   ChevronDown,
   MessageCircle,
-  Users,
-  CreditCard,
-  Calendar,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
+import { faqs, faqCategories, filterFAQs } from "@/lib/faq";
 
 export default function FAQPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [openItems, setOpenItems] = useState<string[]>([]);
-
-  const categories = [
-    { id: "all", name: "Alle", icon: null },
-    { id: "booking", name: "Booking", icon: <Calendar className="w-4 h-4" /> },
-    {
-      id: "payment",
-      name: "Betaling",
-      icon: <CreditCard className="w-4 h-4" />,
-    },
-    {
-      id: "stylist",
-      name: "For stylister",
-      icon: <Users className="w-4 h-4" />,
-    },
-    {
-      id: "general",
-      name: "Generelt",
-      icon: <MessageCircle className="w-4 h-4" />,
-    },
-  ];
-
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const faqs = [
-    {
-      id: "1",
-      category: "booking",
-      question: "Hvordan booker jeg en stylist?",
-      answer:
-        "Du kan enkelt booke en stylist ved å søke etter ønsket tjeneste, velge en stylist som passer deg, og følge booking-prosessen. Du trenger bare å oppgi ønsket tid, sted og eventuelle spesielle ønsker.",
-    },
-    {
-      id: "2",
-      category: "booking",
-      question: "Kan jeg endre eller avbestille min booking?",
-      answer:
-        "Ja, du kan endre eller avbestille din booking helt gratis frem til 24 timer før avtalt tid. Ved senere avbestilling kan det påløpe gebyr. Du kan administrere dine bookinger i 'Min side'.",
-    },
-    {
-      id: "3",
-      category: "payment",
-      question: "Når blir jeg belastet for tjenesten?",
-      answer:
-        "Betalingen trekkes automatisk 24 timer før avtalt tid. Dette sikrer at begge parter er forpliktet til avtalen og reduserer antall no-shows.",
-    },
-    {
-      id: "4",
-      category: "payment",
-      question: "Hvilke betalingsmetoder godtar dere?",
-      answer:
-        "Vi godtar alle vanlige betalingskort (Visa, Mastercard, American Express) samt Vipps. All betaling håndteres sikkert gjennom Stripe.",
-    },
-    {
-      id: "5",
-      category: "general",
-      question: "Er stylistene forsikret?",
-      answer:
-        "Ja, alle våre stylister må ha gyldig ansvarsforsikring før de kan tilby tjenester på plattformen. Vi verifiserer også deres utdanning og erfaring.",
-    },
-    {
-      id: "6",
-      category: "general",
-      question: "Hva skjer hvis jeg ikke er fornøyd med tjenesten?",
-      answer:
-        "Vi tar alle klager på alvor. Kontakt vår kundeservice innen 48 timer, så hjelper vi deg med å finne en løsning. Dette kan inkludere refusjon eller ny behandling.",
-    },
-    {
-      id: "7",
-      category: "stylist",
-      question: "Hvordan blir jeg stylist på plattformen?",
-      answer:
-        "Du kan søke om å bli stylist ved å klikke på 'Bli stylist' og fylle ut søknadsskjemaet. Vi krever relevant utdanning, erfaring og gyldig forsikring.",
-    },
-    {
-      id: "8",
-      category: "stylist",
-      question: "Hvor mye tjener stylister på plattformen?",
-      answer:
-        "Stylister setter sine egne priser og beholder 85% av inntektene. Vi trekker 15% i plattformgebyr som dekker betalingsbehandling, markedsføring og support.",
-    },
-    {
-      id: "9",
-      category: "booking",
-      question: "Kan stylisten komme hjem til meg?",
-      answer:
-        "Ja, mange av våre stylister tilbyr hjemmebesøk. Du kan filtrere søkeresultatene for å se hvilke stylister som kommer hjem til deg i ditt område.",
-    },
-    {
-      id: "10",
-      category: "general",
-      question: "Hvordan fungerer ratingsystemet?",
-      answer:
-        "Etter hver fullførte tjeneste kan både kunde og stylist gi hverandre rating og anmeldelse. Dette hjelper andre brukere med å ta informerte valg og opprettholder høy kvalitet på plattformen.",
-    },
-  ];
-
-  const filteredFaqs = faqs.filter((faq) => {
-    const matchesCategory =
-      selectedCategory === "all" || faq.category === selectedCategory;
-    const matchesSearch =
-      searchTerm === "" ||
-      faq.question.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      faq.answer.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredFaqs = filterFAQs({ faqs, category: selectedCategory, searchTerm });
 
   const toggleItem = (id: string) => {
     setOpenItems((prev) =>
@@ -168,7 +64,7 @@ export default function FAQPage() {
 
           {/* Categories */}
           <div className="flex flex-wrap justify-center gap-2 mb-12">
-            {categories.map((category) => (
+            {faqCategories.map((category) => (
               <Button
                 key={category.id}
                 variant={
@@ -217,7 +113,7 @@ export default function FAQPage() {
                             </CardTitle>
                             <Badge variant="outline" className="text-xs">
                               {
-                                categories.find(
+                                faqCategories.find(
                                   (cat) => cat.id === faq.category
                                 )?.name
                               }

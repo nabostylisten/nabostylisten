@@ -144,6 +144,44 @@ export default function BliStylistPage() {
           </div>
         )}
 
+        {/* Pricing Section - TODO */}
+        <div className="py-16">
+          <div className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Vår forretningsmodell
+            </h2>
+            <Card className="border-dashed">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="text-2xl">💼</span>
+                  Prising kommer snart
+                </CardTitle>
+                <CardDescription>
+                  Vi jobber med å finne den beste prismodellen for både stylister og kunder
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-muted-foreground">
+                  Nabostylisten tar en liten provisjon på 15% av hver booking. Dette dekker:
+                </p>
+                <ul className="list-disc list-inside space-y-2 text-muted-foreground">
+                  <li>Sikker betalingsbehandling gjennom Stripe</li>
+                  <li>Markedsføring og kundeakkvisisjon</li>
+                  <li>Teknisk support og plattformvedlikehold</li>
+                  <li>Booking- og kalendersystem</li>
+                  <li>Kundeservice og tvistehåndtering</li>
+                </ul>
+                <div className="pt-4 border-t">
+                  <p className="text-sm text-muted-foreground italic">
+                    Detaljert prisinformasjon og betalingsvilkår vil bli publisert snart.
+                    Følg med for oppdateringer!
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* CTA Section */}
         {!showApplicationForm && (
           <div className="py-16 text-center">

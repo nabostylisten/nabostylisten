@@ -8,6 +8,7 @@ import { Marquee } from "@/components/magicui/marquee";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Star } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicUrlFromPath } from "@/lib/supabase/storage";
 
@@ -38,73 +39,75 @@ async function PopularServicesContent() {
     const category = service.service_service_categories?.[0]?.service_categories;
 
     return (
-      <figure className="relative h-full w-[350px] cursor-pointer overflow-hidden rounded-xl border p-4 border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05] dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15] transition-colors">
-        {imageUrl && (
-          <div className="relative h-48 w-full mb-4">
-            <Image
-              src={imageUrl}
-              alt={service.title}
-              fill
-              className="object-cover rounded-lg"
-            />
-          </div>
-        )}
-        <div className="space-y-3">
-          <div className="flex justify-between items-start">
-            <div className="flex-1">
-              <h3 className="text-lg font-semibold line-clamp-1">
-                {service.title}
-              </h3>
-              {category && (
-                <Badge variant="outline" className="mt-1 text-xs">
-                  {category.name}
-                </Badge>
-              )}
+      <Link href={`/tjenester/${service.id}`}>
+        <figure className="relative h-full w-[350px] cursor-pointer overflow-hidden rounded-xl border p-4 border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05] dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15] transition-colors">
+          {imageUrl && (
+            <div className="relative h-48 w-full mb-4">
+              <Image
+                src={imageUrl}
+                alt={service.title}
+                fill
+                className="object-cover rounded-lg"
+              />
             </div>
-            <div className="text-right">
-              <p className="font-bold text-lg">{service.price} kr</p>
-              <p className="text-xs text-muted-foreground">
-                {service.duration_minutes} min
+          )}
+          <div className="space-y-3">
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold line-clamp-1">
+                  {service.title}
+                </h3>
+                {category && (
+                  <Badge variant="outline" className="mt-1 text-xs">
+                    {category.name}
+                  </Badge>
+                )}
+              </div>
+              <div className="text-right">
+                <p className="font-bold text-lg">{service.price} kr</p>
+                <p className="text-xs text-muted-foreground">
+                  {service.duration_minutes} min
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-1">
+                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                <span className="font-medium">
+                  {service.average_rating > 0
+                    ? service.average_rating.toFixed(1)
+                    : "Ny"}
+                </span>
+                {service.total_reviews > 0 && (
+                  <span className="text-muted-foreground">
+                    ({service.total_reviews})
+                  </span>
+                )}
+              </div>
+              <p className="text-muted-foreground">
+                {service.profiles?.full_name}
               </p>
             </div>
           </div>
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-1">
-              <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-              <span className="font-medium">
-                {service.average_rating > 0
-                  ? service.average_rating.toFixed(1)
-                  : "Ny"}
-              </span>
-              {service.total_reviews > 0 && (
-                <span className="text-muted-foreground">
-                  ({service.total_reviews})
-                </span>
-              )}
-            </div>
-            <p className="text-muted-foreground">
-              {service.profiles?.full_name}
-            </p>
-          </div>
-        </div>
-      </figure>
+        </figure>
+      </Link>
     );
   };
 
   return (
-    <div className="relative flex w-full flex-col items-center justify-center overflow-hidden">
-      <Marquee pauseOnHover className="[--duration:20s]">
+    <div className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden py-4">
+      <Marquee pauseOnHover className="[--duration:20s] [--gap:1rem]">
         {firstRow.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}
       </Marquee>
-      <Marquee reverse pauseOnHover className="[--duration:20s]">
+      <Marquee reverse pauseOnHover className="[--duration:20s] [--gap:1rem]">
         {secondRow.map((service) => (
           <ServiceCard key={service.id} service={service} />
         ))}
       </Marquee>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-background"></div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/4 bg-gradient-to-l from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background"></div>
     </div>
   );
 }

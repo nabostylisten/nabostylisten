@@ -37,13 +37,13 @@ export function MediaMentions() {
         </div>
         <div className="flex justify-center items-center gap-6 lg:gap-8 flex-wrap">
           {mediaLogos.map((logo, index) => (
-            <Card key={logo.alt} className="p-4 bg-primary/10">
+            <Card key={logo.alt} className="p-6 bg-primary/10 w-32 h-20 flex items-center justify-center">
               <Image
                 src={logo.src}
                 alt={logo.alt}
                 width={logo.width}
                 height={logo.height}
-                className="opacity-80 hover:opacity-100 transition-opacity dark:invert"
+                className="opacity-80 hover:opacity-100 transition-opacity dark:invert max-w-full max-h-full object-contain"
               />
             </Card>
           ))}

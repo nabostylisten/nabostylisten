@@ -12,13 +12,6 @@ import {
   Section,
   Text,
 } from "@react-email/components";
-import {
-  baseStyles,
-  sectionStyles,
-  textStyles,
-  buttonStyles,
-  colors,
-} from "./utils/styles";
 import { baseUrl } from "./utils";
 import { NotificationSettings } from "../components/notification-settings";
 
@@ -52,14 +45,6 @@ export const NewReviewNotificationEmail = ({
   averageRating = 4.8,
 }: NewReviewNotificationEmailProps) => {
   const previewText = `Ny ${rating}-stjerner anmeldelse fra ${customerName}`;
-
-  const ratingColors = {
-    5: { bg: "#4a7c4a", text: "#ffffff" }, // --accent-foreground (excellent)
-    4: { bg: "#e8f5e8", text: "#4a7c4a" }, // --accent (good)
-    3: { bg: "#fee7dc", text: "#c2724a" }, // --secondary (okay)
-    2: { bg: "#fff3cd", text: "#856404" }, // warning yellow
-    1: { bg: "#ff3333", text: "#ffffff" }, // --destructive (poor)
-  };
 
   const ratingLabels = {
     5: "Utmerket",
@@ -158,7 +143,7 @@ export const NewReviewNotificationEmail = ({
 
           {/* Tips Section */}
           <Section style={tipsSection}>
-            <Text style={tipsHeader}>💡 Tips for å håndtere anmeldelser:</Text>
+            <Text style={tipsHeader}>Tips for å håndtere anmeldelser:</Text>
             <Text style={tipsText}>
               • <strong>Takk kunden</strong> - Vis takknemlighet for
               tilbakemelding
@@ -258,22 +243,6 @@ const logo = {
   margin: "0 auto",
 };
 
-const ratingBanner = {
-  borderRadius: "8px",
-  padding: "12px 20px",
-  textAlign: "center" as const,
-  marginBottom: "24px",
-  border: "2px solid",
-};
-
-const ratingText = {
-  fontSize: "14px",
-  fontWeight: "600",
-  margin: "0",
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.5px",
-};
-
 const heading = {
   fontSize: "28px",
   letterSpacing: "-0.5px",
@@ -306,12 +275,6 @@ const starsContainer = {
   justifyContent: "center",
   gap: "16px",
   marginBottom: "12px",
-};
-
-const starsDisplay = {
-  fontSize: "32px",
-  margin: "0",
-  letterSpacing: "4px",
 };
 
 const ratingNumber = {
@@ -465,20 +428,6 @@ const button = {
   boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
 };
 
-const responseButton = {
-  backgroundColor: "#4a7c4a", // --accent-foreground
-  borderRadius: "8px",
-  color: "#ffffff",
-  fontSize: "14px",
-  fontWeight: "600",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "inline-block",
-  padding: "12px 20px",
-  margin: "8px 4px",
-  boxShadow: "0 2px 4px rgba(74, 124, 74, 0.3)",
-};
-
 const tipsSection = {
   margin: "32px 0",
   padding: "20px",
@@ -545,27 +494,6 @@ const improvementText = {
   lineHeight: "1.6",
   color: "#c2724a", // --secondary-foreground
   margin: "0",
-};
-
-const settingsSection = {
-  margin: "32px 0",
-  padding: "16px",
-  backgroundColor: "rgba(155, 140, 200, 0.05)",
-  borderRadius: "8px",
-  textAlign: "center" as const,
-};
-
-const settingsText = {
-  fontSize: "12px",
-  color: "#6b6682", // --muted-foreground
-  margin: "0 0 8px",
-};
-
-const settingsLink = {
-  fontSize: "12px",
-  color: "#9b8cc8", // --primary
-  textDecoration: "none",
-  fontWeight: "500",
 };
 
 const hr = {

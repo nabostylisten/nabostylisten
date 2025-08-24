@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { subscribeToNewsletter, initializeBrevoClient, addContactToBrevo } from "@/lib/newsletter";
 import type { Database } from "@/types/database.types";
 
@@ -205,6 +206,36 @@ export async function shouldReceiveNotification(
     return Boolean(preferences[notificationType]);
   } catch (error) {
     console.error("Error checking notification preference:", error);
+    return false; // Default to not sending notification on error
+  }
+}
+
+/**
+ * Server-side function to check notification preferences using service client
+ * This bypasses RLS policies and should only be used in server actions for 
+ * cross-user notification checks (e.g., checking stylist preferences when customer creates review)
+ */
+export async function shouldReceiveNotificationServerSide(
+  userId: string,
+  notificationType: keyof UserPreferences,
+): Promise<boolean> {
+  try {
+    const serviceClient = createServiceClient();
+    
+    const { data: preferences, error } = await serviceClient
+      .from("user_preferences")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (error || !preferences) {
+      console.error(`Failed to fetch preferences for user ${userId}:`, error);
+      return false;
+    }
+
+    return Boolean(preferences[notificationType]);
+  } catch (error) {
+    console.error("Error checking notification preference (server-side):", error);
     return false; // Default to not sending notification on error
   }
 }

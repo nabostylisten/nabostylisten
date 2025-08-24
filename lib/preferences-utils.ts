@@ -1,6 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 
+/**
+ * IMPORTANT: This file is runtime-agnostic and should remain so.
+ * 
+ * - All functions in this file should accept a SupabaseClient as a parameter
+ * - Do NOT import server-only modules (createServiceClient, server actions, etc.)
+ * - For server-side operations that need to bypass RLS (like checking another user's preferences),
+ *   use the server-side functions in @/server/preferences.actions.ts instead
+ * - This keeps the utilities usable in both client and server environments
+ */
+
 type UserPreferences = Database["public"]["Tables"]["user_preferences"]["Row"];
 
 /**
@@ -141,7 +151,7 @@ export async function shouldReceiveNotification(
     | 'chat.messages'
     | 'stylist.newBookingRequests'
     | 'stylist.reviewNotifications'
-    | 'stylist.paymentNotifications'
+   | 'stylist.paymentNotifications'
     | 'application.statusUpdates'
 ): Promise<boolean> {
   const preferences = await getUserNotificationPreferences(supabase, profileId);

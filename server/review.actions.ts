@@ -2,11 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { DatabaseTables, ReviewFilters } from "@/types";
-import { shouldReceiveNotification } from "@/lib/preferences-utils";
+import { shouldReceiveNotificationServerSide } from "@/server/preferences.actions";
 import { sendEmail } from "@/lib/resend-utils";
 import { NewReviewNotificationEmail } from "@/transactional/emails/new-review-notification";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
+import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 
 export async function getReview(id: string) {
     const supabase = await createClient();
@@ -63,6 +64,8 @@ export async function createReview(
 
     const result = await supabase.from("reviews").insert(reviewData).select().single();
 
+    console.log({result});
+
     if (result.error || !result.data) {
         return result;
     }
@@ -70,11 +73,12 @@ export async function createReview(
     // Send email notification to stylist if they want review notifications
     try {
         // Check if stylist wants review notifications
-        const canSendNotification = await shouldReceiveNotification(
-            supabase,
+        const canSendNotification = await shouldReceiveNotificationServerSide(
             booking.stylist_id,
-            "stylist.reviewNotifications"
+            "review_notifications"
         );
+
+        console.log("canSendNotification", canSendNotification);
 
         if (canSendNotification) {
             // Get additional data for email
@@ -84,7 +88,6 @@ export async function createReview(
                     *,
                     booking_services(
                         services(
-                            name,
                             title
                         )
                     ),
@@ -100,6 +103,8 @@ export async function createReview(
                 `)
                 .eq("id", review.booking_id)
                 .single();
+
+            console.log({fullBookingData});
 
             if (fullBookingData?.stylist?.email) {
                 // Get stylist's review statistics
@@ -118,15 +123,15 @@ export async function createReview(
 
                 // Get service name
                 const serviceName = fullBookingData.booking_services
-                    ?.map(bs => bs.services?.title || bs.services?.name)
-                    .filter(Boolean)[0] || "Skjønnhetstjeneste";
+                    ?.map(bs => bs.services?.title)
+                    .filter(Boolean)[0] || 'Tjeneste';
 
                 // Send notification email
                 const { error: reviewEmailError } = await sendEmail({
                     to: [fullBookingData.stylist.email],
                     subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
                     react: NewReviewNotificationEmail({
-                        logoUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo-email.png`,
+                        logoUrl: getNabostylistenLogoUrl(),
                         stylistProfileId: booking.stylist_id,
                         stylistName: fullBookingData.stylist.full_name || "Stylist",
                         customerName: fullBookingData.customer?.full_name || "Kunde",
@@ -534,10 +539,9 @@ export async function upsertReview(
 
         // Send email notification to stylist if they want review notifications
         try {
-            const canSendNotification = await shouldReceiveNotification(
-                supabase,
+            const canSendNotification = await shouldReceiveNotificationServerSide(
                 booking.stylist_id,
-                "stylist.reviewNotifications"
+                "review_notifications"
             );
 
             if (canSendNotification) {
@@ -548,7 +552,6 @@ export async function upsertReview(
                         *,
                         booking_services(
                             services(
-                                name,
                                 title
                             )
                         ),
@@ -582,7 +585,7 @@ export async function upsertReview(
 
                     // Get service name
                     const serviceName = fullBookingData.booking_services
-                        ?.map(bs => bs.services?.title || bs.services?.name)
+                        ?.map(bs => bs.services?.title)
                         .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
                     // Send notification email

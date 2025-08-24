@@ -98,29 +98,35 @@ The user preferences system provides comprehensive control over how users receiv
 
 ## Business Rules and Logic
 
-### Default Preference Settings
+### Default Preference Settings ✅ IMPLEMENTED
 
-#### New Customers
+#### New Customers ✅ IMPLEMENTED
 
-- Booking notifications: **Enabled** (confirmations, reminders, cancellations)
-- Chat messages: **Enabled**
-- Newsletter: **Disabled** (explicit opt-in required)
-- Marketing emails: **Enabled** (with easy unsubscribe)
-- Security alerts: **Enabled** (always on for safety)
+- **✅ Booking notifications: Enabled** (confirmations, reminders, cancellations)
+- **✅ Chat messages: Enabled**
+- **✅ Newsletter: Enabled** (with immediate Brevo sync)
+- **✅ Marketing emails: Enabled** (with easy unsubscribe via preferences)
+- **✅ Email delivery: Enabled** (master switch for all email notifications)
+- **SMS delivery: Disabled** (future implementation)
+- **Push notifications: Disabled** (future implementation)
 
-#### New Stylists
+#### New Stylists ✅ IMPLEMENTED
 
-- All customer preferences: **Enabled**
-- Business notifications: **Enabled** (bookings, reviews, payments)
-- System updates: **Disabled** (to reduce noise)
-- Professional communications: **Enabled**
+- **✅ All customer preferences: Enabled**
+- **✅ Business notifications: Enabled** (bookings, reviews, payments)
+- **✅ Application status updates: Enabled** (for pending applicants)
+- **✅ Professional communications: Enabled**
 
-#### Administrators
+#### Administrators ✅ IMPLEMENTED
 
-- System notifications: **Enabled**
-- Security monitoring: **Enabled**
-- All operational alerts: **Enabled**
-- Marketing preferences: **User choice**
+- **✅ All notification types: Enabled** by default
+- **✅ Same preference structure** as other users (no special handling)
+- **✅ Can customize** all notification preferences
+
+**Technical Implementation:**
+- Default values defined in database schema and SQL `handle_new_user()` function
+- All boolean preferences default to `true` except newsletter, SMS, and push notifications
+- Consistent defaults across all user roles for simplicity
 
 ### Permission and Access Control
 
@@ -131,47 +137,84 @@ The user preferences system provides comprehensive control over how users receiv
 
 ### Integration Requirements
 
-#### Newsletter System (Brevo)
+#### Newsletter System (Brevo) ✅ IMPLEMENTED
 
-- **TODO: IMPLEMENTATION REQUIRED** - The following Brevo integrations need to be implemented:
-  - **Bidirectional Sync**: Newsletter preference changes update Brevo subscription
-  - **Segmentation**: User data flows to marketing automation
-  - **Compliance**: Unsubscribe links honor platform preferences
-  - **Attribution**: Track subscription source and modification history
-  - **Marketing Email Preferences**: promotional_sms and marketing_emails need full Brevo integration
-  - **Newsletter Subscription Flow**: Complete end-to-end newsletter signup and management
+- **✅ Bidirectional Sync**: Newsletter preference changes automatically update Brevo subscription
+- **✅ Automatic Signup**: New users are automatically subscribed to newsletter if preferences allow
+- **✅ Preference Integration**: Newsletter subscription respects `newsletter_subscribed` and `email_delivery` preferences
+- **✅ Unsubscribe Handling**: Users are removed from Brevo when they disable newsletter preference
+- **✅ Marketing Email Management**: Separate CRUD operations for marketing email subscriptions
+- **✅ Attribution Tracking**: Contact attributes track subscription source and timestamps
+- **✅ Error Resilience**: Brevo API failures don't break preference updates
+- **✅ Full Integration**: Complete end-to-end newsletter and marketing email management
+
+**Technical Implementation:**
+- Automatic subscription during user signup via `subscribeUserToNewsletterAfterSignup()`
+- Real-time preference sync in `updateUserPreferences()` function
+- Separate Brevo contact management for newsletter vs marketing emails
+- Contact attributes: `SOURCE`, `SUBSCRIBED_AT`, `MARKETING_EMAILS`, `MARKETING_SUBSCRIBED_AT`
 
 #### Notification Delivery
 
-- **Preference Checking**: All notification systems query preferences before sending
-- **Fallback Logic**: Critical security notifications bypass user preferences
-- **Delivery Confirmation**: Track successful notification delivery
-- **Bounce Handling**: Update preferences based on delivery failures
+- **✅ Runtime-Agnostic Preferences**: Universal preference checking utility (`lib/preferences-utils.ts`)
+- **✅ Structured Preference Access**: Type-safe preference checking with `getUserNotificationPreferences()`
+- **✅ Batch Operations**: Efficient multi-preference checking with `batchCheckNotificationPreferences()`
+- **✅ Convenience Functions**: Simple boolean checks with `shouldReceiveNotification()`
+- **Fallback Logic**: Critical security notifications bypass user preferences (TODO: Implementation needed)
+- **Delivery Confirmation**: Track successful notification delivery (TODO: Implementation needed)
+- **Bounce Handling**: Update preferences based on delivery failures (TODO: Implementation needed)
+
+**Technical Implementation:**
+- Runtime-agnostic design works in both client and server environments
+- Structured preference objects with logical AND operations (`specific_preference && delivery_preference`)
+- Comprehensive TypeScript types for all notification categories
+- Error handling with graceful fallbacks to safe defaults
 
 ## User Workflows
 
 ### Customer Preference Management
 
-#### Initial Setup (New User)
+#### Initial Setup (New User) ✅ IMPLEMENTED
 
-1. User completes registration process
-2. System creates default preferences based on role
-3. Optional onboarding tour highlights key preference categories
-4. User can modify preferences immediately or later via profile
+1. **✅ User completes registration process** - Standard auth flow with email/OTP or password
+2. **✅ System creates default preferences based on role** - `handle_new_user()` SQL function automatically inserts preferences
+3. **✅ Automatic newsletter subscription** - Respects `newsletter_subscribed` preference during signup
+4. **✅ Seamless preference management** - Users can modify preferences via profile → "Preferanser" page
+5. Optional onboarding tour highlights key preference categories (TODO: Implementation needed)
 
-#### Ongoing Management
+**Technical Implementation:**
+- `handle_new_user()` SQL trigger automatically creates `user_preferences` record
+- Newsletter subscription happens after OTP verification but before redirect
+- Error handling ensures signup succeeds even if newsletter subscription fails
 
-1. Access preferences via profile menu → "Preferanser"
-2. Browse categorized notification options
-3. Toggle specific notification types with immediate saving
-4. Receive confirmation of changes via toast notification
+#### Ongoing Management ✅ IMPLEMENTED
 
-#### Marketing Opt-In Journey
+1. **✅ Access preferences** via profile menu → "Preferanser"
+2. **✅ Browse categorized notification options** - Role-based sections shown/hidden automatically
+3. **✅ Toggle specific notification types with immediate saving** - Auto-save with 100ms debounce
+4. **✅ Receive confirmation of changes** via toast notification
+5. **✅ Real-time Brevo sync** - Newsletter and marketing email preferences update external systems
 
-1. User sees newsletter signup during registration (optional)
-2. Periodic gentle prompts for newsletter subscription
-3. One-click subscribe/unsubscribe from preference panel
-4. Transparent display of current subscription status
+**Technical Implementation:**
+- React Hook Form with auto-submit on field changes
+- TanStack Query for optimistic updates and error handling
+- Role-based UI filtering showing only relevant preferences
+- Comprehensive error handling with user feedback
+
+#### Marketing Opt-In Journey ✅ PARTIALLY IMPLEMENTED
+
+1. **✅ Automatic newsletter handling** - Newsletter subscription based on default preferences
+2. **✅ One-click subscribe/unsubscribe** from preference panel with real-time Brevo sync
+3. **✅ Transparent subscription status** - Current preferences clearly displayed in UI
+4. **✅ Separate marketing email management** - Independent from newsletter subscription
+5. User sees newsletter signup during registration (TODO: Optional checkbox in signup form)
+6. Periodic gentle prompts for newsletter subscription (TODO: Marketing automation)
+
+**Technical Implementation:**
+- Default `newsletter_subscribed: true` for new users creates automatic opt-in flow
+- Immediate Brevo API sync when preferences change
+- Separate contact attributes for newsletter vs marketing emails
+- Error handling prevents preference update failures from breaking user experience
 
 ### Stylist Business Notifications
 

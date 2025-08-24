@@ -10,9 +10,11 @@ import {
 import type { BookingFilters, DatabaseTables } from "@/types";
 import { resend } from "@/lib/resend";
 import { BookingStatusUpdateEmail } from "@/transactional/emails/booking-status-update";
+import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
+import { shouldReceiveNotification } from "@/server/preferences.actions";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -577,26 +579,96 @@ export async function createBookingWithServices(
         //         status: 'pending',
         //     });
 
-        // TODO: Send confirmation email to customer
-        // await sendBookingConfirmationEmail({
-        //     to: user.email,
-        //     bookingId: booking.id,
-        //     startTime: input.startTime,
-        //     endTime: input.endTime,
-        //     stylistName: ...,
-        //     services: ...,
-        //     totalPrice: finalPrice,
-        // });
+        // Send new booking request email to stylist (respecting preferences)
+        try {
+            // Get stylist and customer information for email
+            const { data: stylist } = await supabase
+                .from("profiles")
+                .select("id, full_name, email")
+                .eq("id", input.stylistId)
+                .single();
 
-        // TODO: Send notification email to stylist
-        // await sendNewBookingNotificationEmail({
-        //     to: stylistEmail,
-        //     bookingId: booking.id,
-        //     customerName: user.name,
-        //     startTime: input.startTime,
-        //     endTime: input.endTime,
-        //     services: ...,
-        // });
+            const { data: customer } = await supabase
+                .from("profiles") 
+                .select("id, full_name, email")
+                .eq("id", user.id)
+                .single();
+
+            if (stylist?.email && customer) {
+                // Check if stylist wants new booking request notifications
+                const canSendToStylist = await shouldReceiveNotification(
+                    input.stylistId, 
+                    'new_booking_requests'
+                );
+
+                if (canSendToStylist) {
+                    // Get service details for email
+                    const { data: services } = await supabase
+                        .from("services")
+                        .select("id, title, description, price, duration_minutes")
+                        .in("id", input.serviceIds);
+
+                    const serviceName = services && services.length > 0 
+                        ? services[0]?.title || "Booking"
+                        : "Booking";
+                    const serviceNameWithCount = services && services.length > 1
+                        ? `${serviceName} +${services.length - 1} til`
+                        : serviceName;
+
+                    const startTime = input.startTime;
+                    const endTime = input.endTime;
+                    const bookingDate = format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
+                    const bookingTime = `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+
+                    // Determine location and address
+                    let customerAddress = undefined;
+                    if (input.location === "customer") {
+                        if (input.customerAddress) {
+                            customerAddress = `${input.customerAddress.streetAddress}, ${input.customerAddress.postalCode} ${input.customerAddress.city}`;
+                        } else if (addressId) {
+                            // Get address details if using existing address
+                            const { data: address } = await supabase
+                                .from("addresses")
+                                .select("street_address, city, postal_code")
+                                .eq("id", addressId)
+                                .single();
+                            
+                            if (address) {
+                                customerAddress = `${address.street_address}, ${address.postal_code} ${address.city}`;
+                            }
+                        }
+                    }
+
+                    await resend.emails.send({
+                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                        // to: [stylist.email],
+                        // TODO: Remove this when we actually ship to production
+                        to: ["magnus.rodseth@gmail.com"],
+                        subject: `Ny bookingforespørsel fra ${customer.full_name || 'kunde'}`,
+                        react: NewBookingRequestEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            stylistProfileId: input.stylistId,
+                            stylistName: stylist.full_name || "Stylist",
+                            customerName: customer.full_name || "Kunde",
+                            bookingId: booking.id,
+                            serviceName: serviceNameWithCount,
+                            requestedDate: bookingDate,
+                            requestedTime: bookingTime,
+                            location: input.location,
+                            customerAddress: customerAddress,
+                            messageFromCustomer: input.messageToStylist,
+                            totalPrice: finalPrice,
+                            currency: "NOK",
+                            estimatedDuration: input.totalDurationMinutes,
+                            urgency: "medium" as const,
+                        }),
+                    });
+                }
+            }
+        } catch (emailError) {
+            console.error("Error sending new booking request email:", emailError);
+            // Don't fail the booking creation if email fails
+        }
 
         return {
             data: {
@@ -693,8 +765,119 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         return { error: "Failed to cancel booking", data: null };
     }
 
-    // TODO: Send cancellation emails to both parties
-    // await sendCancellationEmail(...);
+    // Send cancellation emails to both parties (respecting preferences)
+    try {
+        // Get full booking details with user information for email
+        const { data: fullBooking } = await supabase
+            .from("bookings")
+            .select(`
+                *,
+                customer:profiles!bookings_customer_id_fkey(
+                    id,
+                    full_name,
+                    email
+                ),
+                stylist:profiles!bookings_stylist_id_fkey(
+                    id,
+                    full_name,
+                    email
+                ),
+                addresses(
+                    street_address,
+                    city,
+                    postal_code,
+                    entry_instructions
+                ),
+                booking_services(
+                    services(
+                        id,
+                        title,
+                        description
+                    )
+                )
+            `)
+            .eq("id", bookingId)
+            .single();
+
+        if (fullBooking?.customer?.email && fullBooking?.stylist?.email) {
+            // Check user preferences for cancellation notifications
+            const [canSendToCustomer, canSendToStylist] = await Promise.all([
+                shouldReceiveNotification(fullBooking.customer_id, 'booking_cancellations'),
+                shouldReceiveNotification(fullBooking.stylist_id, 'booking_cancellations')
+            ]);
+
+            if (canSendToCustomer || canSendToStylist) {
+                // Prepare common email data
+                const services = fullBooking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
+                const serviceName = services.length > 0 ? services[0]?.title || "Booking" : "Booking";
+                const serviceNameWithCount = services.length > 1
+                    ? `${serviceName} +${services.length - 1} til`
+                    : serviceName;
+
+                const startTime = new Date(fullBooking.start_time);
+                const endTime = new Date(fullBooking.end_time);
+                const bookingDate = format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
+                const bookingTime = `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+
+                // Determine location text
+                let location = "Hos stylisten";
+                if (fullBooking.address_id && fullBooking.addresses) {
+                    location = "Hjemme hos deg";
+                }
+
+                const emailProps = {
+                    customerName: fullBooking.customer.full_name || "Kunde",
+                    stylistName: fullBooking.stylist.full_name || "Stylist",
+                    bookingId: bookingId,
+                    stylistId: fullBooking.stylist_id,
+                    serviceName: serviceNameWithCount,
+                    bookingDate,
+                    bookingTime,
+                    status: "cancelled" as const,
+                    message: reason || "Booking cancelled",
+                    location,
+                };
+
+                const customerEmailSubject = `Booking avlyst: ${serviceName}`;
+                const stylistEmailSubject = `Booking avlyst: ${serviceName}`;
+
+                // Send email to customer (only if they want notifications)
+                if (canSendToCustomer) {
+                    await resend.emails.send({
+                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                        // to: [fullBooking.customer.email],
+                        // TODO: Remove this when we actually ship to production
+                        to: ["magnus.rodseth@gmail.com"],
+                        subject: customerEmailSubject,
+                        react: BookingStatusUpdateEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            ...emailProps,
+                            recipientType: "customer",
+                        }),
+                    });
+                }
+
+                // Send email to stylist (only if they want notifications)
+                if (canSendToStylist) {
+                    await resend.emails.send({
+                        from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                        // to: [fullBooking.stylist.email],
+                        // TODO: Remove this when we actually ship to production
+                        to: ["magnus.rodseth@gmail.com"],
+                        subject: stylistEmailSubject,
+                        react: BookingStatusUpdateEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            ...emailProps,
+                            recipientType: "stylist",
+                        }),
+                    });
+                }
+            }
+        }
+    } catch (emailError) {
+        console.error("Error sending cancellation emails:", emailError);
+        // Don't fail the entire operation if email fails
+    }
 
     return {
         data: {
@@ -812,6 +995,22 @@ export async function updateBookingStatus({
             booking.customer?.email && booking.stylist?.full_name &&
             booking.stylist?.email
         ) {
+            // Check user preferences for booking notifications
+            const [canSendToCustomer, canSendToStylist] = await Promise.all([
+                shouldReceiveNotification(
+                    booking.customer_id, 
+                    status === 'confirmed' ? 'booking_confirmations' : 'booking_status_updates'
+                ),
+                shouldReceiveNotification(
+                    booking.stylist_id, 
+                    status === 'confirmed' ? 'booking_confirmations' : 'booking_status_updates'  
+                )
+            ]);
+
+            if (!canSendToCustomer && !canSendToStylist) {
+                // If neither party wants notifications, skip email sending
+                return { data, error: null };
+            }
             // Prepare common email data
             const services = booking.booking_services?.map((bs) =>
                 bs.services
@@ -860,33 +1059,37 @@ export async function updateBookingStatus({
                 location,
             };
 
-            // Send email to customer
-            await resend.emails.send({
-                from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                // to: [booking.customer.email],
-                // TODO: Remove this when we actually ship to production
-                to: ["magnus.rodseth@gmail.com"],
-                subject: customerEmailSubject,
-                react: BookingStatusUpdateEmail({
-                    logoUrl: getNabostylistenLogoUrl("png"),
-                    ...emailProps,
-                    recipientType: "customer",
-                }),
-            });
+            // Send email to customer (only if they want notifications)
+            if (canSendToCustomer) {
+                await resend.emails.send({
+                    from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                    // to: [booking.customer.email],
+                    // TODO: Remove this when we actually ship to production
+                    to: ["magnus.rodseth@gmail.com"],
+                    subject: customerEmailSubject,
+                    react: BookingStatusUpdateEmail({
+                        logoUrl: getNabostylistenLogoUrl("png"),
+                        ...emailProps,
+                        recipientType: "customer",
+                    }),
+                });
+            }
 
-            // Send email to stylist
-            await resend.emails.send({
-                from: "Nabostylisten <no-reply@magnusrodseth.com>",
-                // to: [booking.stylist.email],
-                // TODO: Remove this when we actually ship to production
-                to: ["magnus.rodseth@gmail.com"],
-                subject: stylistEmailSubject,
-                react: BookingStatusUpdateEmail({
-                    logoUrl: getNabostylistenLogoUrl("png"),
-                    ...emailProps,
-                    recipientType: "stylist",
-                }),
-            });
+            // Send email to stylist (only if they want notifications)
+            if (canSendToStylist) {
+                await resend.emails.send({
+                    from: "Nabostylisten <no-reply@magnusrodseth.com>",
+                    // to: [booking.stylist.email],
+                    // TODO: Remove this when we actually ship to production
+                    to: ["magnus.rodseth@gmail.com"],
+                    subject: stylistEmailSubject,
+                    react: BookingStatusUpdateEmail({
+                        logoUrl: getNabostylistenLogoUrl("png"),
+                        ...emailProps,
+                        recipientType: "stylist",
+                    }),
+                });
+            }
         }
     } catch (emailError) {
         console.error("Error sending booking status emails:", emailError);

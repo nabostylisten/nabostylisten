@@ -2,6 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import type { DatabaseTables, ReviewFilters } from "@/types";
+import { shouldReceiveNotification } from "@/lib/preferences-utils";
+import { resend } from "@/lib/resend";
+import { NewReviewNotificationEmail } from "@/transactional/emails/new-review-notification";
+import { format } from "date-fns";
+import { nb } from "date-fns/locale";
 
 export async function getReview(id: string) {
     const supabase = await createClient();
@@ -56,7 +61,98 @@ export async function createReview(
         stylist_id: booking.stylist_id,
     };
 
-    return await supabase.from("reviews").insert(reviewData).select().single();
+    const result = await supabase.from("reviews").insert(reviewData).select().single();
+
+    if (result.error || !result.data) {
+        return result;
+    }
+
+    // Send email notification to stylist if they want review notifications
+    try {
+        // Check if stylist wants review notifications
+        const canSendNotification = await shouldReceiveNotification(
+            supabase,
+            booking.stylist_id,
+            "stylist.reviewNotifications"
+        );
+
+        if (canSendNotification) {
+            // Get additional data for email
+            const { data: fullBookingData } = await supabase
+                .from("bookings")
+                .select(`
+                    *,
+                    booking_services(
+                        services(
+                            name,
+                            title
+                        )
+                    ),
+                    customer:profiles!customer_id(
+                        full_name,
+                        email
+                    ),
+                    stylist:profiles!stylist_id(
+                        id,
+                        full_name,
+                        email
+                    )
+                `)
+                .eq("id", review.booking_id)
+                .single();
+
+            if (fullBookingData?.stylist?.email) {
+                // Get stylist's review statistics
+                const { data: reviewStats } = await supabase
+                    .from("reviews")
+                    .select("rating")
+                    .eq("stylist_id", booking.stylist_id);
+
+                const totalReviews = reviewStats?.length || 1;
+                const averageRating = reviewStats?.length 
+                    ? Number((reviewStats.reduce((sum, r) => sum + r.rating, 0) / reviewStats.length).toFixed(1))
+                    : result.data.rating;
+
+                // Format booking date
+                const bookingDate = format(new Date(fullBookingData.start_time), "d. MMMM yyyy", { locale: nb });
+
+                // Get service name
+                const serviceName = fullBookingData.booking_services
+                    ?.map(bs => bs.services?.title || bs.services?.name)
+                    .filter(Boolean)[0] || "Skjønnhetstjeneste";
+
+                // Send notification email
+                await resend.emails.send({
+                    from: "Nabostylisten <no-reply@nabostylisten.no>",
+                    to: [fullBookingData.stylist.email],
+                    subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
+                    react: NewReviewNotificationEmail({
+                        logoUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo-email.png`,
+                        stylistProfileId: booking.stylist_id,
+                        stylistName: fullBookingData.stylist.full_name || "Stylist",
+                        customerName: fullBookingData.customer?.full_name || "Kunde",
+                        reviewId: result.data.id,
+                        bookingId: review.booking_id,
+                        serviceName: serviceName,
+                        bookingDate: bookingDate,
+                        rating: result.data.rating as 1 | 2 | 3 | 4 | 5,
+                        comment: result.data.comment || undefined,
+                        totalReviews: totalReviews,
+                        averageRating: averageRating,
+                    }),
+                });
+
+                console.log(`[REVIEW_NOTIFICATION] Sent review notification for review ${result.data.id} to ${fullBookingData.stylist.email}`);
+            }
+        } else {
+            console.log(`[REVIEW_NOTIFICATION] Skipping review notification for stylist ${booking.stylist_id} - preferences disabled`);
+        }
+    } catch (error) {
+        // Don't fail the review creation if email notification fails
+        console.error("[REVIEW_NOTIFICATION] Failed to send review notification:", error);
+    }
+
+    return result;
 }
 
 export async function updateReview(
@@ -426,9 +522,98 @@ export async function upsertReview(
             .select()
             .single();
     } else {
-        // Create new review
-        return await supabase.from("reviews").insert(reviewData).select()
-            .single();
+        // Create new review - use the same logic as createReview for notifications
+        const result = await supabase.from("reviews").insert(reviewData).select().single();
+
+        if (result.error || !result.data) {
+            return result;
+        }
+
+        // Send email notification to stylist if they want review notifications
+        try {
+            const canSendNotification = await shouldReceiveNotification(
+                supabase,
+                booking.stylist_id,
+                "stylist.reviewNotifications"
+            );
+
+            if (canSendNotification) {
+                // Get additional data for email
+                const { data: fullBookingData } = await supabase
+                    .from("bookings")
+                    .select(`
+                        *,
+                        booking_services(
+                            services(
+                                name,
+                                title
+                            )
+                        ),
+                        customer:profiles!customer_id(
+                            full_name,
+                            email
+                        ),
+                        stylist:profiles!stylist_id(
+                            id,
+                            full_name,
+                            email
+                        )
+                    `)
+                    .eq("id", review.booking_id)
+                    .single();
+
+                if (fullBookingData?.stylist?.email) {
+                    // Get stylist's review statistics
+                    const { data: reviewStats } = await supabase
+                        .from("reviews")
+                        .select("rating")
+                        .eq("stylist_id", booking.stylist_id);
+
+                    const totalReviews = reviewStats?.length || 1;
+                    const averageRating = reviewStats?.length 
+                        ? Number((reviewStats.reduce((sum, r) => sum + r.rating, 0) / reviewStats.length).toFixed(1))
+                        : result.data.rating;
+
+                    // Format booking date
+                    const bookingDate = format(new Date(fullBookingData.start_time), "d. MMMM yyyy", { locale: nb });
+
+                    // Get service name
+                    const serviceName = fullBookingData.booking_services
+                        ?.map(bs => bs.services?.title || bs.services?.name)
+                        .filter(Boolean)[0] || "Skjønnhetstjeneste";
+
+                    // Send notification email
+                    await resend.emails.send({
+                        from: "Nabostylisten <no-reply@nabostylisten.no>",
+                        to: [fullBookingData.stylist.email],
+                        subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
+                        react: NewReviewNotificationEmail({
+                            logoUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo-email.png`,
+                            stylistProfileId: booking.stylist_id,
+                            stylistName: fullBookingData.stylist.full_name || "Stylist",
+                            customerName: fullBookingData.customer?.full_name || "Kunde",
+                            reviewId: result.data.id,
+                            bookingId: review.booking_id,
+                            serviceName: serviceName,
+                            bookingDate: bookingDate,
+                            rating: result.data.rating as 1 | 2 | 3 | 4 | 5,
+                            comment: result.data.comment || undefined,
+                            totalReviews: totalReviews,
+                            averageRating: averageRating,
+                        }),
+                    });
+
+                    console.log(`[REVIEW_NOTIFICATION] Sent review notification for review ${result.data.id} to ${fullBookingData.stylist.email}`);
+                }
+            } else {
+                console.log(`[REVIEW_NOTIFICATION] Skipping review notification for stylist ${booking.stylist_id} - preferences disabled`);
+            }
+        } catch (error) {
+            // Don't fail the review creation if email notification fails
+            console.error("[REVIEW_NOTIFICATION] Failed to send review notification:", error);
+        }
+
+        return result;
     }
 }
 

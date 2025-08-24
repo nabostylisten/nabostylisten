@@ -6,11 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Marquee } from "@/components/magicui/marquee";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { Star } from "lucide-react";
+import { ArrowRight, ChevronRight, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getPublicUrlFromPath } from "@/lib/supabase/storage";
+import { Button } from "../ui/button";
 
 function PopularServicesSkeleton() {
   return (
@@ -111,6 +112,14 @@ async function PopularServicesContent() {
       </Marquee>
       <div className="pointer-events-none absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-background"></div>
       <div className="pointer-events-none absolute inset-y-0 right-0 w-1/3 bg-gradient-to-l from-background"></div>
+      <div className="mt-8 pointer-events-auto">
+        <Button asChild className="group">
+          <Link href="/tjenester">
+            Se alle tjenester
+            <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+          </Link>
+        </Button>
+      </div>
     </div>
   );
 }

@@ -22,6 +22,7 @@ import { getStylistAverageRating } from "@/server/review.actions";
 import { ServiceDetailSkeleton } from "@/components/services/service-detail-skeleton";
 import { ServiceDetailSidebar } from "@/components/services/service-detail-sidebar";
 import Image from "next/image";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 interface PageProps {
   params: Promise<{
@@ -104,7 +105,8 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             {/* Hero Section */}
-            <div>
+            <BlurFade delay={0.1} duration={0.5} inView>
+              <div>
               <div className="aspect-video bg-muted rounded-lg mb-6 relative overflow-hidden">
                 {previewImage?.publicUrl ? (
                   <Image
@@ -150,7 +152,8 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
               <p className="text-lg text-muted-foreground leading-relaxed">
                 {service.description || "Ingen beskrivelse tilgjengelig"}
               </p>
-            </div>
+              </div>
+            </BlurFade>
 
             {/* Stylist Info */}
             <Card>
@@ -362,9 +365,11 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
           </div>
 
           {/* Booking Sidebar */}
-          <div className="lg:col-span-1">
-            <ServiceDetailSidebar service={service} />
-          </div>
+          <BlurFade delay={0.15} duration={0.5} inView>
+            <div className="lg:col-span-1">
+              <ServiceDetailSidebar service={service} />
+            </div>
+          </BlurFade>
         </div>
       </div>
     </div>

@@ -24,15 +24,6 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
     return null; // Should not happen with the inner join, but handle gracefully
   }
 
-  // Format price from øre to NOK
-  const formatPrice = (priceInOre: number) => {
-    return new Intl.NumberFormat("no-NO", {
-      style: "currency",
-      currency: "NOK",
-      minimumFractionDigits: 0,
-    }).format(priceInOre / 100);
-  };
-
   // Format duration
   const formatDuration = (minutes: number) => {
     if (minutes < 60) {

@@ -437,10 +437,6 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
     -- Application Updates (for pending/applied stylists)
     application_status_updates boolean DEFAULT true NOT NULL,
 
-    -- System and Security
-    security_alerts boolean DEFAULT true NOT NULL,
-    system_updates boolean DEFAULT false NOT NULL,
-
     -- Delivery Preferences
     email_delivery boolean DEFAULT true NOT NULL,
     sms_delivery boolean DEFAULT false NOT NULL,

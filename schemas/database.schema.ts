@@ -1191,9 +1191,7 @@ export const userPreferencesRowSchema = z.object({
   promotional_sms: z.boolean(),
   push_notifications: z.boolean(),
   review_notifications: z.boolean(),
-  security_alerts: z.boolean(),
   sms_delivery: z.boolean(),
-  system_updates: z.boolean(),
   updated_at: z.string(),
   user_id: z.string(),
 });
@@ -1215,9 +1213,7 @@ export const userPreferencesInsertSchema = z.object({
   promotional_sms: z.boolean().optional(),
   push_notifications: z.boolean().optional(),
   review_notifications: z.boolean().optional(),
-  security_alerts: z.boolean().optional(),
   sms_delivery: z.boolean().optional(),
-  system_updates: z.boolean().optional(),
   updated_at: z.string().optional(),
   user_id: z.string(),
 });
@@ -1239,9 +1235,7 @@ export const userPreferencesUpdateSchema = z.object({
   promotional_sms: z.boolean().optional(),
   push_notifications: z.boolean().optional(),
   review_notifications: z.boolean().optional(),
-  security_alerts: z.boolean().optional(),
   sms_delivery: z.boolean().optional(),
-  system_updates: z.boolean().optional(),
   updated_at: z.string().optional(),
   user_id: z.string().optional(),
 });

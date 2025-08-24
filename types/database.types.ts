@@ -2874,9 +2874,7 @@ export type Database = {
           promotional_sms: boolean
           push_notifications: boolean
           review_notifications: boolean
-          security_alerts: boolean
           sms_delivery: boolean
-          system_updates: boolean
           updated_at: string
           user_id: string
         }
@@ -2897,9 +2895,7 @@ export type Database = {
           promotional_sms?: boolean
           push_notifications?: boolean
           review_notifications?: boolean
-          security_alerts?: boolean
           sms_delivery?: boolean
-          system_updates?: boolean
           updated_at?: string
           user_id: string
         }
@@ -2920,9 +2916,7 @@ export type Database = {
           promotional_sms?: boolean
           push_notifications?: boolean
           review_notifications?: boolean
-          security_alerts?: boolean
           sms_delivery?: boolean
-          system_updates?: boolean
           updated_at?: string
           user_id?: string
         }

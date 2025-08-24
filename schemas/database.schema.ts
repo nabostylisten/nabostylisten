@@ -110,6 +110,7 @@ export const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
 export const addressesRowSchema = z.object({
   city: z.string(),
   country: z.string(),
+  country_code: z.string().nullable(),
   created_at: z.string(),
   entry_instructions: z.string().nullable(),
   id: z.string(),
@@ -125,6 +126,7 @@ export const addressesRowSchema = z.object({
 export const addressesInsertSchema = z.object({
   city: z.string(),
   country: z.string(),
+  country_code: z.string().optional().nullable(),
   created_at: z.string().optional(),
   entry_instructions: z.string().optional().nullable(),
   id: z.string().optional(),
@@ -140,6 +142,7 @@ export const addressesInsertSchema = z.object({
 export const addressesUpdateSchema = z.object({
   city: z.string().optional(),
   country: z.string().optional(),
+  country_code: z.string().optional().nullable(),
   created_at: z.string().optional(),
   entry_instructions: z.string().optional().nullable(),
   id: z.string().optional(),
@@ -200,6 +203,7 @@ export const applicationsRowSchema = z.object({
   birth_date: z.string(),
   city: z.string(),
   country: z.string(),
+  country_code: z.string().nullable(),
   created_at: z.string(),
   email: z.string(),
   entry_instructions: z.string().nullable(),
@@ -222,6 +226,7 @@ export const applicationsInsertSchema = z.object({
   birth_date: z.string(),
   city: z.string(),
   country: z.string(),
+  country_code: z.string().optional().nullable(),
   created_at: z.string().optional(),
   email: z.string(),
   entry_instructions: z.string().optional().nullable(),
@@ -244,6 +249,7 @@ export const applicationsUpdateSchema = z.object({
   birth_date: z.string().optional(),
   city: z.string().optional(),
   country: z.string().optional(),
+  country_code: z.string().optional().nullable(),
   created_at: z.string().optional(),
   email: z.string().optional(),
   entry_instructions: z.string().optional().nullable(),

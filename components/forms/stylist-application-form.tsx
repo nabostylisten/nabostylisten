@@ -79,6 +79,7 @@ const applicationFormSchema = z
       city: z.string().min(2, "By er påkrevet"),
       postalCode: z.string().min(4, "Postnummer må være minst 4 siffer"),
       country: z.string().min(1, "Land er påkrevet"),
+      countryCode: z.string().optional(), // ISO country code from Mapbox
       entryInstructions: z.string().optional(),
       geometry: z.tuple([z.number(), z.number()]).optional(), // [lng, lat]
     }),
@@ -366,6 +367,7 @@ export function StylistApplicationForm({
                 form.setValue("address.city", address.city);
                 form.setValue("address.postalCode", address.postalCode);
                 form.setValue("address.country", address.country);
+                form.setValue("address.countryCode", address.countryCode);
                 form.setValue(
                   "address.entryInstructions",
                   address.entryInstructions

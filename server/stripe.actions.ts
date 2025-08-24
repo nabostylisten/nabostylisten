@@ -119,6 +119,111 @@ export async function getStripeAccountStatus({
 }
 
 /**
+ * Get Stripe account status for the current user (client-side safe)
+ * Checks user permissions and fetches their Stripe account status
+ */
+export async function getCurrentUserStripeStatus() {
+  const supabase = await createClient();
+
+  // Check if user is authenticated
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return { data: null, error: "Not authenticated" };
+  }
+
+  // Get user profile
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile) {
+    return { data: null, error: "Profile not found" };
+  }
+
+  // Check if user is a stylist
+  if (profile.role !== "stylist") {
+    return { data: null, error: "User is not a stylist" };
+  }
+
+  // Get stylist details to check for Stripe account
+  const { data: stylistDetails, error: stylistError } = await supabase
+    .from("stylist_details")
+    .select("*")
+    .eq("profile_id", user.id)
+    .single();
+
+  if (stylistError || !stylistDetails) {
+    return { data: null, error: "Stylist details not found" };
+  }
+
+  if (!stylistDetails.stripe_account_id) {
+    return { 
+      data: { 
+        stripeAccountId: null, 
+        status: null, 
+        isFullyOnboarded: false,
+        profile,
+        stylistDetails 
+      }, 
+      error: null 
+    };
+  }
+
+  try {
+    const statusResult = await getStripeAccountStatusService({
+      stripeAccountId: stylistDetails.stripe_account_id,
+    });
+
+    if (statusResult.data) {
+      const isFullyOnboarded = 
+        statusResult.data.charges_enabled &&
+        statusResult.data.details_submitted &&
+        statusResult.data.payouts_enabled;
+
+      return {
+        data: {
+          stripeAccountId: stylistDetails.stripe_account_id,
+          status: statusResult.data,
+          isFullyOnboarded,
+          profile,
+          stylistDetails
+        },
+        error: null
+      };
+    } else {
+      return { 
+        data: { 
+          stripeAccountId: stylistDetails.stripe_account_id, 
+          status: null, 
+          isFullyOnboarded: false,
+          profile,
+          stylistDetails 
+        }, 
+        error: statusResult.error 
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching Stripe account status:", error);
+    return { 
+      data: { 
+        stripeAccountId: stylistDetails.stripe_account_id, 
+        status: null, 
+        isFullyOnboarded: false,
+        profile,
+        stylistDetails 
+      }, 
+      error: "Failed to fetch Stripe status" 
+    };
+  }
+}
+
+/**
  * Create Stripe customer for a user
  * Server action wrapper around service function
  */

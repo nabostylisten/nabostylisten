@@ -1859,6 +1859,7 @@ export type Database = {
         Row: {
           city: string
           country: string
+          country_code: string | null
           created_at: string
           entry_instructions: string | null
           id: string
@@ -1873,6 +1874,7 @@ export type Database = {
         Insert: {
           city: string
           country: string
+          country_code?: string | null
           created_at?: string
           entry_instructions?: string | null
           id?: string
@@ -1887,6 +1889,7 @@ export type Database = {
         Update: {
           city?: string
           country?: string
+          country_code?: string | null
           created_at?: string
           entry_instructions?: string | null
           id?: string
@@ -1945,6 +1948,7 @@ export type Database = {
           birth_date: string
           city: string
           country: string
+          country_code: string | null
           created_at: string
           email: string
           entry_instructions: string | null
@@ -1966,6 +1970,7 @@ export type Database = {
           birth_date: string
           city: string
           country: string
+          country_code?: string | null
           created_at?: string
           email: string
           entry_instructions?: string | null
@@ -1987,6 +1992,7 @@ export type Database = {
           birth_date?: string
           city?: string
           country?: string
+          country_code?: string | null
           created_at?: string
           email?: string
           entry_instructions?: string | null

@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS public.addresses (
     city text NOT NULL,
     postal_code text NOT NULL,
     country text NOT NULL,
+    country_code text, -- ISO 3166-1 alpha-2 country code (e.g., NO, DK, SE) from Mapbox geocoding
     entry_instructions text, -- For "how to enter the place"
     location gis.geography(Point, 4326), -- PostGIS geography column for efficient spatial queries
 
@@ -122,6 +123,7 @@ CREATE TABLE IF NOT EXISTS public.applications (
     city text NOT NULL,
     postal_code text NOT NULL,
     country text NOT NULL,
+    country_code text, -- ISO 3166-1 alpha-2 country code (e.g., NO, DK, SE) from Mapbox geocoding
     entry_instructions text,
     address_geometry gis.geography(Point, 4326),
 

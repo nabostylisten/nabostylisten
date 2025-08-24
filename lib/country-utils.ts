@@ -6,7 +6,7 @@
 const COUNTRY_NAME_TO_CODE_MAP: Record<string, string> = {
   "Norge": "NO",
   "Norway": "NO",
-  "Danmark": "DK", 
+  "Danmark": "DK",
   "Denmark": "DK",
   "Sverige": "SE",
   "Sweden": "SE",
@@ -41,16 +41,18 @@ const COUNTRY_NAME_TO_CODE_MAP: Record<string, string> = {
  */
 export function getCountryCode(countryName: string): string {
   // If it's already a 2-character code, return as-is
-  if (countryName.length === 2 && countryName.match(/^[A-Z]{2}$/)) {
-    return countryName;
+  if (
+    countryName.length === 2 && countryName.toUpperCase().match(/^[A-Z]{2}$/)
+  ) {
+    return countryName.toUpperCase();
   }
-  
+
   // Look up in our mapping
   const code = COUNTRY_NAME_TO_CODE_MAP[countryName];
   if (code) {
     return code;
   }
-  
+
   // Fallback to Norway since that's our primary market
   console.warn(`Unknown country name: "${countryName}", falling back to "NO"`);
   return "NO";
@@ -62,7 +64,7 @@ export function getCountryCode(countryName: string): string {
 export function getCountryDisplayName(countryCode: string): string {
   const codeToName: Record<string, string> = {
     "NO": "Norge",
-    "DK": "Danmark", 
+    "DK": "Danmark",
     "SE": "Sverige",
     "FI": "Finland",
     "IS": "Island",
@@ -77,6 +79,6 @@ export function getCountryDisplayName(countryCode: string): string {
     "AT": "Østerrike",
     "CH": "Sveits",
   };
-  
+
   return codeToName[countryCode] || countryCode;
 }

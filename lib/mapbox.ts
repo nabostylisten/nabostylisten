@@ -14,6 +14,7 @@ interface ParsedMapboxResponse {
   city: string;
   postalCode: string;
   country: string;
+  countryCode?: string; // ISO country code from Mapbox context
   geometry: [number, number]; // [lng, lat]
 }
 
@@ -77,6 +78,7 @@ export function parseMapboxResponse(suggestion: MapboxSuggestion): ParsedMapboxR
   let postalCode = "";
   let city = "";
   let country = "Norge";
+  let countryCode: string | undefined;
 
   for (const item of context) {
     if (item.id.startsWith("postcode")) {
@@ -85,6 +87,8 @@ export function parseMapboxResponse(suggestion: MapboxSuggestion): ParsedMapboxR
       city = item.text;
     } else if (item.id.startsWith("country")) {
       country = item.text;
+      // Extract ISO country code if available, normalize to uppercase
+      countryCode = item.short_code?.toUpperCase();
     }
   }
 
@@ -122,6 +126,7 @@ export function parseMapboxResponse(suggestion: MapboxSuggestion): ParsedMapboxR
     city,
     postalCode,
     country,
+    countryCode, // ISO country code from Mapbox (e.g., "NO" for Norway)
     geometry: suggestion.center, // [lng, lat]
   };
 }

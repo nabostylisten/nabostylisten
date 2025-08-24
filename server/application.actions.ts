@@ -29,6 +29,7 @@ export interface ApplicationFormData {
         city: string;
         postalCode: string;
         country: string;
+        countryCode?: string; // ISO country code from Mapbox
         entryInstructions?: string;
         geometry?: [number, number]; // [lng, lat] from Mapbox
     };
@@ -115,6 +116,7 @@ export async function createApplication(data: ApplicationFormData) {
             city: data.address.city,
             postal_code: data.address.postalCode,
             country: data.address.country,
+            country_code: data.address.countryCode, // ISO country code from Mapbox
             entry_instructions: data.address.entryInstructions,
             // Store geometry as PostGIS Point if provided from Mapbox
             address_geometry: data.address.geometry
@@ -543,6 +545,7 @@ export async function updateApplicationStatus({
                             city: application.city,
                             postal_code: application.postal_code,
                             country: application.country,
+                            country_code: application.country_code, // Use stored country code from application
                             entry_instructions: application.entry_instructions,
                             // Transfer geometry if available (from application or Mapbox fallback)
                             location: addressGeometry,
@@ -655,7 +658,9 @@ export async function updateApplicationStatus({
                     );
 
                     // Import the service function directly and use the service client
-                    const { createCustomerWithDatabase } = await import("@/lib/stripe/connect");
+                    const { createCustomerWithDatabase } = await import(
+                        "@/lib/stripe/connect"
+                    );
                     const customerResult = await createCustomerWithDatabase({
                         supabaseClient: serviceSupabaseClient, // Use service client for admin operations
                         profileId: authUser.user.id,
@@ -675,7 +680,11 @@ export async function updateApplicationStatus({
                             `[STRIPE_CUSTOMER] Successfully created customer ${stripeCustomerId} for user ${authUser.user.id}`,
                         );
                         console.log(
-                            `[STRIPE_CUSTOMER] Database save status: ${customerResult.data.savedToDatabase ? 'SUCCESS' : 'FAILED'}`,
+                            `[STRIPE_CUSTOMER] Database save status: ${
+                                customerResult.data.savedToDatabase
+                                    ? "SUCCESS"
+                                    : "FAILED"
+                            }`,
                         );
                     }
                 } catch (customerError) {
@@ -693,26 +702,29 @@ export async function updateApplicationStatus({
                     );
 
                     // Import the service function directly and use the service client
-                    const { createConnectedAccountWithDatabase } = await import("@/lib/stripe/connect");
-                    
-                    // Convert country name to ISO code for Stripe
-                    const countryCode = getCountryCode(application.country);
-                    console.log(`[STRIPE_CONNECT] Converting country "${application.country}" to ISO code "${countryCode}"`);
-                    
-                    const stripeResult = await createConnectedAccountWithDatabase({
-                        supabaseClient: serviceSupabaseClient, // Use service client for admin operations
-                        profileId: authUser.user.id,
-                        email: application.email,
-                        name: application.full_name,
-                        address: {
-                            addressLine1: application.street_address,
-                            addressLine2: "", // Not stored separately in applications
-                            city: application.city,
-                            state: "", // Norway doesn't have states like US
-                            postalCode: application.postal_code,
-                            country: countryCode, // Use ISO code instead of country name
-                        },
-                    });
+                    const { createConnectedAccountWithDatabase } = await import(
+                        "@/lib/stripe/connect"
+                    );
+
+                    const countryCode = getCountryCode(
+                        application.country_code || "NO",
+                    ); // Fallback to Norway if no country code is provided
+
+                    const stripeResult =
+                        await createConnectedAccountWithDatabase({
+                            supabaseClient: serviceSupabaseClient, // Use service client for admin operations
+                            profileId: authUser.user.id,
+                            email: application.email,
+                            name: application.full_name,
+                            address: {
+                                addressLine1: application.street_address,
+                                addressLine2: "", // Not stored separately in applications
+                                city: application.city,
+                                state: "", // Norway doesn't have states like US
+                                postalCode: application.postal_code,
+                                country: countryCode, // Use ISO code instead of country name
+                            },
+                        });
 
                     if (stripeResult.error || !stripeResult.data) {
                         console.error(

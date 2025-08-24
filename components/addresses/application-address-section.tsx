@@ -16,6 +16,7 @@ interface ApplicationAddressSectionProps {
     city: string;
     postalCode: string;
     country: string;
+    countryCode?: string; // ISO country code from Mapbox
     entryInstructions?: string;
     geometry?: [number, number]; // [lng, lat] from Mapbox
   }) => void;
@@ -42,78 +43,51 @@ export function ApplicationAddressSection({
     city: defaultValues?.city || "",
     postalCode: defaultValues?.postalCode || "",
     country: defaultValues?.country || "Norge",
+    countryCode: undefined as string | undefined,
     entryInstructions: defaultValues?.entryInstructions || "",
     geometry: undefined as [number, number] | undefined,
   });
 
-  // Helper function to parse Mapbox response (copied from address-form.tsx)
+  // Import the shared parseMapboxResponse function from lib/mapbox.ts
   const parseMapboxResponse = (suggestion: MapboxSuggestion) => {
-    const placeNameParts = suggestion.place_name
-      .split(",")
-      .map((s: string) => s.trim());
-    const context = suggestion.context || [];
-
-    // Extract components from context
-    let postalCode = "";
-    let city = "";
-    let country = "Norge";
-
-    for (const item of context) {
-      if (item.id.startsWith("postcode")) {
-        postalCode = item.text;
-      } else if (item.id.startsWith("place")) {
-        city = item.text;
-      } else if (item.id.startsWith("country")) {
-        country = item.text;
-      }
-    }
-
-    // Construct the full street address: street name + house number
-    let street = suggestion.text;
-    if (suggestion.address) {
-      street = `${suggestion.text} ${suggestion.address}`;
-    }
-
-    // Fallback to first part of place_name if no proper street/address fields
-    if (!street) {
-      street = placeNameParts[0] || "";
-    }
-
-    // Fallback to parsing from place_name if context doesn't have all info
-    if (!city && placeNameParts.length > 1) {
-      // Try to find city from place_name
-      const possibleCity = placeNameParts.find(
-        (part: string) =>
-          !part.match(/^\d{4}/) && part !== street && part !== country
-      );
-      if (possibleCity) city = possibleCity;
-    }
-
-    if (!postalCode && placeNameParts.length > 1) {
-      // Look for 4-digit postal code
-      const possiblePostal = placeNameParts.find((part: string) =>
-        part.match(/^\d{4}/)
-      );
-      if (possiblePostal) postalCode = possiblePostal;
-    }
-
-    return {
-      street,
-      city,
-      postalCode,
-      country,
-      geometry: suggestion.center, // [lng, lat]
-    };
+    const { parseMapboxResponse: sharedParser } = require("@/lib/mapbox");
+    return sharedParser(suggestion);
   };
 
   const handleAddressSelect = (suggestion: MapboxSuggestion) => {
+    // Log the complete Mapbox suggestion to see what fields are available
+    console.log("🗺️ [MAPBOX] Complete suggestion object:", JSON.stringify(suggestion, null, 2));
+    console.log("🗺️ [MAPBOX] suggestion.context:", suggestion.context);
+    console.log("🗺️ [MAPBOX] suggestion.properties:", suggestion.properties);
+    
+    // Check for country-related fields that might contain ISO codes
+    if (suggestion.context) {
+      const countryContext = suggestion.context.find(item => item.id?.startsWith("country"));
+      console.log("🗺️ [MAPBOX] Country context item:", countryContext);
+      
+      // Also log all context items to see what's available
+      suggestion.context.forEach((item, index) => {
+        console.log(`🗺️ [MAPBOX] Context[${index}]:`, item);
+      });
+    }
+    
     const parsed = parseMapboxResponse(suggestion);
+    console.log("🗺️ [MAPBOX] Parsed result:", parsed);
+    
+    // Log specifically if we got a country code
+    if (parsed.countryCode) {
+      console.log(`🗺️ [MAPBOX] ✅ Found country ISO code: "${parsed.countryCode}" for country "${parsed.country}"`);
+    } else {
+      console.log(`🗺️ [MAPBOX] ❌ No country ISO code found for country "${parsed.country}"`);
+    }
+    
     const newAddressData = {
       ...addressData,
       streetAddress: parsed.street,
       city: parsed.city,
       postalCode: parsed.postalCode,
       country: parsed.country,
+      countryCode: parsed.countryCode,
       geometry: parsed.geometry,
     };
     setAddressData(newAddressData);
@@ -125,6 +99,7 @@ export function ApplicationAddressSection({
       city: newAddressData.city,
       postalCode: newAddressData.postalCode,
       country: newAddressData.country,
+      countryCode: newAddressData.countryCode,
       entryInstructions: newAddressData.entryInstructions || undefined,
       geometry: newAddressData.geometry,
     });
@@ -144,6 +119,7 @@ export function ApplicationAddressSection({
       city: newAddressData.city,
       postalCode: newAddressData.postalCode,
       country: newAddressData.country,
+      countryCode: newAddressData.countryCode,
       entryInstructions: newAddressData.entryInstructions || undefined,
       geometry: newAddressData.geometry,
     });
@@ -164,6 +140,7 @@ export function ApplicationAddressSection({
       city: newAddressData.city,
       postalCode: newAddressData.postalCode,
       country: newAddressData.country,
+      countryCode: newAddressData.countryCode,
       entryInstructions: newAddressData.entryInstructions || undefined,
       geometry: undefined,
     });

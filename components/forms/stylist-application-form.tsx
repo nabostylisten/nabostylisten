@@ -80,6 +80,7 @@ const applicationFormSchema = z
       postalCode: z.string().min(4, "Postnummer må være minst 4 siffer"),
       country: z.string().min(1, "Land er påkrevet"),
       entryInstructions: z.string().optional(),
+      geometry: z.tuple([z.number(), z.number()]).optional(), // [lng, lat]
     }),
 
     // Professional information
@@ -238,6 +239,9 @@ export function StylistApplicationForm({
     }
   }
 
+  console.log(form.formState.errors);
+  console.log(form.getValues());
+
   return (
     <Card className="w-full max-w-4xl mx-auto">
       <CardHeader>
@@ -366,6 +370,7 @@ export function StylistApplicationForm({
                   "address.entryInstructions",
                   address.entryInstructions
                 );
+                form.setValue("address.geometry", address.geometry);
               }}
               defaultValues={form.getValues("address")}
               error={form.formState.errors.address?.root?.message}

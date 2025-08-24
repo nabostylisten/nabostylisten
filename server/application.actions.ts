@@ -11,7 +11,10 @@ import { StylistOnboardingEmail } from "@/transactional/emails/stylist-onboardin
 import { createServiceClient } from "@/lib/supabase/service";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
-import { createConnectedAccount, createStripeCustomer } from "@/server/stripe.actions";
+import {
+    createConnectedAccount,
+    createStripeCustomer,
+} from "@/server/stripe.actions";
 
 export interface ApplicationFormData {
     // Personal information
@@ -115,8 +118,10 @@ export async function createApplication(data: ApplicationFormData) {
             country: data.address.country,
             entry_instructions: data.address.entryInstructions,
             // Store geometry as PostGIS Point if provided from Mapbox
-            address_geometry: data.address.geometry 
-                ? `POINT(${data.address.geometry[0]} ${data.address.geometry[1]})`
+            address_geometry: data.address.geometry
+                ? `POINT(${data.address.geometry[0]} ${
+                    data.address.geometry[1]
+                })`
                 : null,
             professional_experience: data.professionalExperience,
             price_range_from: data.priceRangeFrom,
@@ -156,19 +161,23 @@ export async function createApplication(data: ApplicationFormData) {
             try {
                 // Try to extract path from Supabase storage URL
                 const url = new URL(imageUrl);
-                const pathParts = url.pathname.split('/');
-                
+                const pathParts = url.pathname.split("/");
+
                 // Find the applications bucket segment
-                const bucketIndex = pathParts.findIndex(part => part === 'applications');
+                const bucketIndex = pathParts.findIndex((part) =>
+                    part === "applications"
+                );
                 if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
                     // Get the path after the bucket name
-                    filePath = pathParts.slice(bucketIndex + 1).join('/');
+                    filePath = pathParts.slice(bucketIndex + 1).join("/");
                 } else {
                     // Fallback: use the last parts of the path
-                    filePath = pathParts.slice(-2).join('/'); // applicationId/filename
+                    filePath = pathParts.slice(-2).join("/"); // applicationId/filename
                 }
-                
-                console.log(`[MEDIA_CREATION] Extracted file path: ${filePath} from URL: ${imageUrl}`);
+
+                console.log(
+                    `[MEDIA_CREATION] Extracted file path: ${filePath} from URL: ${imageUrl}`,
+                );
             } catch (error) {
                 console.error("Error parsing image URL:", error);
                 // Fallback to using the URL as-is
@@ -219,7 +228,10 @@ export async function createApplication(data: ApplicationFormData) {
             });
 
             if (emailError) {
-                console.error("Error sending admin notification email:", emailError);
+                console.error(
+                    "Error sending admin notification email:",
+                    emailError,
+                );
             }
         } catch (emailError) {
             console.error("Error sending notification email:", emailError);
@@ -393,7 +405,7 @@ export async function updateApplicationStatus({
                 canSendEmail = await shouldReceiveNotification(
                     supabase,
                     application.user_id,
-                    "application.statusUpdates"
+                    "application.statusUpdates",
                 );
             }
 
@@ -414,15 +426,25 @@ export async function updateApplicationStatus({
                     console.error("Error sending rejection email:", emailError);
                     throw new Error("Kunne ikke sende avvisnings-e-post");
                 } else {
-                    console.log(`[APPLICATION_STATUS] Sent rejection email to ${application.email}`);
+                    console.log(
+                        `[APPLICATION_STATUS] Sent rejection email to ${application.email}`,
+                    );
                 }
             } else {
-                console.log(`[APPLICATION_STATUS] Skipping rejection email for user ${application.user_id} - preferences disabled`);
+                console.log(
+                    `[APPLICATION_STATUS] Skipping rejection email for user ${application.user_id} - preferences disabled`,
+                );
             }
         }
 
         if (status === "approved") {
             // For approved applications, create auth user and profile
+            console.log(
+                `[APPROVAL_PROCESS] Starting complete onboarding process for application ${applicationId}`,
+            );
+            console.log(
+                `[APPROVAL_PROCESS] Applicant: ${application.full_name} (${application.email})`,
+            );
             try {
                 // Create auth user with email
                 const { data: authUser, error: authError } =
@@ -453,6 +475,13 @@ export async function updateApplicationStatus({
                     );
                 }
 
+                console.log(
+                    `[USER_CREATION] Successfully created auth user: ${authUser.user.id}`,
+                );
+                console.log(
+                    `[USER_CREATION] User email: ${authUser.user.email}`,
+                );
+
                 // Update the application with the new user_id
                 const { error: updateError } = await supabase
                     .from("applications")
@@ -465,6 +494,10 @@ export async function updateApplicationStatus({
                         updateError,
                     );
                     // Don't throw here, the user was created successfully
+                } else {
+                    console.log(
+                        `[APPLICATION_UPDATE] Successfully linked application ${applicationId} to user ${authUser.user.id}`,
+                    );
                 }
 
                 // Create address record from application data
@@ -474,48 +507,72 @@ export async function updateApplicationStatus({
                     // If no geometry from application, try to get it from Mapbox
                     if (!addressGeometry) {
                         try {
-                            const { getGeometryFromAddressComponents } = await import("@/lib/mapbox");
-                            const geometry = await getGeometryFromAddressComponents({
-                                streetAddress: application.street_address,
-                                city: application.city,
-                                postalCode: application.postal_code,
-                                country: application.country,
-                            });
-                            
+                            const { getGeometryFromAddressComponents } =
+                                await import("@/lib/mapbox");
+                            const geometry =
+                                await getGeometryFromAddressComponents({
+                                    streetAddress: application.street_address,
+                                    city: application.city,
+                                    postalCode: application.postal_code,
+                                    country: application.country,
+                                });
+
                             if (geometry) {
-                                addressGeometry = `POINT(${geometry[0]} ${geometry[1]})`;
-                                console.log(`[APPLICATION_APPROVAL] Retrieved geometry from Mapbox for address: ${geometry[0]}, ${geometry[1]}`);
+                                addressGeometry = `POINT(${geometry[0]} ${
+                                    geometry[1]
+                                })`;
+                                console.log(
+                                    `[APPLICATION_APPROVAL] Retrieved geometry from Mapbox for address: ${
+                                        geometry[0]
+                                    }, ${geometry[1]}`,
+                                );
                             }
                         } catch (mapboxError) {
-                            console.error("Error fetching geometry from Mapbox:", mapboxError);
+                            console.error(
+                                "Error fetching geometry from Mapbox:",
+                                mapboxError,
+                            );
                             // Continue without geometry - not critical for address creation
                         }
                     }
 
-                    const addressData: Database["public"]["Tables"]["addresses"]["Insert"] = {
-                        user_id: authUser.user.id,
-                        nickname: application.address_nickname || "Hjemme",
-                        street_address: application.street_address,
-                        city: application.city,
-                        postal_code: application.postal_code,
-                        country: application.country,
-                        entry_instructions: application.entry_instructions,
-                        // Transfer geometry if available (from application or Mapbox fallback)
-                        location: addressGeometry,
-                    };
+                    const addressData:
+                        Database["public"]["Tables"]["addresses"]["Insert"] = {
+                            user_id: authUser.user.id,
+                            nickname: application.address_nickname || "Hjemme",
+                            street_address: application.street_address,
+                            city: application.city,
+                            postal_code: application.postal_code,
+                            country: application.country,
+                            entry_instructions: application.entry_instructions,
+                            // Transfer geometry if available (from application or Mapbox fallback)
+                            location: addressGeometry,
+                        };
 
                     const { error: addressError } = await supabase
                         .from("addresses")
                         .insert(addressData);
 
                     if (addressError) {
-                        console.error("Error creating address for approved stylist:", addressError);
+                        console.error(
+                            "[ADDRESS_CREATION] Error creating address for approved stylist:",
+                            addressError,
+                        );
+                        console.error(
+                            "[ADDRESS_CREATION] Address data:",
+                            JSON.stringify(addressData, null, 2),
+                        );
                         // Don't throw - address creation is not critical for user creation
                     } else {
-                        console.log(`[APPLICATION_APPROVAL] Created address for stylist ${authUser.user.id}`);
+                        console.log(
+                            `[ADDRESS_CREATION] Successfully created address for stylist ${authUser.user.id}`,
+                        );
                     }
                 } catch (addressCreateError) {
-                    console.error("Unexpected error creating address:", addressCreateError);
+                    console.error(
+                        "Unexpected error creating address:",
+                        addressCreateError,
+                    );
                     // Don't throw - address creation is not critical
                 }
 
@@ -524,7 +581,7 @@ export async function updateApplicationStatus({
                 const canSendApprovalEmail = await shouldReceiveNotification(
                     supabase,
                     authUser.user.id,
-                    "application.statusUpdates"
+                    "application.statusUpdates",
                 );
 
                 if (canSendApprovalEmail) {
@@ -542,13 +599,20 @@ export async function updateApplicationStatus({
                     });
 
                     if (emailError) {
-                        console.error("Error sending approval email:", emailError);
+                        console.error(
+                            "Error sending approval email:",
+                            emailError,
+                        );
                         // Don't throw here, the user was created successfully
                     } else {
-                        console.log(`[APPLICATION_STATUS] Sent approval email to ${application.email}`);
+                        console.log(
+                            `[APPLICATION_STATUS] Sent approval email to ${application.email}`,
+                        );
                     }
                 } else {
-                    console.log(`[APPLICATION_STATUS] Skipping approval email for user ${authUser.user.id} - preferences disabled`);
+                    console.log(
+                        `[APPLICATION_STATUS] Skipping approval email for user ${authUser.user.id} - preferences disabled`,
+                    );
                 }
 
                 // Send stylist onboarding email (always send to newly approved stylists)
@@ -564,64 +628,174 @@ export async function updateApplicationStatus({
                     });
 
                     if (onboardingEmailError) {
-                        console.error("Error sending stylist onboarding email:", onboardingEmailError);
+                        console.error(
+                            "Error sending stylist onboarding email:",
+                            onboardingEmailError,
+                        );
                     } else {
-                        console.log(`[STYLIST_ONBOARDING] Sent onboarding email to ${application.email}`);
+                        console.log(
+                            `[STYLIST_ONBOARDING] Sent onboarding email to ${application.email}`,
+                        );
                     }
                 } catch (onboardingEmailError) {
-                    console.error("Unexpected error sending stylist onboarding email:", onboardingEmailError);
+                    console.error(
+                        "Unexpected error sending stylist onboarding email:",
+                        onboardingEmailError,
+                    );
                     // Don't throw - this is not critical for the approval process
                 }
 
                 // Create Stripe integrations for the approved stylist
                 let stripeAccountId: string | null = null;
                 let stripeCustomerId: string | null = null;
-                
+
                 // Step 1: Create Stripe Customer (stylists can also purchase services)
                 try {
-                    console.log(`[STRIPE_CUSTOMER] Creating customer for user ${authUser.user.id}`);
-                    
+                    console.log(
+                        `[STRIPE_CUSTOMER] Creating customer for user ${authUser.user.id}`,
+                    );
+
                     const customerResult = await createStripeCustomer({
                         profileId: authUser.user.id,
                         email: application.email,
                         fullName: application.full_name,
                     });
-                    
+
                     if (customerResult.error || !customerResult.data) {
-                        console.error("Error creating Stripe customer:", customerResult.error);
+                        console.error(
+                            "[STRIPE_CUSTOMER] Error creating Stripe customer:",
+                            customerResult.error,
+                        );
                         // Don't throw - continue with Connect account creation
                     } else {
                         stripeCustomerId = customerResult.data.stripeCustomerId;
-                        console.log(`[STRIPE_CUSTOMER] Created customer ${stripeCustomerId} for user ${authUser.user.id}`);
+                        console.log(
+                            `[STRIPE_CUSTOMER] Successfully created customer ${stripeCustomerId} for user ${authUser.user.id}`,
+                        );
                     }
                 } catch (customerError) {
-                    console.error("Unexpected error creating Stripe customer:", customerError);
+                    console.error(
+                        "Unexpected error creating Stripe customer:",
+                        customerError,
+                    );
                     // Don't throw - continue with Connect account creation
                 }
-                
+
                 // Step 2: Create Stripe Connect account for receiving payments
                 try {
-                    console.log(`[STRIPE_CONNECT] Creating connected account for user ${authUser.user.id}`);
-                    
+                    console.log(
+                        `[STRIPE_CONNECT] Creating connected account for user ${authUser.user.id}`,
+                    );
+
                     const stripeResult = await createConnectedAccount({
                         profileId: authUser.user.id,
                         email: application.email,
                     });
-                    
+
                     if (stripeResult.error || !stripeResult.data) {
-                        console.error("Error creating Stripe account:", stripeResult.error);
+                        console.error(
+                            "[STRIPE_CONNECT] Error creating Stripe account:",
+                            stripeResult.error,
+                        );
                         // Don't throw - user creation was successful, just log the issue
                     } else {
                         stripeAccountId = stripeResult.data.stripeAccountId;
-                        console.log(`[STRIPE_CONNECT] Created account ${stripeAccountId} for user ${authUser.user.id}`);
-                        
+                        console.log(
+                            `[STRIPE_CONNECT] Successfully created account ${stripeAccountId} for user ${authUser.user.id}`,
+                        );
+                        console.log(
+                            `[STRIPE_CONNECT] Database save status: ${
+                                stripeResult.data.savedToDatabase
+                                    ? "SUCCESS"
+                                    : "FAILED"
+                            }`,
+                        );
+
                         // Note: Onboarding link will be created when stylist visits /stylist/stripe page
                         // This allows better UX with authentication flow and status checking
                     }
                 } catch (stripeError) {
-                    console.error("Unexpected error with Stripe integration:", stripeError);
+                    console.error(
+                        "Unexpected error with Stripe integration:",
+                        stripeError,
+                    );
                     // Don't throw - user creation was successful
                 }
+
+                // Create stylist_details record (required for stylist functionality)
+                try {
+                    console.log(
+                        `[STYLIST_DETAILS] Creating stylist details for user ${authUser.user.id}`,
+                    );
+                    console.log(
+                        `[STYLIST_DETAILS] Using service client to bypass RLS policies for admin operation`,
+                    );
+
+                    const stylistDetailsData:
+                        Database["public"]["Tables"]["stylist_details"][
+                            "Insert"
+                        ] = {
+                            profile_id: authUser.user.id,
+                            stripe_account_id: stripeAccountId, // Link to the Stripe Connect account
+                            // Set sensible defaults for required fields
+                            can_travel: true,
+                            has_own_place: true,
+                            travel_distance_km: 20,
+                        };
+
+                    console.log(
+                        `[STYLIST_DETAILS] Inserting data:`,
+                        JSON.stringify(stylistDetailsData, null, 2),
+                    );
+
+                    const { data: insertedData, error: stylistDetailsError } =
+                        await serviceSupabaseClient
+                            .from("stylist_details")
+                            .insert(stylistDetailsData)
+                            .select();
+
+                    if (stylistDetailsError) {
+                        console.error(
+                            "[STYLIST_DETAILS] Error creating stylist details:",
+                            stylistDetailsError,
+                        );
+                        console.error(
+                            "[STYLIST_DETAILS] Error details:",
+                            JSON.stringify(stylistDetailsError, null, 2),
+                        );
+                        // Don't throw - this would break the approval flow
+                        // The stylist can still access the platform, they just might need manual intervention
+                    } else {
+                        console.log(
+                            `[STYLIST_DETAILS] Successfully created stylist details for user ${authUser.user.id}`,
+                        );
+                        console.log(
+                            `[STYLIST_DETAILS] Inserted record:`,
+                            JSON.stringify(insertedData, null, 2),
+                        );
+                    }
+                } catch (stylistDetailsCreationError) {
+                    console.error(
+                        "[STYLIST_DETAILS] Unexpected error creating stylist details:",
+                        stylistDetailsCreationError,
+                    );
+                    console.error(
+                        "[STYLIST_DETAILS] Error stack:",
+                        stylistDetailsCreationError instanceof Error
+                            ? stylistDetailsCreationError.stack
+                            : "No stack trace",
+                    );
+                    // Don't throw - user creation was successful, just log the issue
+                }
+
+                console.log(
+                    `[APPROVAL_PROCESS] ✅ Successfully completed onboarding for user ${authUser.user.id}`,
+                );
+                console.log(
+                    `[APPROVAL_PROCESS] Summary - User: ${authUser.user.id}, Stripe Connect: ${
+                        stripeAccountId || "FAILED"
+                    }, Stripe Customer: ${stripeCustomerId || "FAILED"}`,
+                );
 
                 return {
                     data: updatedApplication,

@@ -43,6 +43,7 @@ import {
 } from "@/server/preferences.actions";
 import type { Database } from "@/types/database.types";
 import { userPreferencesUpdateSchema } from "@/schemas/database.schema";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 type UserRole = Database["public"]["Enums"]["user_role"];
 type UserPreferences = Database["public"]["Tables"]["user_preferences"]["Row"];
@@ -294,22 +295,24 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
     return (
       <div className="space-y-6">
         {[...Array(3)].map((_, i) => (
-          <Card key={i}>
-            <CardHeader>
-              <div className="h-6 w-48 bg-muted rounded animate-pulse" />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {[...Array(2)].map((_, j) => (
-                <div key={j} className="flex items-center justify-between">
-                  <div className="space-y-2">
-                    <div className="h-4 w-32 bg-muted rounded animate-pulse" />
-                    <div className="h-3 w-64 bg-muted rounded animate-pulse" />
+          <BlurFade key={i} delay={i * 0.1} duration={0.5} inView>
+            <Card>
+              <CardHeader>
+                <div className="h-6 w-48 bg-muted rounded animate-pulse" />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[...Array(2)].map((_, j) => (
+                  <div key={j} className="flex items-center justify-between">
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-muted rounded animate-pulse" />
+                      <div className="h-3 w-64 bg-muted rounded animate-pulse" />
+                    </div>
+                    <div className="h-6 w-12 bg-muted rounded animate-pulse" />
                   </div>
-                  <div className="h-6 w-12 bg-muted rounded animate-pulse" />
-                </div>
-              ))}
-            </CardContent>
-          </Card>
+                ))}
+              </CardContent>
+            </Card>
+          </BlurFade>
         ))}
       </div>
     );
@@ -318,26 +321,28 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
   return (
     <div className="space-y-6">
       {/* Header with submit button */}
-      <div className="flex justify-between items-center">
-        <div>
-          <p className="text-sm text-muted-foreground">
-            Endringer lagres automatisk
-          </p>
+      <BlurFade delay={0.1} duration={0.5} inView>
+        <div className="flex justify-between items-center">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Endringer lagres automatisk
+            </p>
+          </div>
+          <Button
+            onClick={form.handleSubmit(onSubmit)}
+            disabled={updatePreferencesMutation.isPending}
+            variant="outline"
+          >
+            {updatePreferencesMutation.isPending
+              ? "Lagrer..."
+              : "Lagre preferanser"}
+          </Button>
         </div>
-        <Button
-          onClick={form.handleSubmit(onSubmit)}
-          disabled={updatePreferencesMutation.isPending}
-          variant="outline"
-        >
-          {updatePreferencesMutation.isPending
-            ? "Lagrer..."
-            : "Lagre preferanser"}
-        </Button>
-      </div>
+      </BlurFade>
 
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          {preferenceSections.map((section) => {
+          {preferenceSections.map((section, sectionIndex) => {
             // Filter fields based on user role
             const visibleFields = section.fields.filter(
               (field) => !field.roles || field.roles.includes(userRole)
@@ -349,51 +354,57 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
             }
 
             return (
-              <Card key={section.title}>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    {section.icon}
-                    {section.title}
-                  </CardTitle>
-                  <p className="text-sm text-muted-foreground">
-                    {section.description}
-                  </p>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {visibleFields.map((field, index) => (
-                    <div key={field.key}>
-                      <FormField
-                        control={form.control}
-                        name={field.key}
-                        render={({ field: formField }) => (
-                          <FormItem className="flex items-center justify-between space-y-0">
-                            <div className="space-y-1">
-                              <FormLabel className="text-sm font-medium">
-                                {field.label}
-                              </FormLabel>
-                              <FormDescription className="text-sm text-muted-foreground">
-                                {field.description}
-                              </FormDescription>
-                            </div>
-                            <FormControl>
-                              <Switch
-                                checked={formField.value}
-                                onCheckedChange={(value) => {
-                                  formField.onChange(value);
-                                  handleFieldChange(field.key, value);
-                                }}
-                              />
-                            </FormControl>
-                          </FormItem>
+              <BlurFade
+                key={section.title}
+                delay={0.1 + sectionIndex * 0.1}
+                duration={0.5}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      {section.icon}
+                      {section.title}
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">
+                      {section.description}
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {visibleFields.map((field, index) => (
+                      <div key={field.key}>
+                        <FormField
+                          control={form.control}
+                          name={field.key}
+                          render={({ field: formField }) => (
+                            <FormItem className="flex items-center justify-between space-y-0">
+                              <div className="space-y-1">
+                                <FormLabel className="text-sm font-medium">
+                                  {field.label}
+                                </FormLabel>
+                                <FormDescription className="text-sm text-muted-foreground">
+                                  {field.description}
+                                </FormDescription>
+                              </div>
+                              <FormControl>
+                                <Switch
+                                  checked={formField.value}
+                                  onCheckedChange={(value) => {
+                                    formField.onChange(value);
+                                    handleFieldChange(field.key, value);
+                                  }}
+                                />
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                        {index < visibleFields.length - 1 && (
+                          <Separator className="mt-4" />
                         )}
-                      />
-                      {index < visibleFields.length - 1 && (
-                        <Separator className="mt-4" />
-                      )}
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </BlurFade>
             );
           })}
         </form>

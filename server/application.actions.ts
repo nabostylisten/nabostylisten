@@ -10,6 +10,7 @@ import { ApplicationStatusUpdateEmail } from "@/transactional/emails/application
 import { createServiceClient } from "@/lib/supabase/service";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
+import { createConnectedAccount, createAccountOnboardingLink, createStripeCustomer } from "@/server/stripe.actions";
 
 export interface ApplicationFormData {
     // Personal information
@@ -477,10 +478,73 @@ export async function updateApplicationStatus({
                     console.log(`[APPLICATION_STATUS] Skipping approval email for user ${authUser.user.id} - preferences disabled`);
                 }
 
+                // Create Stripe integrations for the approved stylist
+                let stripeAccountId: string | null = null;
+                let onboardingUrl: string | null = null;
+                let stripeCustomerId: string | null = null;
+                
+                // Step 1: Create Stripe Customer (stylists can also purchase services)
+                try {
+                    console.log(`[STRIPE_CUSTOMER] Creating customer for user ${authUser.user.id}`);
+                    
+                    const customerResult = await createStripeCustomer({
+                        profileId: authUser.user.id,
+                        email: application.email,
+                        fullName: application.full_name,
+                    });
+                    
+                    if (customerResult.error || !customerResult.data) {
+                        console.error("Error creating Stripe customer:", customerResult.error);
+                        // Don't throw - continue with Connect account creation
+                    } else {
+                        stripeCustomerId = customerResult.data.stripeCustomerId;
+                        console.log(`[STRIPE_CUSTOMER] Created customer ${stripeCustomerId} for user ${authUser.user.id}`);
+                    }
+                } catch (customerError) {
+                    console.error("Unexpected error creating Stripe customer:", customerError);
+                    // Don't throw - continue with Connect account creation
+                }
+                
+                // Step 2: Create Stripe Connect account for receiving payments
+                try {
+                    console.log(`[STRIPE_CONNECT] Creating connected account for user ${authUser.user.id}`);
+                    
+                    const stripeResult = await createConnectedAccount({
+                        profileId: authUser.user.id,
+                        email: application.email,
+                    });
+                    
+                    if (stripeResult.error || !stripeResult.data) {
+                        console.error("Error creating Stripe account:", stripeResult.error);
+                        // Don't throw - user creation was successful, just log the issue
+                    } else {
+                        stripeAccountId = stripeResult.data.stripeAccountId;
+                        console.log(`[STRIPE_CONNECT] Created account ${stripeAccountId} for user ${authUser.user.id}`);
+                        
+                        // Create onboarding link for email
+                        const linkResult = await createAccountOnboardingLink({
+                            stripeAccountId,
+                        });
+                        
+                        if (linkResult.error || !linkResult.data) {
+                            console.error("Error creating onboarding link:", linkResult.error);
+                        } else {
+                            onboardingUrl = linkResult.data.url;
+                            console.log(`[STRIPE_CONNECT] Created onboarding link for account ${stripeAccountId}`);
+                        }
+                    }
+                } catch (stripeError) {
+                    console.error("Unexpected error with Stripe integration:", stripeError);
+                    // Don't throw - user creation was successful
+                }
+
                 return {
                     data: updatedApplication,
                     error: null,
                     createdUserId: authUser.user.id,
+                    stripeAccountId,
+                    stripeCustomerId,
+                    onboardingUrl,
                 };
             } catch (userCreationError) {
                 console.error("Error creating auth user:", userCreationError);

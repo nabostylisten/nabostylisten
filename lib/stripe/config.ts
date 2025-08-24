@@ -1,44 +1,46 @@
-// TODO: Stripe configuration file
-// This file will handle Stripe initialization and configuration
-// To be implemented when Stripe is set up
+import Stripe from 'stripe';
 
-// import Stripe from 'stripe';
+// Initialize Stripe client with secret key
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: '2025-07-30.basil',
+  typescript: true,
+});
 
-// export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-//   apiVersion: '2024-06-20',
-//   typescript: true,
-// });
+export const getStripePublishableKey = () => {
+  const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  if (!key) {
+    throw new Error('Stripe publishable key not found');
+  }
+  return key;
+};
 
-// export const getStripePublishableKey = () => {
-//   const key = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
-//   if (!key) {
-//     throw new Error('Stripe publishable key not found');
-//   }
-//   return key;
-// };
+// Stripe Connect configuration for Norwegian marketplace
+export const STRIPE_CONNECT_CONFIG: Stripe.AccountCreateParams = {
+  country: 'NO' as const,
+  default_currency: 'nok' as const,
+  capabilities: {
+    card_payments: { requested: true },
+    transfers: { requested: true },
+  },
+  // Controller settings for marketplace model
+  controller: {
+    losses: {
+      payments: 'application',
+    },
+    fees: {
+      payer: 'application' 
+    },
+    stripe_dashboard: {
+      type: 'express' 
+    },
+  },
+} as const;
 
-
-// Stripe Connect configuration for stylists
-// TODO: Configure Stripe Connect settings
-// - Onboarding flow for stylists
-// - Account verification requirements
-// - Payout schedules
-// - Transfer timing (instant vs manual)
-
-// Payment configuration
-// TODO: Configure payment settings
-// - Supported payment methods (cards, Vipps, etc.)
-// - Currency settings (NOK)
-// - Capture timing (24 hours before appointment)
-// - Refund policies
-
-// Webhook configuration
-// TODO: Set up webhook endpoints for:
-// - payment_intent.succeeded
-// - payment_intent.failed
-// - payment_intent.canceled
-// - charge.refunded
-// - account.updated (for Stripe Connect)
-// - payout.paid (for stylist payouts)
-
-export {};
+// URL configuration for onboarding flow
+export const getOnboardingUrls = () => {
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  return {
+    return_url: `${baseUrl}/stylist/stripe/return`,
+    refresh_url: `${baseUrl}/stylist/stripe/refresh`,
+  };
+};

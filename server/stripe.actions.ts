@@ -1,6 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { 
+  createConnectedAccountWithDatabase, 
+  createStripeAccountOnboardingLink,
+  getStripeAccountStatus as getStripeAccountStatusService,
+  createCustomerWithDatabase 
+} from "@/lib/stripe/connect";
 
 // TODO: Implement Stripe-related server actions
 
@@ -68,36 +74,69 @@ export async function processRefund(bookingId: string, reason?: string) {
 
 /**
  * Create Stripe Connect account for stylist
- * TODO: Implement when Stripe Connect is configured
+ * Server action wrapper around service function
  */
-export async function createStylistStripeAccount(stylistId: string) {
-  // TODO: Create Stripe Connect account
-  // const account = await stripe.accounts.create({
-  //   type: 'express',
-  //   country: 'NO',
-  //   email: stylistEmail,
-  //   capabilities: {
-  //     card_payments: { requested: true },
-  //     transfers: { requested: true },
-  //   },
-  // });
-  
-  // TODO: Save account ID to stylist_details
-  // await supabase
-  //   .from("stylist_details")
-  //   .update({ stripe_account_id: account.id })
-  //   .eq("profile_id", stylistId);
-  
-  // TODO: Create account link for onboarding
-  // const accountLink = await stripe.accountLinks.create({
-  //   account: account.id,
-  //   refresh_url: `${process.env.NEXT_PUBLIC_APP_URL}/stylist/stripe/refresh`,
-  //   return_url: `${process.env.NEXT_PUBLIC_APP_URL}/stylist/stripe/return`,
-  //   type: 'account_onboarding',
-  // });
-  
-  // TODO: Return onboarding URL
-  // return { url: accountLink.url };
+export async function createConnectedAccount({
+  profileId,
+  email,
+}: {
+  profileId: string;
+  email: string;
+}) {
+  const supabase = await createClient();
+
+  return await createConnectedAccountWithDatabase({
+    supabaseClient: supabase,
+    profileId,
+    email,
+  });
+}
+
+/**
+ * Create account onboarding link for stylist
+ * Server action wrapper around service function
+ */
+export async function createAccountOnboardingLink({
+  stripeAccountId,
+}: {
+  stripeAccountId: string;
+}) {
+  return await createStripeAccountOnboardingLink({ stripeAccountId });
+}
+
+/**
+ * Get Stripe account status for a stylist
+ * Server action wrapper around service function
+ */
+export async function getStripeAccountStatus({
+  stripeAccountId,
+}: {
+  stripeAccountId: string;
+}) {
+  return await getStripeAccountStatusService({ stripeAccountId });
+}
+
+/**
+ * Create Stripe customer for a user
+ * Server action wrapper around service function
+ */
+export async function createStripeCustomer({
+  profileId,
+  email,
+  fullName,
+}: {
+  profileId: string;
+  email: string;
+  fullName?: string;
+}) {
+  const supabase = await createClient();
+
+  return await createCustomerWithDatabase({
+    supabaseClient: supabase,
+    profileId,
+    email,
+    fullName,
+  });
 }
 
 /**

@@ -3,10 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import type { DatabaseTables, ReviewFilters } from "@/types";
 import { shouldReceiveNotificationServerSide } from "@/server/preferences.actions";
-import { Resend } from "resend";
+import { sendEmail } from "@/lib/resend-utils";
 import { NewReviewNotificationEmail } from "@/transactional/emails/new-review-notification";
-import { format } from "date-fns";
-import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 
 export async function getReview(id: string) {
@@ -357,16 +355,25 @@ export async function upsertReview(
             return result;
         }
 
-        // Send email notification to stylist if they want review notifications
+        // Send email notification to stylist if they have review notifications enabled
         try {
-            const canSendNotification = await shouldReceiveNotificationServerSide(
+            console.log("[REVIEW_DEBUG] Checking stylist review notification preferences...");
+            
+            // Check if stylist wants to receive review notifications
+            const shouldSendNotification = await shouldReceiveNotificationServerSide(
                 booking.stylist_id,
                 "review_notifications"
             );
 
-            if (canSendNotification) {
-                // Get additional data for email
-                const { data: fullBookingData } = await supabase
+            if (!shouldSendNotification) {
+                console.log(`[REVIEW_NOTIFICATION] Stylist ${booking.stylist_id} has disabled review notifications - skipping email`);
+                return result;
+            }
+
+            console.log(`[REVIEW_DEBUG] Stylist has enabled review notifications - proceeding with email...`);
+            
+            // Get additional data for email
+            const { data: fullBookingData } = await supabase
                     .from("bookings")
                     .select(`
                         *,
@@ -388,46 +395,21 @@ export async function upsertReview(
                     .eq("id", review.booking_id)
                     .single();
 
+                console.log("[REVIEW_DEBUG] Full booking data:", JSON.stringify(fullBookingData, null, 2));
+
                 if (fullBookingData?.stylist?.email) {
-                    // Get stylist's review statistics
-                    const { data: reviewStats } = await supabase
-                        .from("reviews")
-                        .select("rating")
-                        .eq("stylist_id", booking.stylist_id);
-
-                    const totalReviews = reviewStats?.length || 1;
-                    const averageRating = reviewStats?.length 
-                        ? Number((reviewStats.reduce((sum, r) => sum + r.rating, 0) / reviewStats.length).toFixed(1))
-                        : result.data.rating;
-
-                    // Format booking date
-                    const bookingDate = format(new Date(fullBookingData.start_time), "d. MMMM yyyy", { locale: nb });
-
-                    // Get service name
-                    const serviceName = fullBookingData.booking_services
-                        ?.map(bs => bs.services?.title)
-                        .filter(Boolean)[0] || "Skjønnhetstjeneste";
-
-                    // Send notification email directly with Resend
-                    const resend = new Resend(process.env.RESEND_API_KEY);
-                    const { error: reviewEmailError } = await resend.emails.send({
-                        from: "Nabostylisten <noreply@magnusrodseth.com>",
-                        to: ["magnus.rodseth@gmail.com"],
+                    // Send notification email using sendEmail utility with simplified template
+                    const { error: reviewEmailError } = await sendEmail({
+                        to: [fullBookingData.stylist.email],
                         subject: `Ny ${result.data.rating}-stjerner anmeldelse fra ${fullBookingData.customer?.full_name || "kunde"}`,
                         react: NewReviewNotificationEmail({
-                            logoUrl: getNabostylistenLogoUrl(),
-                            stylistProfileId: booking.stylist_id,
-                            stylistName: fullBookingData.stylist.full_name || "Stylist",
-                            customerName: fullBookingData.customer?.full_name || "Kunde",
-                            reviewId: result.data.id,
-                            bookingId: review.booking_id,
-                            serviceName: serviceName,
-                            bookingDate: bookingDate,
-                            rating: result.data.rating as 1 | 2 | 3 | 4 | 5,
-                            comment: result.data.comment || undefined,
-                            totalReviews: totalReviews,
-                            averageRating: averageRating,
-                        }),
+                        logoUrl: getNabostylistenLogoUrl(),
+                        stylistName: fullBookingData.stylist.full_name || "Stylist",
+                        customerName: fullBookingData.customer?.full_name || "Kunde",
+                        rating: result.data.rating.toString(),
+                        comment: result.data.comment || undefined,
+                        stylistProfileId: booking.stylist_id,
+                    }),
                     });
 
                     if (reviewEmailError) {
@@ -436,9 +418,6 @@ export async function upsertReview(
 
                     console.log(`[REVIEW_NOTIFICATION] Sent review notification for review ${result.data.id} to ${fullBookingData.stylist.email}`);
                 }
-            } else {
-                console.log(`[REVIEW_NOTIFICATION] Skipping review notification for stylist ${booking.stylist_id} - preferences disabled`);
-            }
         } catch (error) {
             // Don't fail the review creation if email notification fails
             console.error("[REVIEW_NOTIFICATION] Failed to send review notification:", error);

@@ -4,62 +4,44 @@ import {
   Container,
   Head,
   Heading,
-  Hr,
   Html,
   Img,
-  Link,
-  Preview,
   Section,
   Text,
 } from "@react-email/components";
 import { baseUrl } from "./utils";
-import { NotificationSettings } from "../components/notification-settings";
 
-interface NewReviewNotificationEmailProps {
+interface SimplifiedReviewNotificationProps {
   logoUrl: string;
-  stylistProfileId: string;
   stylistName: string;
   customerName: string;
-  reviewId: string;
-  bookingId: string;
-  serviceName: string;
-  bookingDate: string;
-  rating: 1 | 2 | 3 | 4 | 5;
+  rating: string;
   comment?: string;
-  totalReviews: number;
-  averageRating: number;
+  stylistProfileId: string;
 }
 
 export const NewReviewNotificationEmail = ({
-  logoUrl,
-  stylistProfileId = "12345",
+  logoUrl = `${baseUrl}/logo-email.png`,
   stylistName = "Anna Stylist",
   customerName = "Ola Nordmann",
-  reviewId = "rev123",
-  bookingId = "12345",
-  serviceName = "Hårklipp og styling",
-  bookingDate = "15. januar 2024",
-  rating = 5,
-  comment = "Fantastisk opplevelse! Anna var profesjonell og resultatet ble nøyaktig som jeg ønsket. Anbefaler på det varmeste!",
-  totalReviews = 47,
-  averageRating = 4.8,
-}: NewReviewNotificationEmailProps) => {
-  const previewText = `Ny ${rating}-stjerner anmeldelse fra ${customerName}`;
-
-  const ratingLabels = {
-    5: "Utmerket",
-    4: "Bra",
-    3: "Greit",
-    2: "Ikke så bra",
-    1: "Dårlig",
+  rating = "5",
+  comment,
+  stylistProfileId = "12345",
+}: SimplifiedReviewNotificationProps) => {
+  const ratingLabels: { [key: string]: string } = {
+    "5": "Utmerket",
+    "4": "Bra",
+    "3": "Greit",
+    "2": "Ikke så bra",
+    "1": "Dårlig",
   };
 
   return (
     <Html>
       <Head />
-      <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
+          {/* Logo Section */}
           <Section style={logoContainer}>
             <Img
               src={logoUrl}
@@ -69,7 +51,6 @@ export const NewReviewNotificationEmail = ({
               style={logo}
             />
           </Section>
-
           <Heading style={heading}>Du har fått en ny anmeldelse!</Heading>
 
           <Text style={paragraph}>
@@ -77,59 +58,22 @@ export const NewReviewNotificationEmail = ({
             tjenesten du utførte.
           </Text>
 
-          {/* Rating Display */}
-          <Section style={ratingSection}>
-            <div style={starsContainer}>
-              <Text style={ratingNumber}>{rating}/5</Text>
-            </div>
+          <div style={ratingSection}>
+            <Text style={ratingNumber}>{rating}/5</Text>
             <Text style={ratingLabel}>{ratingLabels[rating]} vurdering</Text>
-          </Section>
+          </div>
 
-          {/* Service Context */}
-          <Section style={serviceContextSection}>
-            <Text style={contextHeader}>Angående booking:</Text>
-            <div style={contextRow}>
-              <Text style={contextLabel}>Tjeneste:</Text>
-              <Text style={contextValue}>{serviceName}</Text>
-            </div>
-            <div style={contextRow}>
-              <Text style={contextLabel}>Dato:</Text>
-              <Text style={contextValue}>{bookingDate}</Text>
-            </div>
-            <div style={contextRow}>
-              <Text style={contextLabel}>Kunde:</Text>
-              <Text style={contextValue}>{customerName}</Text>
-            </div>
-          </Section>
-
-          {/* Review Comment */}
           {comment && (
-            <Section style={commentSection}>
+            <div style={commentSection}>
               <Text style={commentHeader}>Kundens kommentar:</Text>
               <Text style={commentContent}>"{comment}"</Text>
               <Text style={commentSignature}>— {customerName}</Text>
-            </Section>
+            </div>
           )}
 
-          {/* Your Statistics */}
-          <Section style={statsSection}>
-            <Text style={statsHeader}>Dine anmeldelsesstatistikker:</Text>
-            <div style={statsGrid}>
-              <div style={statItem}>
-                <Text style={statNumber}>{totalReviews}</Text>
-                <Text style={statLabel}>Totale anmeldelser</Text>
-              </div>
-              <div style={statItem}>
-                <Text style={statNumber}>{averageRating.toFixed(1)}</Text>
-                <Text style={statLabel}>Gjennomsnittlig rating</Text>
-              </div>
-            </div>
-          </Section>
-
-          {/* Call to Action */}
-          <Section style={ctaSection}>
+          <div style={ctaSection}>
             <Text style={paragraph}>
-              {rating >= 4
+              {parseInt(rating) >= 4
                 ? "Gratulerer med en flott anmeldelse! Dette hjelper deg å tiltrekke flere kunder."
                 : "Takk for din service. Bruk tilbakemeldingen til å forbedre opplevelsen for fremtidige kunder."}
             </Text>
@@ -139,60 +83,11 @@ export const NewReviewNotificationEmail = ({
             >
               Se alle anmeldelser
             </Button>
-          </Section>
-
-          {/* Tips Section */}
-          <Section style={tipsSection}>
-            <Text style={tipsHeader}>Tips for å håndtere anmeldelser:</Text>
-            <Text style={tipsText}>
-              • <strong>Takk kunden</strong> - Vis takknemlighet for
-              tilbakemelding
-              <br />• <strong>Vær profesjonell</strong> - Også ved kritiske
-              anmeldelser
-              <br />• <strong>Lær av feedback</strong> - Bruk det til å forbedre
-              tjenestene
-              <br />• <strong>Responder raskt</strong> - Vis at du bryr deg om
-              kundens opplevelse
-              <br />• <strong>Fremhev det positive</strong> - Boost din profil
-              med gode anmeldelser
-            </Text>
-          </Section>
-
-          {/* Encouragement based on rating */}
-          {rating >= 4 ? (
-            <Section style={encouragementSection}>
-              <Text style={encouragementHeader}>Fantastisk jobb!</Text>
-              <Text style={encouragementText}>
-                Du leverer konsekvent høy kvalitet. Slike anmeldelser hjelper
-                deg å skille deg ut på plattformen og tiltrekke flere kunder.
-              </Text>
-            </Section>
-          ) : (
-            <Section style={improvementSection}>
-              <Text style={improvementHeader}>Forbedring er en mulighet</Text>
-              <Text style={improvementText}>
-                Vi er her for å hjelpe deg lykkes. Hvis du trenger veiledning
-                eller støtte for å forbedre tjenestene dine, ta kontakt med oss.
-              </Text>
-            </Section>
-          )}
-
-          <NotificationSettings
-            profileId={stylistProfileId}
-            notificationType="review_notifications"
-          />
-
-          <Hr style={hr} />
+          </div>
 
           <Text style={footer}>
-            Har du spørsmål om anmeldelser? Kontakt oss på{" "}
-            <Link href="mailto:support@nabostylisten.no" style={link}>
-              support@nabostylisten.no
-            </Link>
-          </Text>
-
-          <Text style={footer}>
-            Anmeldelse ID: {reviewId} | Booking ID: {bookingId}
+            Har du spørsmål om anmeldelser? Kontakt oss på
+            support@nabostylisten.no
           </Text>
         </Container>
       </Body>
@@ -201,26 +96,18 @@ export const NewReviewNotificationEmail = ({
 };
 
 NewReviewNotificationEmail.PreviewProps = {
-  logoUrl: "https://example.com/logo.png",
-  stylistProfileId: "12345",
-  totalReviews: 47,
-  averageRating: 4.8,
   stylistName: "Anna Stylist",
   customerName: "Ola Nordmann",
-  reviewId: "review_12345",
-  bookingId: "booking_67890",
-  rating: 5,
+  rating: "5",
   comment:
-    "Fantastisk opplevelse! Anna var så profesjonell og jeg elsker den nye frisyren min. Kommer definitivt tilbake!",
-  serviceName: "Hårklipp og styling",
-  bookingDate: "10. januar 2024",
-} as NewReviewNotificationEmailProps;
+    "Fantastisk opplevelse! Anna var så profesjonell og jeg elsker den nye frisyren min.",
+  stylistProfileId: "12345",
+} as SimplifiedReviewNotificationProps;
 
 export default NewReviewNotificationEmail;
 
-// Styled with Nabostylisten branded colors
 const main = {
-  backgroundColor: "#f8f6ff", // --background
+  backgroundColor: "#f8f6ff",
   fontFamily:
     '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
 };
@@ -248,7 +135,7 @@ const heading = {
   letterSpacing: "-0.5px",
   lineHeight: "1.2",
   fontWeight: "600",
-  color: "#453a6b", // --foreground
+  color: "#453a6b",
   margin: "0 0 24px",
   textAlign: "center" as const,
 };
@@ -257,100 +144,54 @@ const paragraph = {
   margin: "0 0 20px",
   fontSize: "16px",
   lineHeight: "1.6",
-  color: "#453a6b", // --foreground
+  color: "#453a6b",
 };
 
 const ratingSection = {
   margin: "32px 0",
   padding: "30px",
-  backgroundColor: "#e8f5e8", // --accent
+  backgroundColor: "#e8f5e8",
   borderRadius: "16px",
-  border: "3px solid #4a7c4a", // --accent-foreground
+  border: "3px solid #4a7c4a",
   textAlign: "center" as const,
-};
-
-const starsContainer = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "16px",
-  marginBottom: "12px",
 };
 
 const ratingNumber = {
   fontSize: "28px",
   fontWeight: "700",
-  color: "#4a7c4a", // --accent-foreground
-  margin: "0",
+  color: "#4a7c4a",
+  margin: "0 0 12px",
+  display: "block",
 };
 
 const ratingLabel = {
   fontSize: "16px",
   fontWeight: "600",
-  color: "#4a7c4a", // --accent-foreground
+  color: "#4a7c4a",
   margin: "0",
   textTransform: "uppercase" as const,
   letterSpacing: "1px",
 };
 
-const serviceContextSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "10px",
-  border: "1px solid rgba(155, 140, 200, 0.3)",
-};
-
-const contextHeader = {
-  fontSize: "16px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 16px",
-};
-
-const contextRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: "8px",
-};
-
-const contextLabel = {
-  fontSize: "14px",
-  fontWeight: "500",
-  color: "#6b6682", // --muted-foreground
-  margin: "0",
-  flex: "0 0 80px",
-};
-
-const contextValue = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0",
-  textAlign: "right" as const,
-  flex: "1",
-};
-
 const commentSection = {
   margin: "32px 0",
   padding: "24px",
-  backgroundColor: "#fee7dc", // --secondary
-  border: "2px solid #c2724a", // --secondary-foreground
+  backgroundColor: "#fee7dc",
+  border: "2px solid #c2724a",
   borderRadius: "12px",
 };
 
 const commentHeader = {
   fontSize: "16px",
   fontWeight: "600",
-  color: "#c2724a", // --secondary-foreground
+  color: "#c2724a",
   margin: "0 0 16px",
 };
 
 const commentContent = {
   fontSize: "16px",
   lineHeight: "1.7",
-  color: "#c2724a", // --secondary-foreground
+  color: "#c2724a",
   margin: "0 0 12px",
   fontStyle: "italic",
   padding: "16px",
@@ -361,52 +202,9 @@ const commentContent = {
 const commentSignature = {
   fontSize: "14px",
   fontWeight: "600",
-  color: "#c2724a", // --secondary-foreground
+  color: "#c2724a",
   margin: "0",
   textAlign: "right" as const,
-};
-
-const statsSection = {
-  margin: "32px 0",
-  padding: "24px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "12px",
-  border: "2px solid #9b8cc8", // --primary
-};
-
-const statsHeader = {
-  fontSize: "18px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 20px",
-  textAlign: "center" as const,
-};
-
-const statsGrid = {
-  display: "flex",
-  justifyContent: "space-between",
-  gap: "16px",
-};
-
-const statItem = {
-  flex: "1",
-  textAlign: "center" as const,
-};
-
-const statNumber = {
-  fontSize: "24px",
-  fontWeight: "700",
-  color: "#9b8cc8", // --primary
-  margin: "0 0 4px",
-  display: "block",
-};
-
-const statLabel = {
-  fontSize: "12px",
-  color: "#6b6682", // --muted-foreground
-  margin: "0",
-  textTransform: "uppercase" as const,
-  letterSpacing: "0.5px",
 };
 
 const ctaSection = {
@@ -415,7 +213,7 @@ const ctaSection = {
 };
 
 const button = {
-  backgroundColor: "#9b8cc8", // --primary
+  backgroundColor: "#9b8cc8",
   borderRadius: "8px",
   color: "#ffffff",
   fontSize: "16px",
@@ -428,91 +226,10 @@ const button = {
   boxShadow: "0 2px 4px rgba(155, 140, 200, 0.3)",
 };
 
-const tipsSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#edeaf7", // --muted
-  borderRadius: "8px",
-  borderLeft: "4px solid #9b8cc8", // --primary
-};
-
-const tipsHeader = {
-  fontSize: "14px",
-  fontWeight: "600",
-  color: "#453a6b", // --foreground
-  margin: "0 0 12px",
-};
-
-const tipsText = {
-  fontSize: "13px",
-  lineHeight: "1.6",
-  color: "#6b6682", // --muted-foreground
-  margin: "0",
-};
-
-const encouragementSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#e8f5e8", // --accent
-  border: "2px solid #4a7c4a", // --accent-foreground
-  borderRadius: "12px",
-  textAlign: "center" as const,
-};
-
-const encouragementHeader = {
-  fontSize: "18px",
-  fontWeight: "700",
-  color: "#4a7c4a", // --accent-foreground
-  margin: "0 0 12px",
-};
-
-const encouragementText = {
-  fontSize: "14px",
-  lineHeight: "1.6",
-  color: "#4a7c4a", // --accent-foreground
-  margin: "0",
-};
-
-const improvementSection = {
-  margin: "32px 0",
-  padding: "20px",
-  backgroundColor: "#fee7dc", // --secondary
-  border: "2px solid #c2724a", // --secondary-foreground
-  borderRadius: "12px",
-  textAlign: "center" as const,
-};
-
-const improvementHeader = {
-  fontSize: "18px",
-  fontWeight: "700",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0 0 12px",
-};
-
-const improvementText = {
-  fontSize: "14px",
-  lineHeight: "1.6",
-  color: "#c2724a", // --secondary-foreground
-  margin: "0",
-};
-
-const hr = {
-  borderColor: "#edeaf7", // --muted
-  margin: "40px 0 24px",
-  borderWidth: "1px",
-  borderStyle: "solid",
-};
-
 const footer = {
-  color: "#6b6682", // --muted-foreground
+  color: "#6b6682",
   fontSize: "13px",
   lineHeight: "1.5",
-  margin: "0 0 8px",
+  margin: "40px 0 0",
   textAlign: "center" as const,
-};
-
-const link = {
-  color: "#9b8cc8", // --primary
-  textDecoration: "none",
-  fontWeight: "500",
 };

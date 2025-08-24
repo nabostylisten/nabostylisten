@@ -22,6 +22,7 @@ import { MyBookingsList } from "./my-bookings-list";
 import { MyBookingsFilter } from "./my-bookings-filter";
 import { useState, useEffect } from "react";
 import { BookingsWithoutReviewsAlerts } from "../reviews/bookings-without-reviews-alerts";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
@@ -51,157 +52,175 @@ export function MyBookingsPageContent({
     <div className="flex flex-1 flex-col gap-4 p-4">
       <div className="max-w-6xl mx-auto w-full">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <BookOpen className="w-8 h-8" />
-          <div>
-            <h1 className="text-3xl font-bold">
-              {userRole === "stylist"
-                ? stylistMode === "personal"
-                  ? "Mine bookinger"
-                  : "Mine kunder"
-                : "Mine bookinger"}
-            </h1>
-            <p className="text-muted-foreground mt-1">
-              {userRole === "stylist"
-                ? stylistMode === "personal"
-                  ? "Dine egne bookinger som kunde"
-                  : "Administrer dine kunders bookinger og forespørsler"
-                : "Oversikt over dine kommende og tidligere bookinger"}
-            </p>
+        <BlurFade delay={0.1} duration={0.5} inView>
+          <div className="flex items-center gap-3 mb-6">
+            <BookOpen className="w-8 h-8" />
+            <div>
+              <h1 className="text-3xl font-bold">
+                {userRole === "stylist"
+                  ? stylistMode === "personal"
+                    ? "Mine bookinger"
+                    : "Mine kunder"
+                  : "Mine bookinger"}
+              </h1>
+              <p className="text-muted-foreground mt-1">
+                {userRole === "stylist"
+                  ? stylistMode === "personal"
+                    ? "Dine egne bookinger som kunde"
+                    : "Administrer dine kunders bookinger og forespørsler"
+                  : "Oversikt over dine kommende og tidligere bookinger"}
+              </p>
+            </div>
           </div>
-        </div>
+        </BlurFade>
 
         {/* Show review alerts for customers only */}
         {userRole === "customer" && (
-          <BookingsWithoutReviewsAlerts customerId={userId} className="my-4" />
+          <BlurFade delay={0.15} duration={0.5} inView>
+            <BookingsWithoutReviewsAlerts customerId={userId} className="my-4" />
+          </BlurFade>
         )}
 
         {/* Mode toggle for stylists */}
         {userRole === "stylist" && (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
-              <Button
-                variant={stylistMode === "personal" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setStylistMode("personal")}
-                className="flex items-center gap-2"
-              >
-                <User className="w-4 h-4" />
-                Mine bookinger
-              </Button>
-              <Button
-                variant={stylistMode === "services" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setStylistMode("services")}
-                className="flex items-center gap-2"
-              >
-                <Briefcase className="w-4 h-4" />
-                Mine kunder
-              </Button>
+          <BlurFade delay={0.2} duration={0.5} inView>
+            <div className="mb-6">
+              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
+                <Button
+                  variant={stylistMode === "personal" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setStylistMode("personal")}
+                  className="flex items-center gap-2"
+                >
+                  <User className="w-4 h-4" />
+                  Mine bookinger
+                </Button>
+                <Button
+                  variant={stylistMode === "services" ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setStylistMode("services")}
+                  className="flex items-center gap-2"
+                >
+                  <Briefcase className="w-4 h-4" />
+                  Mine kunder
+                </Button>
+              </div>
             </div>
-          </div>
+          </BlurFade>
         )}
 
         {/* Filter */}
-        <div className="mb-6">
-          <MyBookingsFilter />
-        </div>
+        <BlurFade delay={0.25} duration={0.5} inView>
+          <div className="mb-6">
+            <MyBookingsFilter />
+          </div>
+        </BlurFade>
 
         {/* Status Tabs */}
-        <Tabs
-          value={activeTab}
-          onValueChange={(value) => setActiveTab(value as BookingStatus)}
-          className="space-y-6"
-        >
-          <TabsList className="grid w-full grid-cols-4 max-w-2xl">
-            <TabsTrigger value="pending" className="flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4" />
-              Venter
-            </TabsTrigger>
-            <TabsTrigger value="confirmed" className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
-              Bekreftet
-            </TabsTrigger>
-            <TabsTrigger value="cancelled" className="flex items-center gap-2">
-              <XCircle className="w-4 h-4" />
-              Avlyst
-            </TabsTrigger>
-            <TabsTrigger value="completed" className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
-              Fullført
-            </TabsTrigger>
-          </TabsList>
+        <BlurFade delay={0.1} duration={0.5} inView>
+          <Tabs
+            value={activeTab}
+            onValueChange={(value) => setActiveTab(value as BookingStatus)}
+            className="space-y-6"
+          >
+            <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+              <TabsTrigger value="pending" className="flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
+                Venter
+              </TabsTrigger>
+              <TabsTrigger value="confirmed" className="flex items-center gap-2">
+                <CheckCircle className="w-4 h-4" />
+                Bekreftet
+              </TabsTrigger>
+              <TabsTrigger value="cancelled" className="flex items-center gap-2">
+                <XCircle className="w-4 h-4" />
+                Avlyst
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="flex items-center gap-2">
+                <Clock className="w-4 h-4" />
+                Fullført
+              </TabsTrigger>
+            </TabsList>
 
-          <TabsContent value="pending" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Ventende bookinger</CardTitle>
-                <CardDescription>
-                  Bookinger som venter på godkjenning
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MyBookingsList
-                  userId={userId}
-                  status={activeTab}
-                  userRole={stylistMode === "personal" ? "customer" : userRole}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="pending" className="space-y-4">
+              <BlurFade delay={0.1} duration={0.5} inView>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Ventende bookinger</CardTitle>
+                    <CardDescription>
+                      Bookinger som venter på godkjenning
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MyBookingsList
+                      userId={userId}
+                      status={activeTab}
+                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                    />
+                  </CardContent>
+                </Card>
+              </BlurFade>
+            </TabsContent>
 
-          <TabsContent value="confirmed" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Bekreftede bookinger</CardTitle>
-                <CardDescription>
-                  Bookinger som er bekreftet og planlagt
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MyBookingsList
-                  userId={userId}
-                  status={activeTab}
-                  userRole={stylistMode === "personal" ? "customer" : userRole}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="confirmed" className="space-y-4">
+              <BlurFade delay={0.1} duration={0.5} inView>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Bekreftede bookinger</CardTitle>
+                    <CardDescription>
+                      Bookinger som er bekreftet og planlagt
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MyBookingsList
+                      userId={userId}
+                      status={activeTab}
+                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                    />
+                  </CardContent>
+                </Card>
+              </BlurFade>
+            </TabsContent>
 
-          <TabsContent value="cancelled" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Avlyste bookinger</CardTitle>
-                <CardDescription>
-                  Bookinger som har blitt avlyst
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MyBookingsList
-                  userId={userId}
-                  status={activeTab}
-                  userRole={stylistMode === "personal" ? "customer" : userRole}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
+            <TabsContent value="cancelled" className="space-y-4">
+              <BlurFade delay={0.1} duration={0.5} inView>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Avlyste bookinger</CardTitle>
+                    <CardDescription>
+                      Bookinger som har blitt avlyst
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MyBookingsList
+                      userId={userId}
+                      status={activeTab}
+                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                    />
+                  </CardContent>
+                </Card>
+              </BlurFade>
+            </TabsContent>
 
-          <TabsContent value="completed" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Fullførte bookinger</CardTitle>
-                <CardDescription>Bookinger som er fullført</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <MyBookingsList
-                  userId={userId}
-                  status={activeTab}
-                  userRole={stylistMode === "personal" ? "customer" : userRole}
-                />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            <TabsContent value="completed" className="space-y-4">
+              <BlurFade delay={0.1} duration={0.5} inView>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Fullførte bookinger</CardTitle>
+                    <CardDescription>Bookinger som er fullført</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MyBookingsList
+                      userId={userId}
+                      status={activeTab}
+                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                    />
+                  </CardContent>
+                </Card>
+              </BlurFade>
+            </TabsContent>
+          </Tabs>
+        </BlurFade>
       </div>
     </div>
   );

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
 import { MyBookingsPageContent } from "@/components/my-bookings/my-bookings-page-content";
 import { BookingsWithoutReviewsAlerts } from "@/components/reviews/bookings-without-reviews-alerts";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default async function MineBookingerPage({
   params,
@@ -32,10 +33,12 @@ export default async function MineBookingerPage({
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
       <div className="space-y-6">
-        <MyBookingsPageContent
-          userId={profileId}
-          userRole={profile?.role === "stylist" ? "stylist" : "customer"}
-        />
+        <BlurFade delay={0.1} duration={0.5} inView>
+          <MyBookingsPageContent
+            userId={profileId}
+            userRole={profile?.role === "stylist" ? "stylist" : "customer"}
+          />
+        </BlurFade>
       </div>
     </ProfileLayout>
   );

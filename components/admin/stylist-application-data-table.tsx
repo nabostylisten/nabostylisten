@@ -34,14 +34,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Settings2 } from "lucide-react";
 import { getAllApplications } from "@/server/admin/applications.actions";
-import {
-  columns,
-  StylistApplication,
-  getColumnDisplayName,
-} from "./stylist-applications-columns";
+import { columns, getColumnDisplayName } from "./stylist-applications-columns";
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton";
-import { Spinner } from "../ui/kibo-ui/spinner";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function StylistApplicationDataTable() {
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -103,68 +98,47 @@ export function StylistApplicationDataTable() {
 
   const statusCounts = getStatusCounts();
 
+  const tabs: { value: string; label: React.ReactNode }[] = [
+    {
+      value: "all",
+      label: `Alle (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.all})`,
+    },
+    {
+      value: "applied",
+      label: `Nye søknader (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.applied})`,
+    },
+    {
+      value: "pending_info",
+      label: `Venter på info (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.pending_info})`,
+    },
+    {
+      value: "approved",
+      label: `Godkjente (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.approved})`,
+    },
+    {
+      value: "rejected",
+      label: `Avviste (${isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.rejected})`,
+    },
+  ];
+
   return (
     <div className="w-full min-w-0">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-1 gap-1 h-auto lg:grid-cols-5">
-          <TabsTrigger
-            value="all"
-            className="w-full justify-start lg:justify-center"
-          >
-            Alle (
-            {isLoading ? <Skeleton className="w-4 h-4" /> : statusCounts.all})
-          </TabsTrigger>
-          <TabsTrigger
-            value="applied"
-            className="w-full justify-start lg:justify-center"
-          >
-            Nye søknader (
-            {isLoading ? (
-              <Skeleton className="w-4 h-4" />
-            ) : (
-              statusCounts.applied
-            )}
-            )
-          </TabsTrigger>
-          <TabsTrigger
-            value="pending_info"
-            className="w-full justify-start lg:justify-center"
-          >
-            Venter på info (
-            {isLoading ? (
-              <Skeleton className="w-4 h-4" />
-            ) : (
-              statusCounts.pending_info
-            )}
-            )
-          </TabsTrigger>
-          <TabsTrigger
-            value="approved"
-            className="w-full justify-start lg:justify-center"
-          >
-            Godkjente (
-            {isLoading ? (
-              <Skeleton className="w-4 h-4" />
-            ) : (
-              statusCounts.approved
-            )}
-            )
-          </TabsTrigger>
-          <TabsTrigger
-            value="rejected"
-            className="w-full justify-start lg:justify-center"
-          >
-            Avviste (
-            {isLoading ? (
-              <Skeleton className="w-4 h-4" />
-            ) : (
-              statusCounts.rejected
-            )}
-            )
-          </TabsTrigger>
-        </TabsList>
+        <div className="flex w-full items-center justify-center md:justify-start">
+          <TabsList className="inline-flex h-full w-full flex-col md:h-10 md:flex-row">
+            {tabs.map((tab) => (
+              <TabsTrigger
+                key={tab.value}
+                value={tab.value}
+                className="w-full text-xs lg:text-sm"
+              >
+                {tab.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </div>
 
-        <TabsContent value={activeTab} className="space-y-4">
+        <TabsContent value={activeTab} className="mt-6 space-y-4">
           {isLoading ? (
             <DataTableSkeleton columns={columns} rows={8} />
           ) : error ? (
@@ -187,7 +161,7 @@ export function StylistApplicationDataTable() {
                         .getColumn("full_name")
                         ?.setFilterValue(event.target.value);
                     }}
-                    className="w-full max-w-sm"
+                    className="w-64"
                   />
                 </div>
                 <DropdownMenu>

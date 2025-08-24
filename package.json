@@ -1,6 +1,7 @@
 {
   "private": true,
   "scripts": {
+    "with-env": "dotenv -e .env --",
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
@@ -12,7 +13,7 @@
     "supabase:db:diff": "bun ensure:docker && supabase db diff -f",
     "supabase:migrate:up": "bun ensure:docker && supabase migration up",
     "supabase:db:push": "supabase db push",
-    "supabase:db:reset": "supabase db reset && bun run scripts/supabase/buckets.ts create",
+    "supabase:db:reset": "supabase db reset && bun run scripts/supabase/buckets.ts create && bun run with-env bun scripts/supabase/stripe-sync-engine.ts",
     "supabase:db:types": "supabase gen types typescript --project-id rbkpzpaarsaoorgfyfvh --schema public,stripe,gis > types/database.types.ts",
     "supabase:db:types:zod": "supazod -i types/database.types.ts -o schemas/database.schema.ts -s public,stripe,gis",
     "remove:public:prefix": "tsx scripts/remove-public-prefix.ts",
@@ -29,7 +30,11 @@
     "assets:delete": "bun run scripts/supabase/upload-assets.ts delete",
     "email:dev": "cd transactional && bun run dev",
     "email:build": "cd transactional && bun run build",
-    "email:export": "cd transactional && bun run export"
+    "email:export": "cd transactional && bun run export",
+    "stripe:functions:serve": "supabase functions serve --env-file ./supabase/functions/.env",
+    "stripe:listen": "stripe listen --forward-to localhost:54321/functions/v1/stripe-sync",
+    "stripe:webhook:dev": "./scripts/stripe-webhook-dev.sh",
+    "stripe:trigger": "stripe trigger"
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
@@ -56,6 +61,7 @@
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@react-email/components": "^0.4.0",
     "@stepperize/react": "^5.1.6",
+    "@stripe/stripe-js": "^7.8.0",
     "@supabase/postgrest-js": "*",
     "@supabase/ssr": "^0.6.1",
     "@supabase/stripe-sync-engine": "^0.39.0",
@@ -108,6 +114,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
+    "dotenv-cli": "^10.0.0",
     "eslint": "^9",
     "eslint-config-next": "15.3.1",
     "pg": "^8.16.3",

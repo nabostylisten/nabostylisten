@@ -20,16 +20,37 @@ const stripeSync = new StripeSync({
 });
 
 Deno.serve(async (req) => {
-  // Extract raw body as Uint8Array (buffer)
-  const rawBody = new Uint8Array(await req.arrayBuffer());
+  try {
+    // Extract raw body as Uint8Array (buffer)
+    const rawBody = new Uint8Array(await req.arrayBuffer());
+    const stripeSignature = req.headers.get("stripe-signature");
 
-  const stripeSignature = req.headers.get("stripe-signature");
+    console.log("Processing Stripe webhook:", {
+      bodySize: rawBody.length,
+      hasSignature: !!stripeSignature
+    });
+    
+    // @ts-expect-error - stripeSignature is not typed
+    await stripeSync.processWebhook(rawBody, stripeSignature);
+    
+    console.log("Stripe webhook processed successfully");
 
-  // @ts-expect-error - stripeSignature is not typed
-  await stripeSync.processWebhook(rawBody, stripeSignature);
-
-  return new Response(null, {
-    status: 202,
-    headers: { "Content-Type": "application/json" },
-  });
+    return new Response(null, {
+      status: 202,
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Stripe webhook processing failed:", {
+      error: error.message,
+      stack: error.stack
+    });
+    
+    return new Response(
+      JSON.stringify({ error: error.message }),
+      {
+        status: 500,
+        headers: { "Content-Type": "application/json" },
+      }
+    );
+  }
 });

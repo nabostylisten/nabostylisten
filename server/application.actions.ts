@@ -11,10 +11,8 @@ import { StylistOnboardingEmail } from "@/transactional/emails/stylist-onboardin
 import { createServiceClient } from "@/lib/supabase/service";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
-import {
-    createConnectedAccount,
-    createStripeCustomer,
-} from "@/server/stripe.actions";
+// Note: We import Stripe service functions directly to use with serviceSupabaseClient
+// import { createConnectedAccount, createStripeCustomer } from "@/server/stripe.actions";
 
 export interface ApplicationFormData {
     // Personal information
@@ -655,7 +653,10 @@ export async function updateApplicationStatus({
                         `[STRIPE_CUSTOMER] Creating customer for user ${authUser.user.id}`,
                     );
 
-                    const customerResult = await createStripeCustomer({
+                    // Import the service function directly and use the service client
+                    const { createCustomerWithDatabase } = await import("@/lib/stripe/connect");
+                    const customerResult = await createCustomerWithDatabase({
+                        supabaseClient: serviceSupabaseClient, // Use service client for admin operations
                         profileId: authUser.user.id,
                         email: application.email,
                         fullName: application.full_name,
@@ -672,6 +673,9 @@ export async function updateApplicationStatus({
                         console.log(
                             `[STRIPE_CUSTOMER] Successfully created customer ${stripeCustomerId} for user ${authUser.user.id}`,
                         );
+                        console.log(
+                            `[STRIPE_CUSTOMER] Database save status: ${customerResult.data.savedToDatabase ? 'SUCCESS' : 'FAILED'}`,
+                        );
                     }
                 } catch (customerError) {
                     console.error(
@@ -687,9 +691,21 @@ export async function updateApplicationStatus({
                         `[STRIPE_CONNECT] Creating connected account for user ${authUser.user.id}`,
                     );
 
-                    const stripeResult = await createConnectedAccount({
+                    // Import the service function directly and use the service client
+                    const { createConnectedAccountWithDatabase } = await import("@/lib/stripe/connect");
+                    const stripeResult = await createConnectedAccountWithDatabase({
+                        supabaseClient: serviceSupabaseClient, // Use service client for admin operations
                         profileId: authUser.user.id,
                         email: application.email,
+                        name: application.full_name,
+                        address: {
+                            addressLine1: application.street_address,
+                            addressLine2: "", // Not stored separately in applications
+                            city: application.city,
+                            state: "", // Norway doesn't have states like US
+                            postalCode: application.postal_code,
+                            country: application.country,
+                        },
                     });
 
                     if (stripeResult.error || !stripeResult.data) {

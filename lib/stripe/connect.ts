@@ -1,13 +1,13 @@
 /**
  * Stripe Connect service functions
- * 
+ *
  * These functions handle pure Stripe operations and can be called from:
  * - Server actions (with Supabase client)
  * - Standalone scripts (without request context)
  * - Background jobs
  */
 
-import { stripe, STRIPE_CONNECT_CONFIG, getOnboardingUrls } from "./config";
+import { getOnboardingUrls, stripe, STRIPE_CONNECT_CONFIG } from "./config";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 
@@ -22,14 +22,14 @@ export async function createStripeConnectedAccount({
 }: {
   email: string;
   name: string;
-address: {
-  addressLine1: string;
-  addressLine2: string;
-  city: string;
-  state: string;
-  postalCode: string;
-  country: string;
-},
+  address: {
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
 }) {
   const firstName = name.split(" ")[0];
   const lastName = name.split(" ").slice(1).join(" ");
@@ -41,7 +41,7 @@ address: {
         ...STRIPE_CONNECT_CONFIG.business_profile,
         name,
       },
-      individual:{
+      individual: {
         ...STRIPE_CONNECT_CONFIG.individual,
         first_name: firstName,
         last_name: lastName,
@@ -54,7 +54,7 @@ address: {
           country: address.country,
         },
         email,
-      }
+      },
     });
 
     return {
@@ -68,7 +68,9 @@ address: {
     console.error("Error creating Stripe Connect account:", error);
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Failed to create Stripe account",
+      error: error instanceof Error
+        ? error.message
+        : "Failed to create Stripe account",
     };
   }
 }
@@ -84,12 +86,12 @@ export async function createStripeAccountOnboardingLink({
 }) {
   try {
     const { return_url, refresh_url } = getOnboardingUrls();
-    
+
     const accountLink = await stripe.accountLinks.create({
       account: stripeAccountId,
       refresh_url,
       return_url,
-      type: 'account_onboarding',
+      type: "account_onboarding",
     });
 
     return {
@@ -103,7 +105,9 @@ export async function createStripeAccountOnboardingLink({
     console.error("Error creating account onboarding link:", error);
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Failed to create onboarding link",
+      error: error instanceof Error
+        ? error.message
+        : "Failed to create onboarding link",
     };
   }
 }
@@ -136,7 +140,9 @@ export async function getStripeAccountStatus({
     console.error("Error retrieving Stripe account status:", error);
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Failed to get account status",
+      error: error instanceof Error
+        ? error.message
+        : "Failed to get account status",
     };
   }
 }
@@ -212,7 +218,9 @@ export async function createStripeCustomer({
     console.error("Error creating Stripe customer:", error);
     return {
       data: null,
-      error: error instanceof Error ? error.message : "Failed to create Stripe customer",
+      error: error instanceof Error
+        ? error.message
+        : "Failed to create Stripe customer",
     };
   }
 }
@@ -266,14 +274,36 @@ export async function createConnectedAccountWithDatabase({
   supabaseClient,
   profileId,
   email,
+  name,
+  address,
 }: {
   supabaseClient: SupabaseClient<Database>;
   profileId: string;
   email: string;
+  name?: string;
+  address?: {
+    addressLine1: string;
+    addressLine2: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+  };
 }) {
-  // Step 1: Create Stripe account
-  const stripeResult = await createStripeConnectedAccount({ email });
-  
+  // Step 1: Create Stripe account with proper parameters
+  const stripeResult = await createStripeConnectedAccount({
+    email,
+    name: name || "Unknown", // Fallback name
+    address: address || {
+      addressLine1: "Unknown",
+      addressLine2: "",
+      city: "Unknown",
+      state: "",
+      postalCode: "0000",
+      country: "NO",
+    },
+  });
+
   if (stripeResult.error || !stripeResult.data) {
     return {
       data: null,
@@ -291,7 +321,10 @@ export async function createConnectedAccountWithDatabase({
   });
 
   if (!dbResult.success) {
-    console.error("Stripe account created but failed to save to database:", stripeAccountId);
+    console.error(
+      "Stripe account created but failed to save to database:",
+      stripeAccountId,
+    );
     // Don't throw - the Stripe account was created successfully
   }
 
@@ -327,10 +360,10 @@ export async function createCustomerWithDatabase({
     name: fullName,
     metadata: {
       profile_id: profileId,
-      source: 'marketplace_registration',
+      source: "marketplace_registration",
     },
   });
-  
+
   if (customerResult.error || !customerResult.data) {
     return {
       data: null,
@@ -348,7 +381,10 @@ export async function createCustomerWithDatabase({
   });
 
   if (!dbResult.success) {
-    console.error("Stripe customer created but failed to save to database:", stripeCustomerId);
+    console.error(
+      "Stripe customer created but failed to save to database:",
+      stripeCustomerId,
+    );
     // Don't throw - the Stripe customer was created successfully
   }
 

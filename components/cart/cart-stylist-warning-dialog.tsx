@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/dialog";
 import { useCartStore, type CartItem } from "@/stores/cart.store";
 import type { Database } from "@/types/database.types";
-import { ShoppingCart, User } from "lucide-react";
+import { ChevronRight, ShoppingCart, User } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -29,8 +31,10 @@ export const CartStylistWarningDialog = ({
   newService,
   newStylist,
 }: CartStylistWarningDialogProps) => {
-  const { items, getCurrentStylist, replaceCartWithNewService } = useCartStore();
+  const { items, getCurrentStylist, replaceCartWithNewService } =
+    useCartStore();
   const currentStylist = getCurrentStylist();
+  const router = useRouter();
 
   const handleKeepCurrent = () => {
     onClose();
@@ -39,6 +43,19 @@ export const CartStylistWarningDialog = ({
   const handleReplaceCart = () => {
     replaceCartWithNewService(newService, newStylist);
     onClose();
+
+    toast.success("Tjeneste lagt til i handlekurv", {
+      action: {
+        label: (
+          <div className="flex items-center gap-2">
+            Se handlekurv <ChevronRight className="w-3 h-3" />
+          </div>
+        ),
+        onClick: () => {
+          router.push("/handlekurv");
+        },
+      },
+    });
   };
 
   if (!currentStylist) {
@@ -55,11 +72,12 @@ export const CartStylistWarningDialog = ({
           </DialogTitle>
           <DialogDescription className="text-left space-y-4">
             <p>
-              Bookingflyten med valg av tidspunkt og alle alternativene oppleves best ved å 
-              booke tjenester hos én stylist om gangen.
+              Bookingflyten med valg av tidspunkt og alle alternativene oppleves
+              best ved å booke tjenester hos én stylist om gangen.
             </p>
             <p>
-              Du har for øyeblikket <strong>{items.length}</strong> tjeneste{items.length > 1 ? "r" : ""} 
+              Du har for øyeblikket <strong>{items.length}</strong> tjeneste
+              {items.length > 1 ? "r" : ""}
               fra <strong>{currentStylist.full_name}</strong> i handlekurven.
             </p>
           </DialogDescription>
@@ -77,7 +95,10 @@ export const CartStylistWarningDialog = ({
                 <div key={item.service.id} className="text-sm">
                   <span className="font-medium">{item.service.title}</span>
                   {item.quantity > 1 && (
-                    <span className="text-muted-foreground"> x{item.quantity}</span>
+                    <span className="text-muted-foreground">
+                      {" "}
+                      x{item.quantity}
+                    </span>
                   )}
                   <div className="text-muted-foreground">
                     {item.service.price} {item.service.currency}
@@ -109,7 +130,11 @@ export const CartStylistWarningDialog = ({
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button variant="outline" onClick={handleKeepCurrent} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={handleKeepCurrent}
+            className="w-full sm:w-auto"
+          >
             Behold nåværende handlekurv
           </Button>
           <Button onClick={handleReplaceCart} className="w-full sm:w-auto">

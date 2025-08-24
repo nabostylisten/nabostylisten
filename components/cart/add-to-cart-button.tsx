@@ -3,11 +3,12 @@
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cart.store";
 import { CartStylistWarningDialog } from "@/components/cart/cart-stylist-warning-dialog";
-import { ShoppingCart, Check } from "lucide-react";
+import { ShoppingCart, Check, ChevronRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -55,6 +56,7 @@ export const AddToCartButton = ({
     service: Service;
     stylist: Profile;
   } | null>(null);
+  const router = useRouter();
 
   // Check if this service is already in cart
   const isInCart = items.some((item) => item.service.id === service.id);
@@ -85,21 +87,41 @@ export const AddToCartButton = ({
       phone_number: null,
       role: "stylist" as const,
       stripe_customer_id: null,
-      subscribed_to_newsletter: false,
       updated_at: new Date().toISOString(),
       ...stylist,
-    } as Profile;
+    };
 
     const result = addToCart(fullService, fullStylist);
 
     if (result.success) {
       if (isInCart) {
-        toast.success("Tjeneste oppdatert i handlekurv", {
-          description: `${service.title} (antall: ${serviceInCart ? serviceInCart.quantity + 1 : 1})`,
-        });
+        toast.success(
+          `Tjeneste oppdatert i handlekurv (antall: ${serviceInCart ? serviceInCart.quantity + 1 : 1})`,
+          {
+            action: {
+              label: (
+                <div className="flex items-center gap-2">
+                  Se handlekurv <ChevronRight className="w-3 h-3" />
+                </div>
+              ),
+              onClick: () => {
+                router.push("/handlekurv");
+              },
+            },
+          }
+        );
       } else {
         toast.success("Tjeneste lagt til i handlekurv", {
-          description: service.title,
+          action: {
+            label: (
+              <div className="flex items-center gap-2">
+                Se handlekurv <ChevronRight className="w-3 h-3" />
+              </div>
+            ),
+            onClick: () => {
+              router.push("/handlekurv");
+            },
+          },
         });
       }
     } else if (result.needsConfirmation) {

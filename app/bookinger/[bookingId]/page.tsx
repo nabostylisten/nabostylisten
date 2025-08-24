@@ -4,6 +4,7 @@ import { BookingDetailsContent } from "@/components/my-bookings/booking-details-
 import { ProfileLayout } from "@/components/profile-layout";
 import { getReviewByBookingId } from "@/server/review.actions";
 import { ReviewReminderAlert } from "@/components/reviews/review-reminder-alert";
+import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default async function BookingDetailsPage({
   params,
@@ -90,18 +91,22 @@ export default async function BookingDetailsPage({
     <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
       <div className="flex flex-1 flex-col gap-4 p-4">
         {shouldShowReviewReminder && (
-          <ReviewReminderAlert
-            bookingId={bookingId}
-            stylistName={booking.stylist?.full_name || "Stylisten"}
-            serviceTitles={serviceTitles}
-            bookingDate={booking.created_at}
-          />
+          <BlurFade delay={0.1} duration={0.5} inView>
+            <ReviewReminderAlert
+              bookingId={bookingId}
+              stylistName={booking.stylist?.full_name || "Stylisten"}
+              serviceTitles={serviceTitles}
+              bookingDate={booking.created_at}
+            />
+          </BlurFade>
         )}
-        <BookingDetailsContent
-          bookingId={bookingId}
-          userId={user.id}
-          userRole={userRoleForBooking}
-        />
+        <BlurFade delay={0.15} duration={0.5} inView>
+          <BookingDetailsContent
+            bookingId={bookingId}
+            userId={user.id}
+            userRole={userRoleForBooking}
+          />
+        </BlurFade>
       </div>
     </ProfileLayout>
   );

@@ -339,10 +339,22 @@ Use the BlurFade component from `@/components/magicui/blur-fade` for consistent 
 
 ### Database Development
 
-- Generate types: `bun gen:types`
+- Generate types from local database: `bun gen:types`
+- Generate TypeScript types only: `bun supabase:db:types`
 - Create migrations: `bun supabase:db:diff <migration_name>`
 - Apply migrations: `bun supabase:migrate:up`
 - Push to production: `bun supabase:db:push`
+
+#### Local Database Type Generation
+
+The `bun supabase:db:types` command automatically ensures your local Nabostylisten database is running before generating types:
+
+1. Checks Docker is running
+2. Verifies Nabostylisten database container is up and healthy
+3. Generates TypeScript types from the local database schema
+4. Provides clear error messages if prerequisites aren't met
+
+For database verification only (no type generation): `bun ensure:nabostylisten-db`
 
 ### Documentation Standards
 

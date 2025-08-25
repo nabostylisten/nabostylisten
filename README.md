@@ -14,6 +14,42 @@
 - [ ] Configure Auth Email Hook for custom OTP emails (see setup instructions below)
 - [ ] Implement the cron job plan
 
+## Database Development
+
+### Type Generation
+
+The project supports generating TypeScript types from local database:
+
+- **TypeScript types only**: `bun supabase:db:types` - Generate TypeScript types from local database
+- **Full pipeline**: `bun gen:types` - TypeScript types + Zod schemas + prefix removal
+
+### Local Database Type Generation
+
+For development, you can generate types from your local database using:
+
+```bash
+# Generate TypeScript types (ensures local database is running)
+bun supabase:db:types
+
+# Or run the database check script directly
+bun ensure:nabostylisten-db
+```
+
+The `ensure:nabostylisten-db` script will:
+
+1. Check that Docker is running
+2. Verify the Nabostylisten database container is running
+3. Exit with helpful error messages if prerequisites aren't met
+
+Note: This script only verifies database availability - type generation is handled separately by the `supabase:db:types` command.
+
+### Database Operations
+
+- Create migrations: `bun supabase:db:diff <migration_name>`
+- Apply migrations: `bun supabase:migrate:up`
+- Reset local database: `bun supabase:db:reset`
+- Push to production: `bun supabase:db:push`
+
 ## Auth Email Hook Setup
 
 The project uses Supabase Edge Functions with Resend and React Email to send custom branded OTP emails instead of the default Supabase auth emails.

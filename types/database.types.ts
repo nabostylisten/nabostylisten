@@ -7,11 +7,6 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instantiate createClient with right options
-  // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
-  __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
-  }
   gis: {
     Tables: {
       spatial_ref_sys: {
@@ -85,11 +80,11 @@ export type Database = {
     }
     Functions: {
       _postgis_deprecate: {
-        Args: { newname: string; oldname: string; version: string }
+        Args: { version: string; oldname: string; newname: string }
         Returns: undefined
       }
       _postgis_index_extent: {
-        Args: { col: string; tbl: unknown }
+        Args: { tbl: unknown; col: string }
         Returns: unknown
       }
       _postgis_pgsql_version: {
@@ -101,7 +96,7 @@ export type Database = {
         Returns: string
       }
       _postgis_selectivity: {
-        Args: { att_name: string; geom: unknown; mode?: string; tbl: unknown }
+        Args: { geom: unknown; tbl: unknown; att_name: string; mode?: string }
         Returns: number
       }
       _st_3dintersects: {
@@ -182,15 +177,15 @@ export type Database = {
         Returns: number
       }
       _st_touches: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: boolean
       }
       _st_voronoi: {
         Args: {
-          clip?: unknown
           g1: unknown
-          return_polygons?: boolean
+          clip?: unknown
           tolerance?: number
+          return_polygons?: boolean
         }
         Returns: unknown
       }
@@ -205,31 +200,31 @@ export type Database = {
       addgeometrycolumn: {
         Args:
           | {
-              catalog_name: string
-              column_name: string
+              new_type: string
+              use_typmod?: boolean
               new_dim: number
+              new_srid: number
+              column_name: string
+              table_name: string
+              schema_name: string
+            }
+          | {
+              use_typmod?: boolean
+              catalog_name: string
+              schema_name: string
+              table_name: string
+              column_name: string
               new_srid_in: number
               new_type: string
-              schema_name: string
-              table_name: string
-              use_typmod?: boolean
+              new_dim: number
             }
           | {
-              column_name: string
-              new_dim: number
-              new_srid: number
-              new_type: string
-              schema_name: string
-              table_name: string
               use_typmod?: boolean
-            }
-          | {
-              column_name: string
-              new_dim: number
               new_srid: number
-              new_type: string
               table_name: string
-              use_typmod?: boolean
+              new_type: string
+              new_dim: number
+              column_name: string
             }
         Returns: string
       }
@@ -285,17 +280,17 @@ export type Database = {
         Args:
           | {
               catalog_name: string
-              column_name: string
               schema_name: string
+              column_name: string
               table_name: string
             }
-          | { column_name: string; schema_name: string; table_name: string }
-          | { column_name: string; table_name: string }
+          | { table_name: string; column_name: string }
+          | { table_name: string; column_name: string; schema_name: string }
         Returns: string
       }
       dropgeometrytable: {
         Args:
-          | { catalog_name: string; schema_name: string; table_name: string }
+          | { schema_name: string; catalog_name: string; table_name: string }
           | { schema_name: string; table_name: string }
           | { table_name: string }
         Returns: string
@@ -397,7 +392,7 @@ export type Database = {
         Returns: boolean
       }
       geometry_ge: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: boolean
       }
       geometry_gist_compress_2d: {
@@ -627,15 +622,15 @@ export type Database = {
         Returns: unknown
       }
       postgis_constraint_dims: {
-        Args: { geomcolumn: string; geomschema: string; geomtable: string }
+        Args: { geomschema: string; geomtable: string; geomcolumn: string }
         Returns: number
       }
       postgis_constraint_srid: {
-        Args: { geomcolumn: string; geomschema: string; geomtable: string }
+        Args: { geomschema: string; geomtable: string; geomcolumn: string }
         Returns: number
       }
       postgis_constraint_type: {
-        Args: { geomcolumn: string; geomschema: string; geomtable: string }
+        Args: { geomschema: string; geomtable: string; geomcolumn: string }
         Returns: string
       }
       postgis_dropbbox: {
@@ -724,8 +719,8 @@ export type Database = {
       }
       postgis_type_name: {
         Args: {
-          coord_dimension: number
           geomname: string
+          coord_dimension: number
           use_new_name?: boolean
         }
         Returns: string
@@ -779,7 +774,7 @@ export type Database = {
         Returns: unknown
       }
       st_3dmakebox: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: unknown
       }
       st_3dmaxdistance: {
@@ -801,7 +796,7 @@ export type Database = {
       st_angle: {
         Args:
           | { line1: unknown; line2: unknown }
-          | { pt1: unknown; pt2: unknown; pt3: unknown; pt4?: unknown }
+          | { pt4?: unknown; pt1: unknown; pt3: unknown; pt2: unknown }
         Returns: number
       }
       st_area: {
@@ -835,13 +830,13 @@ export type Database = {
         Args:
           | { "": string }
           | { geog: unknown; maxdecimaldigits?: number; options?: number }
-          | { geom: unknown; maxdecimaldigits?: number; options?: number }
           | {
-              geom_column?: string
               maxdecimaldigits?: number
-              pretty_bool?: boolean
               r: Record<string, unknown>
+              geom_column?: string
+              pretty_bool?: boolean
             }
+          | { options?: number; geom: unknown; maxdecimaldigits?: number }
         Returns: string
       }
       st_asgml: {
@@ -849,28 +844,28 @@ export type Database = {
           | { "": string }
           | {
               geog: unknown
-              id?: string
               maxdecimaldigits?: number
-              nprefix?: string
               options?: number
-            }
-          | {
-              geog: unknown
+              nprefix?: string
               id?: string
-              maxdecimaldigits?: number
-              nprefix?: string
-              options?: number
-              version: number
-            }
-          | {
-              geom: unknown
-              id?: string
-              maxdecimaldigits?: number
-              nprefix?: string
-              options?: number
-              version: number
             }
           | { geom: unknown; maxdecimaldigits?: number; options?: number }
+          | {
+              version: number
+              geog: unknown
+              maxdecimaldigits?: number
+              options?: number
+              nprefix?: string
+              id?: string
+            }
+          | {
+              version: number
+              geom: unknown
+              maxdecimaldigits?: number
+              options?: number
+              nprefix?: string
+              id?: string
+            }
         Returns: string
       }
       st_ashexewkb: {
@@ -885,28 +880,28 @@ export type Database = {
         Returns: string
       }
       st_aslatlontext: {
-        Args: { geom: unknown; tmpl?: string }
+        Args: { tmpl?: string; geom: unknown }
         Returns: string
       }
       st_asmarc21: {
-        Args: { format?: string; geom: unknown }
+        Args: { geom: unknown; format?: string }
         Returns: string
       }
       st_asmvtgeom: {
         Args: {
-          bounds: unknown
           buffer?: number
-          clip_geom?: boolean
-          extent?: number
           geom: unknown
+          bounds: unknown
+          extent?: number
+          clip_geom?: boolean
         }
         Returns: unknown
       }
       st_assvg: {
         Args:
           | { "": string }
-          | { geog: unknown; maxdecimaldigits?: number; rel?: number }
-          | { geom: unknown; maxdecimaldigits?: number; rel?: number }
+          | { geog: unknown; rel?: number; maxdecimaldigits?: number }
+          | { geom: unknown; rel?: number; maxdecimaldigits?: number }
         Returns: string
       }
       st_astext: {
@@ -916,20 +911,20 @@ export type Database = {
       st_astwkb: {
         Args:
           | {
+              prec_z?: number
+              prec_m?: number
+              with_sizes?: boolean
+              with_boxes?: boolean
+              geom: unknown
+              prec?: number
+            }
+          | {
+              with_boxes?: boolean
               geom: unknown[]
               ids: number[]
               prec?: number
-              prec_m?: number
               prec_z?: number
-              with_boxes?: boolean
-              with_sizes?: boolean
-            }
-          | {
-              geom: unknown
-              prec?: number
               prec_m?: number
-              prec_z?: number
-              with_boxes?: boolean
               with_sizes?: boolean
             }
         Returns: string
@@ -941,7 +936,7 @@ export type Database = {
       st_azimuth: {
         Args:
           | { geog1: unknown; geog2: unknown }
-          | { geom1: unknown; geom2: unknown }
+          | { geom2: unknown; geom1: unknown }
         Returns: number
       }
       st_boundary: {
@@ -949,13 +944,13 @@ export type Database = {
         Returns: unknown
       }
       st_boundingdiagonal: {
-        Args: { fits?: boolean; geom: unknown }
+        Args: { geom: unknown; fits?: boolean }
         Returns: unknown
       }
       st_buffer: {
         Args:
-          | { geom: unknown; options?: string; radius: number }
           | { geom: unknown; quadsegs: number; radius: number }
+          | { radius: number; geom: unknown; options?: string }
         Returns: unknown
       }
       st_buildarea: {
@@ -996,9 +991,9 @@ export type Database = {
       }
       st_concavehull: {
         Args: {
-          param_allow_holes?: boolean
           param_geom: unknown
           param_pctconvex: number
+          param_allow_holes?: boolean
         }
         Returns: unknown
       }
@@ -1035,15 +1030,15 @@ export type Database = {
         Returns: boolean
       }
       st_curvetoline: {
-        Args: { flags?: number; geom: unknown; tol?: number; toltype?: number }
+        Args: { geom: unknown; tol?: number; toltype?: number; flags?: number }
         Returns: unknown
       }
       st_delaunaytriangles: {
-        Args: { flags?: number; g1: unknown; tolerance?: number }
+        Args: { g1: unknown; flags?: number; tolerance?: number }
         Returns: unknown
       }
       st_difference: {
-        Args: { geom1: unknown; geom2: unknown; gridsize?: number }
+        Args: { geom1: unknown; gridsize?: number; geom2: unknown }
         Returns: unknown
       }
       st_dimension: {
@@ -1056,8 +1051,8 @@ export type Database = {
       }
       st_distance: {
         Args:
-          | { geog1: unknown; geog2: unknown; use_spheroid?: boolean }
-          | { geom1: unknown; geom2: unknown }
+          | { geog2: unknown; geog1: unknown; use_spheroid?: boolean }
+          | { geom2: unknown; geom1: unknown }
         Returns: number
       }
       st_distancesphere: {
@@ -1110,8 +1105,8 @@ export type Database = {
       st_expand: {
         Args:
           | { box: unknown; dx: number; dy: number }
-          | { box: unknown; dx: number; dy: number; dz?: number }
-          | { dm?: number; dx: number; dy: number; dz?: number; geom: unknown }
+          | { dm?: number; geom: unknown; dx: number; dy: number; dz?: number }
+          | { dz?: number; dx: number; box: unknown; dy: number }
         Returns: unknown
       }
       st_exteriorring: {
@@ -1127,19 +1122,19 @@ export type Database = {
         Returns: unknown
       }
       st_force3d: {
-        Args: { geom: unknown; zvalue?: number }
+        Args: { zvalue?: number; geom: unknown }
         Returns: unknown
       }
       st_force3dm: {
-        Args: { geom: unknown; mvalue?: number }
+        Args: { mvalue?: number; geom: unknown }
         Returns: unknown
       }
       st_force3dz: {
-        Args: { geom: unknown; zvalue?: number }
+        Args: { zvalue?: number; geom: unknown }
         Returns: unknown
       }
       st_force4d: {
-        Args: { geom: unknown; mvalue?: number; zvalue?: number }
+        Args: { zvalue?: number; mvalue?: number; geom: unknown }
         Returns: unknown
       }
       st_forcecollection: {
@@ -1168,8 +1163,8 @@ export type Database = {
       }
       st_generatepoints: {
         Args:
-          | { area: unknown; npoints: number }
-          | { area: unknown; npoints: number; seed: number }
+          | { npoints: number; area: unknown }
+          | { npoints: number; area: unknown; seed: number }
         Returns: unknown
       }
       st_geogfromtext: {
@@ -1200,10 +1195,10 @@ export type Database = {
       }
       st_geometricmedian: {
         Args: {
-          fail_if_not_converged?: boolean
           g: unknown
-          max_iter?: number
           tolerance?: number
+          max_iter?: number
+          fail_if_not_converged?: boolean
         }
         Returns: unknown
       }
@@ -1264,11 +1259,11 @@ export type Database = {
         Returns: number
       }
       st_hexagon: {
-        Args: { cell_i: number; cell_j: number; origin?: unknown; size: number }
+        Args: { size: number; cell_i: number; cell_j: number; origin?: unknown }
         Returns: unknown
       }
       st_hexagongrid: {
-        Args: { bounds: unknown; size: number }
+        Args: { size: number; bounds: unknown }
         Returns: Record<string, unknown>[]
       }
       st_interpolatepoint: {
@@ -1318,7 +1313,7 @@ export type Database = {
         Returns: boolean
       }
       st_isvaliddetail: {
-        Args: { flags?: number; geom: unknown }
+        Args: { geom: unknown; flags?: number }
         Returns: Database["gis"]["CompositeTypes"]["valid_detail"]
       }
       st_isvalidreason: {
@@ -1341,7 +1336,7 @@ export type Database = {
         Returns: number
       }
       st_letters: {
-        Args: { font?: Json; letters: string }
+        Args: { letters: string; font?: Json }
         Returns: unknown
       }
       st_linecrossingdirection: {
@@ -1349,7 +1344,7 @@ export type Database = {
         Returns: number
       }
       st_linefromencodedpolyline: {
-        Args: { nprecision?: number; txtin: string }
+        Args: { txtin: string; nprecision?: number }
         Returns: unknown
       }
       st_linefrommultipoint: {
@@ -1365,7 +1360,7 @@ export type Database = {
         Returns: unknown
       }
       st_linelocatepoint: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: number
       }
       st_linemerge: {
@@ -1381,20 +1376,20 @@ export type Database = {
         Returns: unknown
       }
       st_locatealong: {
-        Args: { geometry: unknown; leftrightoffset?: number; measure: number }
+        Args: { geometry: unknown; measure: number; leftrightoffset?: number }
         Returns: unknown
       }
       st_locatebetween: {
         Args: {
-          frommeasure: number
           geometry: unknown
-          leftrightoffset?: number
+          frommeasure: number
           tomeasure: number
+          leftrightoffset?: number
         }
         Returns: unknown
       }
       st_locatebetweenelevations: {
-        Args: { fromelevation: number; geometry: unknown; toelevation: number }
+        Args: { geometry: unknown; fromelevation: number; toelevation: number }
         Returns: unknown
       }
       st_longestline: {
@@ -1406,11 +1401,11 @@ export type Database = {
         Returns: number
       }
       st_makebox2d: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: unknown
       }
       st_makeline: {
-        Args: { "": unknown[] } | { geom1: unknown; geom2: unknown }
+        Args: { "": unknown[] } | { geom2: unknown; geom1: unknown }
         Returns: unknown
       }
       st_makepolygon: {
@@ -1542,7 +1537,7 @@ export type Database = {
         Returns: number
       }
       st_offsetcurve: {
-        Args: { distance: number; line: unknown; params?: string }
+        Args: { params?: string; distance: number; line: unknown }
         Returns: unknown
       }
       st_orderingequals: {
@@ -1575,10 +1570,10 @@ export type Database = {
       }
       st_pointm: {
         Args: {
-          mcoordinate: number
-          srid?: number
           xcoordinate: number
           ycoordinate: number
+          mcoordinate: number
+          srid?: number
         }
         Returns: unknown
       }
@@ -1592,20 +1587,20 @@ export type Database = {
       }
       st_pointz: {
         Args: {
-          srid?: number
+          zcoordinate: number
           xcoordinate: number
           ycoordinate: number
-          zcoordinate: number
+          srid?: number
         }
         Returns: unknown
       }
       st_pointzm: {
         Args: {
-          mcoordinate: number
-          srid?: number
           xcoordinate: number
           ycoordinate: number
           zcoordinate: number
+          mcoordinate: number
+          srid?: number
         }
         Returns: unknown
       }
@@ -1630,16 +1625,16 @@ export type Database = {
         Returns: unknown
       }
       st_project: {
-        Args: { azimuth: number; distance: number; geog: unknown }
+        Args: { geog: unknown; distance: number; azimuth: number }
         Returns: unknown
       }
       st_quantizecoordinates: {
         Args: {
-          g: unknown
-          prec_m?: number
-          prec_x: number
-          prec_y?: number
           prec_z?: number
+          prec_y?: number
+          g: unknown
+          prec_x: number
+          prec_m?: number
         }
         Returns: unknown
       }
@@ -1664,7 +1659,7 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid: {
-        Args: { geog: unknown; srid: number } | { geom: unknown; srid: number }
+        Args: { geog: unknown; srid: number } | { srid: number; geom: unknown }
         Returns: unknown
       }
       st_sharedpaths: {
@@ -1680,7 +1675,7 @@ export type Database = {
         Returns: unknown
       }
       st_simplifypolygonhull: {
-        Args: { geom: unknown; is_outer?: boolean; vertex_fraction: number }
+        Args: { geom: unknown; vertex_fraction: number; is_outer?: boolean }
         Returns: unknown
       }
       st_split: {
@@ -1688,11 +1683,11 @@ export type Database = {
         Returns: unknown
       }
       st_square: {
-        Args: { cell_i: number; cell_j: number; origin?: unknown; size: number }
+        Args: { size: number; cell_i: number; cell_j: number; origin?: unknown }
         Returns: unknown
       }
       st_squaregrid: {
-        Args: { bounds: unknown; size: number }
+        Args: { size: number; bounds: unknown }
         Returns: Record<string, unknown>[]
       }
       st_srid: {
@@ -1704,7 +1699,7 @@ export type Database = {
         Returns: unknown
       }
       st_subdivide: {
-        Args: { geom: unknown; gridsize?: number; maxvertices?: number }
+        Args: { maxvertices?: number; geom: unknown; gridsize?: number }
         Returns: unknown[]
       }
       st_summary: {
@@ -1716,20 +1711,20 @@ export type Database = {
         Returns: unknown
       }
       st_symdifference: {
-        Args: { geom1: unknown; geom2: unknown; gridsize?: number }
+        Args: { geom2: unknown; geom1: unknown; gridsize?: number }
         Returns: unknown
       }
       st_symmetricdifference: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: unknown
       }
       st_tileenvelope: {
         Args: {
-          bounds?: unknown
-          margin?: number
-          x: number
-          y: number
           zoom: number
+          margin?: number
+          bounds?: unknown
+          y: number
+          x: number
         }
         Returns: unknown
       }
@@ -1739,9 +1734,9 @@ export type Database = {
       }
       st_transform: {
         Args:
-          | { from_proj: string; geom: unknown; to_proj: string }
-          | { from_proj: string; geom: unknown; to_srid: number }
+          | { geom: unknown; from_proj: string; to_srid: number }
           | { geom: unknown; to_proj: string }
+          | { to_proj: string; geom: unknown; from_proj: string }
         Returns: unknown
       }
       st_triangulatepolygon: {
@@ -1751,12 +1746,12 @@ export type Database = {
       st_union: {
         Args:
           | { "": unknown[] }
-          | { geom1: unknown; geom2: unknown }
-          | { geom1: unknown; geom2: unknown; gridsize: number }
+          | { geom1: unknown; gridsize: number; geom2: unknown }
+          | { geom2: unknown; geom1: unknown }
         Returns: unknown
       }
       st_voronoilines: {
-        Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
+        Args: { tolerance?: number; g1: unknown; extend_to?: unknown }
         Returns: unknown
       }
       st_voronoipolygons: {
@@ -1776,7 +1771,7 @@ export type Database = {
         Returns: unknown
       }
       st_wrapx: {
-        Args: { geom: unknown; move: number; wrap: number }
+        Args: { geom: unknown; wrap: number; move: number }
         Returns: unknown
       }
       st_x: {
@@ -1830,10 +1825,10 @@ export type Database = {
       updategeometrysrid: {
         Args: {
           catalogn_name: string
+          table_name: string
+          schema_name: string
           column_name: string
           new_srid_in: number
-          schema_name: string
-          table_name: string
         }
         Returns: string
       }
@@ -2951,60 +2946,60 @@ export type Database = {
       nearby_addresses: {
         Args: { lat: number; long: number; radius_km?: number }
         Returns: {
-          city: string
-          country: string
-          distance_meters: number
-          entry_instructions: string
           id: string
+          user_id: string
+          nickname: string
+          street_address: string
+          city: string
+          postal_code: string
+          country: string
+          entry_instructions: string
           is_primary: boolean
           lat: number
           long: number
-          nickname: string
-          postal_code: string
-          street_address: string
-          user_id: string
+          distance_meters: number
         }[]
       }
       nearby_services: {
         Args: {
-          at_customer_place?: boolean
-          at_stylist_place?: boolean
-          category_ids?: string[]
           lat: number
           long: number
-          max_price_ore?: number
-          min_price_ore?: number
           radius_km?: number
           search_term?: string
-          sort_by?: string
+          category_ids?: string[]
+          min_price_ore?: number
+          max_price_ore?: number
+          at_customer_place?: boolean
+          at_stylist_place?: boolean
           stylist_ids?: string[]
+          sort_by?: string
         }
         Returns: {
-          address_city: string
-          address_country: string
-          address_id: string
-          address_lat: number
-          address_lng: number
-          address_postal_code: string
-          address_street_address: string
-          average_rating: number
-          distance_meters: number
+          service_id: string
+          service_title: string
+          service_description: string
+          service_price: number
+          service_currency: string
+          service_duration_minutes: number
           service_at_customer_place: boolean
           service_at_stylist_place: boolean
-          service_created_at: string
-          service_currency: string
-          service_description: string
-          service_duration_minutes: number
-          service_id: string
           service_is_published: boolean
-          service_price: number
-          service_title: string
+          service_created_at: string
+          stylist_id: string
+          stylist_full_name: string
           stylist_bio: string
           stylist_can_travel: boolean
-          stylist_full_name: string
           stylist_has_own_place: boolean
-          stylist_id: string
+          address_id: string
+          address_street_address: string
+          address_city: string
+          address_postal_code: string
+          address_country: string
+          address_lat: number
+          address_lng: number
+          distance_meters: number
           total_reviews: number
+          average_rating: number
         }[]
       }
     }
@@ -4896,3 +4891,4 @@ export const Constants = {
     },
   },
 } as const
+

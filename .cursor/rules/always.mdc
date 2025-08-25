@@ -291,10 +291,21 @@ nabostylisten/
 
 ### Database Development
 
-- Generate types: `bun gen:types`
+- Generate types from local database: `bun gen:types`
+- Generate TypeScript types only: `bun supabase:db:types`
 - Create migrations: `bun supabase:db:diff <migration_name>`
 - Apply migrations: `bun supabase:migrate:up`
 - Push to production: `bun supabase:db:push`
+
+#### Local Database Requirements
+
+The `supabase:db:types` command includes built-in checks to ensure:
+
+1. Docker is running
+2. Nabostylisten database container is running and healthy
+3. Only then generates TypeScript types from local database
+
+Use `bun ensure:nabostylisten-db` to run just the database verification script (does not generate types, only checks database availability).
 
 ### Code Quality
 

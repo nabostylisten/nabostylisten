@@ -10,6 +10,10 @@
 import { getOnboardingUrls, stripe, STRIPE_CONNECT_CONFIG } from "./config";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
+import type Stripe from "stripe";
+
+// Common type for Stripe customer updates
+export type StripeCustomerUpdateParams = Stripe.CustomerUpdateParams;
 
 /**
  * Create a Stripe Connect account
@@ -194,16 +198,20 @@ export async function saveStripeAccountIdToDatabase({
 export async function createStripeCustomer({
   email,
   name,
+  phone,
   metadata = {},
 }: {
   email: string;
   name?: string;
+  phone?: string;
   metadata?: Record<string, string>;
 }) {
   try {
     const customer = await stripe.customers.create({
       email,
       name,
+      phone,
+      preferred_locales: ["no"],
       metadata,
     });
 
@@ -339,6 +347,61 @@ export async function createConnectedAccountWithDatabase({
 }
 
 /**
+ * Update Stripe customer
+ * Pure Stripe operation - no database interaction
+ */
+export async function updateStripeCustomer({
+  customerId,
+  updateParams,
+}: {
+  customerId: string;
+  updateParams: StripeCustomerUpdateParams;
+}) {
+  const shippingParams: Stripe.CustomerUpdateParams["shipping"] =
+    updateParams.address && updateParams.name && updateParams.phone
+      ? {
+        name: updateParams.name,
+        phone: updateParams.phone,
+        address: updateParams.address,
+      }
+      : undefined;
+
+  try {
+    const customer = await stripe.customers.update(customerId, {
+      ...updateParams,
+      shipping: shippingParams,
+    });
+
+    return {
+      data: {
+        customerId: customer.id,
+        customer,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error updating Stripe customer address:", error);
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to update Stripe customer address",
+    };
+  }
+}
+
+export async function deleteStripeCustomerAddress({
+  customerId,
+}: {
+  customerId: string;
+}) {
+  await stripe.customers.update(customerId, {
+    address: undefined,
+    shipping: undefined,
+  });
+}
+
+/**
  * Complete customer creation with database storage
  * Creates both Stripe customer and saves to database
  * Stylists need to be customers too since they can purchase services
@@ -348,16 +411,19 @@ export async function createCustomerWithDatabase({
   profileId,
   email,
   fullName,
+  phoneNumber,
 }: {
   supabaseClient: SupabaseClient<Database>;
   profileId: string;
   email: string;
   fullName?: string;
+  phoneNumber?: string;
 }) {
   // Step 1: Create Stripe customer
   const customerResult = await createStripeCustomer({
     email,
     name: fullName,
+    phone: phoneNumber,
     metadata: {
       profile_id: profileId,
       source: "marketplace_registration",

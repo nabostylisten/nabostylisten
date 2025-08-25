@@ -1,11 +1,14 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { 
-  createConnectedAccountWithDatabase, 
+import {
+  createConnectedAccountWithDatabase,
+  createCustomerWithDatabase,
   createStripeAccountOnboardingLink,
   getStripeAccountStatus as getStripeAccountStatusService,
-  createCustomerWithDatabase 
+  updateStripeCustomer,
+  deleteStripeCustomerAddress,
+  type StripeCustomerUpdateParams,
 } from "@/lib/stripe/connect";
 
 // TODO: Implement Stripe-related server actions
@@ -16,14 +19,14 @@ import {
  */
 export async function createPaymentIntent(bookingId: string) {
   const supabase = await createClient();
-  
+
   // TODO: Get booking details
   // const { data: booking } = await supabase
   //   .from("bookings")
   //   .select("*, services(*)")
   //   .eq("id", bookingId)
   //   .single();
-  
+
   // TODO: Create PaymentIntent with Stripe
   // const paymentIntent = await stripe.paymentIntents.create({
   //   amount: booking.total_price * 100, // Convert to øre
@@ -35,16 +38,16 @@ export async function createPaymentIntent(bookingId: string) {
   //     stylistId: booking.stylist_id,
   //   },
   // });
-  
+
   // TODO: Update booking with payment intent ID
   // await supabase
   //   .from("bookings")
   //   .update({ stripe_payment_intent_id: paymentIntent.id })
   //   .eq("id", bookingId);
-  
+
   // TODO: Return client secret for frontend
   // return { clientSecret: paymentIntent.client_secret };
-  
+
   return { error: "Stripe integration pending" };
 }
 
@@ -104,7 +107,9 @@ export async function createAccountOnboardingLink({
   return await createStripeAccountOnboardingLink({ stripeAccountId });
 }
 
-export type GetStripeAccountStatusResult = Awaited<ReturnType<typeof getStripeAccountStatus>>;
+export type GetStripeAccountStatusResult = Awaited<
+  ReturnType<typeof getStripeAccountStatus>
+>;
 
 /**
  * Get Stripe account status for a stylist
@@ -163,15 +168,15 @@ export async function getCurrentUserStripeStatus() {
   }
 
   if (!stylistDetails.stripe_account_id) {
-    return { 
-      data: { 
-        stripeAccountId: null, 
-        status: null, 
+    return {
+      data: {
+        stripeAccountId: null,
+        status: null,
         isFullyOnboarded: false,
         profile,
-        stylistDetails 
-      }, 
-      error: null 
+        stylistDetails,
+      },
+      error: null,
     };
   }
 
@@ -181,8 +186,7 @@ export async function getCurrentUserStripeStatus() {
     });
 
     if (statusResult.data) {
-      const isFullyOnboarded = 
-        statusResult.data.charges_enabled &&
+      const isFullyOnboarded = statusResult.data.charges_enabled &&
         statusResult.data.details_submitted &&
         statusResult.data.payouts_enabled;
 
@@ -192,33 +196,33 @@ export async function getCurrentUserStripeStatus() {
           status: statusResult.data,
           isFullyOnboarded,
           profile,
-          stylistDetails
+          stylistDetails,
         },
-        error: null
+        error: null,
       };
     } else {
-      return { 
-        data: { 
-          stripeAccountId: stylistDetails.stripe_account_id, 
-          status: null, 
+      return {
+        data: {
+          stripeAccountId: stylistDetails.stripe_account_id,
+          status: null,
           isFullyOnboarded: false,
           profile,
-          stylistDetails 
-        }, 
-        error: statusResult.error 
+          stylistDetails,
+        },
+        error: statusResult.error,
       };
     }
   } catch (error) {
     console.error("Error fetching Stripe account status:", error);
-    return { 
-      data: { 
-        stripeAccountId: stylistDetails.stripe_account_id, 
-        status: null, 
+    return {
+      data: {
+        stripeAccountId: stylistDetails.stripe_account_id,
+        status: null,
         isFullyOnboarded: false,
         profile,
-        stylistDetails 
-      }, 
-      error: "Failed to fetch Stripe status" 
+        stylistDetails,
+      },
+      error: "Failed to fetch Stripe status",
     };
   }
 }
@@ -231,10 +235,12 @@ export async function createStripeCustomer({
   profileId,
   email,
   fullName,
+  phoneNumber,
 }: {
   profileId: string;
   email: string;
   fullName?: string;
+  phoneNumber?: string;
 }) {
   const supabase = await createClient();
 
@@ -243,6 +249,7 @@ export async function createStripeCustomer({
     profileId,
     email,
     fullName,
+    phoneNumber,
   });
 }
 
@@ -250,7 +257,10 @@ export async function createStripeCustomer({
  * Transfer funds to stylist after successful payment
  * TODO: Implement when Stripe Connect is configured
  */
-export async function transferToStylist(paymentIntentId: string, bookingId: string) {
+export async function transferToStylist(
+  paymentIntentId: string,
+  bookingId: string,
+) {
   // TODO: Get payment and booking details
   // TODO: Calculate platform fee and stylist payout
   // TODO: Create transfer to stylist's Stripe account
@@ -267,4 +277,33 @@ export async function getStylistDashboardLink(stylistId: string) {
   // TODO: Create login link
   // const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
   // return { url: loginLink.url };
+}
+
+/**
+ * Update Stripe customer
+ * Server action wrapper around service function
+ */
+export async function updateStripeCustomerAction({
+  customerId,
+  updateParams,
+}: {
+  customerId: string;
+  updateParams: StripeCustomerUpdateParams;
+}) {
+  return await updateStripeCustomer({
+    customerId,
+    updateParams,
+  });
+}
+
+/**
+ * Delete Stripe customer address
+ * Server action wrapper around service function
+ */
+export async function deleteStripeCustomerAddressAction({
+  customerId,
+}: {
+  customerId: string;
+}) {
+  return await deleteStripeCustomerAddress({ customerId });
 }

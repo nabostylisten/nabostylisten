@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { checkUserExists, sendWelcomeEmail } from "@/server/auth.actions";
 import { subscribeUserToNewsletterAfterSignup } from "@/server/preferences.actions";
+import { createStripeCustomer } from "@/server/stripe.actions";
 
 export type AuthMode = "login" | "signup";
 export type AuthStep = "email" | "code";
@@ -98,10 +99,40 @@ export function useAuthForm({
             });
 
             // Subscribe to newsletter if user preferences allow it
-            await subscribeUserToNewsletterAfterSignup(data.user.id).catch((error) => {
-              console.error("[AUTH_FORM] Failed to subscribe to newsletter:", error);
-            });
+            await subscribeUserToNewsletterAfterSignup(data.user.id).catch(
+              (error) => {
+                console.error(
+                  "[AUTH_FORM] Failed to subscribe to newsletter:",
+                  error,
+                );
+              },
+            );
           }
+        }
+      }
+
+      // Create Stripe customer for all verified users (both login and signup)
+      if (data.user?.email) {
+        // Get current profile to check if Stripe customer already exists
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("stripe_customer_id, full_name, phone_number")
+          .eq("id", data.user.id)
+          .single();
+
+        // Only create Stripe customer if one doesn't exist yet
+        if (profile && !profile.stripe_customer_id) {
+          await createStripeCustomer({
+            profileId: data.user.id,
+            email: data.user.email,
+            fullName: profile.full_name || undefined,
+            phoneNumber: profile.phone_number || undefined,
+          }).catch((error) => {
+            console.error(
+              "[AUTH_FORM] Failed to create Stripe customer:",
+              error,
+            );
+          });
         }
       }
 

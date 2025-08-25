@@ -93,15 +93,21 @@ export default function BookingPage() {
         // Clear the cart after successful booking
         clearCart();
         
-        // TODO: Redirect to Stripe checkout or payment confirmation page
-        // For now, redirect to a success page or bookings list
+        // Redirect to payment page with client secret
         toast.success("Booking opprettet! Videresender til betaling...");
         
-        // TODO: Implement Stripe Elements or redirect to Stripe Checkout
-        // router.push(`/checkout/${result.data.booking.id}?payment_intent=${result.data.stripePaymentIntentId}`);
+        if (!result.data.paymentIntentClientSecret) {
+          toast.error("Betalingsintegrasjon feilet. Prøv igjen.");
+          return;
+        }
+
+        const searchParams = new URLSearchParams({
+          payment_intent: result.data.stripePaymentIntentId,
+          client_secret: result.data.paymentIntentClientSecret,
+          booking_id: result.data.booking.id,
+        });
         
-        // Redirect to user's bookings page
-        router.push(`/profiler/${result.data.booking.customer_id}/mine-bookinger`);
+        router.push(`/checkout?${searchParams.toString()}`);
       }
     } catch (error) {
       console.error("Error creating booking:", error);

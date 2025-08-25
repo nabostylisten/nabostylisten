@@ -682,6 +682,42 @@ export async function createStripeRefund({
 }
 
 /**
+ * Update PaymentIntent metadata
+ * Used to update booking ID and other metadata after booking creation
+ * Pure Stripe operation - no database interaction
+ */
+export async function updateStripePaymentIntentMetadata({
+  paymentIntentId,
+  metadata,
+}: {
+  paymentIntentId: string;
+  metadata: Record<string, string>;
+}) {
+  try {
+    const paymentIntent = await stripe.paymentIntents.update(paymentIntentId, {
+      metadata,
+    });
+
+    return {
+      data: {
+        paymentIntentId: paymentIntent.id,
+        metadata: paymentIntent.metadata,
+        updatedAt: new Date().toISOString(),
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error updating PaymentIntent metadata:", error);
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to update PaymentIntent metadata",
+    };
+  }
+}
+
+/**
  * Create login link for Stripe Express Dashboard
  * Pure Stripe operation - no database interaction
  */

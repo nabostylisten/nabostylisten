@@ -8,6 +8,11 @@ import {
     discountsInsertSchema,
 } from "@/schemas/database.schema";
 import type { BookingFilters, DatabaseTables } from "@/types";
+import { 
+    createStripePaymentIntent, 
+    updateStripePaymentIntentMetadata 
+} from "@/lib/stripe/connect";
+import { calculatePlatformFee } from "@/schemas/platform-config.schema";
 import { sendEmail } from "@/lib/resend-utils";
 import { BookingStatusUpdateEmail } from "@/transactional/emails/booking-status-update";
 import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
@@ -554,15 +559,41 @@ export async function createBookingWithServices(
         // 3. Calculate final price after discount
         const finalPrice = Math.max(0, input.totalPrice - discountAmount);
 
-        // Create Stripe PaymentIntent using service function
-        let stripePaymentIntentId: string | null = null;
-        const paymentIntentClientSecret: string | null = null;
-        
-        // TODO: Implement actual PaymentIntent creation
-        // This would be called after booking is successfully created
-        // For now, we're creating a placeholder that will be replaced
-        // when the frontend payment flow is implemented
-        stripePaymentIntentId = `pi_temp_${Date.now()}`;
+        // Get stylist Stripe account ID for payment processing
+        const { data: stylistDetails, error: stylistError } = await supabase
+            .from("stylist_details")
+            .select("stripe_account_id")
+            .eq("profile_id", input.stylistId)
+            .single();
+
+        if (stylistError || !stylistDetails?.stripe_account_id) {
+            return {
+                error: "Stylist has not completed Stripe onboarding",
+                data: null,
+            };
+        }
+
+        // Create Stripe PaymentIntent with real integration
+        const paymentIntentResult = await createStripePaymentIntent({
+            totalAmountNOK: finalPrice,
+            stylistStripeAccountId: stylistDetails.stripe_account_id,
+            bookingId: `temp_${Date.now()}`, // Temporary ID, will be updated after booking creation
+            customerId: user.id,
+            stylistId: input.stylistId,
+            hasAffiliate: false, // TODO: Implement affiliate logic
+            discountAmountNOK: discountAmount,
+            discountCode: input.discountCode,
+        });
+
+        if (paymentIntentResult.error || !paymentIntentResult.data) {
+            return {
+                error: paymentIntentResult.error || "Failed to create payment intent",
+                data: null,
+            };
+        }
+
+        const stripePaymentIntentId = paymentIntentResult.data.paymentIntentId;
+        const paymentIntentClientSecret = paymentIntentResult.data.clientSecret;
 
         // 4. Create the booking
         const bookingData: DatabaseTables["bookings"]["Insert"] = {
@@ -588,8 +619,24 @@ export async function createBookingWithServices(
 
         if (bookingError || !booking) {
             // TODO: Cancel Stripe PaymentIntent if booking creation fails
-            // await stripe.paymentIntents.cancel(stripePaymentIntentId);
+            // This should be implemented with proper error handling
+            console.error("Booking creation failed, PaymentIntent may need cleanup:", stripePaymentIntentId);
             return { error: "Failed to create booking", data: null };
+        }
+
+        // Update PaymentIntent metadata with the real booking ID
+        const metadataUpdateResult = await updateStripePaymentIntentMetadata({
+            paymentIntentId: stripePaymentIntentId,
+            metadata: {
+                booking_id: booking.id,
+                customer_id: user.id,
+                stylist_id: input.stylistId,
+            },
+        });
+
+        if (metadataUpdateResult.error) {
+            console.error("Failed to update PaymentIntent metadata:", metadataUpdateResult.error);
+            // Don't fail the entire booking creation for metadata update failure
         }
 
         // 5. Link services to the booking
@@ -606,7 +653,7 @@ export async function createBookingWithServices(
             // Rollback: delete the booking
             await supabase.from("bookings").delete().eq("id", booking.id);
             // TODO: Cancel Stripe PaymentIntent
-            // await stripe.paymentIntents.cancel(stripePaymentIntentId);
+            console.error("Service linking failed, PaymentIntent may need cleanup:", stripePaymentIntentId);
             return { error: "Failed to link services to booking", data: null };
         }
 
@@ -622,18 +669,39 @@ export async function createBookingWithServices(
             console.error("Failed to create chat for booking:", chatError);
         }
 
-        // TODO: Create payment record for tracking
-        // const { error: paymentError } = await supabase
-        //     .from("payments")
-        //     .insert({
-        //         booking_id: booking.id,
-        //         payment_intent_id: stripePaymentIntentId,
-        //         total_amount: Math.round(finalPrice * 100), // In øre
-        //         platform_fee: Math.round(finalPrice * 0.1 * 100), // 10% platform fee in øre - TODO: Configure this
-        //         stylist_payout_amount: Math.round(finalPrice * 0.9 * 100), // 90% to stylist in øre
-        //         currency: 'NOK',
-        //         status: 'pending',
-        //     });
+        // Create comprehensive payment record using new schema
+        const platformFeeCalculation = calculatePlatformFee({
+            totalAmountNOK: finalPrice,
+            hasAffiliate: false, // TODO: Implement affiliate logic
+        });
+
+        const { error: paymentError } = await supabase
+            .from("payments")
+            .insert({
+                booking_id: booking.id,
+                payment_intent_id: stripePaymentIntentId,
+                original_amount: Math.round(input.totalPrice * 100), // Original amount in øre
+                discount_amount: Math.round(discountAmount * 100), // Discount amount in øre
+                final_amount: Math.round(finalPrice * 100), // Final amount in øre
+                platform_fee: Math.round(platformFeeCalculation.platformFeeNOK * 100), // Platform fee in øre
+                stylist_payout: Math.round(platformFeeCalculation.stylistPayoutNOK * 100), // Stylist payout in øre
+                affiliate_commission: Math.round((platformFeeCalculation.affiliateCommissionNOK || 0) * 100), // Affiliate commission in øre
+                stripe_application_fee_amount: Math.round(paymentIntentResult.data.applicationFeeNOK * 100), // Stripe application fee in øre
+                currency: "NOK",
+                status: "pending",
+                refunded_amount: 0, // Default to 0, will be updated when refunds occur
+                discount_code: input.discountCode,
+                discount_percentage: discountId ? null : undefined, // TODO: Get from discount record
+                discount_fixed_amount: discountId ? Math.round(discountAmount * 100) : undefined,
+                // TODO: Add affiliate fields when affiliate system is implemented
+                // affiliate_id: affiliateId,
+                // affiliate_commission_percentage: affiliateCommissionPercentage,
+            });
+
+        if (paymentError) {
+            console.error("Failed to create payment record:", paymentError);
+            // Don't fail the booking creation, but log the error
+        }
 
         // Send new booking request email to stylist (respecting preferences)
         try {
@@ -731,10 +799,12 @@ export async function createBookingWithServices(
             data: {
                 booking,
                 stripePaymentIntentId,
-                paymentIntentClientSecret, // Will be null until payment integration is complete
+                paymentIntentClientSecret,
                 finalPrice,
                 discountAmount,
-                // TODO: Add platform fee breakdown when payment is implemented
+                platformFeeNOK: platformFeeCalculation.platformFeeNOK,
+                stylistPayoutNOK: platformFeeCalculation.stylistPayoutNOK,
+                affiliateCommissionNOK: platformFeeCalculation.affiliateCommissionNOK,
             },
             error: null,
         };

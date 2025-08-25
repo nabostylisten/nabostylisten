@@ -299,7 +299,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
 
     -- Affiliate tracking
     affiliate_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
-    affiliate_commission_percentage numeric(5, 4), -- Percentage of platform fee given to affiliate
+    affiliate_commission_percentage numeric(3, 2), -- Percentage as decimal (0.20 = 20%)
 
     -- Stripe-specific tracking
     stripe_application_fee_amount integer NOT NULL, -- Stored in øre for Stripe
@@ -529,7 +529,7 @@ CREATE TABLE IF NOT EXISTS public.affiliate_links (
 
     -- Link details
     link_code text NOT NULL UNIQUE, -- Unique identifier for the link (e.g., 'anna-hair-oslo')
-    commission_percentage numeric(5, 4) DEFAULT 0.20 NOT NULL, -- Percentage of platform fee
+    commission_percentage numeric(3, 2) DEFAULT 0.20 NOT NULL, -- Percentage as decimal (0.20 = 20%)
 
     -- Link status and validity
     is_active boolean DEFAULT true NOT NULL,

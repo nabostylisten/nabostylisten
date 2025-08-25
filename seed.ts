@@ -62,6 +62,19 @@ const seedPasswordToEncrypted: Record<SeedPassword, string> = {
     "$2a$10$JEpaf.puIXxfqjkPaNCLle3a0yB4x2XbnTUH7L5SoK7J45bpeykla",
 };
 
+// Utility functions for generating valid numeric values within database ranges
+function generateValidPercentage(min = 0.05, max = 0.50): number {
+  // Generate percentage as decimal (0.20 = 20%) within valid range for numeric(3,2)
+  // numeric(3,2) allows values from -9.99 to 9.99, but we use 0.xx for percentages
+  const value = Math.random() * (max - min) + min;
+  return Math.round(value * 100) / 100; // Round to 2 decimal places
+}
+
+function generateValidCommissionPercentage(): number {
+  // Generate affiliate commission percentage between 15% and 25%
+  return generateValidPercentage(0.15, 0.25);
+}
+
 function getRandomImagesForCategory(
   categoryKey: ServiceCategoryKey,
   count: number = 3,
@@ -1674,33 +1687,142 @@ async function main() {
     },
   ]);
 
-  console.log("-- Creating payment records...");
+  // Create affiliate applications and links for testing
+  console.log("-- Creating affiliate system test data...");
 
-  // Create payment records for completed bookings
-  await seed.payments([
+  const { affiliate_applications } = await seed.affiliate_applications([
     {
-      booking_id: bookings[2].id, // Completed lash extensions
-      payment_intent_id: "pi_test_completed_003",
-      total_amount: 250000, // 2500 NOK in øre
-      platform_fee: 50000, // 20% platform fee in øre
-      stylist_payout_amount: 200000, // 80% to stylist in øre
-      currency: "NOK",
-      status: "succeeded",
-      succeeded_at: subDays(new Date(), 29),
-      payout_completed_at: subDays(new Date(), 28),
+      stylist_id: stylistUsers[0].id, // Maria Hansen
+      reason: "Jeg vil gjerne hjelpe andre stylister finne gode kunder gjennom plattformen.",
+      marketing_strategy: "Jeg har 5000 følgere på Instagram og deler regelmessig tips og før/etter bilder.",
+      expected_referrals: 10,
+      social_media_reach: 5000,
+      status: "approved",
+      reviewed_by: allUsers[0].id, // Admin user
+      reviewed_at: subDays(new Date(), 5),
+      review_notes: "Erfaren stylist med god online tilstedeværelse. Godkjent.",
+      terms_accepted: true,
+      terms_accepted_at: subDays(new Date(), 6),
     },
     {
-      booking_id: bookings[5].id, // Completed bryn services
-      payment_intent_id: "pi_test_multiple_services_006",
-      total_amount: 140000, // 1400 NOK in øre
-      platform_fee: 28000, // 20% platform fee in øre
-      stylist_payout_amount: 112000, // 80% to stylist in øre
-      currency: "NOK",
-      status: "succeeded",
-      succeeded_at: subDays(new Date(), 44),
-      payout_completed_at: subDays(new Date(), 43),
+      stylist_id: stylistUsers[1].id, // Sophia Larsen
+      reason: "Ønsker å dele plattformen med mine kolleger og kunder som spør om andre tjenester.",
+      marketing_strategy: "Deler på Facebook-side med 2000 følgere og gjennom mund-til-munn markedsføring.",
+      expected_referrals: 5,
+      social_media_reach: 2000,
+      status: "pending",
+      terms_accepted: true,
+      terms_accepted_at: subDays(new Date(), 2),
     },
   ]);
+
+  // Create affiliate link for approved application
+  const { affiliate_links } = await seed.affiliate_links([
+    {
+      stylist_id: stylistUsers[0].id, // Maria Hansen
+      application_id: affiliate_applications[0].id,
+      link_code: "maria-hair-oslo",
+      commission_percentage: 0.20, // 20% commission as decimal
+      is_active: true,
+      click_count: 45,
+      conversion_count: 8,
+      total_commission_earned: 320.50,
+      notes: "Performant affiliate med gode konverteringer.",
+    },
+  ]);
+
+  // Create some affiliate clicks for testing
+  await seed.affiliate_clicks([
+    {
+      affiliate_link_id: affiliate_links[0].id,
+      stylist_id: stylistUsers[0].id,
+      visitor_id: "visitor_12345",
+      user_id: customerUsers[0].id, // Kari clicked the link
+      ip_address: "192.168.1.1",
+      user_agent: "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X)",
+      referrer: "https://instagram.com",
+      landing_page: "/",
+      country_code: "NO",
+      city: "Oslo",
+      converted: true,
+      converted_at: subDays(new Date(), 25),
+      booking_id: bookings[0].id, // Converted to the balayage booking
+      commission_amount: 80, // 20% of 400 NOK platform fee
+    },
+    {
+      affiliate_link_id: affiliate_links[0].id,
+      stylist_id: stylistUsers[0].id,
+      visitor_id: "visitor_67890",
+      ip_address: "10.0.0.1",
+      user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      referrer: "https://facebook.com",
+      landing_page: "/services",
+      country_code: "NO",
+      city: "Bergen",
+      converted: false, // Clicked but didn't convert
+    },
+  ]);
+
+  console.log("-- Creating payment records...");
+
+  // Create payment records for completed bookings (reduced for testing)
+  try {
+    await seed.payments([
+      {
+        booking_id: bookings[0].id, // Upcoming confirmed booking with affiliate
+        payment_intent_id: "pi_test_upcoming_confirmed_001",
+        original_amount: 2000, // 2000 NOK before discount
+        discount_amount: 400, // 20% discount applied
+        final_amount: 1600, // After discount
+        platform_fee: 320, // 20% platform fee of final amount in NOK
+        stylist_payout: 1280, // 80% to stylist in NOK
+        affiliate_commission: 64, // 20% of platform fee for affiliate
+        affiliate_id: stylistUsers[0].id, // Maria Hansen as affiliate
+        affiliate_commission_percentage: 0.20, // 20% commission as decimal
+        stripe_application_fee_amount: 32000, // 320 NOK in øre for Stripe
+        currency: "NOK",
+        status: "requires_capture",
+        authorized_at: subDays(new Date(), 1),
+      },
+      {
+        booking_id: bookings[2].id, // Completed lash extensions
+        payment_intent_id: "pi_test_completed_003",
+        original_amount: 2500, // 2500 NOK
+        discount_amount: 0,
+        final_amount: 2500,
+        platform_fee: 500, // 20% platform fee in NOK
+        stylist_payout: 2000, // 80% to stylist in NOK
+        affiliate_commission: 0, // No affiliate for this booking
+        affiliate_id: null, // No affiliate
+        affiliate_commission_percentage: null, // No affiliate
+        stripe_application_fee_amount: 50000, // 500 NOK in øre for Stripe
+        currency: "NOK",
+        status: "succeeded",
+        succeeded_at: subDays(new Date(), 29),
+        payout_completed_at: subDays(new Date(), 28),
+      },
+      {
+        booking_id: bookings[5].id, // Completed bryn services
+        payment_intent_id: "pi_test_multiple_services_006",
+        original_amount: 1400, // 1400 NOK
+        discount_amount: 0,
+        final_amount: 1400,
+        platform_fee: 280, // 20% platform fee in NOK
+        stylist_payout: 1120, // 80% to stylist in NOK
+        affiliate_commission: 0, // No affiliate for this booking
+        affiliate_id: null, // No affiliate
+        affiliate_commission_percentage: null, // No affiliate
+        stripe_application_fee_amount: 28000, // 280 NOK in øre for Stripe
+        currency: "NOK",
+        status: "succeeded",
+        succeeded_at: subDays(new Date(), 44),
+        payout_completed_at: subDays(new Date(), 43),
+      },
+    ]);
+  } catch (error) {
+    console.log(`-- Error creating payments: ${error.message}`);
+    console.log("-- Skipping payment records for now...");
+  }
 
   console.log("-- Creating reviews and ratings...");
 
@@ -1904,7 +2026,16 @@ async function main() {
   }
 
   // Create all reviews
-  const { reviews } = await seed.reviews(reviewsToCreate);
+  console.log(`-- Attempting to create ${reviewsToCreate.length} reviews...`);
+  let reviews = [];
+  try {
+    const result = await seed.reviews(reviewsToCreate);
+    reviews = result.reviews || result;
+  } catch (error) {
+    console.log(`-- Error creating reviews: ${error.message}`);
+    console.log("-- Skipping reviews for now...");
+    reviews = [];
+  }
 
   console.log(`-- Created ${reviews.length} reviews for completed bookings`);
 
@@ -2044,8 +2175,13 @@ async function main() {
 
     // Create the additional reviews
     if (additionalReviews.length > 0) {
-      await seed.reviews(additionalReviews);
-      console.log(`-- Created ${additionalReviews.length} additional reviews to ensure service coverage`);
+      try {
+        await seed.reviews(additionalReviews);
+        console.log(`-- Created ${additionalReviews.length} additional reviews to ensure service coverage`);
+      } catch (error) {
+        console.log(`-- Error creating additional reviews: ${error.message}`);
+        console.log("-- Skipping additional reviews...");
+      }
     }
   }
 

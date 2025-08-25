@@ -9,7 +9,7 @@
     "ensure:docker": "sh scripts/ensure-docker.sh",
     "ensure:nabostylisten-db": "sh scripts/ensure-nabostylisten-db.sh",
     "seed:sync": "bunx @snaplet/seed sync",
-    "seed": "bunx tsx seed.ts > supabase/seed.sql",
+    "seed": "bunx tsx seed/seed.ts > supabase/seed.sql",
     "supabase:start": "bun ensure:docker && supabase start",
     "supabase:db:diff": "bun ensure:docker && supabase db diff -f",
     "supabase:migrate:up": "bun ensure:docker && supabase migration up",

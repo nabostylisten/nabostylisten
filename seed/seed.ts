@@ -1,0 +1,164 @@
+import { createSeedClient } from "@snaplet/seed";
+import {
+  // User management
+  createTestUsersWithAuth,
+  createUserEmailIdentities,
+  separateUsersByRole,
+  
+  // Service categories
+  createMainServiceCategories,
+  createServiceSubcategories,
+  
+  // Stylist management
+  createStylistDetailedProfiles,
+  createStylistAvailabilityRules,
+  createStylistUnavailabilityPeriods,
+  createStylistRecurringUnavailability,
+  
+  // Address management
+  createStylistAddresses,
+  createCustomerPrimaryAddresses,
+  createAdditionalCustomerAddresses,
+  
+  // Service management
+  createRandomizedServices,
+  addImagesToServices,
+  
+  // Applications
+  createStylistApplications,
+  linkApplicationsToCategories,
+  
+  // Discounts
+  createDiscountCodes,
+  
+  // Booking system
+  createComprehensiveBookings,
+  linkServicesToBookings,
+  
+  // Chat system
+  createBookingChats,
+  createOldChatMessagesForCronTesting,
+  createCurrentChatMessages,
+  
+  // Affiliate system
+  createAffiliateApplications,
+  createAffiliateLinksAndTracking,
+  createAffiliateClickTracking,
+  
+  // Payment system
+  createPaymentRecords,
+  
+  // Review system
+  createComprehensiveReviewsSystem,
+} from "./utils";
+
+/**
+ * Main seed function that orchestrates the entire database seeding process
+ * Creates a comprehensive test dataset for the Nabostylisten platform
+ */
+async function main() {
+  console.log("-- Starting comprehensive database seeding...");
+  const seed = await createSeedClient({ dryRun: true });
+
+  // Clear existing data
+  await seed.$resetDatabase();
+
+  // 1. Create service category hierarchy
+  console.log("-- Phase 1: Service Categories");
+  const mainCategories = await createMainServiceCategories(seed);
+  await createServiceSubcategories(seed, mainCategories);
+
+  // 2. Create users with authentication
+  console.log("-- Phase 2: User Management");
+  const allUsers = await createTestUsersWithAuth(seed);
+  await createUserEmailIdentities(seed, allUsers);
+  const { stylistUsers, customerUsers } = separateUsersByRole(allUsers);
+
+  // 3. Create stylist profiles and availability
+  console.log("-- Phase 3: Stylist Management");
+  await createStylistDetailedProfiles(seed, stylistUsers);
+  await createStylistAvailabilityRules(seed, stylistUsers);
+  await createStylistUnavailabilityPeriods(seed, stylistUsers);
+  await createStylistRecurringUnavailability(seed, stylistUsers);
+
+  // 4. Create addresses for users
+  console.log("-- Phase 4: Address Management");
+  await createStylistAddresses(seed, stylistUsers);
+  await createCustomerPrimaryAddresses(seed, customerUsers);
+  const customerAddresses = await createAdditionalCustomerAddresses(seed, customerUsers);
+
+  // 5. Create services and media
+  console.log("-- Phase 5: Service Management");
+  const { services } = await createRandomizedServices(seed, stylistUsers, mainCategories);
+  await addImagesToServices(seed, services);
+
+  // 6. Create applications
+  console.log("-- Phase 6: Application Management");
+  const applications = await createStylistApplications(seed);
+  await linkApplicationsToCategories(seed, applications, mainCategories);
+
+  // 7. Create discount codes
+  console.log("-- Phase 7: Discount Management");
+  const discounts = await createDiscountCodes(seed);
+
+  // 8. Create comprehensive booking system
+  console.log("-- Phase 8: Booking System");
+  const bookings = await createComprehensiveBookings(seed, customerUsers, stylistUsers, discounts, customerAddresses);
+  const bookingServiceLinks = await linkServicesToBookings(seed, bookings, services);
+
+  // 9. Create chat system
+  console.log("-- Phase 9: Chat System");
+  const chats = await createBookingChats(seed, bookings);
+  await createOldChatMessagesForCronTesting(seed, chats, customerUsers, stylistUsers);
+  await createCurrentChatMessages(seed, chats, customerUsers, stylistUsers);
+
+  // 10. Create affiliate system
+  console.log("-- Phase 10: Affiliate System");
+  const affiliate_applications = await createAffiliateApplications(seed, stylistUsers, allUsers);
+  const affiliate_links = await createAffiliateLinksAndTracking(seed, stylistUsers, affiliate_applications);
+  await createAffiliateClickTracking(seed, affiliate_links, stylistUsers, customerUsers, bookings);
+
+  // 11. Create payment records
+  console.log("-- Phase 11: Payment System");
+  await createPaymentRecords(seed, bookings, stylistUsers);
+
+  // 12. Create comprehensive review system
+  console.log("-- Phase 12: Review System");
+  await createComprehensiveReviewsSystem(
+    seed,
+    bookings,
+    services,
+    customerUsers,
+    stylistUsers,
+    bookingServiceLinks
+  );
+
+  console.log("--  Database seeding completed successfully!");
+  console.log("-- ");
+  console.log("-- =� Seeding Summary:");
+  console.log(`--   =e Users: ${allUsers.length} (${stylistUsers.length} stylists, ${customerUsers.length} customers)`);
+  console.log(`--   <�  Service categories: ${mainCategories.length} main categories with subcategories`);
+  console.log(`--   =� Services: ${services.length} services with images and category links`);
+  console.log(`--   =� Bookings: ${bookings.length} bookings across various statuses`);
+  console.log(`--   =� Chats: ${chats.length} active chat conversations`);
+  console.log(`--   =� Discounts: ${discounts.length} discount codes for testing`);
+  console.log(`--   > Applications: ${applications.length} stylist applications`);
+  console.log("-- ");
+  console.log("-- >� Test Accounts:");
+  console.log("--   =d Admin: admin@nabostylisten.no");
+  console.log("--   <� Stylist: maria.hansen@example.com (Oslo)");
+  console.log("--   =�  Customer: kari.nordmann@example.com (multiple bookings)");
+  console.log("--   = Password for all: demo-password");
+  console.log("-- ");
+  console.log("-- = Cron Job Testing:");
+  console.log("--   =� Old chat messages added for cleanup testing");
+  console.log("--   =' Test endpoint: GET /api/cron/cleanup-old-messages");
+  console.log("--   = Remember to set CRON_SECRET environment variable");
+
+  process.exit(0);
+}
+
+main().catch((e) => {
+  console.error("-- L Seed failed:", e);
+  process.exit(1);
+});

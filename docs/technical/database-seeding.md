@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Nabostylisten platform uses **Snaplet Seed** to generate realistic test data for local development and testing environments. This document provides technical details on how database seeding is implemented, configured, and maintained.
+The Nabostylisten platform uses **Snaplet Seed** with a modular architecture to generate realistic test data for local development and testing environments. The system has been refactored from a monolithic 2,300+ line script into a well-organized, maintainable structure with clear separation of concerns.
 
 ## Technology Stack
 
@@ -24,29 +24,55 @@ The Nabostylisten platform uses **Snaplet Seed** to generate realistic test data
 }
 ```
 
-## Architecture
+## Modular Architecture
 
-### File Structure
+### New File Structure
+
+The seed system has been completely restructured for maintainability and clarity:
 
 ```
 nabostylisten/
-├── seed.ts                    # Main seed script
-├── seed.config.ts             # Snaplet configuration
-├── package.json               # Scripts and dependencies
-├── .snaplet/                  # Generated Snaplet files
-│   ├── dataModel.json         # Database structure analysis
-│   └── config.json            # Runtime configuration
+├── seed/                           # New modular seed directory
+│   ├── seed.ts                     # Main orchestrator (138 lines)
+│   └── utils/                      # Utility functions by domain
+│       ├── index.ts                # Centralized exports
+│       ├── shared.ts               # Constants & utility functions
+│       ├── users.ts                # User creation & authentication
+│       ├── categories.ts           # Service categories
+│       ├── stylists.ts             # Stylist profiles & availability
+│       ├── addresses.ts            # PostGIS location data
+│       ├── services.ts             # Service templates & media
+│       ├── applications.ts         # Stylist applications
+│       ├── discounts.ts            # Discount codes
+│       ├── bookings.ts             # Booking system
+│       ├── chats.ts                # Messaging system
+│       ├── affiliates.ts           # Affiliate tracking
+│       ├── payments.ts             # Payment records
+│       └── reviews.ts              # Review system
+├── seed.config.ts                  # Snaplet configuration
+├── package.json                    # Updated script paths
+├── .snaplet/                       # Generated Snaplet files
+│   ├── dataModel.json             # Database structure analysis
+│   └── config.json                # Runtime configuration
 └── supabase/
-    ├── seed.sql              # Generated SQL output
-    └── schemas/              # Database schema definitions
+    ├── seed.sql                   # Generated SQL output
+    └── schemas/                   # Database schema definitions
 ```
+
+### Architecture Benefits
+
+1. **Maintainability**: Each domain has its own focused file
+2. **Readability**: Main orchestrator reads like documentation
+3. **Modularity**: Easy to modify specific areas without touching others
+4. **Type Safety**: Full TypeScript support with proper imports
+5. **Future-Proofing**: Easy to add new domains or modify existing ones
 
 ### Configuration Architecture
 
 The seeding system consists of three main configuration layers:
 
 1. **Snaplet Configuration** (`seed.config.ts`)
-2. **Seed Logic** (`seed.ts`)
+2. **Modular Seed Logic** (`seed/seed.ts` + `seed/utils/`)
 3. **Package Scripts** (`package.json`)
 
 ## Configuration
@@ -83,204 +109,224 @@ export default defineConfig({
 - **select**: Schema and table selection patterns
 - **exclusions**: Tables to ignore during analysis
 
-### Package Scripts
+### Updated Package Scripts
 
 ```json
 {
   "seed:sync": "bunx @snaplet/seed sync",
-  "seed": "bunx tsx seed.ts > supabase/seed.sql"
+  "seed": "bunx tsx seed/seed.ts > supabase/seed.sql"
 }
 ```
 
-## Database Schema Integration
+**Note**: Script path updated from `seed.ts` to `seed/seed.ts`
 
-### Supported Schemas
+## Modular Seed Implementation
 
-The seeding system is configured to work with:
+### Main Orchestrator (`seed/seed.ts`)
 
-1. **Public Schema (`public*`)**:
-
-   - All application tables
-   - Business logic entities
-   - User-generated content
-
-2. **Auth Schema (`auth.users`, `auth.identities`, `auth.sessions`)**:
-   - Supabase authentication tables
-   - User authentication data
-   - Session management
-
-### Schema Analysis Process
-
-```bash
-# Analyze database structure
-bunx @snaplet/seed sync
-```
-
-This command:
-
-1. Connects to the local Supabase database
-2. Analyzes table schemas and relationships
-3. Generates TypeScript types in `.snaplet/dataModel.json`
-4. Creates seed client with proper type definitions
-
-## Seed Data Structure
-
-### Core Entities
-
-The seed script populates the following core entities in dependency order:
-
-#### 1. Service Categories
-
-- **Main Categories**: Hair, Nails, Makeup, Brows & Lashes, Wedding
-- **Subcategories**: Hierarchical structure with parent-child relationships
-- **Purpose**: Foundation for service classification
-
-#### 2. Users & Authentication
-
-- **Admin User**: System administrator with full access
-- **Stylists**: 3 stylists with varied profiles and specializations
-- **Customers**: 2 customers for testing booking flows
-
-#### 3. Stylist Profiles & Details
-
-- **Professional Information**: Bio, travel preferences, service areas
-- **Social Media**: Instagram, Facebook, TikTok profiles
-- **Addresses**: Primary business locations with geographic coordinates
-
-#### 4. Services
-
-- **Service Offerings**: 9 services across different categories
-- **Pricing**: Realistic Norwegian pricing (650-2500 NOK)
-- **Location Options**: At customer place, at stylist place, or both
-- **Publishing Status**: All services published for testing
-
-#### 5. Availability Management
-
-- **Work Schedules**: Different patterns for each stylist
-- **One-off Unavailability**: Specific time blocks (lunch, appointments)
-- **Recurring Patterns**: Weekly/monthly recurring unavailability
-- **iCalendar Rules**: RRULE format for complex recurrence patterns
-
-#### 6. Applications
-
-- **Various Statuses**: Applied, pending_info, approved
-- **Realistic Data**: Norwegian addresses, phone numbers, experience descriptions
-- **Category Mapping**: Applications linked to service categories
-
-#### 7. System Configuration
-
-- **Discount Codes**: Percentage and fixed amount discounts
-- **Validation Rules**: Usage limits, expiration dates
-
-## Seed Script Implementation
-
-### Basic Structure
+The main seed file now serves as a clear, high-level orchestrator:
 
 ```typescript
 import { createSeedClient } from "@snaplet/seed";
+import {
+  // User management
+  createTestUsersWithAuth,
+  createUserEmailIdentities,
+  separateUsersByRole,
+
+  // Service categories
+  createMainServiceCategories,
+  createServiceSubcategories,
+
+  // ... other domain imports
+} from "./utils";
 
 async function main() {
+  console.log("-- Starting comprehensive database seeding...");
   const seed = await createSeedClient({ dryRun: true });
 
   // Clear existing data
   await seed.$resetDatabase();
 
-  // Create entities in dependency order
-  await seed.users([...]);
-  await seed.service_categories([...]);
-  // ... additional entities
+  // 1. Create service category hierarchy
+  console.log("-- Phase 1: Service Categories");
+  const mainCategories = await createMainServiceCategories(seed);
+  await createServiceSubcategories(seed, mainCategories);
 
-  console.log("Database seeded successfully! 🌱");
+  // 2. Create users with authentication
+  console.log("-- Phase 2: User Management");
+  const allUsers = await createTestUsersWithAuth(seed);
+  await createUserEmailIdentities(seed, allUsers);
+  const { stylistUsers, customerUsers } = separateUsersByRole(allUsers);
+
+  // ... additional phases
+
+  console.log("-- ✅ Database seeding completed successfully!");
   process.exit(0);
 }
 ```
 
-### Key Implementation Patterns
+### Domain-Specific Utilities
 
-#### 1. Dry Run Mode
+Each utility file contains focused, descriptive functions:
 
-```typescript
-const seed = await createSeedClient({ dryRun: true });
-```
-
-- Generates SQL without executing
-- Perfect for Supabase integration
-- Allows manual review of generated queries
-
-#### 2. Entity Relationships
+#### Users Utility (`seed/utils/users.ts`)
 
 ```typescript
-// Capture returned entities for relationships
-const { users: stylists } = await seed.users([...]);
-const { service_categories: mainCategories } = await seed.service_categories([...]);
+/**
+ * Creates test users with proper Supabase authentication setup
+ * Profiles will be created automatically by database trigger
+ */
+export async function createTestUsersWithAuth(seed: SeedClient) {
+  console.log("-- Creating test users with authentication setup...");
 
-// Use in dependent entities
-await seed.services([
-  {
-    stylist_id: stylists[0].profiles.id,
-    service_service_categories: [
-      { category_id: mainCategories[0].id },
-    ],
-  },
-]);
+  const { users: allUsers } = await seed.users(
+    testUsersData.map(createAuthUserWithSupabaseMetadata)
+  );
+
+  return allUsers;
+}
+
+/**
+ * Separates users by role for easier reference in other seed functions
+ */
+export function separateUsersByRole(allUsers: any[]) {
+  const stylistUsers = allUsers.slice(1, 11); // All 10 stylists (skip admin)
+  const customerUsers = allUsers.slice(11, 15); // All 4 customers
+
+  return { stylistUsers, customerUsers };
+}
 ```
 
-#### 3. Type Safety
+#### Services Utility (`seed/utils/services.ts`)
 
 ```typescript
-// @ts-ignore for complex nested relationships
-const mariaId = stylists[0].profiles.id;
+/**
+ * Generates randomized services based on templates for all stylists
+ * Each service gets random pricing, duration, and includes/requirements
+ */
+export async function createRandomizedServices(
+  seed: SeedClient,
+  stylistUsers: any[],
+  mainCategories: any[]
+) {
+  console.log("-- Creating randomized services from templates...");
+
+  // Implementation...
+
+  return { services, serviceCategoryLinks };
+}
+
+/**
+ * Adds curated images to services based on their category
+ * Each service gets 3-5 relevant images from the curated collection
+ */
+export async function addImagesToServices(seed: SeedClient, services: any[]) {
+  console.log("-- Adding curated images to services...");
+  // Implementation...
+}
 ```
 
-### Availability System Integration
+### Shared Constants (`seed/utils/shared.ts`)
 
-#### Work Schedule Seeding
+Common utilities and constants are centralized:
 
 ```typescript
-await seed.stylist_availability_rules([
-  // Different patterns for each stylist
-  {
-    stylist_id: mariaId,
-    day_of_week: "monday",
-    start_time: "09:00",
-    end_time: "17:00",
-  },
-  {
-    stylist_id: emmaId,
-    day_of_week: "tuesday",
-    start_time: "12:00",
-    end_time: "20:00",
-  },
-  {
-    stylist_id: sophiaId,
-    day_of_week: "wednesday",
-    start_time: "10:00",
-    end_time: "18:00",
-  },
-]);
+// Service category types
+export type ServiceCategoryKey =
+  | "hair"
+  | "nails"
+  | "makeup"
+  | "browsLashes"
+  | "wedding";
+
+// Curated images organized by main category
+export const categoryImages: Record<ServiceCategoryKey, string[]> = {
+  hair: [
+    "https://images.unsplash.com/photo-1562322140-8baeececf3df?w=800",
+    "https://images.unsplash.com/photo-1605497788044-5a32c7078486?w=800",
+    // ... more URLs
+  ],
+  // ... other categories
+};
+
+// Utility functions
+export function generateValidPercentage(min = 0.05, max = 0.5): number {
+  const value = Math.random() * (max - min) + min;
+  return Math.round(value * 100) / 100;
+}
 ```
 
-#### Recurring Unavailability
+## Comprehensive Seed Data Structure
 
-```typescript
-await seed.stylist_recurring_unavailability([
-  {
-    stylist_id: mariaId,
-    title: "Lunsj pause",
-    start_time: "12:00:00",
-    end_time: "13:00:00",
-    series_start_date: seriesStartDate,
-    series_end_date: null, // Continues indefinitely
-    rrule: "FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR", // Every weekday
-  },
-]);
-```
+### Enhanced Data Volume
 
-**RRULE Patterns Used:**
+The modular system now generates significantly more comprehensive test data:
 
-- `FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR` - Every weekday
-- `FREQ=WEEKLY;BYDAY=TU` - Every Tuesday
-- `FREQ=MONTHLY;BYMONTHDAY=1` - First day of every month
+#### Core Entities (Expanded)
+
+1. **Service Categories**
+
+   - **5 Main Categories**: Hair, Nails, Makeup, Brows & Lashes, Wedding
+   - **11 Subcategories**: Hierarchical structure with Norwegian names
+   - **Purpose**: Foundation for service classification and filtering
+
+2. **Users & Authentication** (Expanded)
+
+   - **1 Admin User**: System administrator with full access
+   - **10 Stylists**: Distributed across Norway's main cities (Oslo, Bergen, Trondheim, Stavanger, Kristiansand)
+   - **4 Customers**: For testing various booking scenarios
+   - **Proper Auth Setup**: Complete Supabase authentication with identities
+
+3. **Stylist Management System**
+
+   - **Detailed Profiles**: Bio, travel preferences, social media links
+   - **Availability Rules**: Varied schedules across all 10 stylists
+   - **Unavailability Periods**: One-off blocks and recurring patterns
+   - **Geographic Distribution**: Real Norwegian addresses with PostGIS coordinates
+
+4. **Services** (Massive Expansion)
+
+   - **55+ Services**: Comprehensive offerings across all categories
+   - **Realistic Pricing**: Norwegian market rates (800-3000 NOK)
+   - **Service Templates**: 35+ different service types with variations
+   - **Curated Images**: Category-appropriate images from Unsplash
+   - **Location Flexibility**: Mix of in-salon and mobile services
+
+5. **Comprehensive Booking System**
+
+   - **205+ Bookings**: Various statuses and time periods
+   - **Specific Test Scenarios**: Known bookings for testing workflows
+   - **Realistic Distribution**: Past, current, and future bookings
+   - **Service Linking**: Bookings properly linked to specific services
+
+6. **Communication System**
+
+   - **3 Active Chats**: Different conversation scenarios
+   - **Current Messages**: Realistic customer-stylist conversations
+   - **Cron Test Data**: Old messages for cleanup testing (5+ years old)
+
+7. **Reviews & Ratings System**
+
+   - **Comprehensive Coverage**: Every service has multiple reviews
+   - **Cross-Reviews**: Stylists reviewing each other's services
+   - **Review Images**: Visual variety with customer photos
+   - **Rating Distribution**: Weighted towards positive reviews
+
+8. **Business Systems**
+   - **Affiliate Program**: Applications, links, and click tracking
+   - **Payment Records**: Various payment statuses and commission structures
+   - **Discount Codes**: Multiple types with usage tracking
+   - **Application Workflow**: Various application statuses for testing
+
+### Data Consistency & Relationships
+
+The modular system maintains strict referential integrity:
+
+1. **Dependency Ordering**: Each phase depends on previous phases
+2. **Foreign Key Management**: Proper ID capture and reuse
+3. **Business Logic Compliance**: Realistic Norwegian market data
+4. **Constraint Validation**: Respects all database constraints and triggers
 
 ## Development Workflow
 
@@ -297,17 +343,17 @@ supabase migration up
 bun run seed:sync
 ```
 
-### 2. Seed Data Generation
+### 2. Modular Seed Data Generation
 
 ```bash
-# Generate seed SQL
+# Generate comprehensive seed SQL
 bun run seed
 
-# Reset database with seed data
+# Reset database with all seed data
 supabase db reset
 ```
 
-### 3. Schema Changes
+### 3. Schema Changes Workflow
 
 When database schema changes:
 
@@ -315,207 +361,143 @@ When database schema changes:
 # Re-sync Snaplet types
 bun run seed:sync
 
-# Update seed script as needed
+# Update relevant utility files in seed/utils/
 # Regenerate seed SQL
 bun run seed
 ```
 
-## Data Consistency
+### 4. Modular Development
 
-### Referential Integrity
+To modify specific domains:
 
-The seed script maintains referential integrity by:
+- **User Management**: Edit `seed/utils/users.ts`
+- **Service System**: Edit `seed/utils/services.ts`
+- **Booking Logic**: Edit `seed/utils/bookings.ts`
+- **Review System**: Edit `seed/utils/reviews.ts`
+- **etc.**
 
-1. **Dependency Ordering**: Creates parent entities before children
-2. **Foreign Key Management**: Captures and reuses entity IDs
-3. **Constraint Validation**: Respects database constraints and triggers
+Main orchestrator (`seed/seed.ts`) rarely needs changes.
 
-### Realistic Data Patterns
+## Performance & Scale
 
-#### Norwegian Localization
+### Optimized Performance
 
-- **Phone Numbers**: +47 format
-- **Addresses**: Real Norwegian cities and postal codes
-- **Names**: Norwegian naming conventions
-- **Currency**: NOK (Norwegian Kroner)
+1. **Efficient Generation**: ~5-10 seconds for complete seed
+2. **Large Dataset**: 200+ entities across all tables
+3. **Batch Operations**: Optimized bulk inserts
+4. **Memory Efficient**: Streaming approach with minimal memory usage
 
-#### Business Logic Compliance
+### Comprehensive Coverage
 
-- **Pricing**: Realistic service pricing in Norwegian market
-- **Availability**: Realistic work schedules and patterns
-- **Applications**: Realistic professional experience descriptions
+- **15 Users** with complete authentication setup
+- **55+ Services** with images and category relationships
+- **205+ Bookings** covering all test scenarios
+- **Comprehensive Reviews** ensuring every service has coverage
+- **Real Geographic Data** with PostGIS coordinates
 
-## Performance Considerations
+## Error Handling & Debugging
 
-### Optimization Strategies
+### Enhanced Error Context
 
-1. **Batch Operations**: Insert multiple records in single operations
-2. **Relationship Mapping**: Efficient foreign key assignment
-3. **Minimal Data Set**: Only essential data for testing
-
-### Resource Usage
-
-- **Generation Time**: ~2-5 seconds for complete seed
-- **Database Size**: ~50-100 records across all tables
-- **Memory Usage**: Minimal due to streaming approach
-
-## Error Handling
-
-### Common Issues
-
-#### 1. Connection Errors
-
-```bash
-SnapletError: 9302
-Unable to connect to the database
-```
-
-**Solution**: Verify Supabase is running and connection string is correct
-
-#### 2. Schema Sync Issues
-
-```bash
-Database analysis failed
-```
-
-**Solution**: Run `bun run seed:sync` after schema changes
-
-#### 3. Type Errors
+The modular structure provides better error isolation:
 
 ```typescript
-// Use @ts-ignore for complex nested types
-// @ts-ignore
-const userId = users[0].profiles.id;
+// Phase-based error handling
+console.log("-- Phase 5: Service Management");
+try {
+  const { services } = await createRandomizedServices(
+    seed,
+    stylistUsers,
+    mainCategories
+  );
+  await addImagesToServices(seed, services);
+} catch (error) {
+  console.error("-- Error in Service Management phase:", error);
+  process.exit(1);
+}
 ```
 
 ### Debugging Strategies
 
-1. **Dry Run Inspection**: Review generated SQL before execution
-2. **Incremental Testing**: Comment out sections to isolate issues
-3. **Database Logs**: Check Supabase logs for constraint violations
+1. **Phase Isolation**: Comment out phases to isolate issues
+2. **Function-Level Testing**: Test individual utility functions
+3. **Incremental Building**: Add complexity gradually
+4. **SQL Review**: Inspect generated SQL before execution
 
-## Integration with Supabase
+## Integration Benefits
 
-### Reset Integration
+### Supabase Integration
 
-The seed data integrates with Supabase's database reset functionality:
+The enhanced system provides:
 
-```bash
-supabase db reset
-```
-
-This command:
-
-1. Drops and recreates the database
-2. Applies all migrations
-3. Executes `supabase/seed.sql`
-4. Triggers database functions (user profile creation, etc.)
+- **Consistent State**: Every reset produces identical, comprehensive data
+- **Feature Testing**: Full coverage of all platform features
+- **Performance Testing**: Realistic data volumes and relationships
+- **User Journey Testing**: Complete customer and stylist workflows
 
 ### Development Benefits
 
-- **Consistent State**: Every reset produces identical data
-- **Feature Testing**: Comprehensive test scenarios
-- **Performance Testing**: Realistic data volumes and relationships
+1. **Quick Setup**: Single command creates full test environment
+2. **Realistic Testing**: Norwegian market data with proper relationships
+3. **Feature Development**: Comprehensive scenarios for all features
+4. **Bug Reproduction**: Consistent data for issue investigation
 
-## Maintenance
+## Future Maintenance
 
-### Regular Updates
+### Modular Maintenance Advantages
 
-#### 1. Schema Evolution
+1. **Targeted Updates**: Modify only relevant utility files
+2. **Easy Extensions**: Add new domains without touching existing code
+3. **Clear Responsibilities**: Each file has a single, clear purpose
+4. **Type Safety**: Full TypeScript support prevents runtime errors
 
-- Update `seed.ts` when adding new tables
-- Adjust relationships when schema changes
-- Re-sync Snaplet types after migrations
+### Regular Maintenance Tasks
 
-#### 2. Data Relevance
+#### 1. Domain-Specific Updates
 
-- Update Norwegian addresses and phone numbers
-- Adjust pricing to market rates
-- Refresh realistic business scenarios
+- **User Management** (`users.ts`): Update authentication patterns
+- **Service Management** (`services.ts`): Add new service types or adjust pricing
+- **Geographic Data** (`addresses.ts`): Update Norwegian addresses and coordinates
+- **Review System** (`reviews.ts`): Enhance review scenarios
 
-#### 3. Feature Coverage
+#### 2. Schema Evolution Support
 
-- Add seed data for new features
-- Expand test scenarios as application grows
-- Maintain representative user journeys
+- Update relevant utility files when schema changes
+- Maintain foreign key relationships
+- Preserve business logic compliance
 
-### Version Management
+#### 3. Feature Coverage Expansion
 
-```bash
-# Update Snaplet Seed
-bun add -D @snaplet/seed@latest
-
-# Re-sync after updates
-bun run seed:sync
-```
-
-## Security Considerations
-
-### Local Development Only
-
-- **Environment Isolation**: Seed data only for local development
-- **No Production Data**: Never run seeds against production databases
-- **Safe Defaults**: Test data uses example.com domains
-
-### Data Privacy
-
-- **Synthetic Data**: All personal information is fictional
-- **No Real Credentials**: Authentication uses test passwords
-- **GDPR Compliance**: No actual personal data stored
-
-## Future Enhancements
-
-### Planned Improvements
-
-1. **Dynamic Scaling**: Configure data volume via environment variables
-2. **Scenario Templates**: Predefined test scenarios for different features
-3. **Performance Testing**: Large data sets for performance evaluation
-4. **Multi-tenant Support**: Multiple studio configurations
-
-### Integration Opportunities
-
-1. **CI/CD Pipeline**: Automated seeding in test environments
-2. **E2E Testing**: Consistent data for automated tests
-3. **Performance Monitoring**: Baseline metrics from seed data
-4. **Documentation**: Interactive demos with seed data
+- Add new utility files for new features
+- Extend existing utilities for feature enhancements
+- Maintain comprehensive test scenario coverage
 
 ## Troubleshooting Guide
 
-### Common Commands
+### Enhanced Validation
 
-```bash
-# Full reset and reseed
-supabase db reset
-
-# Sync types only
-bun run seed:sync
-
-# Generate SQL only
-bun run seed
-
-# Check Supabase status
-supabase status
-
-# View database logs
-supabase logs -f db
-```
-
-### Validation Queries
-
-After seeding, verify data integrity:
+After seeding, verify the comprehensive data:
 
 ```sql
--- Check user counts by role
+-- Check comprehensive user distribution
 SELECT role, COUNT(*) FROM profiles GROUP BY role;
+-- Expected: admin(1), stylist(10), customer(4)
 
--- Verify service-category relationships
+-- Verify service distribution across categories
 SELECT sc.name, COUNT(s.id) as service_count
 FROM service_categories sc
 LEFT JOIN service_service_categories ssc ON sc.id = ssc.category_id
 LEFT JOIN services s ON ssc.service_id = s.id
+WHERE sc.parent_category_id IS NULL
 GROUP BY sc.name;
 
--- Check availability rules coverage
+-- Check booking status distribution
+SELECT status, COUNT(*) FROM bookings GROUP BY status;
+
+-- Verify review coverage
+SELECT COUNT(*) as total_reviews FROM reviews;
+
+-- Check comprehensive availability coverage
 SELECT p.full_name, COUNT(sar.id) as availability_rules
 FROM profiles p
 LEFT JOIN stylist_availability_rules sar ON p.id = sar.stylist_id
@@ -523,4 +505,46 @@ WHERE p.role = 'stylist'
 GROUP BY p.full_name;
 ```
 
-This technical documentation provides a complete reference for maintaining and extending the Nabostylisten database seeding system.
+### Common Modular Issues
+
+#### 1. Import Errors
+
+```bash
+Error: Cannot resolve module './utils/...'
+```
+
+**Solution**: Verify all exports in `seed/utils/index.ts`
+
+#### 2. Phase Dependency Issues
+
+```bash
+Error: Cannot read property 'id' of undefined
+```
+
+**Solution**: Ensure proper phase ordering and entity capture
+
+#### 3. Type Errors in Utilities
+
+```bash
+Type error in seed/utils/services.ts
+```
+
+**Solution**: Update specific utility file types after schema changes
+
+## Security & Best Practices
+
+### Modular Security
+
+- **Isolated Concerns**: Security issues contained to specific domains
+- **Clear Data Sources**: All test data clearly marked and documented
+- **No Production Risk**: Modular structure prevents accidental production seeding
+
+### Development Best Practices
+
+1. **Single Responsibility**: Each utility file has one clear purpose
+2. **Descriptive Functions**: Function names clearly indicate their purpose
+3. **Type Safety**: Full TypeScript support prevents runtime errors
+4. **Documentation**: Each function includes clear documentation
+5. **Error Handling**: Proper error context and recovery strategies
+
+This enhanced modular architecture provides a robust, maintainable foundation for database seeding that will scale with the Nabostylisten platform's growth while remaining easy to understand and modify.

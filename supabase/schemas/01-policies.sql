@@ -19,6 +19,11 @@ ALTER TABLE public.chats ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.media ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.platform_config ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.affiliate_applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.affiliate_links ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.affiliate_clicks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.affiliate_payouts ENABLE ROW LEVEL SECURITY;
 
 -- A function to check the current user's role (recommended for performance).
 CREATE OR REPLACE FUNCTION public.get_my_role()
@@ -629,3 +634,125 @@ WITH CHECK ( user_id = (select auth.uid()) );
 
 -- Users cannot delete preferences (they should always exist with defaults)
 -- No DELETE policy means no one can delete preferences
+
+-- ========== PLATFORM CONFIG POLICIES ==========
+-- Only admins can view platform configuration
+CREATE POLICY "Only admins can view platform config" ON public.platform_config
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Only admins can insert platform configuration
+CREATE POLICY "Only admins can insert platform config" ON public.platform_config
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- Only admins can update platform configuration
+CREATE POLICY "Only admins can update platform config" ON public.platform_config
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- Only admins can delete platform configuration
+CREATE POLICY "Only admins can delete platform config" ON public.platform_config
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- ========== AFFILIATE APPLICATION POLICIES ==========
+-- Stylists can create their own affiliate applications
+CREATE POLICY "Stylists can create affiliate applications" ON public.affiliate_applications
+FOR INSERT TO authenticated
+WITH CHECK ( 
+  (select auth.uid()) = stylist_id 
+  AND public.get_my_role() = 'stylist' 
+);
+
+-- Users can view their own affiliate applications
+CREATE POLICY "Users can view their own affiliate applications" ON public.affiliate_applications
+FOR SELECT TO authenticated
+USING ( (select auth.uid()) = stylist_id );
+
+-- Admins can view all affiliate applications
+CREATE POLICY "Admins can view all affiliate applications" ON public.affiliate_applications
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Only admins can update affiliate applications (for approval/rejection)
+CREATE POLICY "Only admins can update affiliate applications" ON public.affiliate_applications
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- ========== AFFILIATE LINK POLICIES ==========
+-- Users can view their own affiliate links
+CREATE POLICY "Users can view their own affiliate links" ON public.affiliate_links
+FOR SELECT TO authenticated
+USING ( (select auth.uid()) = stylist_id );
+
+-- Admins can view all affiliate links
+CREATE POLICY "Admins can view all affiliate links" ON public.affiliate_links
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Only admins can create affiliate links (after approving applications)
+CREATE POLICY "Only admins can create affiliate links" ON public.affiliate_links
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- Only admins can update affiliate links
+CREATE POLICY "Only admins can update affiliate links" ON public.affiliate_links
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- Users can disable their own affiliate links
+CREATE POLICY "Users can disable their own affiliate links" ON public.affiliate_links
+FOR UPDATE TO authenticated
+USING ( (select auth.uid()) = stylist_id )
+WITH CHECK ( 
+  (select auth.uid()) = stylist_id 
+  AND is_active = false -- Only allow disabling, not other updates
+);
+
+-- ========== AFFILIATE CLICK POLICIES ==========
+-- System can insert affiliate clicks (no user restrictions for tracking)
+CREATE POLICY "System can insert affiliate clicks" ON public.affiliate_clicks
+FOR INSERT TO anon, authenticated
+WITH CHECK ( true );
+
+-- Users can view clicks for their own affiliate links
+CREATE POLICY "Users can view their own affiliate clicks" ON public.affiliate_clicks
+FOR SELECT TO authenticated
+USING ( (select auth.uid()) = stylist_id );
+
+-- Admins can view all affiliate clicks
+CREATE POLICY "Admins can view all affiliate clicks" ON public.affiliate_clicks
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- System can update affiliate clicks for conversion tracking
+CREATE POLICY "System can update affiliate clicks for conversions" ON public.affiliate_clicks
+FOR UPDATE TO authenticated
+USING ( true )
+WITH CHECK ( true );
+
+-- ========== AFFILIATE PAYOUT POLICIES ==========
+-- Users can view their own affiliate payouts
+CREATE POLICY "Users can view their own affiliate payouts" ON public.affiliate_payouts
+FOR SELECT TO authenticated
+USING ( (select auth.uid()) = stylist_id );
+
+-- Admins can view all affiliate payouts
+CREATE POLICY "Admins can view all affiliate payouts" ON public.affiliate_payouts
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Only admins can create affiliate payouts
+CREATE POLICY "Only admins can create affiliate payouts" ON public.affiliate_payouts
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- Only admins can update affiliate payouts
+CREATE POLICY "Only admins can update affiliate payouts" ON public.affiliate_payouts
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );

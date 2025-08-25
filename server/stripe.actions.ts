@@ -2,77 +2,173 @@
 
 import { createClient } from "@/lib/supabase/server";
 import {
+  cancelStripePaymentIntent,
+  captureStripePaymentIntent,
   createConnectedAccountWithDatabase,
   createCustomerWithDatabase,
   createStripeAccountOnboardingLink,
-  getStripeAccountStatus as getStripeAccountStatusService,
-  updateStripeCustomer,
+  createStripePaymentIntent,
+  createStripeRefund,
   deleteStripeCustomerAddress,
+  getStripeAccountStatus as getStripeAccountStatusService,
   type StripeCustomerUpdateParams,
+  updateStripeCustomer,
 } from "@/lib/stripe/connect";
 
 // TODO: Implement Stripe-related server actions
 
 /**
- * Create a Stripe PaymentIntent for a booking
- * TODO: Implement when Stripe is configured
+ * Create a Stripe PaymentIntent for a booking with destination charges
+ * Server action wrapper around service function
  */
-export async function createPaymentIntent(bookingId: string) {
+export async function createPaymentIntent({
+  bookingId,
+  totalAmountNOK,
+  discountAmountNOK = 0,
+  discountCode,
+  affiliateId,
+}: {
+  bookingId: string;
+  totalAmountNOK: number;
+  discountAmountNOK?: number;
+  discountCode?: string;
+  affiliateId?: string;
+}) {
   const supabase = await createClient();
 
-  // TODO: Get booking details
-  // const { data: booking } = await supabase
-  //   .from("bookings")
-  //   .select("*, services(*)")
-  //   .eq("id", bookingId)
-  //   .single();
+  try {
+    // Get booking details with stylist information
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
+      .select(`
+        *,
+        stylist:profiles!bookings_stylist_id_fkey(
+          id,
+          full_name,
+          stylist_details(stripe_account_id)
+        )
+      `)
+      .eq("id", bookingId)
+      .single();
 
-  // TODO: Create PaymentIntent with Stripe
-  // const paymentIntent = await stripe.paymentIntents.create({
-  //   amount: booking.total_price * 100, // Convert to øre
-  //   currency: 'nok',
-  //   capture_method: 'manual', // Capture 24 hours before appointment
-  //   metadata: {
-  //     bookingId,
-  //     customerId: booking.customer_id,
-  //     stylistId: booking.stylist_id,
-  //   },
-  // });
+    if (bookingError || !booking) {
+      return { data: null, error: "Booking not found" };
+    }
 
-  // TODO: Update booking with payment intent ID
-  // await supabase
-  //   .from("bookings")
-  //   .update({ stripe_payment_intent_id: paymentIntent.id })
-  //   .eq("id", bookingId);
+    // Check if stylist has Stripe account
+    const stylistStripeAccountId = booking.stylist?.stylist_details
+      ?.stripe_account_id;
+    if (!stylistStripeAccountId) {
+      return {
+        data: null,
+        error: "Stylist has not completed Stripe onboarding",
+      };
+    }
 
-  // TODO: Return client secret for frontend
-  // return { clientSecret: paymentIntent.client_secret };
+    // Create PaymentIntent using service function
+    const paymentIntentResult = await createStripePaymentIntent({
+      totalAmountNOK,
+      stylistStripeAccountId,
+      bookingId,
+      customerId: booking.customer_id,
+      stylistId: booking.stylist_id,
+      hasAffiliate: !!affiliateId,
+      affiliateId,
+      discountAmountNOK,
+      discountCode,
+    });
 
-  return { error: "Stripe integration pending" };
+    if (paymentIntentResult.error || !paymentIntentResult.data) {
+      return {
+        data: null,
+        error: paymentIntentResult.error || "Failed to create payment intent",
+      };
+    }
+
+    // Update booking with payment intent ID
+    const { error: updateError } = await supabase
+      .from("bookings")
+      .update({
+        stripe_payment_intent_id: paymentIntentResult.data.paymentIntentId,
+        // Update total_price to reflect final amount after discounts
+        total_price: paymentIntentResult.data.amountNOK,
+      })
+      .eq("id", bookingId);
+
+    if (updateError) {
+      console.error(
+        "Failed to update booking with payment intent:",
+        updateError,
+      );
+      // TODO: Consider cancelling the PaymentIntent if database update fails
+    }
+
+    // TODO: Create payment record for tracking
+    // This will be implemented when we update the database schema
+
+    return {
+      data: {
+        clientSecret: paymentIntentResult.data.clientSecret,
+        paymentIntentId: paymentIntentResult.data.paymentIntentId,
+        amountNOK: paymentIntentResult.data.amountNOK,
+        platformFeeNOK: paymentIntentResult.data.applicationFeeNOK,
+        stylistPayoutNOK: paymentIntentResult.data.stylistPayoutNOK,
+        affiliateCommissionNOK: paymentIntentResult.data.affiliateCommissionNOK,
+        discountAmountNOK: paymentIntentResult.data.discountAmountNOK,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error in createPaymentIntent:", error);
+    return {
+      data: null,
+      error: "An unexpected error occurred while creating payment intent",
+    };
+  }
 }
 
 /**
- * Capture payment 24 hours before appointment
+ * Capture payment before appointment
  * TODO: This should be called by a scheduled job/cron
+ * Server action wrapper around service function
  */
 export async function capturePaymentBeforeAppointment(bookingId: string) {
-  // TODO: Get booking and payment intent
-  // TODO: Check if it's 24 hours before appointment
-  // TODO: Capture the payment
-  // TODO: Update booking and payment records
-  // TODO: Send confirmation emails
+  const supabase = await createClient();
+
+  try {
+    // TODO: Get booking and payment intent details
+    // TODO: Verify it's N hours before appointment, see PLATFORM_CONFIG
+    // TODO: Use captureStripePaymentIntent service function
+    // TODO: Update booking and payment records in database
+    // TODO: Send confirmation emails to customer and stylist
+
+    return { data: null, error: "Capture flow not yet implemented" };
+  } catch (error) {
+    console.error("Error capturing payment:", error);
+    return { data: null, error: "Failed to capture payment" };
+  }
 }
 
 /**
  * Process refund for cancelled booking
- * TODO: Implement when Stripe is configured
+ * Server action wrapper around service function
  */
 export async function processRefund(bookingId: string, reason?: string) {
-  // TODO: Get booking and payment details
-  // TODO: Check refund eligibility (24+ hours before appointment)
-  // TODO: Create refund with Stripe
-  // TODO: Update booking and payment records
-  // TODO: Send refund confirmation email
+  const supabase = await createClient();
+
+  try {
+    // TODO: Get booking and payment details
+    // TODO: Check refund eligibility (N+ hours before appointment)
+    // TODO: Calculate refund amount based on cancellation timing
+    // TODO: Use createStripeRefund or cancelStripePaymentIntent service functions
+    // TODO: Update booking and payment records
+    // TODO: Send refund confirmation email
+
+    return { data: null, error: "Refund flow not yet implemented" };
+  } catch (error) {
+    console.error("Error processing refund:", error);
+    return { data: null, error: "Failed to process refund" };
+  }
 }
 
 /**

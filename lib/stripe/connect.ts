@@ -11,6 +11,7 @@ import { getOnboardingUrls, stripe, STRIPE_CONNECT_CONFIG } from "./config";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import type Stripe from "stripe";
+import { calculatePlatformFee, PLATFORM_CONFIG } from "@/lib/platform-config";
 
 // Common type for Stripe customer updates
 export type StripeCustomerUpdateParams = Stripe.CustomerUpdateParams;
@@ -462,4 +463,217 @@ export async function createCustomerWithDatabase({
     },
     error: null,
   };
+}
+
+/**
+ * Create a Stripe PaymentIntent for a booking with destination charges
+ * Pure Stripe operation - no database interaction
+ */
+export async function createStripePaymentIntent({
+  totalAmountNOK,
+  stylistStripeAccountId,
+  bookingId,
+  customerId,
+  stylistId,
+  hasAffiliate = false,
+  affiliateId,
+  discountAmountNOK = 0,
+  discountCode,
+}: {
+  totalAmountNOK: number;
+  stylistStripeAccountId: string;
+  bookingId: string;
+  customerId: string;
+  stylistId: string;
+  hasAffiliate?: boolean;
+  affiliateId?: string;
+  discountAmountNOK?: number;
+  discountCode?: string;
+}) {
+  try {
+    // Apply discount to total amount
+    const finalAmountNOK = Math.max(0, totalAmountNOK - discountAmountNOK);
+    const finalAmountOre = Math.round(finalAmountNOK * 100);
+
+    // Calculate fees
+    const feeCalculation = calculatePlatformFee({
+      totalAmountNOK: finalAmountNOK,
+      hasAffiliate,
+    });
+
+    const applicationFeeOre = Math.round(feeCalculation.platformFeeNOK * 100);
+
+    // Build metadata object with essential booking information
+    const metadata: Record<string, string> = {
+      booking_id: bookingId,
+      customer_id: customerId,
+      stylist_id: stylistId,
+      original_amount_nok: totalAmountNOK.toString(),
+      final_amount_nok: finalAmountNOK.toString(),
+      platform_fee_nok: feeCalculation.platformFeeNOK.toString(),
+      stylist_payout_nok: feeCalculation.stylistPayoutNOK.toString(),
+    };
+
+    // Add affiliate information if applicable
+    if (hasAffiliate && affiliateId) {
+      metadata.has_affiliate = "true";
+      metadata.affiliate_id = affiliateId;
+      metadata.affiliate_commission_nok = feeCalculation.affiliateCommissionNOK
+        .toString();
+    }
+
+    // Add discount information if applicable
+    if (discountAmountNOK > 0) {
+      metadata.discount_amount_nok = discountAmountNOK.toString();
+      if (discountCode) {
+        metadata.discount_code = discountCode;
+      }
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: finalAmountOre,
+      currency: PLATFORM_CONFIG.payment.defaultCurrency.toLowerCase(),
+      application_fee_amount: applicationFeeOre,
+      transfer_data: {
+        destination: stylistStripeAccountId,
+      },
+      capture_method: "manual", // Will be captured by cron job before appointment
+      metadata,
+      // Add description for better tracking
+      description: `Booking ${bookingId} - Stylist services`,
+    });
+
+    return {
+      data: {
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret,
+        amountOre: finalAmountOre,
+        amountNOK: finalAmountNOK,
+        applicationFeeOre,
+        applicationFeeNOK: feeCalculation.platformFeeNOK,
+        stylistPayoutNOK: feeCalculation.stylistPayoutNOK,
+        affiliateCommissionNOK: feeCalculation.affiliateCommissionNOK,
+        discountAmountNOK,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error creating Stripe PaymentIntent:", error);
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to create payment intent",
+    };
+  }
+}
+
+/**
+ * Capture a PaymentIntent manually
+ * This will be called by cron job 24 hours before appointment
+ * Pure Stripe operation - no database interaction
+ */
+export async function captureStripePaymentIntent({
+  paymentIntentId,
+}: {
+  paymentIntentId: string;
+}) {
+  try {
+    const paymentIntent = await stripe.paymentIntents.capture(
+      paymentIntentId,
+    );
+
+    return {
+      data: {
+        paymentIntentId: paymentIntent.id,
+        status: paymentIntent.status,
+        capturedAt: new Date().toISOString(),
+        amountCaptured: paymentIntent.amount_received,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error capturing PaymentIntent:", error);
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to capture payment",
+    };
+  }
+}
+
+/**
+ * Cancel a PaymentIntent
+ * Used when booking is cancelled before capture
+ * Pure Stripe operation - no database interaction
+ */
+export async function cancelStripePaymentIntent({
+  paymentIntentId,
+  cancellationReason,
+}: {
+  paymentIntentId: string;
+  cancellationReason?: Stripe.PaymentIntentCancelParams.CancellationReason;
+}) {
+  try {
+    const paymentIntent = await stripe.paymentIntents.cancel(paymentIntentId, {
+      cancellation_reason: cancellationReason,
+    });
+
+    return {
+      data: {
+        paymentIntentId: paymentIntent.id,
+        status: paymentIntent.status,
+        cancelledAt: new Date().toISOString(),
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error cancelling PaymentIntent:", error);
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to cancel payment",
+    };
+  }
+}
+
+/**
+ * Create a refund for a captured PaymentIntent
+ * Pure Stripe operation - no database interaction
+ */
+export async function createStripeRefund({
+  paymentIntentId,
+  amountOre,
+  reason,
+}: {
+  paymentIntentId: string;
+  amountOre?: number; // If not provided, refunds full amount
+  reason?: string;
+}) {
+  try {
+    const refund = await stripe.refunds.create({
+      payment_intent: paymentIntentId,
+      amount: amountOre,
+      reason: reason as Stripe.RefundCreateParams.Reason,
+    });
+
+    return {
+      data: {
+        refundId: refund.id,
+        paymentIntentId,
+        status: refund.status,
+        amountRefunded: refund.amount,
+        createdAt: new Date(refund.created * 1000).toISOString(),
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error creating refund:", error);
+    return {
+      data: null,
+      error: error instanceof Error ? error.message : "Failed to create refund",
+    };
+  }
 }

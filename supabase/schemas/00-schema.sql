@@ -27,6 +27,15 @@ CREATE TYPE public.day_of_week AS ENUM ('monday', 'tuesday', 'wednesday', 'thurs
 -- Enum for booking note categories
 CREATE TYPE public.booking_note_category AS ENUM ('service_notes', 'customer_preferences', 'issues', 'results', 'follow_up', 'other');
 
+-- Enum for payment statuses
+CREATE TYPE public.payment_status AS ENUM ('pending', 'requires_payment_method', 'requires_confirmation', 'requires_action', 'processing', 'requires_capture', 'cancelled', 'succeeded');
+
+-- Enum for affiliate application statuses
+CREATE TYPE public.affiliate_application_status AS ENUM ('pending', 'approved', 'rejected', 'suspended');
+
+-- Enum for affiliate payout statuses
+CREATE TYPE public.affiliate_payout_status AS ENUM ('pending', 'processing', 'paid', 'failed');
+
 
 -- ================== TABLES ==================
 
@@ -274,22 +283,41 @@ CREATE TABLE IF NOT EXISTS public.payments (
     booking_id uuid NOT NULL UNIQUE REFERENCES public.bookings(id) ON DELETE CASCADE,
     payment_intent_id text NOT NULL UNIQUE,
 
-    -- Amounts stored in smallest currency unit (øre/cents) to avoid floating point issues
-    total_amount integer NOT NULL,
-    platform_fee integer NOT NULL,
-    stylist_payout_amount integer NOT NULL,
+    -- Amounts in NOK (stored as numeric for precision)
+    original_amount numeric(10, 2) NOT NULL, -- Amount before discounts
+    discount_amount numeric(10, 2) DEFAULT 0 NOT NULL,
+    final_amount numeric(10, 2) NOT NULL, -- Amount after discounts
+    platform_fee numeric(10, 2) NOT NULL,
+    stylist_payout numeric(10, 2) NOT NULL,
+    affiliate_commission numeric(10, 2) DEFAULT 0 NOT NULL,
     currency text DEFAULT 'NOK' NOT NULL,
 
-    -- Stripe transfer tracking
-    stylist_transfer_id text,
+    -- Discount tracking
+    discount_code text,
+    discount_percentage numeric(5, 2), -- If percentage-based discount
+    discount_fixed_amount numeric(10, 2), -- If fixed amount discount
+
+    -- Affiliate tracking
+    affiliate_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    affiliate_commission_percentage numeric(5, 4), -- Percentage of platform fee given to affiliate
+
+    -- Stripe-specific tracking
+    stripe_application_fee_amount integer NOT NULL, -- Stored in øre for Stripe
+    stylist_transfer_id text, -- Stripe Transfer ID for funds transferred to stylist's connected account
     
     -- Payment status tracking
-    status text NOT NULL DEFAULT 'pending', -- e.g., 'pending', 'succeeded', 'pending_payout', 'paid_out', 'failed'
+    status public.payment_status DEFAULT 'pending' NOT NULL,
     
     -- Timestamps for payment lifecycle
-    succeeded_at timestamp with time zone,
+    authorized_at timestamp with time zone, -- When payment was authorized
+    captured_at timestamp with time zone, -- When payment was captured (24h before appointment)
+    succeeded_at timestamp with time zone, -- When payment fully succeeded
     payout_initiated_at timestamp with time zone,
-    payout_completed_at timestamp with time zone
+    payout_completed_at timestamp with time zone,
+    
+    -- Refund tracking
+    refunded_amount numeric(10, 2) DEFAULT 0 NOT NULL,
+    refund_reason text
 );
 
 -- Table for booking notes created by stylists
@@ -446,6 +474,139 @@ CREATE TABLE IF NOT EXISTS public.user_preferences (
     push_notifications boolean DEFAULT true NOT NULL -- Future: for mobile app
 );
 
+-- Table for platform configuration settings (managed by admins)
+CREATE TABLE IF NOT EXISTS public.platform_config (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_by uuid NOT NULL REFERENCES public.profiles(id) ON DELETE SET NULL,
+
+    -- Configuration key and value
+    config_key text NOT NULL UNIQUE,
+    config_value jsonb NOT NULL,
+    description text,
+
+    -- Metadata
+    is_active boolean DEFAULT true NOT NULL,
+    environment text DEFAULT 'production' NOT NULL -- 'production', 'staging', 'development'
+);
+
+-- Table for affiliate link applications
+CREATE TABLE IF NOT EXISTS public.affiliate_applications (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Applicant information
+    stylist_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    
+    -- Application details
+    reason text NOT NULL, -- Why they want to be an affiliate
+    marketing_strategy text, -- How they plan to promote the platform
+    expected_referrals integer, -- Estimated referrals per month
+    social_media_reach integer, -- Total followers/reach across platforms
+
+    -- Application status
+    status public.affiliate_application_status DEFAULT 'pending' NOT NULL,
+    reviewed_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    reviewed_at timestamp with time zone,
+    review_notes text,
+
+    -- Terms agreement
+    terms_accepted boolean DEFAULT false NOT NULL,
+    terms_accepted_at timestamp with time zone
+);
+
+-- Table for affiliate links (one-to-one with approved applications)
+CREATE TABLE IF NOT EXISTS public.affiliate_links (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Link ownership
+    stylist_id uuid NOT NULL UNIQUE REFERENCES public.profiles(id) ON DELETE CASCADE,
+    application_id uuid NOT NULL UNIQUE REFERENCES public.affiliate_applications(id) ON DELETE CASCADE,
+
+    -- Link details
+    link_code text NOT NULL UNIQUE, -- Unique identifier for the link (e.g., 'anna-hair-oslo')
+    commission_percentage numeric(5, 4) DEFAULT 0.20 NOT NULL, -- Percentage of platform fee
+
+    -- Link status and validity
+    is_active boolean DEFAULT true NOT NULL,
+    expires_at timestamp with time zone, -- NULL means no expiration
+    
+    -- Usage tracking
+    click_count integer DEFAULT 0 NOT NULL,
+    conversion_count integer DEFAULT 0 NOT NULL,
+    total_commission_earned numeric(10, 2) DEFAULT 0 NOT NULL,
+
+    -- Metadata
+    notes text -- Admin notes about this affiliate link
+);
+
+-- Table for tracking affiliate link clicks
+CREATE TABLE IF NOT EXISTS public.affiliate_clicks (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Link tracking
+    affiliate_link_id uuid NOT NULL REFERENCES public.affiliate_links(id) ON DELETE CASCADE,
+    stylist_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+
+    -- Click details
+    visitor_id text, -- Anonymous visitor identifier (cookie/session)
+    user_id uuid REFERENCES public.profiles(id) ON DELETE SET NULL, -- If user is logged in
+    
+    -- Technical details
+    ip_address text,
+    user_agent text,
+    referrer text,
+    landing_page text,
+
+    -- Geographic data (if available)
+    country_code text,
+    city text,
+
+    -- Conversion tracking
+    converted boolean DEFAULT false NOT NULL,
+    converted_at timestamp with time zone,
+    booking_id uuid REFERENCES public.bookings(id) ON DELETE SET NULL,
+    commission_amount numeric(10, 2) DEFAULT 0 NOT NULL
+);
+
+-- Table for affiliate commission payouts
+CREATE TABLE IF NOT EXISTS public.affiliate_payouts (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Payout details
+    stylist_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    affiliate_link_id uuid NOT NULL REFERENCES public.affiliate_links(id) ON DELETE CASCADE,
+
+    -- Payout amount and period
+    payout_amount numeric(10, 2) NOT NULL,
+    currency text DEFAULT 'NOK' NOT NULL,
+    period_start date NOT NULL,
+    period_end date NOT NULL,
+
+    -- Commission details
+    total_bookings integer NOT NULL,
+    total_commission_earned numeric(10, 2) NOT NULL,
+    
+    -- Payout status
+    status public.affiliate_payout_status DEFAULT 'pending' NOT NULL,
+    processed_by uuid REFERENCES public.profiles(id) ON DELETE SET NULL,
+    processed_at timestamp with time zone,
+    
+    -- Stripe payout tracking
+    stripe_transfer_id text,
+    stripe_payout_id text,
+
+    -- Metadata
+    notes text
+);
+
 -- ================== TRIGGERS AND FUNCTIONS ==================
 
 -- Function to update the 'updated_at' column automatically
@@ -557,6 +718,10 @@ CREATE TRIGGER update_discounts_updated_at BEFORE UPDATE ON public.discounts FOR
 CREATE TRIGGER update_chats_updated_at BEFORE UPDATE ON public.chats FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_user_preferences_updated_at BEFORE UPDATE ON public.user_preferences FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_booking_notes_updated_at BEFORE UPDATE ON public.booking_notes FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_platform_config_updated_at BEFORE UPDATE ON public.platform_config FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_affiliate_applications_updated_at BEFORE UPDATE ON public.affiliate_applications FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_affiliate_links_updated_at BEFORE UPDATE ON public.affiliate_links FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_affiliate_payouts_updated_at BEFORE UPDATE ON public.affiliate_payouts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Trigger to automatically create a profile when a new user signs up
 CREATE TRIGGER on_auth_user_created
@@ -794,3 +959,18 @@ $$;
 
 -- Spatial index for efficient geographic queries on addresses
 CREATE INDEX IF NOT EXISTS idx_addresses_location ON public.addresses USING gist (location);
+
+-- Indexes for affiliate system performance
+CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_affiliate_link_id ON public.affiliate_clicks(affiliate_link_id);
+CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_user_id ON public.affiliate_clicks(user_id);
+CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_booking_id ON public.affiliate_clicks(booking_id);
+CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_created_at ON public.affiliate_clicks(created_at);
+CREATE INDEX IF NOT EXISTS idx_affiliate_links_link_code ON public.affiliate_links(link_code);
+CREATE INDEX IF NOT EXISTS idx_affiliate_links_stylist_id ON public.affiliate_links(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_payments_affiliate_id ON public.payments(affiliate_id);
+CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON public.payments(booking_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
+
+-- ================== DEFAULT DATA ==================
+-- Platform configuration will be managed at the application level
+-- No automatic insertion of platform config data

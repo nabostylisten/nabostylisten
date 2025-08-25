@@ -494,19 +494,15 @@ export async function createBookingWithServices(
         // 3. Calculate final price after discount
         const finalPrice = Math.max(0, input.totalPrice - discountAmount);
 
-        // TODO: Create Stripe PaymentIntent here
-        // const paymentIntent = await stripe.paymentIntents.create({
-        //     amount: Math.round(finalPrice * 100), // Convert to øre/cents
-        //     currency: 'nok',
-        //     metadata: {
-        //         customerId: user.id,
-        //         stylistId: input.stylistId,
-        //         serviceIds: input.serviceIds.join(','),
-        //     },
-        //     // Setup for automatic capture 24 hours before appointment
-        //     capture_method: 'manual',
-        // });
-        const stripePaymentIntentId = `pi_temp_${Date.now()}`; // TODO: Replace with actual Stripe PaymentIntent ID
+        // Create Stripe PaymentIntent using service function
+        let stripePaymentIntentId: string | null = null;
+        let paymentIntentClientSecret: string | null = null;
+        
+        // TODO: Implement actual PaymentIntent creation
+        // This would be called after booking is successfully created
+        // For now, we're creating a placeholder that will be replaced
+        // when the frontend payment flow is implemented
+        stripePaymentIntentId = `pi_temp_${Date.now()}`;
 
         // 4. Create the booking
         const bookingData: DatabaseTables["bookings"]["Insert"] = {
@@ -674,7 +670,11 @@ export async function createBookingWithServices(
         return {
             data: {
                 booking,
-                stripePaymentIntentId, // TODO: Return client secret for Stripe payment confirmation
+                stripePaymentIntentId,
+                paymentIntentClientSecret, // Will be null until payment integration is complete
+                finalPrice,
+                discountAmount,
+                // TODO: Add platform fee breakdown when payment is implemented
             },
             error: null,
         };

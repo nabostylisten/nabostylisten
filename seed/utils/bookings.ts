@@ -1,33 +1,49 @@
-import type { SeedClient } from "@snaplet/seed";
+import type {
+  addressesScalars,
+  bookingsScalars,
+  discountsScalars,
+  SeedClient,
+  servicesScalars,
+  usersScalars,
+} from "@snaplet/seed";
 import type { DatabaseTables } from "../../types/index";
 import { addDays, addMinutes, subDays } from "date-fns";
-import { Database } from "../../types/database.types";
 
 /**
  * Creates comprehensive bookings for testing including various statuses and scenarios
  * Includes specific test bookings and additional random bookings for pagination testing
  */
 export async function createComprehensiveBookings(
-  seed: SeedClient, 
-  customerUsers: any[], 
-  stylistUsers: any[], 
-  discounts: any[],
-  customerAddresses: any[]
+  seed: SeedClient,
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
+  discounts: discountsScalars[],
+  customerAddresses: addressesScalars[],
 ) {
   console.log("-- Creating comprehensive bookings for testing...");
 
   const allBookingsToCreate: DatabaseTables["bookings"]["Insert"][] = [];
 
   // Add the specific test bookings first
-  const specificBookings = createSpecificTestBookings(customerUsers, stylistUsers, discounts, customerAddresses);
+  const specificBookings = createSpecificTestBookings(
+    customerUsers,
+    stylistUsers,
+    discounts,
+    customerAddresses,
+  );
   allBookingsToCreate.push(...specificBookings);
 
   // Generate additional bookings for pagination testing
-  const additionalBookings = generateAdditionalBookings(customerUsers, stylistUsers, customerAddresses, 20);
+  const additionalBookings = generateAdditionalBookings(
+    customerUsers,
+    stylistUsers,
+    customerAddresses,
+    20,
+  );
   allBookingsToCreate.push(...additionalBookings);
 
   const { bookings } = await seed.bookings(allBookingsToCreate);
-  
+
   console.log(`-- Created ${bookings.length} total bookings`);
   return bookings;
 }
@@ -36,10 +52,10 @@ export async function createComprehensiveBookings(
  * Creates specific test bookings with known scenarios for testing
  */
 function createSpecificTestBookings(
-  customerUsers: any[], 
-  stylistUsers: any[], 
-  discounts: any[],
-  customerAddresses: any[]
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
+  discounts: discountsScalars[],
+  customerAddresses: addressesScalars[],
 ): DatabaseTables["bookings"]["Insert"][] {
   return [
     // 1. Upcoming confirmed booking with discount - Kari Nordmann
@@ -149,12 +165,12 @@ function createSpecificTestBookings(
  * Generates additional random bookings for pagination and volume testing
  */
 function generateAdditionalBookings(
-  customerUsers: any[], 
-  stylistUsers: any[], 
-  customerAddresses: any[],
-  count: number
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
+  customerAddresses: addressesScalars[],
+  count: number,
 ): DatabaseTables["bookings"]["Insert"][] {
-  const statuses: Array<Database["public"]["Enums"]["booking_status"]> = [
+  const statuses: Array<bookingsScalars["status"]> = [
     "confirmed",
     "completed",
     "pending",
@@ -174,8 +190,10 @@ function generateAdditionalBookings(
   const bookings = [];
 
   for (let i = 0; i < count; i++) {
-    const customer = customerUsers[Math.floor(Math.random() * customerUsers.length)];
-    const stylist = stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
+    const customer =
+      customerUsers[Math.floor(Math.random() * customerUsers.length)];
+    const stylist =
+      stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
     const status = statuses[Math.floor(Math.random() * statuses.length)];
     const isUpcoming = Math.random() > 0.5;
     const baseDate = isUpcoming
@@ -213,7 +231,11 @@ function generateAdditionalBookings(
  * Links services to bookings for testing service-booking relationships
  * Each booking gets 1-2 services linked to it
  */
-export async function linkServicesToBookings(seed: SeedClient, bookings: any[], services: any[]) {
+export async function linkServicesToBookings(
+  seed: SeedClient,
+  bookings: bookingsScalars[],
+  services: servicesScalars[],
+) {
   console.log("-- Linking services to bookings...");
 
   const bookingServiceLinks = [
@@ -248,13 +270,13 @@ export async function linkServicesToBookings(seed: SeedClient, bookings: any[], 
     for (let j = 0; j < numServices; j++) {
       let attempts = 0;
       let randomService;
-      
+
       // Try to find a service we haven't already linked to this booking
       do {
         randomService = services[Math.floor(Math.random() * services.length)];
         attempts++;
       } while (usedServices.has(randomService?.id) && attempts < 10);
-      
+
       if (randomService && booking && !usedServices.has(randomService.id)) {
         bookingServiceLinks.push({
           booking_id: booking.id,

@@ -1,18 +1,30 @@
-import type { SeedClient } from "@snaplet/seed";
+import type {
+  affiliate_applicationsScalars,
+  affiliate_linksScalars,
+  bookingsScalars,
+  SeedClient,
+  usersScalars,
+} from "@snaplet/seed";
 import { subDays } from "date-fns";
 
 /**
  * Creates affiliate applications for testing the affiliate program workflow
  * Includes both approved and pending applications
  */
-export async function createAffiliateApplications(seed: SeedClient, stylistUsers: any[], allUsers: any[]) {
+export async function createAffiliateApplications(
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+  allUsers: usersScalars[],
+) {
   console.log("-- Creating affiliate system test data...");
 
   const { affiliate_applications } = await seed.affiliate_applications([
     {
       stylist_id: stylistUsers[0].id, // Maria Hansen
-      reason: "Jeg vil gjerne hjelpe andre stylister finne gode kunder gjennom plattformen.",
-      marketing_strategy: "Jeg har 5000 følgere på Instagram og deler regelmessig tips og før/etter bilder.",
+      reason:
+        "Jeg vil gjerne hjelpe andre stylister finne gode kunder gjennom plattformen.",
+      marketing_strategy:
+        "Jeg har 5000 følgere på Instagram og deler regelmessig tips og før/etter bilder.",
       expected_referrals: 10,
       social_media_reach: 5000,
       status: "approved",
@@ -24,8 +36,10 @@ export async function createAffiliateApplications(seed: SeedClient, stylistUsers
     },
     {
       stylist_id: stylistUsers[1].id, // Sophia Larsen
-      reason: "Ønsker å dele plattformen med mine kolleger og kunder som spør om andre tjenester.",
-      marketing_strategy: "Deler på Facebook-side med 2000 følgere og gjennom mund-til-munn markedsføring.",
+      reason:
+        "Ønsker å dele plattformen med mine kolleger og kunder som spør om andre tjenester.",
+      marketing_strategy:
+        "Deler på Facebook-side med 2000 følgere og gjennom mund-til-munn markedsføring.",
       expected_referrals: 5,
       social_media_reach: 2000,
       status: "pending",
@@ -41,9 +55,9 @@ export async function createAffiliateApplications(seed: SeedClient, stylistUsers
  * Creates affiliate links for approved applications with tracking data
  */
 export async function createAffiliateLinksAndTracking(
-  seed: SeedClient, 
-  stylistUsers: any[], 
-  affiliate_applications: any[]
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+  affiliate_applications: affiliate_applicationsScalars[],
 ) {
   console.log("-- Creating affiliate links and tracking data...");
 
@@ -70,11 +84,11 @@ export async function createAffiliateLinksAndTracking(
  * Includes both converted and non-converted clicks
  */
 export async function createAffiliateClickTracking(
-  seed: SeedClient, 
-  affiliate_links: any[], 
-  stylistUsers: any[], 
-  customerUsers: any[], 
-  bookings: any[]
+  seed: SeedClient,
+  affiliate_links: affiliate_linksScalars[],
+  stylistUsers: usersScalars[],
+  customerUsers: usersScalars[],
+  bookings: bookingsScalars[],
 ) {
   console.log("-- Creating affiliate click tracking data...");
 
@@ -100,7 +114,8 @@ export async function createAffiliateClickTracking(
       stylist_id: stylistUsers[0].id,
       visitor_id: "visitor_67890",
       ip_address: "10.0.0.1",
-      user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+      user_agent:
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
       referrer: "https://facebook.com",
       landing_page: "/services",
       country_code: "NO",

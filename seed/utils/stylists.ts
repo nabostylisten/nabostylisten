@@ -1,13 +1,19 @@
-import type { SeedClient } from "@snaplet/seed";
-import { Database } from "../../types/database.types";
+import type {
+  SeedClient,
+  stylist_availability_rulesScalars,
+  usersScalars,
+} from "@snaplet/seed";
 
 /**
  * Creates detailed profiles for stylists including bio, social media, and travel preferences
  * Profiles will exist due to database trigger when users were created
  */
-export async function createStylistDetailedProfiles(seed: SeedClient, stylistUsers: any[]) {
+export async function createStylistDetailedProfiles(
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+) {
   console.log("-- Creating stylist detailed profiles...");
-  
+
   await seed.stylist_details([
     // Oslo stylists
     {
@@ -18,6 +24,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       has_own_place: true,
       travel_distance_km: 15,
       instagram_profile: "@mariahansen_hair",
+      stripe_account_id: null,
     },
     {
       profile_id: stylistUsers[1].id, // Sophia Larsen
@@ -28,6 +35,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       travel_distance_km: null,
       instagram_profile: "@sophialashes",
       facebook_profile: "sophialarsenlashes",
+      stripe_account_id: null,
     },
     // Bergen stylists
     {
@@ -39,6 +47,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       travel_distance_km: 20,
       instagram_profile: "@emma_beauty",
       tiktok_profile: "@emmabeautybergen",
+      stripe_account_id: null,
     },
     {
       profile_id: stylistUsers[3].id, // Lisa Berg
@@ -48,6 +57,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       has_own_place: true,
       travel_distance_km: 25,
       instagram_profile: "@lisaberg_hair",
+      stripe_account_id: null,
     },
     // Trondheim stylists
     {
@@ -59,6 +69,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       travel_distance_km: 30,
       instagram_profile: "@anna_makeup_trondheim",
       facebook_profile: "annamakeup",
+      stripe_account_id: null,
     },
     {
       profile_id: stylistUsers[5].id, // Ingrid Solberg
@@ -68,6 +79,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       has_own_place: true,
       travel_distance_km: null,
       instagram_profile: "@ingrid_nails",
+      stripe_account_id: null,
     },
     // Stavanger stylists
     {
@@ -79,6 +91,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       travel_distance_km: 20,
       instagram_profile: "@camilla_hair_stavanger",
       tiktok_profile: "@camillahair",
+      stripe_account_id: null,
     },
     {
       profile_id: stylistUsers[7].id, // Thea Andersen
@@ -88,6 +101,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       has_own_place: false,
       travel_distance_km: 15,
       instagram_profile: "@thea_lashes",
+      stripe_account_id: null,
     },
     // Kristiansand stylists
     {
@@ -99,6 +113,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       travel_distance_km: 25,
       instagram_profile: "@marte_beauty_krs",
       youtube_profile: "martebeauty",
+      stripe_account_id: null,
     },
     {
       profile_id: stylistUsers[9].id, // Sara Pedersen
@@ -108,6 +123,7 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
       has_own_place: true,
       travel_distance_km: 20,
       instagram_profile: "@sara_hair_kristiansand",
+      stripe_account_id: null,
     },
   ]);
 }
@@ -116,54 +132,61 @@ export async function createStylistDetailedProfiles(seed: SeedClient, stylistUse
  * Creates availability rules for all stylists with varied schedules
  * Most stylists work weekdays with some variation in hours and Saturday availability
  */
-export async function createStylistAvailabilityRules(seed: SeedClient, stylistUsers: any[]) {
+export async function createStylistAvailabilityRules(
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+) {
   console.log("-- Creating stylist availability rules...");
-  
+
   const availabilityRules = [];
   const weekdays = ["monday", "tuesday", "wednesday", "thursday", "friday"];
-  
+
   for (let i = 0; i < stylistUsers.length; i++) {
     const stylist = stylistUsers[i];
-    
+
     // Most stylists work weekdays
     for (const day of weekdays) {
       // Vary the hours slightly for each stylist
       const startHour = 8 + (i % 3); // 8, 9, or 10 AM start
       const endHour = 17 + (i % 3); // 17, 18, or 19 PM end
-      
+
       // Skip some days for variety (every 3rd stylist skips Wednesday)
       if (i % 3 === 0 && day === "wednesday") continue;
-      
+
       availabilityRules.push({
         stylist_id: stylist.id,
-        day_of_week: day as Database["public"]["Enums"]["day_of_week"],
-        start_time: `${startHour.toString().padStart(2, '0')}:00`,
-        end_time: `${endHour.toString().padStart(2, '0')}:00`,
+        day_of_week: day as stylist_availability_rulesScalars["day_of_week"],
+        start_time: `${startHour.toString().padStart(2, "0")}:00`,
+        end_time: `${endHour.toString().padStart(2, "0")}:00`,
       });
     }
-    
+
     // About 70% work Saturdays
     if (i % 10 < 7) {
       availabilityRules.push({
         stylist_id: stylist.id,
-        day_of_week: "saturday" as Database["public"]["Enums"]["day_of_week"],
-        start_time: `${(10 + (i % 2)).toString().padStart(2, '0')}:00`, // 10 or 11 AM
-        end_time: `${(15 + (i % 2)).toString().padStart(2, '0')}:00`, // 15 or 16 PM
+        day_of_week:
+          "saturday" as stylist_availability_rulesScalars["day_of_week"],
+        start_time: `${(10 + (i % 2)).toString().padStart(2, "0")}:00`, // 10 or 11 AM
+        end_time: `${(15 + (i % 2)).toString().padStart(2, "0")}:00`, // 15 or 16 PM
       });
     }
   }
-  
+
   await seed.stylist_availability_rules(availabilityRules);
 }
 
 /**
  * Creates one-off unavailability periods for stylists (appointments, breaks, etc.)
  */
-export async function createStylistUnavailabilityPeriods(seed: SeedClient, stylistUsers: any[]) {
+export async function createStylistUnavailabilityPeriods(
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+) {
   console.log("-- Creating stylist unavailability periods...");
-  
+
   const { addDays, addHours } = await import("date-fns");
-  
+
   const nextWeek = addDays(new Date(), 7);
   const lunchDate = new Date(nextWeek);
   lunchDate.setHours(13, 0, 0, 0);
@@ -187,9 +210,12 @@ export async function createStylistUnavailabilityPeriods(seed: SeedClient, styli
 /**
  * Creates recurring unavailability patterns for stylists (regular breaks, meetings, etc.)
  */
-export async function createStylistRecurringUnavailability(seed: SeedClient, stylistUsers: any[]) {
+export async function createStylistRecurringUnavailability(
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+) {
   console.log("-- Creating stylist recurring unavailability patterns...");
-  
+
   const seriesStartDate = new Date();
   seriesStartDate.setDate(1); // Start from the 1st of current month
 

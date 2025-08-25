@@ -1,11 +1,15 @@
-import type { SeedClient } from "@snaplet/seed";
+import type { bookingsScalars, SeedClient, usersScalars } from "@snaplet/seed";
 import { subDays } from "date-fns";
 
 /**
  * Creates payment records for testing the payment processing system
  * Includes various payment statuses and affiliate commissions
  */
-export async function createPaymentRecords(seed: SeedClient, bookings: any[], stylistUsers: any[]) {
+export async function createPaymentRecords(
+  seed: SeedClient,
+  bookings: bookingsScalars[],
+  stylistUsers: usersScalars[],
+) {
   console.log("-- Creating payment records...");
 
   try {
@@ -62,7 +66,11 @@ export async function createPaymentRecords(seed: SeedClient, bookings: any[], st
       },
     ]);
   } catch (error) {
-    console.log(`-- Error creating payments: ${error.message}`);
+    console.log(
+      `-- Error creating payments: ${
+        error instanceof Error ? error.message : "Unknown error"
+      }`,
+    );
     console.log("-- Skipping payment records for now...");
   }
 }

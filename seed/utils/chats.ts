@@ -1,10 +1,18 @@
-import type { SeedClient } from "@snaplet/seed";
+import type {
+  bookingsScalars,
+  chatsScalars,
+  SeedClient,
+  usersScalars,
+} from "@snaplet/seed";
 import { addDays, subDays } from "date-fns";
 
 /**
  * Creates chat channels for selected bookings to test real-time messaging
  */
-export async function createBookingChats(seed: SeedClient, bookings: any[]) {
+export async function createBookingChats(
+  seed: SeedClient,
+  bookings: bookingsScalars[],
+) {
   console.log("-- Creating chats for selected bookings...");
 
   const { chats } = await seed.chats([
@@ -21,21 +29,22 @@ export async function createBookingChats(seed: SeedClient, bookings: any[]) {
  * These messages are older than 5 years and should be cleaned up by the scheduled job
  */
 export async function createOldChatMessagesForCronTesting(
-  seed: SeedClient, 
-  chats: any[], 
-  customerUsers: any[], 
-  stylistUsers: any[]
+  seed: SeedClient,
+  chats: chatsScalars[],
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
 ) {
   console.log("-- Creating old chat messages for cron job testing...");
-  
+
   const sixYearsAgo = subDays(new Date(), 365 * 6); // 6 years ago
-  
+
   // Create old messages that should be deleted by cron job
   await seed.chat_messages([
     {
       chat_id: chats[0].id,
       sender_id: customerUsers[0].id,
-      content: "Dette er en veldig gammel melding som skal slettes av cron job.",
+      content:
+        "Dette er en veldig gammel melding som skal slettes av cron job.",
       is_read: true,
       created_at: sixYearsAgo,
     },
@@ -63,10 +72,10 @@ export async function createOldChatMessagesForCronTesting(
  * Includes various conversation scenarios and read/unread states
  */
 export async function createCurrentChatMessages(
-  seed: SeedClient, 
-  chats: any[], 
-  customerUsers: any[], 
-  stylistUsers: any[]
+  seed: SeedClient,
+  chats: chatsScalars[],
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
 ) {
   console.log("-- Creating current chat messages...");
 

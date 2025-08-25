@@ -1,12 +1,18 @@
-import type { SeedClient } from "@snaplet/seed";
+import type {
+  applicationsScalars,
+  SeedClient,
+  service_categoriesScalars,
+} from "@snaplet/seed";
 
 /**
  * Creates stylist applications with various statuses for testing the approval workflow
  * Applications demonstrate different stages: applied, pending_info, approved, etc.
  */
 export async function createStylistApplications(seed: SeedClient) {
-  console.log("-- Creating stylist applications for approval workflow testing...");
-  
+  console.log(
+    "-- Creating stylist applications for approval workflow testing...",
+  );
+
   const { applications } = await seed.applications([
     {
       full_name: "Lars Eriksen",
@@ -65,9 +71,13 @@ export async function createStylistApplications(seed: SeedClient) {
  * Links applications to service categories they want to offer
  * This helps admins understand what services applicants want to provide
  */
-export async function linkApplicationsToCategories(seed: SeedClient, applications: any[], mainCategories: any[]) {
+export async function linkApplicationsToCategories(
+  seed: SeedClient,
+  applications: applicationsScalars[],
+  mainCategories: service_categoriesScalars[],
+) {
   console.log("-- Linking applications to service categories...");
-  
+
   await seed.application_categories([
     { application_id: applications[0].id, category_id: mainCategories[0].id }, // Lars -> Hår
     { application_id: applications[1].id, category_id: mainCategories[2].id }, // Anna -> Makeup

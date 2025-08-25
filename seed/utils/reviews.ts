@@ -1,4 +1,11 @@
-import type { SeedClient } from "@snaplet/seed";
+import type {
+  booking_servicesScalars,
+  bookingsScalars,
+  reviewsScalars,
+  SeedClient,
+  servicesScalars,
+  usersScalars,
+} from "@snaplet/seed";
 import type { DatabaseTables } from "../../types/index";
 import { addHours, addMinutes, subDays } from "date-fns";
 import { reviewImagesUrls } from "./shared";
@@ -9,11 +16,11 @@ import { reviewImagesUrls } from "./shared";
  */
 export async function createComprehensiveReviewsSystem(
   seed: SeedClient,
-  bookings: any[],
-  services: any[],
-  customerUsers: any[],
-  stylistUsers: any[],
-  bookingServiceLinks: any[]
+  bookings: bookingsScalars[],
+  services: servicesScalars[],
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
+  bookingServiceLinks: Partial<booking_servicesScalars>[],
 ) {
   console.log("-- Creating reviews and ratings...");
 
@@ -21,31 +28,40 @@ export async function createComprehensiveReviewsSystem(
   const completedBookings = bookings.filter((b) => b.status === "completed");
 
   // Create reviews for existing completed bookings
-  const initialReviews = await createReviewsForCompletedBookings(seed, completedBookings);
-  
-  // Create additional bookings between stylists as customers
-  const { extraBookings, additionalReviews } = await createStylistCrossBookingsWithReviews(
-    seed, 
-    customerUsers, 
-    stylistUsers
+  const initialReviews = await createReviewsForCompletedBookings(
+    seed,
+    completedBookings,
   );
+
+  // Create additional bookings between stylists as customers
+  const { extraBookings, additionalReviews } =
+    await createStylistCrossBookingsWithReviews(
+      seed,
+      customerUsers,
+      stylistUsers,
+    );
 
   // Ensure every service has adequate reviews
   const serviceReviews = await ensureEveryServiceHasReviews(
-    seed, 
-    services, 
-    customerUsers, 
-    stylistUsers, 
-    bookingServiceLinks, 
+    seed,
+    services,
+    customerUsers,
+    stylistUsers,
+    bookingServiceLinks,
     [...bookings, ...extraBookings],
-    [...initialReviews, ...additionalReviews]
+    [...initialReviews, ...additionalReviews],
   );
 
   // Add review images for visual variety
-  await addReviewImages(seed, [...initialReviews, ...additionalReviews, ...serviceReviews]);
+  await addReviewImages(seed, [
+    ...initialReviews,
+    ...additionalReviews,
+    ...serviceReviews,
+  ]);
 
-  const totalReviews = initialReviews.length + additionalReviews.length + serviceReviews.length;
-  
+  const totalReviews = initialReviews.length + additionalReviews.length +
+    serviceReviews.length;
+
   console.log("-- Successfully seeded database with reviews and ratings!");
   console.log(`--   Total reviews: ${totalReviews}`);
   console.log(`--   Every published service has at least 3 reviews`);
@@ -54,7 +70,10 @@ export async function createComprehensiveReviewsSystem(
 /**
  * Creates reviews for existing completed bookings
  */
-async function createReviewsForCompletedBookings(seed: SeedClient, completedBookings: any[]) {
+async function createReviewsForCompletedBookings(
+  seed: SeedClient,
+  completedBookings: bookingsScalars[],
+) {
   const reviewTemplates = [
     {
       ratings: [5, 5, 4, 5],
@@ -109,11 +128,15 @@ async function createReviewsForCompletedBookings(seed: SeedClient, completedBook
       const result = await seed.reviews(reviewsToCreate);
       return result.reviews || result;
     } catch (error) {
-      console.log(`-- Error creating reviews: ${error.message}`);
+      console.log(
+        `-- Error creating reviews: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      );
       return [];
     }
   }
-  
+
   return [];
 }
 
@@ -122,8 +145,8 @@ async function createReviewsForCompletedBookings(seed: SeedClient, completedBook
  */
 async function createStylistCrossBookingsWithReviews(
   seed: SeedClient,
-  customerUsers: any[],
-  stylistUsers: any[]
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
 ) {
   const stylistAsCustomerBookings: DatabaseTables["bookings"]["Insert"][] = [];
 
@@ -148,20 +171,23 @@ async function createStylistCrossBookingsWithReviews(
     const randomCustomer = [...customerUsers, ...stylistUsers][
       Math.floor(Math.random() * (customerUsers.length + stylistUsers.length))
     ];
-    const randomStylist = stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
+    const randomStylist =
+      stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
 
     // Avoid self-booking
     if (randomCustomer.id === randomStylist.id) continue;
 
     const randomDaysAgo = Math.floor(Math.random() * 60) + 10;
     const randomDuration = [60, 90, 120, 150][Math.floor(Math.random() * 4)];
-    const randomPrice = [500, 650, 800, 1200, 1500][Math.floor(Math.random() * 5)];
+    const randomPrice =
+      [500, 650, 800, 1200, 1500][Math.floor(Math.random() * 5)];
 
     stylistAsCustomerBookings.push({
       customer_id: randomCustomer.id,
       stylist_id: randomStylist.id,
       start_time: subDays(new Date(), randomDaysAgo).toISOString(),
-      end_time: addMinutes(subDays(new Date(), randomDaysAgo), randomDuration).toISOString(),
+      end_time: addMinutes(subDays(new Date(), randomDaysAgo), randomDuration)
+        .toISOString(),
       message_to_stylist: [
         "Gleder meg!",
         "Første gang hos deg!",
@@ -172,7 +198,9 @@ async function createStylistCrossBookingsWithReviews(
       status: "completed" as const,
       total_price: randomPrice,
       total_duration_minutes: randomDuration,
-      stripe_payment_intent_id: `pi_test_extra_${i.toString().padStart(3, "0")}`,
+      stripe_payment_intent_id: `pi_test_extra_${
+        i.toString().padStart(3, "0")
+      }`,
     });
   }
 
@@ -191,7 +219,9 @@ async function createStylistCrossBookingsWithReviews(
   for (const booking of extraBookings) {
     if (booking.id && booking.customer_id && booking.stylist_id) {
       const rating = [3, 4, 4, 4, 5, 5, 5, 5][Math.floor(Math.random() * 8)];
-      const comment = stylistReviewComments[Math.floor(Math.random() * stylistReviewComments.length)];
+      const comment = stylistReviewComments[
+        Math.floor(Math.random() * stylistReviewComments.length)
+      ];
 
       additionalReviews.push({
         booking_id: booking.id,
@@ -209,7 +239,11 @@ async function createStylistCrossBookingsWithReviews(
       const result = await seed.reviews(additionalReviews);
       createdAdditionalReviews = result.reviews || result;
     } catch (error) {
-      console.log(`-- Error creating additional reviews: ${error.message}`);
+      console.log(
+        `-- Error creating additional reviews: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      );
     }
   }
 
@@ -221,51 +255,57 @@ async function createStylistCrossBookingsWithReviews(
  */
 async function ensureEveryServiceHasReviews(
   seed: SeedClient,
-  services: any[],
-  customerUsers: any[],
-  stylistUsers: any[],
-  bookingServiceLinks: any[],
-  allBookings: any[],
-  existingReviews: any[]
+  services: servicesScalars[],
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
+  bookingServiceLinks: Partial<booking_servicesScalars>[],
+  allBookings: bookingsScalars[],
+  existingReviews: reviewsScalars[],
 ) {
   console.log("-- Ensuring every service has reviews...");
-  
+
   const additionalBookingsForReviews = [];
   const servicesToEnsureReviews = [];
-  
+
   for (const service of services) {
     if (!service.is_published) continue;
-    
+
     // Count existing reviews for this service
-    const serviceBookings = bookingServiceLinks.filter(link => link.service_id === service.id);
-    const serviceReviews = existingReviews.filter(review => {
-      const reviewBooking = allBookings.find(b => b.id === review.booking_id);
+    const serviceBookings = bookingServiceLinks.filter((link) =>
+      link.service_id === service.id
+    );
+    const serviceReviews = existingReviews.filter((review) => {
+      const reviewBooking = allBookings.find((b) => b.id === review.booking_id);
       if (!reviewBooking) return false;
-      return serviceBookings.some(sb => sb.booking_id === reviewBooking.id);
+      return serviceBookings.some((sb) => sb.booking_id === reviewBooking.id);
     });
 
     const reviewsNeeded = Math.max(0, 3 - serviceReviews.length);
-    
+
     if (reviewsNeeded > 0) {
-      console.log(`-- Service "${service.title}" needs ${reviewsNeeded} more reviews`);
-      
+      console.log(
+        `-- Service "${service.title}" needs ${reviewsNeeded} more reviews`,
+      );
+
       for (let i = 0; i < reviewsNeeded; i++) {
         let randomCustomer;
         let attempts = 0;
-        
+
         do {
           randomCustomer = [...customerUsers, ...stylistUsers][
-            Math.floor(Math.random() * (customerUsers.length + stylistUsers.length))
+            Math.floor(
+              Math.random() * (customerUsers.length + stylistUsers.length),
+            )
           ];
           attempts++;
         } while (randomCustomer.id === service.stylist_id && attempts < 10);
-        
+
         if (randomCustomer.id === service.stylist_id) continue;
-        
+
         const randomDaysAgo = Math.floor(Math.random() * 90) + 10;
         const startTime = subDays(new Date(), randomDaysAgo);
         const endTime = addMinutes(startTime, service.duration_minutes);
-        
+
         additionalBookingsForReviews.push({
           customer_id: randomCustomer.id,
           stylist_id: service.stylist_id,
@@ -283,7 +323,7 @@ async function ensureEveryServiceHasReviews(
           total_duration_minutes: service.duration_minutes,
           stripe_payment_intent_id: `pi_ensure_reviews_${service.id}_${i}`,
         });
-        
+
         servicesToEnsureReviews.push(service);
       }
     }
@@ -291,14 +331,16 @@ async function ensureEveryServiceHasReviews(
 
   if (additionalBookingsForReviews.length === 0) return [];
 
-  const { bookings: newBookings } = await seed.bookings(additionalBookingsForReviews);
-  
+  const { bookings: newBookings } = await seed.bookings(
+    additionalBookingsForReviews,
+  );
+
   // Link these bookings to their specific services
   const newBookingServiceLinks = [];
   for (let i = 0; i < newBookings.length; i++) {
     const booking = newBookings[i];
     const service = servicesToEnsureReviews[i];
-    
+
     if (service && booking.id) {
       newBookingServiceLinks.push({
         booking_id: booking.id,
@@ -306,7 +348,7 @@ async function ensureEveryServiceHasReviews(
       });
     }
   }
-  
+
   if (newBookingServiceLinks.length > 0) {
     await seed.booking_services(newBookingServiceLinks);
   }
@@ -336,10 +378,16 @@ async function ensureEveryServiceHasReviews(
   if (additionalReviews.length > 0) {
     try {
       const result = await seed.reviews(additionalReviews);
-      console.log(`-- Created ${additionalReviews.length} additional reviews to ensure service coverage`);
+      console.log(
+        `-- Created ${additionalReviews.length} additional reviews to ensure service coverage`,
+      );
       return result.reviews || result;
     } catch (error) {
-      console.log(`-- Error creating additional reviews: ${error.message}`);
+      console.log(
+        `-- Error creating additional reviews: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      );
       return [];
     }
   }
@@ -350,14 +398,18 @@ async function ensureEveryServiceHasReviews(
 /**
  * Adds review images to some reviews for visual variety
  */
-async function addReviewImages(seed: SeedClient, reviews: any[]) {
+async function addReviewImages(
+  seed: SeedClient,
+  reviews: reviewsScalars[],
+) {
   const reviewImagesData: DatabaseTables["media"]["Insert"][] = [];
   const reviewsWithImages = reviews.filter((_, index) => index % 3 === 0); // Every 3rd review gets images
 
   for (const review of reviewsWithImages) {
     const numImages = Math.floor(Math.random() * 3) + 1; // 1-3 images per review
     for (let i = 0; i < numImages; i++) {
-      const randomImageUrl = reviewImagesUrls[Math.floor(Math.random() * reviewImagesUrls.length)];
+      const randomImageUrl =
+        reviewImagesUrls[Math.floor(Math.random() * reviewImagesUrls.length)];
       reviewImagesData.push({
         owner_id: review.customer_id,
         file_path: randomImageUrl,

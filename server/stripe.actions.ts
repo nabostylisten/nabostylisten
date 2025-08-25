@@ -7,6 +7,7 @@ import {
   createConnectedAccountWithDatabase,
   createCustomerWithDatabase,
   createStripeAccountOnboardingLink,
+  createStripeExpressDashboardLink,
   createStripePaymentIntent,
   createStripeRefund,
   deleteStripeCustomerAddress,
@@ -226,57 +227,60 @@ export async function getStripeAccountStatus({
 export async function getCurrentUserStripeStatus() {
   const supabase = await createClient();
 
-  // Check if user is authenticated
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return { data: null, error: "Not authenticated" };
-  }
-
-  // Get user profile
-  const { data: profile, error: profileError } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-
-  if (profileError || !profile) {
-    return { data: null, error: "Profile not found" };
-  }
-
-  // Check if user is a stylist
-  if (profile.role !== "stylist") {
-    return { data: null, error: "User is not a stylist" };
-  }
-
-  // Get stylist details to check for Stripe account
-  const { data: stylistDetails, error: stylistError } = await supabase
-    .from("stylist_details")
-    .select("*")
-    .eq("profile_id", user.id)
-    .single();
-
-  if (stylistError || !stylistDetails) {
-    return { data: null, error: "Stylist details not found" };
-  }
-
-  if (!stylistDetails.stripe_account_id) {
-    return {
-      data: {
-        stripeAccountId: null,
-        status: null,
-        isFullyOnboarded: false,
-        profile,
-        stylistDetails,
-      },
-      error: null,
-    };
-  }
-
   try {
+    // Check if user is authenticated
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.error("Authentication error in getCurrentUserStripeStatus:", authError);
+      return { data: null, error: "Du må være logget inn for å se inntektsinformasjon." };
+    }
+
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile) {
+      console.error("Error fetching profile:", profileError);
+      return { data: null, error: "Kunne ikke finne brukerprofil." };
+    }
+
+    // Check if user is a stylist
+    if (profile.role !== "stylist") {
+      return { data: null, error: "Kun stylister har tilgang til inntektsinformasjon." };
+    }
+
+    // Get stylist details to check for Stripe account
+    const { data: stylistDetails, error: stylistError } = await supabase
+      .from("stylist_details")
+      .select("*")
+      .eq("profile_id", user.id)
+      .single();
+
+    if (stylistError || !stylistDetails) {
+      console.error("Error fetching stylist details:", stylistError);
+      return { data: null, error: "Kunne ikke finne stylistinformasjon." };
+    }
+
+    if (!stylistDetails.stripe_account_id) {
+      return {
+        data: {
+          stripeAccountId: null,
+          status: null,
+          isFullyOnboarded: false,
+          profile,
+          stylistDetails,
+        },
+        error: null,
+      };
+    }
+
     const statusResult = await getStripeAccountStatusService({
       stripeAccountId: stylistDetails.stripe_account_id,
     });
@@ -297,6 +301,7 @@ export async function getCurrentUserStripeStatus() {
         error: null,
       };
     } else {
+      console.error("Error fetching Stripe account status:", statusResult.error);
       return {
         data: {
           stripeAccountId: stylistDetails.stripe_account_id,
@@ -305,20 +310,14 @@ export async function getCurrentUserStripeStatus() {
           profile,
           stylistDetails,
         },
-        error: statusResult.error,
+        error: "Kunne ikke hente status fra Stripe. Prøv igjen senere.",
       };
     }
   } catch (error) {
-    console.error("Error fetching Stripe account status:", error);
+    console.error("Unexpected error in getCurrentUserStripeStatus:", error);
     return {
-      data: {
-        stripeAccountId: stylistDetails.stripe_account_id,
-        status: null,
-        isFullyOnboarded: false,
-        profile,
-        stylistDetails,
-      },
-      error: "Failed to fetch Stripe status",
+      data: null,
+      error: "En uventet feil oppstod. Prøv igjen senere.",
     };
   }
 }
@@ -402,4 +401,63 @@ export async function deleteStripeCustomerAddressAction({
   customerId: string;
 }) {
   return await deleteStripeCustomerAddress({ customerId });
+}
+
+/**
+ * Create Express Dashboard login link for stylist
+ * Server action wrapper around service function
+ * Only allows stylists to access their own dashboard
+ */
+export async function createExpressDashboardLink({
+  stripeAccountId,
+}: {
+  stripeAccountId: string;
+}) {
+  const supabase = await createClient();
+
+  try {
+    // Verify user is authenticated and owns the Stripe account
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      console.error("Authentication error in createExpressDashboardLink:", authError);
+      return { data: null, error: "Du må være logget inn for å få tilgang til dashboard." };
+    }
+
+    // Check if user is a stylist and owns this Stripe account
+    const { data: stylistDetails, error: stylistError } = await supabase
+      .from("stylist_details")
+      .select("stripe_account_id")
+      .eq("profile_id", user.id)
+      .single();
+
+    if (stylistError || !stylistDetails) {
+      console.error("Error fetching stylist details:", stylistError);
+      return { data: null, error: "Kunne ikke finne stylistinformasjon." };
+    }
+
+    if (stylistDetails.stripe_account_id !== stripeAccountId) {
+      console.error("Unauthorized Stripe account access attempt:", {
+        userId: user.id,
+        requestedAccount: stripeAccountId,
+        ownedAccount: stylistDetails.stripe_account_id,
+      });
+      return { data: null, error: "Du har ikke tilgang til denne kontoen." };
+    }
+
+    const result = await createStripeExpressDashboardLink({ stripeAccountId });
+    
+    if (result.error) {
+      console.error("Error creating Stripe Express Dashboard link:", result.error);
+      return { data: null, error: "Kunne ikke opprette tilgang til dashboard. Prøv igjen senere." };
+    }
+
+    return result;
+  } catch (error) {
+    console.error("Unexpected error in createExpressDashboardLink:", error);
+    return { data: null, error: "En uventet feil oppstod. Prøv igjen senere." };
+  }
 }

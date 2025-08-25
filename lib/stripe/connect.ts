@@ -680,3 +680,34 @@ export async function createStripeRefund({
     };
   }
 }
+
+/**
+ * Create login link for Stripe Express Dashboard
+ * Pure Stripe operation - no database interaction
+ */
+export async function createStripeExpressDashboardLink({
+  stripeAccountId,
+}: {
+  stripeAccountId: string;
+}) {
+  try {
+    const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
+
+    return {
+      data: {
+        url: loginLink.url,
+        created: loginLink.created,
+        stripeAccountId,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error creating Express Dashboard login link:", error);
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to create Express Dashboard login link",
+    };
+  }
+}

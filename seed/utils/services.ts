@@ -1,11 +1,16 @@
-import type { SeedClient } from "@snaplet/seed";
+import type {
+  SeedClient,
+  service_categoriesScalars,
+  servicesScalars,
+  usersScalars,
+} from "@snaplet/seed";
 import type { DatabaseTables } from "../../types/index";
-import { 
-  ServiceCategoryKey, 
-  categoryIncludes, 
-  categoryRequirements, 
+import {
+  categoryIncludes,
+  categoryRequirements,
+  getRandomImagesForCategory,
   getRandomItemsFromArray,
-  getRandomImagesForCategory 
+  ServiceCategoryKey,
 } from "./shared";
 
 // Service templates for generating randomized services
@@ -19,8 +24,7 @@ export const serviceTemplates: Array<{
   // Hair Services
   {
     title: "Dameklipp",
-    description:
-      "Profesjonell klipp med vask og føn. Konsultasjon inkludert.",
+    description: "Profesjonell klipp med vask og føn. Konsultasjon inkludert.",
     category: "hair",
     categoryIndex: 0,
     duration: [45, 60, 75],
@@ -263,18 +267,26 @@ export const serviceTemplates: Array<{
  * Generates randomized services based on templates for all stylists
  * Each service gets random pricing, duration, and includes/requirements
  */
-export async function createRandomizedServices(seed: SeedClient, stylistUsers: any[], mainCategories: any[]) {
+export async function createRandomizedServices(
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+  mainCategories: service_categoriesScalars[],
+) {
   console.log("-- Creating randomized services from templates...");
-  
+
   const servicesToCreate = [];
-  const serviceCategoryLinks: { service_id: string; category_id: string }[] = [];
+  const serviceCategoryLinks: { service_id: string; category_id: string }[] =
+    [];
 
   // Generate 55 randomized services
   for (let i = 0; i < 55; i++) {
-    const template = serviceTemplates[Math.floor(Math.random() * serviceTemplates.length)];
-    const stylist = stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
+    const template =
+      serviceTemplates[Math.floor(Math.random() * serviceTemplates.length)];
+    const stylist =
+      stylistUsers[Math.floor(Math.random() * stylistUsers.length)];
     const basePrice = 800 + Math.floor(Math.random() * 2200); // 800-3000 NOK
-    const duration = template.duration[Math.floor(Math.random() * template.duration.length)];
+    const duration =
+      template.duration[Math.floor(Math.random() * template.duration.length)];
 
     // Add some variation to titles to avoid duplicates
     const variation = i > serviceTemplates.length
@@ -337,7 +349,10 @@ export async function createRandomizedServices(seed: SeedClient, stylistUsers: a
  * Adds curated images to services based on their category
  * Each service gets 3-5 relevant images from the curated collection
  */
-export async function addImagesToServices(seed: SeedClient, services: any[]) {
+export async function addImagesToServices(
+  seed: SeedClient,
+  services: servicesScalars[],
+) {
   console.log("-- Adding curated images to services...");
 
   for (let i = 0; i < services.length; i++) {

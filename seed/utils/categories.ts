@@ -1,4 +1,4 @@
-import type { SeedClient } from "@snaplet/seed";
+import type { SeedClient, service_categoriesScalars } from "@snaplet/seed";
 
 /**
  * Creates main service categories for the platform
@@ -6,7 +6,7 @@ import type { SeedClient } from "@snaplet/seed";
  */
 export async function createMainServiceCategories(seed: SeedClient) {
   console.log("-- Creating main service categories...");
-  
+
   const { service_categories: mainCategories } = await seed.service_categories([
     {
       name: "Hår",
@@ -37,9 +37,12 @@ export async function createMainServiceCategories(seed: SeedClient) {
  * Creates subcategories that provide more specific service categorization
  * Each subcategory belongs to a main category
  */
-export async function createServiceSubcategories(seed: SeedClient, mainCategories: any[]) {
+export async function createServiceSubcategories(
+  seed: SeedClient,
+  mainCategories: service_categoriesScalars[],
+) {
   console.log("-- Creating service subcategories...");
-  
+
   await seed.service_categories([
     {
       name: "Herreklipp",

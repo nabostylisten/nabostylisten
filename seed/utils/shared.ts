@@ -1,5 +1,4 @@
-import type { DatabaseTables } from "../../types/index";
-import { Database } from "../../types/database.types";
+import { Database } from "@/types/database.types";
 
 // Service category types
 export type ServiceCategoryKey =

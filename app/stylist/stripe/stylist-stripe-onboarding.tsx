@@ -253,7 +253,7 @@ export function StylistStripeOnboarding({
                 <div className="flex items-center gap-2 text-blue-800 mb-2">
                   <Clock className="h-4 w-4" />
                   <span className="font-medium text-sm">
-                    Estimert tid: 5 minutter
+                    Estimert tid: 3 minutter
                   </span>
                 </div>
                 <p className="text-blue-700 text-sm">

@@ -97,7 +97,7 @@ export const StylistOnboardingEmail = ({
             </div>
 
             <Text style={timeEstimate}>
-              Prosessen tar ca. 5 minutter å fullføre
+              Prosessen tar ca. 3 minutter å fullføre
             </Text>
           </Section>
 

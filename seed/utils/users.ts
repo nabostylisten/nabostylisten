@@ -1,6 +1,6 @@
-import type { SeedClient } from "@snaplet/seed";
+import type { SeedClient, usersScalars, usersScalars } from "@snaplet/seed";
 import { addMinutes, subDays } from "date-fns";
-import { AuthUser, seedPasswordToEncrypted, generateToken } from "./shared";
+import { AuthUser, generateToken, seedPasswordToEncrypted } from "./shared";
 
 // Define test users - more stylists across Norway's main cities
 export const testUsersData: AuthUser[] = [
@@ -165,9 +165,11 @@ function createAuthUserWithSupabaseMetadata(user: AuthUser) {
  */
 export async function createTestUsersWithAuth(seed: SeedClient) {
   console.log("-- Creating test users with authentication setup...");
-  
+
   // Create users with proper auth setup - profiles will be created automatically by trigger
-  const { users: allUsers } = await seed.users(testUsersData.map(createAuthUserWithSupabaseMetadata));
+  const { users: allUsers } = await seed.users(
+    testUsersData.map(createAuthUserWithSupabaseMetadata),
+  );
 
   return allUsers;
 }
@@ -175,9 +177,13 @@ export async function createTestUsersWithAuth(seed: SeedClient) {
 /**
  * Creates email identities for all users for Supabase authentication
  */
-export async function createUserEmailIdentities(seed: SeedClient, users: any[]) {
+
+export async function createUserEmailIdentities(
+  seed: SeedClient,
+  users: usersScalars[],
+) {
   console.log("-- Creating email identities for users...");
-  
+
   await seed.identities(
     users.map((user) => ({
       user_id: user.id,
@@ -195,9 +201,9 @@ export async function createUserEmailIdentities(seed: SeedClient, users: any[]) 
 /**
  * Separates users by role for easier reference in other seed functions
  */
-export function separateUsersByRole(allUsers: any[]) {
+export function separateUsersByRole(allUsers: usersScalars[]) {
   const stylistUsers = allUsers.slice(1, 11); // All 10 stylists (skip admin)
   const customerUsers = allUsers.slice(11, 15); // All 4 customers
-  
+
   return { stylistUsers, customerUsers };
 }

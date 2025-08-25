@@ -1,12 +1,15 @@
-import type { SeedClient } from "@snaplet/seed";
+import type { SeedClient, usersScalars } from "@snaplet/seed";
 
 /**
  * Creates addresses for stylists with proper PostGIS geography data
  * Addresses are distributed across major Norwegian cities with realistic coordinates
  */
-export async function createStylistAddresses(seed: SeedClient, stylistUsers: any[]) {
+export async function createStylistAddresses(
+  seed: SeedClient,
+  stylistUsers: usersScalars[],
+) {
   console.log("-- Creating stylist addresses with PostGIS coordinates...");
-  
+
   // Note: PostGIS expects POINT(longitude latitude) format
   await seed.addresses([
     // Oslo stylists addresses
@@ -120,9 +123,12 @@ export async function createStylistAddresses(seed: SeedClient, stylistUsers: any
 /**
  * Creates primary addresses for customers distributed across Norwegian cities
  */
-export async function createCustomerPrimaryAddresses(seed: SeedClient, customerUsers: any[]) {
+export async function createCustomerPrimaryAddresses(
+  seed: SeedClient,
+  customerUsers: usersScalars[],
+) {
   console.log("-- Creating customer primary addresses...");
-  
+
   await seed.addresses([
     {
       user_id: customerUsers[0].id, // Kari Nordmann
@@ -170,9 +176,12 @@ export async function createCustomerPrimaryAddresses(seed: SeedClient, customerU
 /**
  * Creates additional customer addresses for booking testing scenarios
  */
-export async function createAdditionalCustomerAddresses(seed: SeedClient, customerUsers: any[]) {
+export async function createAdditionalCustomerAddresses(
+  seed: SeedClient,
+  customerUsers: usersScalars[],
+) {
   console.log("-- Creating additional customer addresses for testing...");
-  
+
   const { addresses: customerAddresses } = await seed.addresses([
     {
       user_id: customerUsers[0].id, // Kari Nordmann

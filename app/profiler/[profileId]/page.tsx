@@ -4,6 +4,7 @@ import { getStylistProfileWithServices } from "@/server/profile.actions";
 import { StylistPublicProfile } from "@/components/stylist-public-profile";
 import type { Metadata } from "next";
 import { companyConfig } from "@/lib/brand";
+import { truncateString } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{ profileId: string }>;
@@ -28,7 +29,7 @@ export async function generateMetadata({
   const serviceCount = profileData.services?.length || 0;
   const title = `${name} - Stylist på ${companyConfig.name}`;
   const description = profileData.profile.stylist_details?.bio
-    ? profileData.profile.stylist_details?.bio.slice(0, 150) + "..."
+    ? truncateString(profileData.profile.stylist_details?.bio, 150)
     : `Profesjonell stylist ${name} med ${serviceCount} ${serviceCount === 1 ? "tjeneste" : "tjenester"} tilgjengelig på ${companyConfig.name}.`;
 
   return {

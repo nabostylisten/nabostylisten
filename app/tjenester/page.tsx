@@ -10,6 +10,10 @@ import type { ServiceSearchParams } from "@/types";
 import { searchParamsToFilters } from "@/types";
 import { Button } from "@/components/ui/button";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { createPageMetadata } from "@/lib/brand";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = createPageMetadata('tjenester', { url: '/tjenester' })
 
 interface TjenesterPageProps {
   searchParams: Promise<ServiceSearchParams>;

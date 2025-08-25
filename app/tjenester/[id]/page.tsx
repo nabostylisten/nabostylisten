@@ -25,6 +25,7 @@ import Image from "next/image";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import type { Metadata } from "next";
 import { companyConfig } from "@/lib/brand";
+import { truncateString } from "@/lib/utils";
 
 interface PageProps {
   params: Promise<{
@@ -32,21 +33,24 @@ interface PageProps {
   }>;
 }
 
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
   const { id } = await params;
   const { data: service, error } = await getPublicService(id);
-  
+
   if (error || !service) {
     return {
       title: `Tjeneste ikke funnet - ${companyConfig.name}`,
-      description: 'Denne tjenesten eksisterer ikke eller er ikke lenger tilgjengelig.',
-    }
+      description:
+        "Denne tjenesten eksisterer ikke eller er ikke lenger tilgjengelig.",
+    };
   }
 
-  const title = `${service.title} - ${companyConfig.name}`
-  const description = service.description 
-    ? `${service.description.slice(0, 150)}...` 
-    : `${service.title} med ${service.profiles?.full_name || 'profesjonell stylist'} på ${companyConfig.name}.`
+  const title = `${service.title} - ${companyConfig.name}`;
+  const description = service.description
+    ? truncateString(service.description, 150)
+    : `${service.title} med ${service.profiles?.full_name || "profesjonell stylist"} på ${companyConfig.name}.`;
 
   return {
     title,
@@ -55,22 +59,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: {
       title,
       description,
-      type: 'website',
+      type: "website",
       url: `/tjenester/${id}`,
       siteName: companyConfig.name,
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title,
       description,
     },
-  }
+  };
 }
 
 async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
   // First get the service data
   const { data: service, error } = await getPublicService(serviceId);
-  
+
   if (error || !service) {
     notFound();
   }
@@ -86,10 +90,12 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
     getStylistAverageRating(service.profiles?.id || ""),
   ]);
 
-  const stylistRating = stylistRatingResult.error ? null : {
-    total_reviews: stylistRatingResult.count,
-    average_rating: stylistRatingResult.average,
-  };
+  const stylistRating = stylistRatingResult.error
+    ? null
+    : {
+        total_reviews: stylistRatingResult.count,
+        average_rating: stylistRatingResult.average,
+      };
   const stylistRatingError = stylistRatingResult.error;
 
   const previewImage = service.media?.find((m) => m.is_preview_image);
@@ -144,51 +150,51 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
             {/* Hero Section */}
             <BlurFade delay={0.1} duration={0.5} inView>
               <div>
-              <div className="aspect-video bg-muted rounded-lg mb-6 relative overflow-hidden">
-                {previewImage?.publicUrl ? (
-                  <Image
-                    src={previewImage.publicUrl}
-                    alt={service.title}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 1024px) 100vw, 66vw"
-                  />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-                    <span className="text-muted-foreground">Ingen bilde</span>
+                <div className="aspect-video bg-muted rounded-lg mb-6 relative overflow-hidden">
+                  {previewImage?.publicUrl ? (
+                    <Image
+                      src={previewImage.publicUrl}
+                      alt={service.title}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 66vw"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
+                      <span className="text-muted-foreground">Ingen bilde</span>
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap items-center gap-4 mb-4">
+                  <Badge variant="secondary" className="text-lg px-3 py-1">
+                    Fra {service.price} {service.currency}
+                  </Badge>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    {primaryAddress?.city || "Ukjent lokasjon"}
+                  </div>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    {formatDuration(service.duration_minutes)}
+                  </div>
+                </div>
+
+                {categories.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {categories.map((category) => (
+                      <Badge key={category.id} variant="outline">
+                        {category.name}
+                      </Badge>
+                    ))}
                   </div>
                 )}
-              </div>
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                <Badge variant="secondary" className="text-lg px-3 py-1">
-                  Fra {service.price} {service.currency}
-                </Badge>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4" />
-                  {primaryAddress?.city || "Ukjent lokasjon"}
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  {formatDuration(service.duration_minutes)}
-                </div>
-              </div>
 
-              {categories.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {categories.map((category) => (
-                    <Badge key={category.id} variant="outline">
-                      {category.name}
-                    </Badge>
-                  ))}
-                </div>
-              )}
-
-              <h1 className="text-3xl lg:text-4xl font-bold mb-4">
-                {service.title}
-              </h1>
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                {service.description || "Ingen beskrivelse tilgjengelig"}
-              </p>
+                <h1 className="text-3xl lg:text-4xl font-bold mb-4">
+                  {service.title}
+                </h1>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  {service.description || "Ingen beskrivelse tilgjengelig"}
+                </p>
               </div>
             </BlurFade>
 
@@ -212,17 +218,19 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                       <h3 className="font-semibold text-lg">
                         {service.profiles?.full_name || "Ukjent stylist"}
                       </h3>
-                      {!stylistRatingError && stylistRating && stylistRating.total_reviews > 0 && (
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                          <span className="text-sm font-medium">
-                            {stylistRating.average_rating}
-                          </span>
-                          <span className="text-xs text-muted-foreground">
-                            ({stylistRating.total_reviews})
-                          </span>
-                        </div>
-                      )}
+                      {!stylistRatingError &&
+                        stylistRating &&
+                        stylistRating.total_reviews > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                            <span className="text-sm font-medium">
+                              {stylistRating.average_rating}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              ({stylistRating.total_reviews})
+                            </span>
+                          </div>
+                        )}
                     </div>
                     {stylistDetails?.bio && (
                       <p className="text-sm text-muted-foreground mt-1">
@@ -296,23 +304,25 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
                   <span>Anmeldelser</span>
-                  {!reviewStatsError && reviewStats && reviewStats.total_reviews > 0 && (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        <span className="font-medium">
-                          {reviewStats.average_rating}
+                  {!reviewStatsError &&
+                    reviewStats &&
+                    reviewStats.total_reviews > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span className="font-medium">
+                            {reviewStats.average_rating}
+                          </span>
+                        </div>
+                        <span className="text-sm text-muted-foreground">
+                          ({reviewStats.total_reviews}{" "}
+                          {reviewStats.total_reviews === 1
+                            ? "anmeldelse"
+                            : "anmeldelser"}
+                          )
                         </span>
                       </div>
-                      <span className="text-sm text-muted-foreground">
-                        ({reviewStats.total_reviews}{" "}
-                        {reviewStats.total_reviews === 1
-                          ? "anmeldelse"
-                          : "anmeldelser"}
-                        )
-                      </span>
-                    </div>
-                  )}
+                    )}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">

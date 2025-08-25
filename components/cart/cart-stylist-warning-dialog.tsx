@@ -14,6 +14,7 @@ import type { Database } from "@/types/database.types";
 import { ChevronRight, ShoppingCart, User } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import GoToCartToastAction from "./go-to-cart-toast-action";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
 type Profile = Database["public"]["Tables"]["profiles"]["Row"];
@@ -45,16 +46,7 @@ export const CartStylistWarningDialog = ({
     onClose();
 
     toast.success("Tjeneste lagt til i handlekurv", {
-      action: {
-        label: (
-          <div className="flex items-center gap-2">
-            Se handlekurv <ChevronRight className="w-3 h-3" />
-          </div>
-        ),
-        onClick: () => {
-          router.push("/handlekurv");
-        },
-      },
+      action: <GoToCartToastAction />,
     });
   };
 

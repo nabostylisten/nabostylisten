@@ -9,18 +9,17 @@ import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
 
+import { companyConfig, createPageMetadata } from "@/lib/brand";
+
 const defaultUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  title: "Nabostylisten - Book din stylist hjemme",
-  description:
-    "Norges ledende platform for å booke skjønnhetstjenester hjemme eller på salong. Finn din perfekte stylist i dag.",
-  applicationName: "Nabostylisten",
+  ...createPageMetadata('home'),
   appleWebApp: {
-    title: "Nabostylisten",
+    title: companyConfig.name,
     statusBarStyle: "black-translucent",
   },
 };

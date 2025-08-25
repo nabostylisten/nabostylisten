@@ -95,3 +95,24 @@ After deploying the `send-otp-email` Edge Function, you need to configure the Au
 ### Reference Documentation
 
 For detailed implementation guidance, see: [Custom Auth Emails with React Email and Resend](https://supabase.com/docs/guides/functions/examples/auth-send-email-hook-react-email-resend)
+
+## Testing OpenGraph Images
+
+To test and preview OpenGraph images during development, use the **OGraph Previewer** browser extension:
+
+1. **Install the extension**: [OGraph Previewer](https://chromewebstore.google.com/detail/ograph-previewer/ggcfeakcnodgcmmllfdbmngekljbhiim)
+
+2. **Test your local development server**:
+   - Start your development server: `bun dev`
+   - Navigate to any page on `localhost:3000`
+   - Click the OGraph Previewer extension icon
+   - Preview how your page will appear on social media platforms
+
+3. **Test specific routes**:
+   - Homepage: `localhost:3000/`
+   - Services: `localhost:3000/tjenester`
+   - Individual service: `localhost:3000/tjenester/[service-id]`
+   - Stylist profile: `localhost:3000/profiler/[stylist-id]`
+   - Become stylist: `localhost:3000/bli-stylist`
+
+This method is much simpler than using external tools like ngrok and provides immediate feedback during development.

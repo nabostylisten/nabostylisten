@@ -23,11 +23,48 @@ import { ServiceDetailSkeleton } from "@/components/services/service-detail-skel
 import { ServiceDetailSidebar } from "@/components/services/service-detail-sidebar";
 import Image from "next/image";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import type { Metadata } from "next";
+import { companyConfig } from "@/lib/brand";
 
 interface PageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { id } = await params;
+  const { data: service, error } = await getPublicService(id);
+  
+  if (error || !service) {
+    return {
+      title: `Tjeneste ikke funnet - ${companyConfig.name}`,
+      description: 'Denne tjenesten eksisterer ikke eller er ikke lenger tilgjengelig.',
+    }
+  }
+
+  const title = `${service.title} - ${companyConfig.name}`
+  const description = service.description 
+    ? `${service.description.slice(0, 150)}...` 
+    : `${service.title} med ${service.profiles?.full_name || 'profesjonell stylist'} på ${companyConfig.name}.`
+
+  return {
+    title,
+    description,
+    applicationName: companyConfig.name,
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: `/tjenester/${id}`,
+      siteName: companyConfig.name,
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+    },
+  }
 }
 
 async function ServiceDetailContent({ serviceId }: { serviceId: string }) {

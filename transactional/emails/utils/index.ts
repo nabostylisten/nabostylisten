@@ -4,7 +4,6 @@ export const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "http://localhost:3000";
 
-
 // Notification preference labels for different types
 export const notificationLabels = {
   newsletter_subscribed: "nyhetsbrev",
@@ -15,7 +14,7 @@ export const notificationLabels = {
   booking_cancellations: "avlysningsvarsler",
   booking_status_updates: "booking-statusoppdateringer",
   chat_messages: "chat-meldinger",
-  new_booking_requests: "nye bookingforesp�rsler",
+  new_booking_requests: "nye bookingforespørsler",
   review_notifications: "anmeldelsesvarsler",
   payment_notifications: "betalingsvarsler",
   application_status_updates: "søknadsoppdateringer",

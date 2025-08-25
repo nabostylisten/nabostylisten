@@ -93,36 +93,67 @@ export async function getUserBookings(
                 id,
                 full_name,
                 email,
+                phone_number,
                 role
             ),
             stylist:profiles!bookings_stylist_id_fkey(
                 id,
                 full_name,
                 email,
-                role
+                phone_number,
+                role,
+                stylist_details(
+                    bio,
+                    can_travel,
+                    has_own_place,
+                    travel_distance_km
+                )
             ),
-            addresses(
+            address:addresses(
+                id,
+                nickname,
                 street_address,
                 city,
                 postal_code,
+                country,
+                country_code,
                 entry_instructions
             ),
-            discounts(
+            discount:discounts(
+                id,
                 code,
+                description,
                 discount_percentage,
-                discount_amount
+                discount_amount,
+                currency
             ),
             booking_services(
-                services(
+                service:services(
                     id,
                     title,
                     description,
                     price,
                     currency,
-                    duration_minutes
+                    duration_minutes,
+                    is_published,
+                    at_customer_place,
+                    at_stylist_place
                 )
             ),
-            chats(id)
+            chats(
+                id,
+                created_at,
+                updated_at
+            ),
+            payments(
+                id,
+                final_amount,
+                platform_fee,
+                stylist_payout,
+                currency,
+                status,
+                succeeded_at
+            )
         `);
 
     // Filter by role - customers see their bookings, stylists see bookings assigned to them
@@ -267,22 +298,33 @@ export async function getBookingDetails(bookingId: string) {
                 stylist_details(
                     bio,
                     instagram_profile,
-                    facebook_profile
+                    facebook_profile,
+                    tiktok_profile,
+                    youtube_profile,
+                    snapchat_profile,
+                    other_social_media_urls,
+                    can_travel,
+                    has_own_place,
+                    travel_distance_km
                 )
             ),
             address:addresses(
+                id,
                 nickname,
                 street_address,
                 city,
                 postal_code,
                 country,
+                country_code,
                 entry_instructions
             ),
             discount:discounts(
+                id,
                 code,
                 description,
                 discount_percentage,
-                discount_amount
+                discount_amount,
+                currency
             ),
             booking_services(
                 service:services(
@@ -295,11 +337,14 @@ export async function getBookingDetails(bookingId: string) {
                     includes,
                     requirements,
                     at_customer_place,
-                    at_stylist_place
+                    at_stylist_place,
+                    is_published
                 )
             ),
             chats(
                 id,
+                created_at,
+                updated_at,
                 chat_messages(
                     id,
                     content,
@@ -309,13 +354,28 @@ export async function getBookingDetails(bookingId: string) {
                 )
             ),
             payments(
-                total_amount,
+                id,
+                payment_intent_id,
+                original_amount,
+                discount_amount,
+                final_amount,
                 platform_fee,
-                stylist_payout_amount,
+                stylist_payout,
+                affiliate_commission,
                 currency,
                 status,
+                authorized_at,
+                captured_at,
                 succeeded_at,
-                payout_completed_at
+                payout_initiated_at,
+                payout_completed_at,
+                refunded_amount,
+                refund_reason,
+                affiliate_id,
+                affiliate_commission_percentage,
+                discount_code,
+                discount_percentage,
+                discount_fixed_amount
             )
         `)
         .eq("id", bookingId)
@@ -496,7 +556,7 @@ export async function createBookingWithServices(
 
         // Create Stripe PaymentIntent using service function
         let stripePaymentIntentId: string | null = null;
-        let paymentIntentClientSecret: string | null = null;
+        const paymentIntentClientSecret: string | null = null;
         
         // TODO: Implement actual PaymentIntent creation
         // This would be called after booking is successfully created
@@ -686,7 +746,7 @@ export async function createBookingWithServices(
 
 export async function confirmBookingPayment(
     bookingId: string,
-    paymentIntentId: string,
+    _paymentIntentId: string,
 ) {
     // TODO: Implement Stripe payment confirmation
     // 1. Confirm payment with Stripe

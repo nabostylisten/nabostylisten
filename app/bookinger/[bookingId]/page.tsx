@@ -40,13 +40,21 @@ export default async function BookingDetailsPage({
       stylist_id,
       status,
       created_at,
+      start_time,
+      end_time,
       stylist:profiles!bookings_stylist_id_fkey(
         id,
-        full_name
+        full_name,
+        email
       ),
       booking_services(
-        services(
-          title
+        service:services(
+          id,
+          title,
+          description,
+          price,
+          currency,
+          duration_minutes
         )
       )
     `
@@ -84,7 +92,7 @@ export default async function BookingDetailsPage({
 
   // Prepare data for review reminder
   const serviceTitles =
-    booking.booking_services?.map((bs) => bs.services?.title).filter(Boolean) ||
+    booking.booking_services?.map((bs) => bs.service?.title).filter(Boolean) ||
     [];
 
   return (

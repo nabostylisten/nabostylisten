@@ -16,6 +16,8 @@ const publicRoutes = [
   "/faq",
   "/handlekurv", // Allow viewing cart without authentication
   "/manifest.json", // PWA manifest file
+  "/sitemap.xml", // SEO sitemap
+  "/robots.txt", // SEO robots file
 ];
 
 // Define route patterns for dynamic public routes

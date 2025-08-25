@@ -26,7 +26,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Edit, Trash2, Scissors, ImageIcon, Search, Filter, CreditCard } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Scissors,
+  ImageIcon,
+  Search,
+  Filter,
+  CreditCard,
+} from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -38,7 +47,11 @@ import {
 } from "@/components/ui/pagination";
 import { ServiceForm } from "@/components/service-form";
 import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
-import { deleteService, getFilteredStylistServices, getServiceCategories } from "@/server/service.actions";
+import {
+  deleteService,
+  getFilteredStylistServices,
+  getServiceCategories,
+} from "@/server/service.actions";
 import { getCurrentUserStripeStatus } from "@/server/stripe.actions";
 import { createClient } from "@/lib/supabase/client";
 import { BlurFade } from "@/components/magicui/blur-fade";
@@ -72,7 +85,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   const queryClient = useQueryClient();
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   // Modal state
   const [serviceFormOpen, setServiceFormOpen] = React.useState(false);
   const [serviceFormMode, setServiceFormMode] = React.useState<
@@ -97,21 +110,33 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
     retry: false,
   });
 
-  const isStripeFullyOnboarded = stripeStatusResult?.data?.isFullyOnboarded ?? false;
+  const isStripeFullyOnboarded =
+    stripeStatusResult?.data?.isFullyOnboarded ?? false;
 
-  // Redirect to Stripe onboarding if not fully onboarded
+  // Redirect to Stripe onboarding if not fully onboarded (but only after we've checked)
   React.useEffect(() => {
-    if (!isCheckingStripe && stripeStatusResult && !isStripeFullyOnboarded && !stripeError) {
+    if (
+      !isCheckingStripe &&
+      stripeStatusResult?.data &&
+      !isStripeFullyOnboarded &&
+      !stripeError
+    ) {
       router.push("/stylist/stripe");
     }
-  }, [isCheckingStripe, stripeStatusResult, isStripeFullyOnboarded, stripeError, router]);
-  
+  }, [
+    isCheckingStripe,
+    stripeStatusResult,
+    isStripeFullyOnboarded,
+    stripeError,
+    router,
+  ]);
+
   // Filter state from URL
   const filters = React.useMemo(() => {
     const params = Object.fromEntries(searchParams.entries());
     return searchParamsToFilters(params);
   }, [searchParams]);
-  
+
   // Local filter state for immediate updates
   const [search, setSearch] = React.useState(filters.search || "");
   const [selectedCategories, setSelectedCategories] = React.useState<string[]>(
@@ -130,7 +155,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
     queryFn: () => getServiceCategories(),
     select: (data) => data.data || [],
   });
-  
+
   // Fetch filtered services
   const {
     data: servicesResult,
@@ -138,10 +163,11 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
     error,
   } = useQuery({
     queryKey: ["stylist-services", profileId, filters],
-    queryFn: () => getFilteredStylistServices(profileId, { ...filters, page: currentPage }),
+    queryFn: () =>
+      getFilteredStylistServices(profileId, { ...filters, page: currentPage }),
     select: (data) => data,
   });
-  
+
   const services = servicesResult?.data || [];
   const totalPages = servicesResult?.totalPages || 0;
   const totalCount = servicesResult?.count || 0;
@@ -204,7 +230,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
       router.push("/stylist/stripe");
       return;
     }
-    
+
     setServiceFormMode("create");
     setSelectedService(undefined);
     setServiceFormOpen(true);
@@ -231,31 +257,37 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
     // Invalidate queries to refresh data
     queryClient.invalidateQueries({ queryKey: ["stylist-services"] });
   };
-  
+
   // Update URL with new filters
-  const updateFilters = React.useCallback((newFilters: Partial<ServiceFilters>) => {
-    const updatedFilters = { ...filters, ...newFilters, page: 1 };
-    const searchParamsString = filtersToSearchParams(updatedFilters);
-    const params = new URLSearchParams();
-    Object.entries(searchParamsString).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        params.set(key, value.toString());
-      }
-    });
-    router.push(params.toString() ? `?${params.toString()}` : window.location.pathname);
-    setCurrentPage(1);
-  }, [filters, router]);
-  
+  const updateFilters = React.useCallback(
+    (newFilters: Partial<ServiceFilters>) => {
+      const updatedFilters = { ...filters, ...newFilters, page: 1 };
+      const searchParamsString = filtersToSearchParams(updatedFilters);
+      const params = new URLSearchParams();
+      Object.entries(searchParamsString).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.set(key, value.toString());
+        }
+      });
+      router.push(
+        params.toString() ? `?${params.toString()}` : window.location.pathname
+      );
+      setCurrentPage(1);
+    },
+    [filters, router]
+  );
+
   const handleSearch = () => {
     updateFilters({
       search: search.trim() || undefined,
-      categories: selectedCategories.length > 0 ? selectedCategories : undefined,
+      categories:
+        selectedCategories.length > 0 ? selectedCategories : undefined,
       sortBy: sortBy !== "newest" ? sortBy : undefined,
       minPrice: minPrice.trim() || undefined,
       maxPrice: maxPrice.trim() || undefined,
     });
   };
-  
+
   const handleClearFilters = () => {
     setSearch("");
     setSelectedCategories([]);
@@ -271,19 +303,19 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
       maxPrice: undefined,
     });
   };
-  
-  const hasActiveFilters = 
+
+  const hasActiveFilters =
     search ||
     selectedCategories.length > 0 ||
     sortBy !== "newest" ||
     minPrice ||
     maxPrice;
-    
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     updateFilters({ page });
   };
-  
+
   // Sync local state with URL params when they change
   React.useEffect(() => {
     setSearch(filters.search || "");
@@ -454,73 +486,6 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
     return items;
   };
 
-  // Show loading state while checking Stripe status
-  if (isCheckingStripe) {
-    return (
-      <>
-        <BlurFade delay={0.1} duration={0.5} inView>
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <Scissors className="w-8 h-8" />
-              <div>
-                <h1 className="text-3xl font-bold">Mine tjenester</h1>
-                <p className="text-muted-foreground mt-1">
-                  Administrer dine tjenester og priser
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 animate-pulse" />
-              <Skeleton className="h-10 w-32" />
-            </div>
-          </div>
-        </BlurFade>
-
-        <BlurFade delay={0.15} duration={0.5} inView>
-          <Card className="mb-6">
-            <CardContent className="p-6 space-y-4">
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="flex-1">
-                  <Skeleton className="h-10 w-full" />
-                </div>
-                <div className="md:w-48">
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-              </div>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <Skeleton className="h-10 flex-1" />
-                <Skeleton className="h-10 w-32 sm:w-auto" />
-              </div>
-            </CardContent>
-          </Card>
-        </BlurFade>
-
-        <BlurFade delay={0.2} duration={0.5} inView>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => (
-              <Card key={index} className="flex flex-col">
-                <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
-                <CardHeader className="pb-4">
-                  <Skeleton className="h-6 w-3/4 mb-2" />
-                  <Skeleton className="h-4 w-full" />
-                  <Skeleton className="h-4 w-2/3" />
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <Skeleton className="h-4 w-1/2" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </BlurFade>
-      </>
-    );
-  }
-
   return (
     <>
       <BlurFade delay={0.1} duration={0.5} inView>
@@ -539,8 +504,17 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
             className="flex items-center gap-2"
             disabled={isCheckingStripe || !isStripeFullyOnboarded}
           >
-            <Plus className="w-4 h-4" />
-            Ny tjeneste
+            {isCheckingStripe ? (
+              <>
+                <CreditCard className="w-4 h-4 animate-pulse" />
+                Sjekker konto...
+              </>
+            ) : (
+              <>
+                <Plus className="w-4 h-4" />
+                Ny tjeneste
+              </>
+            )}
           </Button>
         </div>
       </BlurFade>
@@ -574,7 +548,9 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
                   <SelectContent>
                     <SelectItem value="newest">Nyeste først</SelectItem>
                     <SelectItem value="price_asc">Lavest pris først</SelectItem>
-                    <SelectItem value="price_desc">Høyest pris først</SelectItem>
+                    <SelectItem value="price_desc">
+                      Høyest pris først
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -648,7 +624,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
           <div className="flex items-center justify-between mb-4">
             <p className="text-sm text-muted-foreground">
               {totalCount > 0
-                ? `Viser ${((currentPage - 1) * 12) + 1}-${Math.min(currentPage * 12, totalCount)} av ${totalCount} tjenester`
+                ? `Viser ${(currentPage - 1) * 12 + 1}-${Math.min(currentPage * 12, totalCount)} av ${totalCount} tjenester`
                 : "Ingen tjenester funnet"}
             </p>
           </div>
@@ -681,7 +657,9 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
         <BlurFade delay={0.2} duration={0.5} inView>
           <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <p className="text-destructive mb-4">Feil ved lasting av tjenester</p>
+              <p className="text-destructive mb-4">
+                Feil ved lasting av tjenester
+              </p>
               <Button onClick={() => window.location.reload()}>
                 Prøv igjen
               </Button>
@@ -698,7 +676,12 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
               const previewImageUrl = getPreviewImageUrl(service);
 
               return (
-                <BlurFade key={service.id} delay={index * 0.05} duration={0.5} inView>
+                <BlurFade
+                  key={service.id}
+                  delay={index * 0.05}
+                  duration={0.5}
+                  inView
+                >
                   <Card className="flex flex-col hover:shadow-lg transition-shadow duration-200 h-full">
                     {/* Service Image - Smaller for 3-column layout */}
                     <div className="relative aspect-[4/3] bg-muted rounded-t-lg overflow-hidden">
@@ -717,85 +700,88 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
                       )}
                     </div>
 
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1 min-w-0">
-                      <CardTitle className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
-                        {service.title}
-                      </CardTitle>
-                      <div className="flex flex-col gap-2">
-                        <div>
-                          <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                            Kategorier
-                          </span>
-                          <div className="flex flex-wrap gap-2">
-                            {service.service_service_categories?.length ? (
-                              service.service_service_categories.map(
-                                (relation) => (
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
+                            {service.title}
+                          </CardTitle>
+                          <div className="flex flex-col gap-2">
+                            <div>
+                              <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                                Kategorier
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {service.service_service_categories?.length ? (
+                                  service.service_service_categories.map(
+                                    (relation) => (
+                                      <Badge
+                                        key={relation.service_categories.id}
+                                        variant="secondary"
+                                        className="text-xs font-medium"
+                                      >
+                                        {relation.service_categories.name}
+                                      </Badge>
+                                    )
+                                  )
+                                ) : (
                                   <Badge
-                                    key={relation.service_categories.id}
                                     variant="secondary"
                                     className="text-xs font-medium"
                                   >
-                                    {relation.service_categories.name}
+                                    Ukategorisert
                                   </Badge>
-                                )
-                              )
-                            ) : (
-                              <Badge
-                                variant="secondary"
-                                className="text-xs font-medium"
-                              >
-                                Ukategorisert
-                              </Badge>
-                            )}
+                                )}
+                              </div>
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                                Leveringssted
+                              </span>
+                              <div className="flex flex-wrap gap-2">
+                                {service.at_customer_place && (
+                                  <Badge variant="outline" className="text-xs">
+                                    Hjemme hos kunde
+                                  </Badge>
+                                )}
+                                {service.at_stylist_place && (
+                                  <Badge variant="outline" className="text-xs">
+                                    På salong
+                                  </Badge>
+                                )}
+                                {!service.at_customer_place &&
+                                  !service.at_stylist_place && (
+                                    <Badge
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      Ikke spesifisert
+                                    </Badge>
+                                  )}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div>
-                          <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                            Leveringssted
-                          </span>
-                          <div className="flex flex-wrap gap-2">
-                            {service.at_customer_place && (
-                              <Badge variant="outline" className="text-xs">
-                                Hjemme hos kunde
-                              </Badge>
-                            )}
-                            {service.at_stylist_place && (
-                              <Badge variant="outline" className="text-xs">
-                                På salong
-                              </Badge>
-                            )}
-                            {!service.at_customer_place &&
-                              !service.at_stylist_place && (
-                                <Badge variant="outline" className="text-xs">
-                                  Ikke spesifisert
-                                </Badge>
-                              )}
-                          </div>
+                        <div className="flex gap-1 ml-3 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditService(service)}
+                            className="h-8 w-8 p-0 hover:bg-muted"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteService(service)}
+                            className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex gap-1 ml-3 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEditService(service)}
-                        className="h-8 w-8 p-0 hover:bg-muted"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDeleteService(service)}
-                        className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
+                    </CardHeader>
                     <CardContent className="flex-1 flex flex-col justify-between pt-0 pb-4">
                       {service.description && (
                         <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-2">
@@ -828,13 +814,16 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
           </div>
         </BlurFade>
       ) : (
-        !isLoading && !error && (
+        !isLoading &&
+        !error && (
           <BlurFade delay={0.2} duration={0.5} inView>
             <Card>
               <CardContent className="flex flex-col items-center justify-center py-12">
                 <Scissors className="w-16 h-16 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">
-                  {hasActiveFilters ? "Ingen tjenester funnet" : "Ingen tjenester ennå"}
+                  {hasActiveFilters
+                    ? "Ingen tjenester funnet"
+                    : "Ingen tjenester ennå"}
                 </h3>
                 <p className="text-muted-foreground text-center mb-4">
                   {hasActiveFilters
@@ -856,8 +845,17 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
                     className="flex items-center gap-2"
                     disabled={isCheckingStripe || !isStripeFullyOnboarded}
                   >
-                    <Plus className="w-4 h-4" />
-                    Legg til første tjeneste
+                    {isCheckingStripe ? (
+                      <>
+                        <CreditCard className="w-4 h-4 animate-pulse" />
+                        Sjekker konto...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        Legg til tjeneste
+                      </>
+                    )}
                   </Button>
                 )}
               </CardContent>

@@ -8,7 +8,7 @@ import {
   useElements,
   Elements,
 } from "@stripe/react-stripe-js";
-import { loadStripe } from "@stripe/stripe-js";
+import { loadStripe, StripeElementsOptions } from "@stripe/stripe-js";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ import { ArrowLeft, CreditCard, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { brandColors } from "@/lib/brand";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { useTheme } from "next-themes";
+import { useAuth } from "@/hooks/use-auth";
 
 // Load Stripe outside of component render to avoid recreating the Stripe object
 if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
@@ -40,10 +42,20 @@ function PaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const router = useRouter();
+  const { user, profile } = useAuth();
 
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Auto-fill email from logged-in user
+  useEffect(() => {
+    if (user?.email && !email) {
+      setEmail(user.email);
+    } else if (profile?.email && !email) {
+      setEmail(profile.email);
+    }
+  }, [user, profile, email]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,14 +136,12 @@ function PaymentForm({
                 <Separator />
 
                 {/* Payment Element */}
-                <div className="space-y-2">
+                <div className="space-y-6">
                   <Label>Betalingsmetode</Label>
-                  <div className="border rounded-md p-1">
-                    <PaymentElement
-                      id="payment-element"
-                      options={paymentElementOptions}
-                    />
-                  </div>
+                  <PaymentElement
+                    id="payment-element"
+                    options={paymentElementOptions}
+                  />
                 </div>
 
                 {/* Submit button */}
@@ -178,6 +188,7 @@ function PaymentForm({
 }
 
 function CheckoutContent() {
+  const { resolvedTheme: theme } = useTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -191,6 +202,8 @@ function CheckoutContent() {
     }
   }, [clientSecret, bookingId, router]);
 
+  const isDark = theme === "dark";
+
   if (!clientSecret || !bookingId) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -203,27 +216,44 @@ function CheckoutContent() {
   }
 
   // Stripe Elements appearance configuration using brand colors
-  const appearance = {
+  const appearance: StripeElementsOptions["appearance"] = {
     theme: "stripe" as const,
     variables: {
-      colorPrimary: brandColors.light.primary,
-      colorBackground: brandColors.light.background,
-      colorText: brandColors.light.foreground,
-      colorDanger: brandColors.light.destructive,
-      fontFamily: "inherit",
+      colorPrimary: isDark
+        ? brandColors.dark.primary
+        : brandColors.light.primary,
+      colorBackground: isDark
+        ? brandColors.dark.background
+        : brandColors.light.background,
+      colorText: isDark
+        ? brandColors.dark.foreground
+        : brandColors.light.foreground,
+      colorDanger: isDark
+        ? brandColors.dark.destructive
+        : brandColors.light.destructive,
       borderRadius: "6px",
     },
     rules: {
       ".Tab": {
-        backgroundColor: brandColors.light.muted,
-        border: `1px solid ${brandColors.light.muted}`,
+        backgroundColor: isDark
+          ? brandColors.dark.muted
+          : brandColors.light.muted,
+        border: `1px solid ${
+          isDark ? brandColors.dark.muted : brandColors.light.muted
+        }`,
       },
       ".Tab:hover": {
-        backgroundColor: brandColors.light.secondary,
+        backgroundColor: isDark
+          ? brandColors.dark.secondary
+          : brandColors.light.secondary,
       },
       ".Tab--selected": {
-        backgroundColor: brandColors.light.background,
-        border: `1px solid ${brandColors.light.primary}`,
+        backgroundColor: isDark
+          ? brandColors.dark.background
+          : brandColors.light.background,
+        border: `1px solid ${
+          isDark ? brandColors.dark.primary : brandColors.light.primary
+        }`,
       },
     },
   };

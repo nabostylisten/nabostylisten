@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
     addressesInsertSchema,
     bookingsInsertSchema,
@@ -714,7 +715,9 @@ export async function createBookingWithServices(
             hasAffiliate: false, // TODO: Implement affiliate logic
         });
 
-        const { error: paymentError } = await supabase
+        // Use service client for payment record creation to bypass RLS
+        const serviceClient = createServiceClient();
+        const { error: paymentError } = await serviceClient
             .from("payments")
             .insert({
                 booking_id: booking.id,

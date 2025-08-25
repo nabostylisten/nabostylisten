@@ -18,6 +18,7 @@ export default function BookingPage() {
   const { items, getTotalItems, getTotalPrice, getCurrentStylist, clearCart } =
     useCartStore();
   const [isProcessingBooking, setIsProcessingBooking] = useState(false);
+  const [isRedirectingToCheckout, setIsRedirectingToCheckout] = useState(false);
   const [stripeOnboardingError, setStripeOnboardingError] = useState<{
     show: boolean;
     stylistName?: string;
@@ -98,6 +99,8 @@ export default function BookingPage() {
             show: true,
             stylistName: currentStylist?.full_name ?? undefined,
           });
+          // Scroll to top to show the alert
+          window.scrollTo({ top: 0, behavior: "smooth" });
           return;
         }
 
@@ -106,9 +109,6 @@ export default function BookingPage() {
       }
 
       if (result.data) {
-        // Clear the cart after successful booking
-        clearCart();
-
         // Redirect to payment page with client secret
         toast.success("Booking opprettet! Videresender til betaling...");
 
@@ -123,7 +123,10 @@ export default function BookingPage() {
           booking_id: result.data.booking.id,
         });
 
-        router.push(`/checkout?${searchParams.toString()}`);
+        // Set flag to prevent useEffect redirect and clear cart
+        setIsRedirectingToCheckout(true);
+        clearCart();
+        router.replace(`/checkout?${searchParams.toString()}`);
       }
     } catch (error) {
       console.error("Error creating booking:", error);
@@ -134,12 +137,12 @@ export default function BookingPage() {
   };
 
   useEffect(() => {
-    if (totalItems === 0) {
+    if (totalItems === 0 && !isRedirectingToCheckout) {
       router.push("/handlekurv");
     }
-  }, [totalItems, router]);
+  }, [totalItems, router, isRedirectingToCheckout]);
 
-  if (totalItems === 0) {
+  if (totalItems === 0 && !isRedirectingToCheckout) {
     return null;
   }
 

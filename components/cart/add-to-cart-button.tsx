@@ -96,12 +96,9 @@ export const AddToCartButton = ({
 
     if (result.success) {
       if (isInCart) {
-        toast.success(
-          `Tjeneste oppdatert i handlekurv (antall: ${serviceInCart ? serviceInCart.quantity + 1 : 1})`,
-          {
-            action: <GoToCartToastAction />,
-          }
-        );
+        toast.success(`Tjeneste oppdatert i handlekurv`, {
+          action: <GoToCartToastAction />,
+        });
       } else {
         toast.success("Tjeneste lagt til i handlekurv", {
           action: <GoToCartToastAction />,

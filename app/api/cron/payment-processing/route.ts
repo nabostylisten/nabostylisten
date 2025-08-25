@@ -3,8 +3,13 @@ import { createClient } from "@/lib/supabase/server";
 import { shouldReceiveNotification } from "@/lib/preferences-utils";
 import { sendEmail } from "@/lib/resend-utils";
 import { PaymentNotificationEmail } from "@/transactional/emails/payment-notification";
-import { format, addHours } from "date-fns";
+import { capturePaymentBeforeAppointment } from "@/server/stripe.actions";
+import { addHours, format } from "date-fns";
 import { nb } from "date-fns/locale";
+import {
+  calculatePlatformFee,
+  DEFAULT_PLATFORM_CONFIG,
+} from "@/schemas/platform-config.schema";
 
 export async function POST(request: NextRequest) {
   try {
@@ -18,8 +23,10 @@ export async function POST(request: NextRequest) {
     // Calculate the target date range (24 hours from now for payment capture)
     const now = new Date();
     const paymentCaptureTime = addHours(now, 24); // 24 hours from now
-    
-    console.log(`[PAYMENT_PROCESSING] Processing payments for bookings at ${paymentCaptureTime.toISOString()}`);
+
+    console.log(
+      `[PAYMENT_PROCESSING] Processing payments for bookings at ${paymentCaptureTime.toISOString()}`,
+    );
 
     // Query confirmed bookings that need payment processing (24 hours before start)
     const { data: bookings, error: bookingsError } = await supabase
@@ -38,19 +45,25 @@ export async function POST(request: NextRequest) {
       .eq("status", "confirmed")
       .gte("start_time", addHours(paymentCaptureTime, -1).toISOString()) // 1 hour window
       .lte("start_time", addHours(paymentCaptureTime, 1).toISOString())
-      .is("payment_captured_at", null); // Only bookings where payment hasn't been captured yet
 
     if (bookingsError) {
-      console.error("[PAYMENT_PROCESSING] Error fetching bookings:", bookingsError);
+      console.error(
+        "[PAYMENT_PROCESSING] Error fetching bookings:",
+        bookingsError,
+      );
       return new Response("Error fetching bookings", { status: 500 });
     }
 
     if (!bookings || bookings.length === 0) {
-      console.log("[PAYMENT_PROCESSING] No bookings found for payment processing");
+      console.log(
+        "[PAYMENT_PROCESSING] No bookings found for payment processing",
+      );
       return new Response("No payments to process", { status: 200 });
     }
 
-    console.log(`[PAYMENT_PROCESSING] Found ${bookings.length} bookings for payment processing`);
+    console.log(
+      `[PAYMENT_PROCESSING] Found ${bookings.length} bookings for payment processing`,
+    );
 
     let paymentsProcessed = 0;
     let errorsCount = 0;
@@ -59,36 +72,31 @@ export async function POST(request: NextRequest) {
     // Process each booking
     for (const booking of bookings) {
       try {
-        console.log(`[PAYMENT_PROCESSING] Processing payment for booking ${booking.id}`);
+        console.log(
+          `[PAYMENT_PROCESSING] Processing payment for booking ${booking.id}`,
+        );
 
-        // TODO: Implement actual Stripe payment capture when Stripe integration is ready
-        // For now, we'll simulate the payment processing and send notifications
-        
-        // 1. TODO: Capture payment with Stripe
-        // const paymentResult = await stripe.paymentIntents.capture(booking.stripe_payment_intent_id);
-        
-        // 2. TODO: Calculate platform fee and stylist payout
-        const totalAmount = booking.total_price || 0;
-        const platformFeePercent = 0.15; // 15% platform fee
-        const platformFee = totalAmount * platformFeePercent;
-        const stylistPayout = totalAmount - platformFee;
-        
-        // 3. Update booking with payment capture timestamp
-        const { error: updateError } = await supabase
-          .from("bookings")
-          .update({ 
-            payment_captured_at: new Date().toISOString(),
-            // TODO: Add actual payment details when Stripe is integrated
-            // stripe_payment_intent_id: paymentResult.id,
-            // stripe_charge_id: paymentResult.charges.data[0].id,
-          })
-          .eq("id", booking.id);
+        // Capture the payment using the implemented server action
+        const captureResult = await capturePaymentBeforeAppointment(booking.id);
 
-        if (updateError) {
-          console.error(`[PAYMENT_PROCESSING] Failed to update booking ${booking.id}:`, updateError);
+        if (captureResult.error || !captureResult.data) {
+          console.error(
+            `[PAYMENT_PROCESSING] Failed to capture payment for booking ${booking.id}:`,
+            captureResult.error,
+          );
           errorsCount++;
           continue;
         }
+
+        console.log(
+          `[PAYMENT_PROCESSING] Successfully captured payment for booking ${booking.id}`,
+        );
+
+        // Calculate platform fee and stylist payout for email notifications
+        const totalAmount = booking.total_price || 0;
+        const { platformFeeNOK, stylistPayoutNOK } = calculatePlatformFee({
+          totalAmountNOK: totalAmount,
+        });
 
         paymentsProcessed++;
 
@@ -97,14 +105,18 @@ export async function POST(request: NextRequest) {
           const canSendToCustomer = await shouldReceiveNotification(
             supabase,
             booking.customer_id,
-            "booking.confirmations"
+            "booking.confirmations",
           );
 
           if (canSendToCustomer) {
             try {
-              const bookingDate = format(new Date(booking.start_time), "d. MMMM yyyy", { locale: nb });
+              const bookingDate = format(
+                new Date(booking.start_time),
+                "d. MMMM yyyy",
+                { locale: nb },
+              );
               const serviceName = booking.booking_services
-                ?.map(bs => bs.service?.title || bs.service?.name)
+                ?.map((bs) => bs.service?.title || bs.service?.name)
                 .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
               const { error: customerPaymentEmailError } = await sendEmail({
@@ -127,13 +139,21 @@ export async function POST(request: NextRequest) {
               });
 
               if (customerPaymentEmailError) {
-                console.error(`[PAYMENT_PROCESSING] Failed to send customer email for booking ${booking.id}:`, customerPaymentEmailError);
+                console.error(
+                  `[PAYMENT_PROCESSING] Failed to send customer email for booking ${booking.id}:`,
+                  customerPaymentEmailError,
+                );
               }
 
               emailsSent++;
-              console.log(`[PAYMENT_PROCESSING] Sent payment confirmation to customer ${booking.customer.email}`);
+              console.log(
+                `[PAYMENT_PROCESSING] Sent payment confirmation to customer ${booking.customer.email}`,
+              );
             } catch (emailError) {
-              console.error(`[PAYMENT_PROCESSING] Failed to send customer email for booking ${booking.id}:`, emailError);
+              console.error(
+                `[PAYMENT_PROCESSING] Failed to send customer email for booking ${booking.id}:`,
+                emailError,
+              );
             }
           }
         }
@@ -141,20 +161,24 @@ export async function POST(request: NextRequest) {
         // 5. TODO: Process payout to stylist when Stripe Connect is ready
         // This would typically happen after the service is completed
         // const payoutResult = await transferToStylist(paymentResult.id, booking.id);
-        
+
         // 6. Send payout notification to stylist (simulate for now)
         if (booking.stylist?.email) {
           const canSendToStylist = await shouldReceiveNotification(
             supabase,
             booking.stylist_id,
-            "stylist.paymentNotifications"
+            "stylist.paymentNotifications",
           );
 
           if (canSendToStylist) {
             try {
-              const bookingDate = format(new Date(booking.start_time), "d. MMMM yyyy", { locale: nb });
+              const bookingDate = format(
+                new Date(booking.start_time),
+                "d. MMMM yyyy",
+                { locale: nb },
+              );
               const serviceName = booking.booking_services
-                ?.map(bs => bs.service?.title || bs.service?.name)
+                ?.map((bs) => bs.service?.title || bs.service?.name)
                 .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
               // TODO: Only send payout notification after service completion
@@ -182,26 +206,40 @@ export async function POST(request: NextRequest) {
               });
 
               if (stylistPaymentEmailError) {
-                console.error(`[PAYMENT_PROCESSING] Failed to send stylist email for booking ${booking.id}:`, stylistPaymentEmailError);
+                console.error(
+                  `[PAYMENT_PROCESSING] Failed to send stylist email for booking ${booking.id}:`,
+                  stylistPaymentEmailError,
+                );
               }
 
               emailsSent++;
-              console.log(`[PAYMENT_PROCESSING] Sent payment notification to stylist ${booking.stylist.email}`);
+              console.log(
+                `[PAYMENT_PROCESSING] Sent payment notification to stylist ${booking.stylist.email}`,
+              );
             } catch (emailError) {
-              console.error(`[PAYMENT_PROCESSING] Failed to send stylist email for booking ${booking.id}:`, emailError);
+              console.error(
+                `[PAYMENT_PROCESSING] Failed to send stylist email for booking ${booking.id}:`,
+                emailError,
+              );
             }
           }
         }
 
-        console.log(`[PAYMENT_PROCESSING] Successfully processed payment for booking ${booking.id}`);
-
+        console.log(
+          `[PAYMENT_PROCESSING] Successfully processed payment for booking ${booking.id}`,
+        );
       } catch (error) {
-        console.error(`[PAYMENT_PROCESSING] Error processing booking ${booking.id}:`, error);
+        console.error(
+          `[PAYMENT_PROCESSING] Error processing booking ${booking.id}:`,
+          error,
+        );
         errorsCount++;
       }
     }
 
-    console.log(`[PAYMENT_PROCESSING] Completed: ${paymentsProcessed} payments processed, ${emailsSent} emails sent, ${errorsCount} errors`);
+    console.log(
+      `[PAYMENT_PROCESSING] Completed: ${paymentsProcessed} payments processed, ${emailsSent} emails sent, ${errorsCount} errors`,
+    );
 
     return new Response(
       JSON.stringify({
@@ -210,11 +248,11 @@ export async function POST(request: NextRequest) {
         paymentsProcessed,
         emailsSent,
         errors: errorsCount,
-        message: "Payment processing completed. Note: Full Stripe integration pending.",
+        message:
+          "Payment processing completed. Note: Full Stripe integration pending.",
       }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      { status: 200, headers: { "Content-Type": "application/json" } },
     );
-
   } catch (error) {
     console.error("[PAYMENT_PROCESSING] Cron job failed:", error);
     return new Response("Internal server error", { status: 500 });

@@ -130,23 +130,109 @@ export async function createPaymentIntent({
 
 /**
  * Capture payment before appointment
- * TODO: This should be called by a scheduled job/cron
+ * Called by scheduled job/cron 24 hours before appointment
  * Server action wrapper around service function
  */
 export async function capturePaymentBeforeAppointment(bookingId: string) {
   const supabase = await createClient();
 
   try {
-    // TODO: Get booking and payment intent details
-    // TODO: Verify it's N hours before appointment, see PLATFORM_CONFIG
-    // TODO: Use captureStripePaymentIntent service function
-    // TODO: Update booking and payment records in database
-    // TODO: Send confirmation emails to customer and stylist
+    // Get booking details with payment intent ID
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
+      .select(`
+        *,
+        customer:profiles!bookings_customer_id_fkey(
+          id,
+          full_name,
+          email
+        ),
+        stylist:profiles!bookings_stylist_id_fkey(
+          id,
+          full_name
+        )
+      `)
+      .eq("id", bookingId)
+      .single();
 
-    return { data: null, error: "Capture flow not yet implemented" };
+    if (bookingError || !booking) {
+      return { data: null, error: "Booking not found" };
+    }
+
+    if (!booking.stripe_payment_intent_id) {
+      return { data: null, error: "No payment intent found for booking" };
+    }
+
+    // Check if payment has already been captured by looking at payments table
+    const { data: existingPayment } = await supabase
+      .from("payments")
+      .select("captured_at")
+      .eq("booking_id", bookingId)
+      .single();
+
+    if (existingPayment?.captured_at) {
+      return { data: null, error: "Payment already captured for this booking" };
+    }
+
+    // Capture the payment using Stripe
+    const captureResult = await captureStripePaymentIntent({
+      paymentIntentId: booking.stripe_payment_intent_id,
+    });
+
+    if (captureResult.error || !captureResult.data) {
+      return {
+        data: null,
+        error: captureResult.error || "Failed to capture payment with Stripe",
+      };
+    }
+
+    // Update booking status to confirmed after payment capture
+    const { error: updateError } = await supabase
+      .from("bookings")
+      .update({
+        status: "confirmed", // Ensure status is confirmed after payment capture
+      })
+      .eq("id", bookingId);
+
+    if (updateError) {
+      console.error("Failed to update booking after payment capture:", updateError);
+      return {
+        data: null,
+        error: "Payment captured but failed to update booking record",
+      };
+    }
+
+    // Update payment record status if exists
+    const { error: paymentUpdateError } = await supabase
+      .from("payments")
+      .update({
+        status: "succeeded",
+        captured_at: captureResult.data.capturedAt,
+        succeeded_at: captureResult.data.capturedAt,
+      })
+      .eq("booking_id", bookingId);
+
+    if (paymentUpdateError) {
+      console.error("Failed to update payment record:", paymentUpdateError);
+      // Don't return error here since payment was successfully captured
+    }
+
+    return {
+      data: {
+        bookingId,
+        paymentIntentId: captureResult.data.paymentIntentId,
+        status: captureResult.data.status,
+        capturedAt: captureResult.data.capturedAt,
+        amountCaptured: captureResult.data.amountCaptured,
+      },
+      error: null,
+    };
   } catch (error) {
-    console.error("Error capturing payment:", error);
-    return { data: null, error: "Failed to capture payment" };
+    console.error("Error in capturePaymentBeforeAppointment:", error);
+    return {
+      data: null,
+      error: "An unexpected error occurred while capturing payment",
+    };
   }
 }
 

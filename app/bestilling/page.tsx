@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCartStore } from "@/stores/cart.store";
-import { ArrowLeft, Clock, User } from "lucide-react";
+import { ArrowLeft, Clock, User, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BookingStepper } from "@/components/booking";
@@ -17,6 +18,10 @@ export default function BookingPage() {
   const { items, getTotalItems, getTotalPrice, getCurrentStylist, clearCart } =
     useCartStore();
   const [isProcessingBooking, setIsProcessingBooking] = useState(false);
+  const [stripeOnboardingError, setStripeOnboardingError] = useState<{
+    show: boolean;
+    stylistName?: string;
+  }>({ show: false });
 
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
@@ -46,19 +51,21 @@ export default function BookingPage() {
 
     try {
       // Extract service IDs from cart items
-      const serviceIds = items.map(item => item.service.id);
+      const serviceIds = items.map((item) => item.service.id);
 
       // Prepare address data if customer location is selected
       let customerAddressData = undefined;
       let addressId = undefined;
-      
+
       if (bookingData.location === "customer") {
         if (bookingData.customerAddressId) {
           // Using an existing address from the user's saved addresses
           addressId = bookingData.customerAddressId;
         } else if (bookingData.customerAddress) {
           // Fallback: Parse the address string if no address ID is provided
-          const addressParts = bookingData.customerAddress.split(',').map(part => part.trim());
+          const addressParts = bookingData.customerAddress
+            .split(",")
+            .map((part) => part.trim());
           customerAddressData = {
             streetAddress: addressParts[0] || bookingData.customerAddress,
             city: addressParts[1] || "Oslo", // Default to Oslo for now
@@ -85,6 +92,15 @@ export default function BookingPage() {
       });
 
       if (result.error) {
+        // Check if this is a Stripe onboarding error
+        if (result.error === "stripe_onboarding_required") {
+          setStripeOnboardingError({
+            show: true,
+            stylistName: currentStylist?.full_name ?? undefined,
+          });
+          return;
+        }
+
         toast.error(result.error);
         return;
       }
@@ -92,10 +108,10 @@ export default function BookingPage() {
       if (result.data) {
         // Clear the cart after successful booking
         clearCart();
-        
+
         // Redirect to payment page with client secret
         toast.success("Booking opprettet! Videresender til betaling...");
-        
+
         if (!result.data.paymentIntentClientSecret) {
           toast.error("Betalingsintegrasjon feilet. Prøv igjen.");
           return;
@@ -106,7 +122,7 @@ export default function BookingPage() {
           client_secret: result.data.paymentIntentClientSecret,
           booking_id: result.data.booking.id,
         });
-        
+
         router.push(`/checkout?${searchParams.toString()}`);
       }
     } catch (error) {
@@ -140,66 +156,83 @@ export default function BookingPage() {
           </div>
         </BlurFade>
 
+        {/* Stripe Onboarding Error Alert */}
+        {stripeOnboardingError.show && (
+          <BlurFade duration={0.5} inView>
+            <Alert className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50">
+              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <AlertDescription className="text-amber-800 dark:text-amber-200">
+                <strong>Booking kunne ikke fullføres.</strong>{" "}
+                {stripeOnboardingError.stylistName} mangler betalingsoppsett og
+                har blitt varslet om å fullføre dette. Du kan prøve å booke
+                igjen senere når oppsettet er fullført.
+              </AlertDescription>
+            </Alert>
+          </BlurFade>
+        )}
+
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Booking Steps */}
           <div className="lg:col-span-2 space-y-6">
             {/* Cart Summary */}
             <BlurFade delay={0.1} duration={0.5} inView>
               <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  Sammendrag av tjenester
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {currentStylist && (
-                  <div className="bg-muted/50 rounded-lg p-4">
-                    <h3 className="font-medium text-sm text-muted-foreground mb-1">
-                      Stylist
-                    </h3>
-                    <p className="font-semibold">{currentStylist.full_name}</p>
-                  </div>
-                )}
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" />
+                    Sammendrag av tjenester
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {currentStylist && (
+                    <div className="bg-muted/50 rounded-lg p-4">
+                      <h3 className="font-medium text-sm text-muted-foreground mb-1">
+                        Stylist
+                      </h3>
+                      <p className="font-semibold">
+                        {currentStylist.full_name}
+                      </p>
+                    </div>
+                  )}
 
-                <div className="space-y-3">
-                  {items.map((item) => (
-                    <div
-                      key={item.service.id}
-                      className="flex justify-between items-start py-2"
-                    >
-                      <div className="flex-1">
-                        <h4 className="font-medium">{item.service.title}</h4>
-                        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            {item.service.duration_minutes} min
-                          </span>
-                          {item.quantity > 1 && (
-                            <span>Antall: {item.quantity}</span>
-                          )}
+                  <div className="space-y-3">
+                    {items.map((item) => (
+                      <div
+                        key={item.service.id}
+                        className="flex justify-between items-start py-2"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-medium">{item.service.title}</h4>
+                          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {item.service.duration_minutes} min
+                            </span>
+                            {item.quantity > 1 && (
+                              <span>Antall: {item.quantity}</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold">
+                            {(item.service.price * item.quantity).toFixed(2)}{" "}
+                            {item.service.currency}
+                          </p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className="font-semibold">
-                          {(item.service.price * item.quantity).toFixed(2)}{" "}
-                          {item.service.currency}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 text-sm">
-                  <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
-                    <Clock className="w-4 h-4" />
-                    <span className="font-medium">
-                      Total varighet: {Math.floor(totalDurationMinutes / 60)}t{" "}
-                      {totalDurationMinutes % 60}min
-                    </span>
+                    ))}
                   </div>
-                </div>
-              </CardContent>
+
+                  <div className="bg-blue-50 dark:bg-blue-950/50 rounded-lg p-3 text-sm">
+                    <div className="flex items-center gap-2 text-blue-700 dark:text-blue-300">
+                      <Clock className="w-4 h-4" />
+                      <span className="font-medium">
+                        Total varighet: {Math.floor(totalDurationMinutes / 60)}t{" "}
+                        {totalDurationMinutes % 60}min
+                      </span>
+                    </div>
+                  </div>
+                </CardContent>
               </Card>
             </BlurFade>
 
@@ -207,12 +240,12 @@ export default function BookingPage() {
             {currentStylist && (
               <BlurFade delay={0.15} duration={0.5} inView>
                 <BookingStepper
-                stylistId={currentStylist.id}
-                serviceDurationMinutes={totalDurationMinutes}
-                stylistCanTravel={true} // TODO: Get from stylist details
-                stylistHasOwnPlace={true} // TODO: Get from stylist details
-                onComplete={handleBookingComplete}
-                isProcessing={isProcessingBooking}
+                  stylistId={currentStylist.id}
+                  serviceDurationMinutes={totalDurationMinutes}
+                  stylistCanTravel={true} // TODO: Get from stylist details
+                  stylistHasOwnPlace={true} // TODO: Get from stylist details
+                  onComplete={handleBookingComplete}
+                  isProcessing={isProcessingBooking}
                 />
               </BlurFade>
             )}
@@ -222,35 +255,35 @@ export default function BookingPage() {
           <div>
             <BlurFade delay={0.2} duration={0.5} inView>
               <Card className="sticky top-24">
-              <CardHeader>
-                <CardTitle>Bestillingssammendrag</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  {items.map((item) => (
-                    <div
-                      key={item.service.id}
-                      className="flex justify-between text-sm"
-                    >
-                      <span>
-                        {item.service.title}
-                        {item.quantity > 1 && ` x${item.quantity}`}
-                      </span>
-                      <span>
-                        {(item.service.price * item.quantity).toFixed(2)}{" "}
-                        {item.service.currency}
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                <CardHeader>
+                  <CardTitle>Bestillingssammendrag</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    {items.map((item) => (
+                      <div
+                        key={item.service.id}
+                        className="flex justify-between text-sm"
+                      >
+                        <span>
+                          {item.service.title}
+                          {item.quantity > 1 && ` x${item.quantity}`}
+                        </span>
+                        <span>
+                          {(item.service.price * item.quantity).toFixed(2)}{" "}
+                          {item.service.currency}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
 
-                <Separator />
+                  <Separator />
 
-                <div className="flex justify-between font-semibold text-lg">
-                  <span>Total</span>
-                  <span>{totalPrice.toFixed(2)} NOK</span>
-                </div>
-              </CardContent>
+                  <div className="flex justify-between font-semibold text-lg">
+                    <span>Total</span>
+                    <span>{totalPrice.toFixed(2)} NOK</span>
+                  </div>
+                </CardContent>
               </Card>
             </BlurFade>
           </div>

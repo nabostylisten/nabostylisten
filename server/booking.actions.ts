@@ -8,14 +8,15 @@ import {
     discountsInsertSchema,
 } from "@/schemas/database.schema";
 import type { BookingFilters, DatabaseTables } from "@/types";
-import { 
-    createStripePaymentIntent, 
-    updateStripePaymentIntentMetadata 
+import {
+    createStripePaymentIntent,
+    updateStripePaymentIntentMetadata,
 } from "@/lib/stripe/connect";
 import { calculatePlatformFee } from "@/schemas/platform-config.schema";
 import { sendEmail } from "@/lib/resend-utils";
 import { BookingStatusUpdateEmail } from "@/transactional/emails/booking-status-update";
 import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
+import { StripeOnboardingRequired } from "@/transactional/emails/stripe-onboarding-required";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
@@ -586,8 +587,37 @@ export async function createBookingWithServices(
         });
 
         if (paymentIntentResult.error || !paymentIntentResult.data) {
+            // Check if this is a Stripe onboarding error
+            const isOnboardingError =
+                paymentIntentResult.error?.includes("transfers") ||
+                paymentIntentResult.error?.includes("capabilities") ||
+                paymentIntentResult.error?.includes("crypto_transfers") ||
+                paymentIntentResult.error?.includes("legacy_payments");
+
+            if (isOnboardingError) {
+                // Trigger notification emails in the background (don't await to avoid blocking user)
+                notifyStripeOnboardingRequired({
+                    stylistId: input.stylistId,
+                    customerName: user.email || "Kunde", // Use email as fallback if full_name not available
+                }).catch((error) => {
+                    console.error(
+                        "Failed to send onboarding notification emails:",
+                        error,
+                    );
+                });
+
+                return {
+                    error: "stripe_onboarding_required",
+                    data: {
+                        stylistId: input.stylistId,
+                        requiresOnboarding: true,
+                    },
+                };
+            }
+
             return {
-                error: paymentIntentResult.error || "Failed to create payment intent",
+                error: paymentIntentResult.error ||
+                    "Failed to create payment intent",
                 data: null,
             };
         }
@@ -620,7 +650,10 @@ export async function createBookingWithServices(
         if (bookingError || !booking) {
             // TODO: Cancel Stripe PaymentIntent if booking creation fails
             // This should be implemented with proper error handling
-            console.error("Booking creation failed, PaymentIntent may need cleanup:", stripePaymentIntentId);
+            console.error(
+                "Booking creation failed, PaymentIntent may need cleanup:",
+                stripePaymentIntentId,
+            );
             return { error: "Failed to create booking", data: null };
         }
 
@@ -635,7 +668,10 @@ export async function createBookingWithServices(
         });
 
         if (metadataUpdateResult.error) {
-            console.error("Failed to update PaymentIntent metadata:", metadataUpdateResult.error);
+            console.error(
+                "Failed to update PaymentIntent metadata:",
+                metadataUpdateResult.error,
+            );
             // Don't fail the entire booking creation for metadata update failure
         }
 
@@ -653,7 +689,10 @@ export async function createBookingWithServices(
             // Rollback: delete the booking
             await supabase.from("bookings").delete().eq("id", booking.id);
             // TODO: Cancel Stripe PaymentIntent
-            console.error("Service linking failed, PaymentIntent may need cleanup:", stripePaymentIntentId);
+            console.error(
+                "Service linking failed, PaymentIntent may need cleanup:",
+                stripePaymentIntentId,
+            );
             return { error: "Failed to link services to booking", data: null };
         }
 
@@ -683,16 +722,26 @@ export async function createBookingWithServices(
                 original_amount: Math.round(input.totalPrice * 100), // Original amount in øre
                 discount_amount: Math.round(discountAmount * 100), // Discount amount in øre
                 final_amount: Math.round(finalPrice * 100), // Final amount in øre
-                platform_fee: Math.round(platformFeeCalculation.platformFeeNOK * 100), // Platform fee in øre
-                stylist_payout: Math.round(platformFeeCalculation.stylistPayoutNOK * 100), // Stylist payout in øre
-                affiliate_commission: Math.round((platformFeeCalculation.affiliateCommissionNOK || 0) * 100), // Affiliate commission in øre
-                stripe_application_fee_amount: Math.round(paymentIntentResult.data.applicationFeeNOK * 100), // Stripe application fee in øre
+                platform_fee: Math.round(
+                    platformFeeCalculation.platformFeeNOK * 100,
+                ), // Platform fee in øre
+                stylist_payout: Math.round(
+                    platformFeeCalculation.stylistPayoutNOK * 100,
+                ), // Stylist payout in øre
+                affiliate_commission: Math.round(
+                    (platformFeeCalculation.affiliateCommissionNOK || 0) * 100,
+                ), // Affiliate commission in øre
+                stripe_application_fee_amount: Math.round(
+                    paymentIntentResult.data.applicationFeeNOK * 100,
+                ), // Stripe application fee in øre
                 currency: "NOK",
                 status: "pending",
                 refunded_amount: 0, // Default to 0, will be updated when refunds occur
                 discount_code: input.discountCode,
                 discount_percentage: discountId ? null : undefined, // TODO: Get from discount record
-                discount_fixed_amount: discountId ? Math.round(discountAmount * 100) : undefined,
+                discount_fixed_amount: discountId
+                    ? Math.round(discountAmount * 100)
+                    : undefined,
                 // TODO: Add affiliate fields when affiliate system is implemented
                 // affiliate_id: affiliateId,
                 // affiliate_commission_percentage: affiliateCommissionPercentage,
@@ -713,7 +762,7 @@ export async function createBookingWithServices(
                 .single();
 
             const { data: customer } = await supabase
-                .from("profiles") 
+                .from("profiles")
                 .select("id, full_name, email")
                 .eq("id", user.id)
                 .single();
@@ -721,18 +770,20 @@ export async function createBookingWithServices(
             if (stylist?.email && customer) {
                 // Check if stylist wants new booking request notifications
                 const canSendToStylist = await shouldReceiveNotification(
-                    input.stylistId, 
-                    'new_booking_requests'
+                    input.stylistId,
+                    "new_booking_requests",
                 );
 
                 if (canSendToStylist) {
                     // Get service details for email
                     const { data: services } = await supabase
                         .from("services")
-                        .select("id, title, description, price, duration_minutes")
+                        .select(
+                            "id, title, description, price, duration_minutes",
+                        )
                         .in("id", input.serviceIds);
 
-                    const serviceName = services && services.length > 0 
+                    const serviceName = services && services.length > 0
                         ? services[0]?.title || "Booking"
                         : "Booking";
                     const serviceNameWithCount = services && services.length > 1
@@ -741,14 +792,19 @@ export async function createBookingWithServices(
 
                     const startTime = input.startTime;
                     const endTime = input.endTime;
-                    const bookingDate = format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
-                    const bookingTime = `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+                    const bookingDate = format(startTime, "EEEE d. MMMM yyyy", {
+                        locale: nb,
+                    });
+                    const bookingTime = `${format(startTime, "HH:mm")} - ${
+                        format(endTime, "HH:mm")
+                    }`;
 
                     // Determine location and address
                     let customerAddress = undefined;
                     if (input.location === "customer") {
                         if (input.customerAddress) {
-                            customerAddress = `${input.customerAddress.streetAddress}, ${input.customerAddress.postalCode} ${input.customerAddress.city}`;
+                            customerAddress =
+                                `${input.customerAddress.streetAddress}, ${input.customerAddress.postalCode} ${input.customerAddress.city}`;
                         } else if (addressId) {
                             // Get address details if using existing address
                             const { data: address } = await supabase
@@ -756,16 +812,19 @@ export async function createBookingWithServices(
                                 .select("street_address, city, postal_code")
                                 .eq("id", addressId)
                                 .single();
-                            
+
                             if (address) {
-                                customerAddress = `${address.street_address}, ${address.postal_code} ${address.city}`;
+                                customerAddress =
+                                    `${address.street_address}, ${address.postal_code} ${address.city}`;
                             }
                         }
                     }
 
                     const { error: newBookingEmailError } = await sendEmail({
                         to: [stylist.email],
-                        subject: `Ny bookingforespørsel fra ${customer.full_name || 'kunde'}`,
+                        subject: `Ny bookingforespørsel fra ${
+                            customer.full_name || "kunde"
+                        }`,
                         react: NewBookingRequestEmail({
                             logoUrl: getNabostylistenLogoUrl("png"),
                             stylistProfileId: input.stylistId,
@@ -786,12 +845,18 @@ export async function createBookingWithServices(
                     });
 
                     if (newBookingEmailError) {
-                        console.error("Error sending new booking request email:", newBookingEmailError);
+                        console.error(
+                            "Error sending new booking request email:",
+                            newBookingEmailError,
+                        );
                     }
                 }
             }
         } catch (emailError) {
-            console.error("Error sending new booking request email:", emailError);
+            console.error(
+                "Error sending new booking request email:",
+                emailError,
+            );
             // Don't fail the booking creation if email fails
         }
 
@@ -804,7 +869,8 @@ export async function createBookingWithServices(
                 discountAmount,
                 platformFeeNOK: platformFeeCalculation.platformFeeNOK,
                 stylistPayoutNOK: platformFeeCalculation.stylistPayoutNOK,
-                affiliateCommissionNOK: platformFeeCalculation.affiliateCommissionNOK,
+                affiliateCommissionNOK:
+                    platformFeeCalculation.affiliateCommissionNOK,
             },
             error: null,
         };
@@ -933,22 +999,36 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         if (fullBooking?.customer?.email && fullBooking?.stylist?.email) {
             // Check user preferences for cancellation notifications
             const [canSendToCustomer, canSendToStylist] = await Promise.all([
-                shouldReceiveNotification(fullBooking.customer_id, 'booking_cancellations'),
-                shouldReceiveNotification(fullBooking.stylist_id, 'booking_cancellations')
+                shouldReceiveNotification(
+                    fullBooking.customer_id,
+                    "booking_cancellations",
+                ),
+                shouldReceiveNotification(
+                    fullBooking.stylist_id,
+                    "booking_cancellations",
+                ),
             ]);
 
             if (canSendToCustomer || canSendToStylist) {
                 // Prepare common email data
-                const services = fullBooking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
-                const serviceName = services.length > 0 ? services[0]?.title || "Booking" : "Booking";
+                const services = fullBooking.booking_services?.map((bs) =>
+                    bs.services
+                ).filter(Boolean) || [];
+                const serviceName = services.length > 0
+                    ? services[0]?.title || "Booking"
+                    : "Booking";
                 const serviceNameWithCount = services.length > 1
                     ? `${serviceName} +${services.length - 1} til`
                     : serviceName;
 
                 const startTime = new Date(fullBooking.start_time);
                 const endTime = new Date(fullBooking.end_time);
-                const bookingDate = format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
-                const bookingTime = `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+                const bookingDate = format(startTime, "EEEE d. MMMM yyyy", {
+                    locale: nb,
+                });
+                const bookingTime = `${format(startTime, "HH:mm")} - ${
+                    format(endTime, "HH:mm")
+                }`;
 
                 // Determine location text
                 let location = "Hos stylisten";
@@ -985,7 +1065,10 @@ export async function cancelBooking(bookingId: string, reason?: string) {
                     });
 
                     if (customerEmailError) {
-                        console.error("Error sending customer cancellation email:", customerEmailError);
+                        console.error(
+                            "Error sending customer cancellation email:",
+                            customerEmailError,
+                        );
                     }
                 }
 
@@ -1002,7 +1085,10 @@ export async function cancelBooking(bookingId: string, reason?: string) {
                     });
 
                     if (stylistEmailError) {
-                        console.error("Error sending stylist cancellation email:", stylistEmailError);
+                        console.error(
+                            "Error sending stylist cancellation email:",
+                            stylistEmailError,
+                        );
                     }
                 }
             }
@@ -1131,13 +1217,17 @@ export async function updateBookingStatus({
             // Check user preferences for booking notifications
             const [canSendToCustomer, canSendToStylist] = await Promise.all([
                 shouldReceiveNotification(
-                    booking.customer_id, 
-                    status === 'confirmed' ? 'booking_confirmations' : 'booking_status_updates'
+                    booking.customer_id,
+                    status === "confirmed"
+                        ? "booking_confirmations"
+                        : "booking_status_updates",
                 ),
                 shouldReceiveNotification(
-                    booking.stylist_id, 
-                    status === 'confirmed' ? 'booking_confirmations' : 'booking_status_updates'  
-                )
+                    booking.stylist_id,
+                    status === "confirmed"
+                        ? "booking_confirmations"
+                        : "booking_status_updates",
+                ),
             ]);
 
             if (!canSendToCustomer && !canSendToStylist) {
@@ -1205,7 +1295,10 @@ export async function updateBookingStatus({
                 });
 
                 if (customerEmailError) {
-                    console.error("Error sending customer status update email:", customerEmailError);
+                    console.error(
+                        "Error sending customer status update email:",
+                        customerEmailError,
+                    );
                 }
             }
 
@@ -1222,7 +1315,10 @@ export async function updateBookingStatus({
                 });
 
                 if (stylistEmailError) {
-                    console.error("Error sending stylist status update email:", stylistEmailError);
+                    console.error(
+                        "Error sending stylist status update email:",
+                        stylistEmailError,
+                    );
                 }
             }
         }
@@ -1240,4 +1336,137 @@ export async function updateBookingStatus({
     // }
 
     return { data, error: null };
+}
+
+/**
+ * Handle Stripe onboarding notification emails
+ * Called when a booking fails due to incomplete stylist Stripe setup
+ */
+export async function notifyStripeOnboardingRequired({
+    stylistId,
+    customerName,
+}: {
+    stylistId: string;
+    customerName: string;
+}) {
+    const supabase = await createClient();
+
+    try {
+        // Get stylist information
+        const { data: stylist, error: stylistError } = await supabase
+            .from("profiles")
+            .select(`
+                id,
+                full_name,
+                email,
+                stylist_details(
+                    stripe_account_id
+                )
+            `)
+            .eq("id", stylistId)
+            .single();
+
+        if (stylistError || !stylist) {
+            console.error(
+                "Error fetching stylist for onboarding notification:",
+                stylistError,
+            );
+            return { error: "Stylist not found", data: null };
+        }
+
+        // Get all admin users
+        const { data: admins, error: adminError } = await supabase
+            .from("profiles")
+            .select("id, full_name, email")
+            .eq("role", "admin");
+
+        if (adminError) {
+            console.error("Error fetching admin users:", adminError);
+        }
+
+        const logoUrl = getNabostylistenLogoUrl("png");
+
+        const emailPromises: Promise<unknown>[] = [];
+
+        // Send email to stylist
+        if (stylist.email) {
+            emailPromises.push(
+                sendEmail({
+                    to: [stylist.email],
+                    subject:
+                        "Fullfør betalingsoppsett for å motta bookinger - Nabostylisten",
+                    react: StripeOnboardingRequired({
+                        logoUrl,
+                        recipientType: "stylist",
+                        stylistName: stylist.full_name || "Stylist",
+                        stylistEmail: stylist.email,
+                        customerName,
+                    }),
+                }),
+            );
+        }
+
+        // Send email to all admin users
+        if (admins && admins.length > 0) {
+            for (const admin of admins) {
+                if (admin.email) {
+                    emailPromises.push(
+                        sendEmail({
+                            to: [admin.email],
+                            subject: `Stylist mangler Stripe-onboarding: ${
+                                stylist.full_name || "Ukjent stylist"
+                            }`,
+                            react: StripeOnboardingRequired({
+                                logoUrl,
+                                recipientType: "admin",
+                                stylistName: stylist.full_name ||
+                                    "Ukjent stylist",
+                                stylistEmail: stylist.email ||
+                                    "Ikke oppgitt",
+                                customerName,
+                            }),
+                        }),
+                    );
+                }
+            }
+        }
+
+        // Send all emails in parallel
+        const emailResults = await Promise.allSettled(emailPromises);
+
+        // Log any email failures
+        emailResults.forEach((result, index) => {
+            if (result.status === "rejected") {
+                console.error(
+                    `Failed to send onboarding notification email ${
+                        index + 1
+                    }:`,
+                    result.reason,
+                );
+            }
+        });
+
+        const successfulEmails = emailResults.filter((r) =>
+            r.status === "fulfilled"
+        ).length;
+        const totalEmails = emailResults.length;
+
+        return {
+            data: {
+                emailsSent: successfulEmails,
+                totalAttempted: totalEmails,
+                stylistNotified: stylist.email ? successfulEmails > 0 : false,
+                adminsNotified: admins
+                    ? successfulEmails > (stylist.email ? 1 : 0)
+                    : false,
+            },
+            error: null,
+        };
+    } catch (error) {
+        console.error("Error in notifyStripeOnboardingRequired:", error);
+        return {
+            error: "Failed to send notification emails",
+            data: null,
+        };
+    }
 }

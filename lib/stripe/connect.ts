@@ -11,7 +11,10 @@ import { getOnboardingUrls, stripe, STRIPE_CONNECT_CONFIG } from "./config";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database.types";
 import type Stripe from "stripe";
-import { calculatePlatformFee, PLATFORM_CONFIG } from "@/lib/platform-config";
+import {
+  calculatePlatformFee,
+  DEFAULT_PLATFORM_CONFIG,
+} from "@/schemas/platform-config.schema";
 
 // Common type for Stripe customer updates
 export type StripeCustomerUpdateParams = Stripe.CustomerUpdateParams;
@@ -532,7 +535,7 @@ export async function createStripePaymentIntent({
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount: finalAmountOre,
-      currency: PLATFORM_CONFIG.payment.defaultCurrency.toLowerCase(),
+      currency: DEFAULT_PLATFORM_CONFIG.payment.defaultCurrency.toLowerCase(),
       application_fee_amount: applicationFeeOre,
       transfer_data: {
         destination: stylistStripeAccountId,

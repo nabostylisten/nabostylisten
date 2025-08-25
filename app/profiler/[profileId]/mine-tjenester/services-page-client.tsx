@@ -26,7 +26,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Plus, Edit, Trash2, Scissors, ImageIcon, Search, Filter } from "lucide-react";
+import { Plus, Edit, Trash2, Scissors, ImageIcon, Search, Filter, CreditCard } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -39,6 +39,7 @@ import {
 import { ServiceForm } from "@/components/service-form";
 import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
 import { deleteService, getFilteredStylistServices, getServiceCategories } from "@/server/service.actions";
+import { getCurrentUserStripeStatus } from "@/server/stripe.actions";
 import { createClient } from "@/lib/supabase/client";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,6 +85,26 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   const [serviceToDelete, setServiceToDelete] = React.useState<
     Service | undefined
   >();
+
+  // Check Stripe onboarding status
+  const {
+    data: stripeStatusResult,
+    isLoading: isCheckingStripe,
+    error: stripeError,
+  } = useQuery({
+    queryKey: ["current-user-stripe-status"],
+    queryFn: () => getCurrentUserStripeStatus(),
+    retry: false,
+  });
+
+  const isStripeFullyOnboarded = stripeStatusResult?.data?.isFullyOnboarded ?? false;
+
+  // Redirect to Stripe onboarding if not fully onboarded
+  React.useEffect(() => {
+    if (!isCheckingStripe && stripeStatusResult && !isStripeFullyOnboarded && !stripeError) {
+      router.push("/stylist/stripe");
+    }
+  }, [isCheckingStripe, stripeStatusResult, isStripeFullyOnboarded, stripeError, router]);
   
   // Filter state from URL
   const filters = React.useMemo(() => {
@@ -178,6 +199,12 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   });
 
   const handleCreateService = () => {
+    // Don't allow creating services if not fully onboarded
+    if (!isStripeFullyOnboarded) {
+      router.push("/stylist/stripe");
+      return;
+    }
+    
     setServiceFormMode("create");
     setSelectedService(undefined);
     setServiceFormOpen(true);
@@ -427,6 +454,73 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
     return items;
   };
 
+  // Show loading state while checking Stripe status
+  if (isCheckingStripe) {
+    return (
+      <>
+        <BlurFade delay={0.1} duration={0.5} inView>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <Scissors className="w-8 h-8" />
+              <div>
+                <h1 className="text-3xl font-bold">Mine tjenester</h1>
+                <p className="text-muted-foreground mt-1">
+                  Administrer dine tjenester og priser
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4 animate-pulse" />
+              <Skeleton className="h-10 w-32" />
+            </div>
+          </div>
+        </BlurFade>
+
+        <BlurFade delay={0.15} duration={0.5} inView>
+          <Card className="mb-6">
+            <CardContent className="p-6 space-y-4">
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <Skeleton className="h-10 w-full" />
+                </div>
+                <div className="md:w-48">
+                  <Skeleton className="h-10 w-full" />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Skeleton className="h-10 flex-1" />
+                <Skeleton className="h-10 w-32 sm:w-auto" />
+              </div>
+            </CardContent>
+          </Card>
+        </BlurFade>
+
+        <BlurFade delay={0.2} duration={0.5} inView>
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <Card key={index} className="flex flex-col">
+                <Skeleton className="aspect-[4/3] w-full rounded-t-lg" />
+                <CardHeader className="pb-4">
+                  <Skeleton className="h-6 w-3/4 mb-2" />
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-2/3" />
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <Skeleton className="h-4 w-1/2" />
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </BlurFade>
+      </>
+    );
+  }
+
   return (
     <>
       <BlurFade delay={0.1} duration={0.5} inView>
@@ -443,6 +537,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
           <Button
             onClick={handleCreateService}
             className="flex items-center gap-2"
+            disabled={isCheckingStripe || !isStripeFullyOnboarded}
           >
             <Plus className="w-4 h-4" />
             Ny tjeneste
@@ -759,6 +854,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
                   <Button
                     onClick={handleCreateService}
                     className="flex items-center gap-2"
+                    disabled={isCheckingStripe || !isStripeFullyOnboarded}
                   >
                     <Plus className="w-4 h-4" />
                     Legg til første tjeneste

@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/stores/cart.store";
-import { ArrowLeft, ShoppingCart, Trash2 } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -37,6 +38,7 @@ export default function CartPage() {
   } = useCartStore();
   
   const [removeServiceId, setRemoveServiceId] = useState<string | null>(null);
+  const [decreaseServiceId, setDecreaseServiceId] = useState<string | null>(null);
   const [user, setUser] = useState<User | null>(null);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
@@ -104,6 +106,19 @@ export default function CartPage() {
   const handleRemoveFromCart = (serviceId: string) => {
     removeFromCart(serviceId);
     setRemoveServiceId(null);
+  };
+
+  const handleDecreaseQuantity = (serviceId: string) => {
+    updateQuantity(serviceId, 0); // This will effectively remove the item
+    setDecreaseServiceId(null);
+  };
+
+  const handleQuantityChange = (serviceId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      setRemoveServiceId(serviceId);
+    } else {
+      updateQuantity(serviceId, newQuantity);
+    }
   };
 
   const handleClearCart = () => {
@@ -178,66 +193,122 @@ export default function CartPage() {
                 )}
 
                 {items.map((item) => (
-                  <div key={item.service.id} className="flex gap-4 p-4 border rounded-lg">
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{item.service.title}</h3>
-                      {item.service.description && (
-                        <p className="text-sm text-muted-foreground mb-2">
-                          {item.service.description}
-                        </p>
-                      )}
-                      
-                      <div className="flex items-center gap-4 text-sm">
-                        <span className="font-medium">
-                          {item.service.price} {item.service.currency}
-                        </span>
-                        <span className="text-muted-foreground">
-                          {item.service.duration_minutes} min
-                        </span>
-                      </div>
-                      
-                      {item.quantity > 1 && (
-                        <div className="mt-2">
-                          <span className="text-sm bg-muted px-2 py-1 rounded">
-                            Antall: {item.quantity}
+                  <div key={item.service.id} className="p-4 border rounded-lg space-y-4">
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-semibold mb-1">{item.service.title}</h3>
+                        {item.service.description && (
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {item.service.description}
+                          </p>
+                        )}
+                        
+                        <div className="flex items-center gap-4 text-sm">
+                          <span className="font-medium">
+                            {item.service.price} {item.service.currency}
+                          </span>
+                          <span className="text-muted-foreground">
+                            {item.service.duration_minutes} min
                           </span>
                         </div>
-                      )}
-                    </div>
-                    
-                    <div className="flex flex-col items-end justify-between">
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground hover:text-destructive"
-                            onClick={() => setRemoveServiceId(item.service.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Fjern tjeneste</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Er du sikker på at du vil fjerne "{item.service.title}" fra handlekurven?
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleRemoveFromCart(item.service.id)}>
-                              Fjern
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
+                      </div>
                       
-                      {item.quantity > 1 && (
-                        <span className="text-lg font-semibold">
-                          {(item.service.price * item.quantity).toFixed(2)} {item.service.currency}
-                        </span>
-                      )}
+                      <div className="flex flex-col items-end justify-between">
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-muted-foreground hover:text-destructive"
+                              onClick={() => setRemoveServiceId(item.service.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Fjern tjeneste</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Er du sikker på at du vil fjerne "{item.service.title}" fra handlekurven?
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleRemoveFromCart(item.service.id)}>
+                                Fjern
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                        
+                        {item.quantity > 1 && (
+                          <span className="text-lg font-semibold">
+                            {(item.service.price * item.quantity).toFixed(2)} {item.service.currency}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Quantity controls */}
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <span className="text-sm font-medium">Antall:</span>
+                      <div className="flex items-center gap-2">
+                        {item.quantity === 1 ? (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => setDecreaseServiceId(item.service.id)}
+                              >
+                                <ChevronDown className="w-3 h-3" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Fjern tjeneste</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Er du sikker på at du vil fjerne "{item.service.title}" fra handlekurven?
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setDecreaseServiceId(null)}>Avbryt</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDecreaseQuantity(item.service.id)}>
+                                  Fjern
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => updateQuantity(item.service.id, item.quantity - 1)}
+                          >
+                            <ChevronDown className="w-3 h-3" />
+                          </Button>
+                        )}
+                        <Input
+                          type="number"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value) || 0;
+                            handleQuantityChange(item.service.id, value);
+                          }}
+                          className="h-8 w-16 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                          min="1"
+                        />
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => updateQuantity(item.service.id, item.quantity + 1)}
+                        >
+                          <ChevronUp className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

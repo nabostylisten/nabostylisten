@@ -282,12 +282,14 @@ The booking process is now implemented as a guided 4-step stepper system that pr
 
 **Booking-Related Communication**:
 
-- Confirmation emails via Resend with unified detail links (`/bookinger/[bookingId]`)
+- Post-payment confirmation emails triggered from `/checkout/success` page
+- Customer receipt emails with payment confirmation and booking details
+- Stylist booking request emails sent only after successful payment
 - Status update emails for both customers and stylists
-- Branded email templates for booking confirmations and cancellations
+- Branded email templates following Nabostylisten design system
 - SMS reminders (if implemented)
 - In-app chat channel creation
-- Stylist notification system
+- Stylist notification system with user preference respect
 - Booking update notifications
 
 ## Current Implementation Status
@@ -348,6 +350,14 @@ The booking process is now implemented as a guided 4-step stepper system that pr
    - Status management for stylists (confirm/cancel with messages)
    - Automated email notifications for status changes
    - Simplified URL structure for email links and sharing
+
+9. **Post-Payment Email System** ⭐ **NEW**:
+   - Automated email sending triggered from checkout success page
+   - Customer receipt emails with payment confirmation details
+   - Stylist booking request emails sent only after successful payment
+   - Background email processing to avoid blocking checkout experience
+   - Respect for user notification preferences
+   - Comprehensive booking details in all communications
 
 ### 📋 Planned Features
 

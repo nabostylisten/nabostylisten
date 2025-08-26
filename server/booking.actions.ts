@@ -17,6 +17,7 @@ import { calculatePlatformFee } from "@/schemas/platform-config.schema";
 import { sendEmail } from "@/lib/resend-utils";
 import { BookingStatusUpdateEmail } from "@/transactional/emails/booking-status-update";
 import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
+import { BookingReceiptEmail } from "@/transactional/emails/booking-receipt";
 import { StripeOnboardingRequired } from "@/transactional/emails/stripe-onboarding-required";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -755,113 +756,8 @@ export async function createBookingWithServices(
             // Don't fail the booking creation, but log the error
         }
 
-        // Send new booking request email to stylist (respecting preferences)
-        try {
-            // Get stylist and customer information for email
-            const { data: stylist } = await supabase
-                .from("profiles")
-                .select("id, full_name, email")
-                .eq("id", input.stylistId)
-                .single();
-
-            const { data: customer } = await supabase
-                .from("profiles")
-                .select("id, full_name, email")
-                .eq("id", user.id)
-                .single();
-
-            if (stylist?.email && customer) {
-                // Check if stylist wants new booking request notifications
-                const canSendToStylist = await shouldReceiveNotification(
-                    input.stylistId,
-                    "new_booking_requests",
-                );
-
-                if (canSendToStylist) {
-                    // Get service details for email
-                    const { data: services } = await supabase
-                        .from("services")
-                        .select(
-                            "id, title, description, price, duration_minutes",
-                        )
-                        .in("id", input.serviceIds);
-
-                    const serviceName = services && services.length > 0
-                        ? services[0]?.title || "Booking"
-                        : "Booking";
-                    const serviceNameWithCount = services && services.length > 1
-                        ? `${serviceName} +${services.length - 1} til`
-                        : serviceName;
-
-                    const startTime = input.startTime;
-                    const endTime = input.endTime;
-                    const bookingDate = format(startTime, "EEEE d. MMMM yyyy", {
-                        locale: nb,
-                    });
-                    const bookingTime = `${format(startTime, "HH:mm")} - ${
-                        format(endTime, "HH:mm")
-                    }`;
-
-                    // Determine location and address
-                    let customerAddress = undefined;
-                    if (input.location === "customer") {
-                        if (input.customerAddress) {
-                            customerAddress =
-                                `${input.customerAddress.streetAddress}, ${input.customerAddress.postalCode} ${input.customerAddress.city}`;
-                        } else if (addressId) {
-                            // Get address details if using existing address
-                            const { data: address } = await supabase
-                                .from("addresses")
-                                .select("street_address, city, postal_code")
-                                .eq("id", addressId)
-                                .single();
-
-                            if (address) {
-                                customerAddress =
-                                    `${address.street_address}, ${address.postal_code} ${address.city}`;
-                            }
-                        }
-                    }
-
-                    const { error: newBookingEmailError } = await sendEmail({
-                        to: [stylist.email],
-                        subject: `Ny bookingforespørsel fra ${
-                            customer.full_name || "kunde"
-                        }`,
-                        react: NewBookingRequestEmail({
-                            logoUrl: getNabostylistenLogoUrl("png"),
-                            stylistProfileId: input.stylistId,
-                            stylistName: stylist.full_name || "Stylist",
-                            customerName: customer.full_name || "Kunde",
-                            bookingId: booking.id,
-                            serviceName: serviceNameWithCount,
-                            requestedDate: bookingDate,
-                            requestedTime: bookingTime,
-                            location: input.location,
-                            customerAddress: customerAddress,
-                            messageFromCustomer: input.messageToStylist,
-                            totalPrice: finalPrice,
-                            currency: "NOK",
-                            estimatedDuration: input.totalDurationMinutes,
-                            urgency: "medium" as const,
-                        }),
-                    });
-
-                    if (newBookingEmailError) {
-                        console.error(
-                            "Error sending new booking request email:",
-                            newBookingEmailError,
-                        );
-                    }
-                }
-            }
-        } catch (emailError) {
-            console.error(
-                "Error sending new booking request email:",
-                emailError,
-            );
-            // Don't fail the booking creation if email fails
-        }
+        // Note: Booking request emails are now sent after successful payment
+        // via the sendPostPaymentEmails function called from checkout success
 
         return {
             data: {
@@ -1469,6 +1365,214 @@ export async function notifyStripeOnboardingRequired({
         console.error("Error in notifyStripeOnboardingRequired:", error);
         return {
             error: "Failed to send notification emails",
+            data: null,
+        };
+    }
+}
+
+/**
+ * Send post-payment confirmation emails
+ * Called when payment is successful to send receipt to customer and booking request to stylist
+ */
+export async function sendPostPaymentEmails(bookingId: string) {
+    const supabase = await createClient();
+
+    try {
+        // Get comprehensive booking details
+        const { data: booking, error: bookingError } = await supabase
+            .from("bookings")
+            .select(`
+                *,
+                customer:profiles!bookings_customer_id_fkey(
+                    id,
+                    full_name,
+                    email
+                ),
+                stylist:profiles!bookings_stylist_id_fkey(
+                    id,
+                    full_name,
+                    email
+                ),
+                address:addresses(
+                    id,
+                    nickname,
+                    street_address,
+                    city,
+                    postal_code,
+                    country,
+                    country_code,
+                    entry_instructions
+                ),
+                discount:discounts(
+                    id,
+                    code,
+                    description,
+                    discount_percentage,
+                    discount_amount,
+                    currency
+                ),
+                booking_services(
+                    service:services(
+                        id,
+                        title,
+                        description,
+                        price,
+                        currency,
+                        duration_minutes,
+                        includes,
+                        requirements,
+                        at_customer_place,
+                        at_stylist_place,
+                        is_published
+                    )
+                )
+            `)
+            .eq("id", bookingId)
+            .single();
+
+        if (bookingError || !booking) {
+            console.error("Error fetching booking for post-payment emails:", bookingError);
+            return { error: "Booking not found", data: null };
+        }
+
+        if (!booking.customer?.email || !booking.stylist?.email) {
+            console.error("Missing customer or stylist email addresses");
+            return { error: "Missing email addresses", data: null };
+        }
+
+        // Prepare common email data
+        const services = booking.booking_services?.map((bs) =>
+            bs.service
+        ).filter(Boolean) || [];
+
+        const serviceName = services.length > 0
+            ? services[0]?.title || "Booking"
+            : "Booking";
+        const serviceNameWithCount = services.length > 1
+            ? `${serviceName} +${services.length - 1} til`
+            : serviceName;
+
+        const startTime = new Date(booking.start_time);
+        const endTime = new Date(booking.end_time);
+        const bookingDate = format(startTime, "EEEE d. MMMM yyyy", {
+            locale: nb,
+        });
+        const bookingTime = `${format(startTime, "HH:mm")} - ${
+            format(endTime, "HH:mm")
+        }`;
+
+        // Determine location and address
+        const location = booking.address_id ? "customer" : "stylist";
+        let customerAddress = undefined;
+        if (booking.address_id && booking.address) {
+            customerAddress =
+                `${booking.address.street_address}, ${booking.address.postal_code} ${booking.address.city}`;
+        }
+
+        const logoUrl = getNabostylistenLogoUrl("png");
+
+        // Check notification preferences
+        const [canSendToCustomer, canSendToStylist] = await Promise.all([
+            shouldReceiveNotification(
+                booking.customer_id,
+                "booking_confirmations",
+            ),
+            shouldReceiveNotification(
+                booking.stylist_id,
+                "new_booking_requests",
+            ),
+        ]);
+
+        const emailPromises: Promise<unknown>[] = [];
+
+        // Send booking receipt email to customer
+        if (canSendToCustomer) {
+            emailPromises.push(
+                sendEmail({
+                    to: [booking.customer.email],
+                    subject: `Betalingsbekreftelse: ${serviceName}`,
+                    react: BookingReceiptEmail({
+                        logoUrl,
+                        customerName: booking.customer.full_name || "Kunde",
+                        customerProfileId: booking.customer_id,
+                        stylistName: booking.stylist.full_name || "Stylist",
+                        bookingId: booking.id,
+                        serviceName: serviceNameWithCount,
+                        bookingDate,
+                        bookingTime,
+                        location: location as "stylist" | "customer",
+                        customerAddress,
+                        messageFromCustomer: booking.message_to_stylist || undefined,
+                        totalPrice: booking.total_price,
+                        currency: "NOK",
+                        estimatedDuration: booking.total_duration_minutes,
+                    }),
+                })
+            );
+        }
+
+        // Send booking request email to stylist
+        if (canSendToStylist) {
+            emailPromises.push(
+                sendEmail({
+                    to: [booking.stylist.email],
+                    subject: `Ny bookingforespørsel fra ${
+                        booking.customer.full_name || "kunde"
+                    }`,
+                    react: NewBookingRequestEmail({
+                        logoUrl,
+                        stylistProfileId: booking.stylist_id,
+                        stylistName: booking.stylist.full_name || "Stylist",
+                        customerName: booking.customer.full_name || "Kunde",
+                        bookingId: booking.id,
+                        serviceName: serviceNameWithCount,
+                        requestedDate: bookingDate,
+                        requestedTime: bookingTime,
+                        location: location,
+                        customerAddress: customerAddress,
+                        messageFromCustomer: booking.message_to_stylist || undefined,
+                        totalPrice: booking.total_price,
+                        currency: "NOK",
+                        estimatedDuration: booking.total_duration_minutes,
+                        urgency: "medium" as const,
+                    }),
+                })
+            );
+        }
+
+        // Send all emails in parallel
+        const emailResults = await Promise.allSettled(emailPromises);
+
+        // Log any email failures
+        emailResults.forEach((result, index) => {
+            if (result.status === "rejected") {
+                console.error(
+                    `Failed to send post-payment email ${index + 1}:`,
+                    result.reason,
+                );
+            }
+        });
+
+        const successfulEmails = emailResults.filter((r) =>
+            r.status === "fulfilled"
+        ).length;
+        const totalEmails = emailResults.length;
+
+        return {
+            data: {
+                emailsSent: successfulEmails,
+                totalAttempted: totalEmails,
+                customerNotified: canSendToCustomer ? successfulEmails > 0 : false,
+                stylistNotified: canSendToStylist
+                    ? successfulEmails > (canSendToCustomer ? 1 : 0)
+                    : false,
+            },
+            error: null,
+        };
+    } catch (error) {
+        console.error("Error in sendPostPaymentEmails:", error);
+        return {
+            error: "Failed to send post-payment emails",
             data: null,
         };
     }

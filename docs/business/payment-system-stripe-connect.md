@@ -26,6 +26,12 @@ The payment system will use Stripe Connect to handle marketplace transactions be
   - No immediate charge (funds reserved only)
   - Booking created with "pending" payment status
 
+- **After Successful Payment**:
+  - Customer receives payment receipt email with booking details
+  - Stylist receives booking request email (only after payment confirmation)
+  - Both emails sent automatically from `/checkout/success` page
+  - Email delivery respects user notification preferences
+
 - **24 Hours Before Service**:
   - Automatic payment capture
   - Platform fee (20%) automatically separated
@@ -57,8 +63,9 @@ The payment system will use Stripe Connect to handle marketplace transactions be
 
 2. **Booking Payment Flow**:
 
-   - [ ] Create payment intent with pre-authorization
-   - [ ] Store `stripe_payment_intent_id` in booking
+   - [x] Create payment intent with pre-authorization ✅ (implemented)
+   - [x] Store `stripe_payment_intent_id` in booking ✅ (implemented)
+   - [x] Post-payment email system with customer receipts and stylist notifications ✅ (implemented)
    - [ ] Implement capture logic 24 hours before service
 
 3. **Chat Integration**:

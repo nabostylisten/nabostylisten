@@ -10,6 +10,8 @@ import {
   AlertCircle,
   Loader2,
   ArrowRight,
+  Mail,
+  ExternalLink,
 } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -93,6 +95,44 @@ export function PaymentSuccessCard({
     queryKey: ["booking", bookingId],
     queryFn: () => getBookingDetails(bookingId),
   });
+
+  // Create support email content
+  const createSupportEmailUrl = (
+    booking: BookingWithRelations | null | undefined
+  ) => {
+    const subject = encodeURIComponent(
+      "Manglende kvittering - Booking " + bookingId
+    );
+
+    const services =
+      booking?.booking_services
+        ?.map((bs) => bs.service?.title)
+        .filter(Boolean)
+        .join(", ") || "Ikke spesifisert";
+    const bookingDate = booking?.start_time
+      ? new Date(booking.start_time).toLocaleDateString("no-NO")
+      : "Ikke spesifisert";
+    const totalAmount = booking?.total_price
+      ? `${booking.total_price} NOK`
+      : "Ikke spesifisert";
+
+    const body = encodeURIComponent(`Hei Nabostylisten-teamet,
+
+Jeg har fullført en betaling, men har ikke mottatt kvittering på e-post.
+
+Bookingdetaljer:
+- Booking ID: ${bookingId}
+- Betalings-ID: ${paymentIntentId}
+- Tjenester: ${services}
+- Dato: ${bookingDate}
+- Totalt beløp: ${totalAmount}
+
+Vennligst send meg kvitteringen på e-post eller bekreft at betalingen ble mottatt.
+
+Med vennlig hilsen`);
+
+    return `mailto:support@nabostylisten.no?subject=${subject}&body=${body}`;
+  };
 
   const booking = bookingResult?.data;
   const content =
@@ -422,8 +462,49 @@ export function PaymentSuccessCard({
           </Card>
         </BlurFade>
 
+        {/* Support contact card for successful payments */}
+        {(paymentStatus === "succeeded" ||
+          paymentStatus === "requires_capture") && (
+          <BlurFade delay={0.3} duration={0.5} inView>
+            <Card className="mt-6 border-muted bg-muted/30">
+              <CardContent className="pt-6">
+                <div className="flex items-start gap-3">
+                  <Mail className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="flex-1 space-y-2">
+                    <h4 className="font-medium text-sm">
+                      Ikke mottatt kvittering på e-post?
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      Hvis du ikke har mottatt kvittering innen 5 minutter,
+                      kontakt oss så sender vi den på nytt. Vi har alle
+                      betalingsdetaljene klare.
+                    </p>
+                    <div className="pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="h-8 text-xs"
+                      >
+                        <a
+                          href={createSupportEmailUrl(booking ?? null)}
+                          className="inline-flex items-center gap-1.5"
+                        >
+                          <Mail className="w-3 h-3" />
+                          Send support-henvendelse
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </BlurFade>
+        )}
+
         {/* Additional info */}
-        <BlurFade delay={0.25} duration={0.5} inView>
+        <BlurFade delay={0.35} duration={0.5} inView>
           <div className="mt-8 text-center text-sm text-muted-foreground space-y-2">
             <p>
               {paymentStatus === "succeeded" ||

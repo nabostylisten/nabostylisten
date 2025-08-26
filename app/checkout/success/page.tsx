@@ -5,14 +5,21 @@ import { Loader2 } from "lucide-react";
 // Get Stripe instance for server-side payment intent retrieval
 import { stripe } from "@/lib/stripe/config";
 import { PaymentSuccessCard } from "@/components/booking/payment-success-card";
+import { sendPostPaymentEmails } from "@/server/booking.actions";
 
 interface SuccessPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
-async function PaymentStatus({ paymentIntentId, bookingId }: { paymentIntentId: string; bookingId: string }) {
+async function PaymentStatus({
+  paymentIntentId,
+  bookingId,
+}: {
+  paymentIntentId: string;
+  bookingId: string;
+}) {
   let paymentIntent;
-  
+
   try {
     paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
   } catch (error) {
@@ -26,16 +33,39 @@ async function PaymentStatus({ paymentIntentId, bookingId }: { paymentIntentId: 
     );
   }
 
+  // Send post-payment emails if payment is successful
+  const isPaymentSuccessful =
+    paymentIntent.status === "succeeded" ||
+    paymentIntent.status === "requires_capture";
+
+  if (isPaymentSuccessful) {
+    // Send emails in the background - don't wait for completion to avoid blocking the page
+    await sendPostPaymentEmails(bookingId).catch((error) => {
+      console.error("Failed to send post-payment emails:", error);
+      // Don't fail the page render if emails fail
+    });
+  }
+
   return (
     <PaymentSuccessCard
-      paymentStatus={paymentIntent.status as "succeeded" | "requires_capture" | "processing" | "requires_payment_method"}
+      paymentStatus={
+        paymentIntent.status as
+          | "succeeded"
+          | "requires_capture"
+          | "processing"
+          | "requires_payment_method"
+      }
       paymentIntentId={paymentIntentId}
       bookingId={bookingId}
     />
   );
 }
 
-async function SuccessContent({ searchParams }: { searchParams: Awaited<SuccessPageProps['searchParams']> }) {
+async function SuccessContent({
+  searchParams,
+}: {
+  searchParams: Awaited<SuccessPageProps["searchParams"]>;
+}) {
   const paymentIntentId = searchParams.payment_intent as string;
   const bookingId = searchParams.booking_id as string;
 
@@ -44,10 +74,7 @@ async function SuccessContent({ searchParams }: { searchParams: Awaited<SuccessP
   }
 
   return (
-    <PaymentStatus 
-      paymentIntentId={paymentIntentId}
-      bookingId={bookingId}
-    />
+    <PaymentStatus paymentIntentId={paymentIntentId} bookingId={bookingId} />
   );
 }
 

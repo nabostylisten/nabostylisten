@@ -1440,6 +1440,21 @@ export async function sendPostPaymentEmails(bookingId: string) {
             return { error: "Missing email addresses", data: null };
         }
 
+        // Check if emails have already been sent to prevent duplicates
+        if (booking.customer_receipt_email_sent_at && booking.stylist_notification_email_sent_at) {
+            console.log("Post-payment emails already sent for booking:", bookingId);
+            return {
+                data: {
+                    emailsSent: 2,
+                    totalAttempted: 2,
+                    customerNotified: true,
+                    stylistNotified: true,
+                    message: "Emails already sent"
+                },
+                error: null,
+            };
+        }
+
         // Prepare common email data
         const services = booking.booking_services?.map((bs) =>
             bs.service
@@ -1558,14 +1573,55 @@ export async function sendPostPaymentEmails(bookingId: string) {
         ).length;
         const totalEmails = emailResults.length;
 
+        // Determine which emails were successfully sent
+        let customerEmailSent = false;
+        let stylistEmailSent = false;
+        
+        if (canSendToCustomer && canSendToStylist && emailResults.length === 2) {
+            // Both emails attempted
+            customerEmailSent = emailResults[0].status === "fulfilled";
+            stylistEmailSent = emailResults[1].status === "fulfilled";
+        } else if (canSendToCustomer && !canSendToStylist && emailResults.length === 1) {
+            // Only customer email attempted
+            customerEmailSent = emailResults[0].status === "fulfilled";
+        } else if (!canSendToCustomer && canSendToStylist && emailResults.length === 1) {
+            // Only stylist email attempted  
+            stylistEmailSent = emailResults[0].status === "fulfilled";
+        }
+
+        // Update database with timestamps for successfully sent emails
+        const updateData: Partial<{
+            customer_receipt_email_sent_at: string;
+            stylist_notification_email_sent_at: string;
+        }> = {};
+        const now = new Date().toISOString();
+        
+        if (customerEmailSent && !booking.customer_receipt_email_sent_at) {
+            updateData.customer_receipt_email_sent_at = now;
+        }
+        if (stylistEmailSent && !booking.stylist_notification_email_sent_at) {
+            updateData.stylist_notification_email_sent_at = now;
+        }
+
+        // Update booking record if any emails were sent
+        if (Object.keys(updateData).length > 0) {
+            const { error: updateError } = await supabase
+                .from("bookings")
+                .update(updateData)
+                .eq("id", bookingId);
+                
+            if (updateError) {
+                console.error("Failed to update email tracking fields:", updateError);
+                // Don't fail the entire operation, just log the error
+            }
+        }
+
         return {
             data: {
                 emailsSent: successfulEmails,
                 totalAttempted: totalEmails,
-                customerNotified: canSendToCustomer ? successfulEmails > 0 : false,
-                stylistNotified: canSendToStylist
-                    ? successfulEmails > (canSendToCustomer ? 1 : 0)
-                    : false,
+                customerNotified: canSendToCustomer ? customerEmailSent : false,
+                stylistNotified: canSendToStylist ? stylistEmailSent : false,
             },
             error: null,
         };

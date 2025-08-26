@@ -452,7 +452,7 @@ Med vennlig hilsen`);
                       rel="noopener noreferrer"
                       className="text-sm text-muted-foreground hover:text-primary underline flex items-center gap-1"
                     >
-                      Se i Stripe Dashboard
+                      Se i Stripe-dashboard
                       <ArrowRight className="w-3 h-3" />
                     </a>
                   </div>

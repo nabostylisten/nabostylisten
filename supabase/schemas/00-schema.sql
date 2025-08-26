@@ -251,7 +251,11 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     total_duration_minutes integer NOT NULL,
 
     -- Stripe Integration
-    stripe_payment_intent_id text
+    stripe_payment_intent_id text,
+    
+    -- Email tracking
+    customer_receipt_email_sent_at timestamp with time zone,
+    stylist_notification_email_sent_at timestamp with time zone
 );
 
 -- Junction table to link a single booking to multiple services

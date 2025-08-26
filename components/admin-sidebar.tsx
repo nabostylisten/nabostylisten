@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Scissors } from "lucide-react";
+import { LayoutDashboard, FileText, Scissors, CreditCard } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 
 interface AdminSidebarProps {
@@ -28,6 +28,12 @@ const adminSidebarItems = [
     href: "/admin/tjenester",
     icon: Scissors,
     description: "Administrer kategorier",
+  },
+  {
+    title: "Betalinger",
+    href: "/admin/betalinger",
+    icon: CreditCard,
+    description: "Administrer betalinger og refusjon",
   },
 ];
 

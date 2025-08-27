@@ -2,14 +2,14 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "./middleware";
-import { 
-  getDateRange, 
-  groupDataByPeriod, 
+import {
+  CustomDateRange,
   fillMissingPeriods,
-  CustomDateRange 
+  getDateRange,
+  groupDataByPeriod,
 } from "@/lib/charts/date-utils";
 import { TimePeriod } from "@/lib/charts/time-periods";
-import { subDays, subMonths } from "date-fns";
+import { subDays } from "date-fns";
 
 // ==================== OVERVIEW TAB ACTIONS ====================
 
@@ -28,9 +28,9 @@ export async function getPlatformKPIs() {
 
     const userCounts = {
       total: users?.length || 0,
-      customers: users?.filter(u => u.role === "customer").length || 0,
-      stylists: users?.filter(u => u.role === "stylist").length || 0,
-      admins: users?.filter(u => u.role === "admin").length || 0,
+      customers: users?.filter((u) => u.role === "customer").length || 0,
+      stylists: users?.filter((u) => u.role === "stylist").length || 0,
+      admins: users?.filter((u) => u.role === "admin").length || 0,
     };
 
     // Get active bookings this month
@@ -49,13 +49,14 @@ export async function getPlatformKPIs() {
     // Get revenue this month
     const { data: payments, error: paymentsError } = await supabase
       .from("payments")
-      .select("total_amount")
+      .select("final_amount")
       .gte("created_at", startOfMonth.toISOString())
       .eq("status", "succeeded");
 
     if (paymentsError) throw paymentsError;
 
-    const revenueThisMonth = payments?.reduce((sum, p) => sum + (p.total_amount || 0), 0) || 0;
+    const revenueThisMonth = payments?.reduce((sum, p) =>
+      sum + (p.final_amount || 0), 0) || 0;
 
     // Get pending applications
     const { data: applications, error: applicationsError } = await supabase
@@ -68,7 +69,7 @@ export async function getPlatformKPIs() {
     return {
       users: userCounts,
       activeBookingsThisMonth: bookings?.length || 0,
-      revenueThisMonth: revenueThisMonth / 100, // Convert from �re to kr
+      revenueThisMonth: revenueThisMonth, // Already in NOK (not øre)
       pendingApplications: applications?.length || 0,
     };
   } catch (error) {
@@ -79,7 +80,7 @@ export async function getPlatformKPIs() {
 
 export async function getUserGrowthTrends(
   period: TimePeriod = "last_30_days",
-  customRange?: CustomDateRange
+  customRange?: CustomDateRange,
 ) {
   await requireAdmin();
   const supabase = await createClient();
@@ -102,16 +103,16 @@ export async function getUserGrowthTrends(
       period,
       (items) => ({
         total: items.length,
-        customers: items.filter(u => u.role === "customer").length,
-        stylists: items.filter(u => u.role === "stylist").length,
-      })
+        customers: items.filter((u) => u.role === "customer").length,
+        stylists: items.filter((u) => u.role === "stylist").length,
+      }),
     );
 
     return fillMissingPeriods(
       grouped,
       period,
       { total: 0, customers: 0, stylists: 0 },
-      endDate
+      endDate,
     );
   } catch (error) {
     console.error("Error fetching user growth trends:", error);
@@ -121,7 +122,7 @@ export async function getUserGrowthTrends(
 
 export async function getBookingVolumeTrends(
   period: TimePeriod = "last_30_days",
-  customRange?: CustomDateRange
+  customRange?: CustomDateRange,
 ) {
   await requireAdmin();
   const supabase = await createClient();
@@ -144,18 +145,18 @@ export async function getBookingVolumeTrends(
       period,
       (items) => ({
         total: items.length,
-        confirmed: items.filter(b => b.status === "confirmed").length,
-        pending: items.filter(b => b.status === "pending").length,
-        cancelled: items.filter(b => b.status === "cancelled").length,
-        completed: items.filter(b => b.status === "completed").length,
-      })
+        confirmed: items.filter((b) => b.status === "confirmed").length,
+        pending: items.filter((b) => b.status === "pending").length,
+        cancelled: items.filter((b) => b.status === "cancelled").length,
+        completed: items.filter((b) => b.status === "completed").length,
+      }),
     );
 
     return fillMissingPeriods(
       grouped,
       period,
       { total: 0, confirmed: 0, pending: 0, cancelled: 0, completed: 0 },
-      endDate
+      endDate,
     );
   } catch (error) {
     console.error("Error fetching booking volume trends:", error);
@@ -165,7 +166,7 @@ export async function getBookingVolumeTrends(
 
 export async function getRevenueOverview(
   period: TimePeriod = "last_30_days",
-  customRange?: CustomDateRange
+  customRange?: CustomDateRange,
 ) {
   await requireAdmin();
   const supabase = await createClient();
@@ -175,7 +176,9 @@ export async function getRevenueOverview(
 
     const { data: payments, error } = await supabase
       .from("payments")
-      .select("id, created_at, total_amount, platform_fee, stylist_payout_amount, status")
+      .select(
+        "id, created_at, final_amount, platform_fee, stylist_payout, status",
+      )
       .gte("created_at", startDate.toISOString())
       .lte("created_at", endDate.toISOString())
       .order("created_at", { ascending: true });
@@ -188,22 +191,22 @@ export async function getRevenueOverview(
       period,
       (items) => ({
         totalRevenue: items
-          .filter(p => p.status === "succeeded")
-          .reduce((sum, p) => sum + (p.total_amount || 0), 0) / 100,
+          .filter((p) => p.status === "succeeded")
+          .reduce((sum, p) => sum + (p.final_amount || 0), 0),
         platformFees: items
-          .filter(p => p.status === "succeeded")
-          .reduce((sum, p) => sum + (p.platform_fee || 0), 0) / 100,
+          .filter((p) => p.status === "succeeded")
+          .reduce((sum, p) => sum + (p.platform_fee || 0), 0),
         stylistPayouts: items
-          .filter(p => p.status === "succeeded")
-          .reduce((sum, p) => sum + (p.stylist_payout_amount || 0), 0) / 100,
-      })
+          .filter((p) => p.status === "succeeded")
+          .reduce((sum, p) => sum + (p.stylist_payout || 0), 0),
+      }),
     );
 
     return fillMissingPeriods(
       grouped,
       period,
       { totalRevenue: 0, platformFees: 0, stylistPayouts: 0 },
-      endDate
+      endDate,
     );
   } catch (error) {
     console.error("Error fetching revenue overview:", error);
@@ -252,23 +255,26 @@ export async function getRecentActivity(limit: number = 10) {
 
     // Combine and sort all activities by created_at
     const activities = [
-      ...(bookings || []).map(b => ({
+      ...(bookings || []).map((b) => ({
         id: b.id,
         type: "booking" as const,
         created_at: b.created_at,
-        description: `Ny booking fra ${b.customer?.full_name} til ${b.stylist?.full_name}`,
+        description:
+          `Ny booking fra ${b.customer?.full_name} til ${b.stylist?.full_name}`,
         status: b.status,
         amount: b.total_price,
       })),
-      ...(users || []).map(u => ({
+      ...(users || []).map((u) => ({
         id: u.id,
         type: "user" as const,
         created_at: u.created_at,
-        description: `Ny ${u.role === "stylist" ? "stylist" : "kunde"} registrert: ${u.full_name}`,
+        description: `Ny ${
+          u.role === "stylist" ? "stylist" : "kunde"
+        } registrert: ${u.full_name}`,
         status: "active",
         amount: null,
       })),
-      ...(applications || []).map(a => ({
+      ...(applications || []).map((a) => ({
         id: a.id,
         type: "application" as const,
         created_at: a.created_at,
@@ -277,7 +283,9 @@ export async function getRecentActivity(limit: number = 10) {
         amount: null,
       })),
     ]
-      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      )
       .slice(0, limit);
 
     return activities;
@@ -318,10 +326,10 @@ export async function getCustomerStats() {
 
     const stats = {
       totalCustomers: customers?.length || 0,
-      newCustomersLast30Days: customers?.filter(c => 
+      newCustomersLast30Days: customers?.filter((c) =>
         new Date(c.created_at) >= thirtyDaysAgo
       ).length || 0,
-      activeCustomers: customers?.filter(c => 
+      activeCustomers: customers?.filter((c) =>
         c.bookings && c.bookings.length > 0
       ).length || 0,
       averageLifetimeValue: 0,
@@ -331,7 +339,7 @@ export async function getCustomerStats() {
     if (customers && customers.length > 0) {
       const totalValue = customers.reduce((sum, c) => {
         const customerTotal = (c.bookings || [])
-          .filter(b => b.status === "completed")
+          .filter((b) => b.status === "completed")
           .reduce((bSum, b) => bSum + (b.total_price || 0), 0);
         return sum + customerTotal;
       }, 0);
@@ -374,11 +382,13 @@ export async function getStylistStats() {
 
     if (error) throw error;
 
-    const stylistsWithStats = (stylists || []).map(s => {
+    const stylistsWithStats = (stylists || []).map((s) => {
       const totalBookings = s.bookings?.length || 0;
-      const completedBookings = s.bookings?.filter(b => b.status === "completed").length || 0;
+      const completedBookings = s.bookings?.filter((b) =>
+        b.status === "completed"
+      ).length || 0;
       const revenue = s.bookings
-        ?.filter(b => b.status === "completed")
+        ?.filter((b) => b.status === "completed")
         .reduce((sum, b) => sum + (b.total_price || 0), 0) || 0;
       const avgRating = s.reviews && s.reviews.length > 0
         ? s.reviews.reduce((sum, r) => sum + r.rating, 0) / s.reviews.length
@@ -388,7 +398,8 @@ export async function getStylistStats() {
         id: s.id,
         full_name: s.full_name,
         email: s.email,
-        servicesCount: s.services?.filter(svc => svc.is_published).length || 0,
+        servicesCount: s.services?.filter((svc) => svc.is_published).length ||
+          0,
         totalBookings,
         completedBookings,
         revenue,
@@ -409,7 +420,7 @@ export async function getStylistStats() {
 
 export async function getBookingStats(
   period: TimePeriod = "last_30_days",
-  customRange?: CustomDateRange
+  customRange?: CustomDateRange,
 ) {
   await requireAdmin();
   const supabase = await createClient();
@@ -427,18 +438,28 @@ export async function getBookingStats(
 
     const stats = {
       totalBookings: bookings?.length || 0,
-      pendingBookings: bookings?.filter(b => b.status === "pending").length || 0,
-      confirmedBookings: bookings?.filter(b => b.status === "confirmed").length || 0,
-      completedBookings: bookings?.filter(b => b.status === "completed").length || 0,
-      cancelledBookings: bookings?.filter(b => b.status === "cancelled").length || 0,
+      pendingBookings: bookings?.filter((b) => b.status === "pending").length ||
+        0,
+      confirmedBookings: bookings?.filter((b) =>
+        b.status === "confirmed"
+      ).length || 0,
+      completedBookings: bookings?.filter((b) =>
+        b.status === "completed"
+      ).length || 0,
+      cancelledBookings:
+        bookings?.filter((b) => b.status === "cancelled").length || 0,
       averageBookingValue: 0,
       cancellationRate: 0,
     };
 
     if (bookings && bookings.length > 0) {
-      const totalValue = bookings.reduce((sum, b) => sum + (b.total_price || 0), 0);
+      const totalValue = bookings.reduce(
+        (sum, b) => sum + (b.total_price || 0),
+        0,
+      );
       stats.averageBookingValue = totalValue / bookings.length;
-      stats.cancellationRate = (stats.cancelledBookings / stats.totalBookings) * 100;
+      stats.cancellationRate = (stats.cancelledBookings / stats.totalBookings) *
+        100;
     }
 
     return stats;
@@ -471,13 +492,14 @@ export async function getBookingsByServiceCategory() {
 
     // Count bookings by category
     const categoryCount: Record<string, number> = {};
-    
-    bookings?.forEach(booking => {
-      booking.booking_services?.forEach(bs => {
-        bs.services?.service_service_categories?.forEach(ssc => {
+
+    bookings?.forEach((booking) => {
+      booking.booking_services?.forEach((bs) => {
+        bs.services?.service_service_categories?.forEach((ssc) => {
           const categoryName = ssc.service_categories?.name;
           if (categoryName) {
-            categoryCount[categoryName] = (categoryCount[categoryName] || 0) + 1;
+            categoryCount[categoryName] = (categoryCount[categoryName] || 0) +
+              1;
           }
         });
       });
@@ -521,19 +543,26 @@ export async function getServiceStats() {
 
     const stats = {
       totalServices: services?.length || 0,
-      publishedServices: services?.filter(s => s.is_published).length || 0,
+      publishedServices: services?.filter((s) => s.is_published).length || 0,
       averagePrice: 0,
-      servicesAtCustomer: services?.filter(s => s.at_customer_place).length || 0,
-      servicesAtStylist: services?.filter(s => s.at_stylist_place).length || 0,
+      servicesAtCustomer: services?.filter((s) => s.at_customer_place).length ||
+        0,
+      servicesAtStylist: services?.filter((s) => s.at_stylist_place).length ||
+        0,
       categoriesCount: new Set(
-        services?.flatMap(s => 
-          s.service_service_categories?.map(ssc => ssc.service_categories?.name) || []
-        )
+        services?.flatMap((s) =>
+          s.service_service_categories?.map((ssc) =>
+            ssc.service_categories?.name
+          ) || []
+        ),
       ).size,
     };
 
     if (services && services.length > 0) {
-      const totalPrice = services.reduce((sum, s) => sum + (Number(s.price) || 0), 0);
+      const totalPrice = services.reduce(
+        (sum, s) => sum + (Number(s.price) || 0),
+        0,
+      );
       stats.averagePrice = totalPrice / services.length;
     }
 
@@ -563,7 +592,7 @@ export async function getTopServices(limit: number = 10) {
     if (error) throw error;
 
     const servicesWithBookingCount = (services || [])
-      .map(s => ({
+      .map((s) => ({
         id: s.id,
         title: s.title,
         stylistName: s.profiles?.full_name || "Unknown",

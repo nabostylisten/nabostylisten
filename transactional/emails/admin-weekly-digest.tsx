@@ -235,18 +235,10 @@ export const AdminWeeklyDigestEmail = ({
   weekEnd = "19. januar 2025",
   metrics,
 }: AdminWeeklyDigestEmailProps) => {
-  const userGrowth = formatPercentChange(
-    metrics.newUsers.total,
-    metrics.newUsers.previousWeek
-  );
-  const bookingGrowth = formatPercentChange(
-    metrics.bookings.total,
-    metrics.bookings.previousWeekTotal
-  );
-  const revenueGrowth = formatPercentChange(
-    metrics.revenue.totalBookingsValue,
-    metrics.revenue.previousWeekRevenue
-  );
+  // These could be used for future trend indicators in the email if needed
+  // const userGrowth = formatPercentChange(metrics.newUsers.total, metrics.newUsers.previousWeek);
+  // const bookingGrowth = formatPercentChange(metrics.bookings.total, metrics.bookings.previousWeekTotal);
+  // const revenueGrowth = formatPercentChange(metrics.revenue.totalBookingsValue, metrics.revenue.previousWeekRevenue);
 
   return (
     <Html>

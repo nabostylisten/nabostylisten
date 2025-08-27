@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "created_at": "2025-08-27T14:43:57.443Z",
+    "total_processed": 5,
+    "successful_creations": 5,
+    "failed_creations": 0
+  },
+  "results": [
+    {
+      "id": "1763609f-34e4-4bbd-87be-898a39b512f6",
+      "success": true
+    },
+    {
+      "id": "3920843b-738f-496d-8d0e-9c54ec696939",
+      "success": true
+    },
+    {
+      "id": "4bbd6832-c31f-4456-a5c8-298fb2ed88ab",
+      "success": true
+    },
+    {
+      "id": "4fbb10f5-35c9-40d4-a9ab-31af521c7799",
+      "success": true
+    },
+    {
+      "id": "5107388a-26c7-48fa-8e43-efde6803c5d8",
+      "success": true
+    }
+  ]
+}

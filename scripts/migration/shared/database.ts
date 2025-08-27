@@ -588,4 +588,94 @@ export class MigrationDatabase {
       return -1;
     }
   }
+
+  /**
+   * Create booking record
+   */
+  async createBooking(
+    booking: Database["public"]["Tables"]["bookings"]["Insert"]
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabase
+        .from("bookings")
+        .insert(booking);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Get count of bookings
+   */
+  async getBookingCount(): Promise<number> {
+    try {
+      const { count, error } = await this.supabase
+        .from("bookings")
+        .select("*", { count: "exact", head: true });
+
+      if (error) {
+        this.logger.error('Failed to get booking count', error);
+        return -1;
+      }
+
+      return count || 0;
+    } catch (error) {
+      this.logger.error('Failed to get booking count', error);
+      return -1;
+    }
+  }
+
+  /**
+   * Create booking-service relationship record
+   */
+  async createBookingService(
+    bookingService: Database["public"]["Tables"]["booking_services"]["Insert"]
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabase
+        .from("booking_services")
+        .insert(bookingService);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Get count of booking-service relationships
+   */
+  async getBookingServiceCount(): Promise<number> {
+    try {
+      const { count, error } = await this.supabase
+        .from("booking_services")
+        .select("*", { count: "exact", head: true });
+
+      if (error) {
+        this.logger.error('Failed to get booking service count', error);
+        return -1;
+      }
+
+      return count || 0;
+    } catch (error) {
+      this.logger.error('Failed to get booking service count', error);
+      return -1;
+    }
+  }
 }

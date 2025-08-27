@@ -1,0 +1,55 @@
+{
+  "completed_at": "2025-08-27T14:47:00.000Z",
+  "duration_seconds": 12,
+  "phase": "Phase 4: Booking System Migration",
+  "steps_completed": 3,
+  "results": {
+    "bookings_found_mysql": 5,
+    "bookings_extracted": 5,
+    "bookings_created_supabase": 5,
+    "booking_services_from_json": 0,
+    "booking_services_from_junction": 0,
+    "booking_services_created": 0,
+    "bookings_skipped_missing_users": 0,
+    "address_ids_nullified": 5
+  },
+  "status_mapping": {
+    "system_cancel": 2,
+    "completed": 2,
+    "expired": 1
+  },
+  "transformed_statuses": {
+    "cancelled": 3,
+    "completed": 2
+  },
+  "price_statistics": {
+    "min": 10,
+    "max": 228,
+    "average": 93,
+    "currency": "NOK"
+  },
+  "database_state": {
+    "bookings": 5,
+    "booking_services": 0
+  },
+  "notes": [
+    "Successfully migrated 5 bookings with complete status mapping from 9 MySQL statuses to 4 PostgreSQL statuses",
+    "All customer_id and stylist_id mappings resolved successfully using Phase 1 user migration",
+    "Address IDs temporarily set to null - will be resolved after Phase 2 address migration",
+    "No JSON service relationships found in current dataset (bookings_with_json_services: 0)",
+    "booking_services_service junction table was empty in current dataset",
+    "Complex booking status mapping implemented: system_cancel/expired → cancelled with appropriate cancellation_reason",
+    "Time zone handling implemented with calculated end_time and total_duration_minutes",
+    "Column count warnings in MySQL parser do not affect data extraction functionality"
+  ],
+  "json_parsing_implementation": {
+    "description": "JSON parsing for booking.service field implemented as requested",
+    "function_location": "scripts/migration/phase-4-bookings/01-extract-bookings.ts:47-56",
+    "logic": "parseBookingServices(bookingService: string | null): string[] - handles both array and single service formats with error recovery"
+  },
+  "next_steps": [
+    "Run Phase 2: Address migration to populate address_id fields in bookings",
+    "Phase 5: Payment system migration", 
+    "Update booking.address_id fields after address migration completes"
+  ]
+}

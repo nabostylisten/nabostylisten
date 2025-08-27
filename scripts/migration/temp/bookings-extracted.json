@@ -1,0 +1,83 @@
+{
+  "metadata": {
+    "extracted_at": "2025-08-27T14:42:11.065Z",
+    "total_bookings": 5
+  },
+  "bookings": [
+    {
+      "id": "1763609f-34e4-4bbd-87be-898a39b512f6",
+      "customer_id": "6120c1e5-bfd8-4caf-b443-9649f8d13d8d",
+      "stylist_id": "ef651125-f7f1-41fa-bdb8-fd746b026b04",
+      "start_time": "2025-02-28 09:45:00",
+      "end_time": "2025-02-28T09:45:00.000Z",
+      "message_to_stylist": "",
+      "status": "cancelled",
+      "cancelled_at": "2025-06-13 19:50:06.000000",
+      "cancellation_reason": "System cancellation",
+      "address_id": "053f4acd-2388-4eb5-9cb4-16d4f3697933",
+      "total_price": 10,
+      "total_duration_minutes": 60,
+      "service_ids": []
+    },
+    {
+      "id": "3920843b-738f-496d-8d0e-9c54ec696939",
+      "customer_id": "6120c1e5-bfd8-4caf-b443-9649f8d13d8d",
+      "stylist_id": "ef651125-f7f1-41fa-bdb8-fd746b026b04",
+      "start_time": "2025-03-12 02:00:00",
+      "end_time": "2025-03-12T02:00:00.000Z",
+      "message_to_stylist": "",
+      "status": "cancelled",
+      "cancelled_at": "2025-06-13 19:50:06.000000",
+      "cancellation_reason": "System cancellation",
+      "address_id": "053f4acd-2388-4eb5-9cb4-16d4f3697933",
+      "total_price": 10,
+      "total_duration_minutes": 60,
+      "service_ids": []
+    },
+    {
+      "id": "4bbd6832-c31f-4456-a5c8-298fb2ed88ab",
+      "customer_id": "d82662ec-3cfd-4fbe-8226-6a5bf487bc2d",
+      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "start_time": "2025-06-18 09:15:00",
+      "end_time": "2025-06-18T08:15:00.000Z",
+      "message_to_stylist": "testing",
+      "status": "completed",
+      "cancelled_at": null,
+      "cancellation_reason": null,
+      "address_id": "037265cc-c4b9-4ef6-9d53-de0875757b81",
+      "total_price": 228,
+      "total_duration_minutes": 60,
+      "service_ids": []
+    },
+    {
+      "id": "4fbb10f5-35c9-40d4-a9ab-31af521c7799",
+      "customer_id": "d82662ec-3cfd-4fbe-8226-6a5bf487bc2d",
+      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "start_time": "2025-06-11 10:15:00",
+      "end_time": "2025-06-11T09:15:00.000Z",
+      "message_to_stylist": "test",
+      "status": "completed",
+      "cancelled_at": null,
+      "cancellation_reason": null,
+      "address_id": "037265cc-c4b9-4ef6-9d53-de0875757b81",
+      "total_price": 118,
+      "total_duration_minutes": 60,
+      "service_ids": []
+    },
+    {
+      "id": "5107388a-26c7-48fa-8e43-efde6803c5d8",
+      "customer_id": "6120c1e5-bfd8-4caf-b443-9649f8d13d8d",
+      "stylist_id": "1c67ff6e-e569-461c-848f-3a5eff00cb7e",
+      "start_time": "2025-06-11 06:00:00",
+      "end_time": "2025-06-11T05:00:00.000Z",
+      "message_to_stylist": "",
+      "status": "cancelled",
+      "cancelled_at": "2025-06-13 19:50:06.000000",
+      "cancellation_reason": "Booking expired",
+      "address_id": "c25be5b3-154f-4f39-b8dc-6b672749504e",
+      "total_price": 100,
+      "total_duration_minutes": 60,
+      "service_ids": []
+    }
+  ]
+}

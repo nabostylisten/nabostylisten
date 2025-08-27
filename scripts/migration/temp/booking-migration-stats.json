@@ -1,0 +1,13 @@
+{
+  "total_bookings": 5,
+  "processed_bookings": 5,
+  "skipped_bookings": 0,
+  "status_mappings": {
+    "system_cancel": 2,
+    "completed": 2,
+    "expired": 1
+  },
+  "bookings_with_json_services": 0,
+  "bookings_missing_user_mapping": 0,
+  "errors": 0
+}

@@ -1,0 +1,65 @@
+
+
+=== Migration Session Started: 2025-08-27T13:39:15.693Z ===
+[2025-08-27T13:39:15.695Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-08-27T13:39:15.696Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-08-27T13:39:15.696Z] [INFO ] Verifying prerequisites...
+[2025-08-27T13:39:15.696Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T13:39:15.720Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T13:39:15.720Z] [INFO ] Created temp directory: /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-08-27T13:39:15.741Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T13:39:15.741Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-08-27T13:39:15.741Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-08-27T13:39:15.783Z ===
+[2025-08-27T13:39:15.784Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-08-27T13:39:15.794Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T13:39:15.795Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-08-27T13:39:15.797Z] [ERROR] Failed to extract buyer records
+Data: {
+  "message": "Could not find CREATE TABLE statement for buyer",
+  "stack": "Error: Could not find CREATE TABLE statement for buyer\n    at extractTableData (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:75:17)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:26:27)\n    at extractBuyers (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:21:48)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:286:33)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:283:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T13:39:15.798Z] [ERROR] Failed to get dump statistics
+Data: {
+  "message": "Could not find CREATE TABLE statement for buyer",
+  "stack": "Error: Could not find CREATE TABLE statement for buyer\n    at extractTableData (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:75:17)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:26:27)\n    at extractBuyers (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:21:48)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:286:33)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:283:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T13:39:15.798Z] [ERROR] Phase 1 Step 1 failed
+Data: {
+  "message": "Could not find CREATE TABLE statement for buyer",
+  "stack": "Error: Could not find CREATE TABLE statement for buyer\n    at extractTableData (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:75:17)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:26:27)\n    at extractBuyers (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:21:48)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:286:33)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:283:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T13:39:15.800Z] [ERROR] ❌ Step 1: Extract Users failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:98:9)"
+}
+[2025-08-27T13:39:15.801Z] [WARN ] Migration stopped due to error. To resume:
+[2025-08-27T13:39:15.801Z] [INFO ] 1. Fix the error in phase-1-users/01-extract-users.ts
+[2025-08-27T13:39:15.801Z] [INFO ] 2. Re-run this script - it will continue from where it left off
+[2025-08-27T13:39:15.801Z] [INFO ] 3. Or run individual scripts manually for debugging
+[2025-08-27T13:39:15.801Z] [ERROR] ❌ Phase 1 migration failed after 0s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:98:9)"
+}
+[2025-08-27T13:39:15.801Z] [INFO ] 
+Troubleshooting:
+[2025-08-27T13:39:15.801Z] [INFO ] 1. Check the error logs above
+[2025-08-27T13:39:15.801Z] [INFO ] 2. Verify database connection and credentials
+[2025-08-27T13:39:15.801Z] [INFO ] 3. Check that the MySQL dump file exists and is readable
+[2025-08-27T13:39:15.801Z] [INFO ] 4. Run individual scripts to isolate the issue

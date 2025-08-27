@@ -1,0 +1,25 @@
+[2025-08-27T13:39:15.797Z] [ERROR] Failed to extract buyer records
+Data: {
+  "message": "Could not find CREATE TABLE statement for buyer",
+  "stack": "Error: Could not find CREATE TABLE statement for buyer\n    at extractTableData (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:75:17)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:26:27)\n    at extractBuyers (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:21:48)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:286:33)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:283:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T13:39:15.798Z] [ERROR] Failed to get dump statistics
+Data: {
+  "message": "Could not find CREATE TABLE statement for buyer",
+  "stack": "Error: Could not find CREATE TABLE statement for buyer\n    at extractTableData (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:75:17)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:26:27)\n    at extractBuyers (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:21:48)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:286:33)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:283:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T13:39:15.798Z] [ERROR] Phase 1 Step 1 failed
+Data: {
+  "message": "Could not find CREATE TABLE statement for buyer",
+  "stack": "Error: Could not find CREATE TABLE statement for buyer\n    at extractTableData (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:75:17)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:26:27)\n    at extractBuyers (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:21:48)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:286:33)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:283:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T13:39:15.800Z] [ERROR] ❌ Step 1: Extract Users failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:98:9)"
+}
+[2025-08-27T13:39:15.801Z] [ERROR] ❌ Phase 1 migration failed after 0s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:98:9)"
+}

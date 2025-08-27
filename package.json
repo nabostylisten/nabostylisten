@@ -16,6 +16,7 @@
     "supabase:migrate:up": "bun ensure:docker && supabase migration up",
     "supabase:db:push": "supabase db push",
     "supabase:db:reset": "supabase db reset && bun run scripts/supabase/buckets.ts create && bun run with-env bun scripts/supabase/stripe-sync-engine.ts && bun run seed:stripe",
+    "supabase:db:reset:no-seed": "supabase db reset --no-seed",
     "supabase:db:types": "bun ensure:docker && bun ensure:nabostylisten-db && supabase gen types typescript --local --schema public,stripe,gis > types/database.types.ts",
     "supabase:db:types:zod": "supazod -i types/database.types.ts -o schemas/database.schema.ts -s public,stripe,gis",
     "remove:public:prefix": "tsx scripts/remove-public-prefix.ts",

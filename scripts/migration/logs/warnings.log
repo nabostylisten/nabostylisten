@@ -1,1 +1,23 @@
 [2025-08-27T13:39:15.801Z] [WARN ] Migration stopped due to error. To resume:
+[2025-08-27T13:45:11.052Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-08-27T13:45:11.052Z] [WARN ] Found 11 users with duplicate emails
+[2025-08-27T13:46:50.103Z] [WARN ] Batch 1 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:50.475Z] [WARN ] Batch 2 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:50.845Z] [WARN ] Batch 3 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:51.237Z] [WARN ] Batch 4 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:51.605Z] [WARN ] Batch 5 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:51.969Z] [WARN ] Batch 6 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:52.349Z] [WARN ] Batch 7 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:52.730Z] [WARN ] Batch 8 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:53.128Z] [WARN ] Batch 9 had errors: Batch 1: duplicate key value violates unique constraint "profiles_pkey"
+[2025-08-27T13:46:53.428Z] [WARN ] Migration stopped due to error. To resume:
+[2025-08-27T13:48:01.179Z] [WARN ] No stylists to process for stylist_details
+[2025-08-27T13:50:15.291Z] [WARN ] No stylists to process for stylist_details
+[2025-08-27T13:50:41.906Z] [WARN ] No stylists to process for stylist_details
+[2025-08-27T13:51:47.397Z] [WARN ] No stylists to process for stylist_details
+[2025-08-27T13:52:08.124Z] [WARN ] No users to process for user preferences
+[2025-08-27T13:52:22.208Z] [WARN ] Batch 1 had errors: Batch 1: duplicate key value violates unique constraint "user_preferences_user_id_key"
+[2025-08-27T13:52:22.538Z] [WARN ] Batch 2 had errors: Batch 1: duplicate key value violates unique constraint "user_preferences_user_id_key"
+[2025-08-27T13:52:22.880Z] [WARN ] Batch 3 had errors: Batch 1: duplicate key value violates unique constraint "user_preferences_user_id_key"
+[2025-08-27T13:52:23.224Z] [WARN ] Batch 4 had errors: Batch 1: duplicate key value violates unique constraint "user_preferences_user_id_key"
+[2025-08-27T13:52:23.531Z] [WARN ] Batch 5 had errors: Batch 1: duplicate key value violates unique constraint "user_preferences_user_id_key"

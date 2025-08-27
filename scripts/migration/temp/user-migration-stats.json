@@ -1,0 +1,14 @@
+{
+  "total_buyers": 278,
+  "total_stylists": 221,
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "duplicate_emails": 11,
+  "merged_accounts": 11,
+  "skipped_records": 62,
+  "created_auth_users": 437,
+  "created_profiles": 0,
+  "created_stylist_details": 170,
+  "created_user_preferences": 0,
+  "errors": 876
+}

@@ -50,10 +50,15 @@ async function main() {
         .map((r: any) => r.original_id)
     );
 
-    // Filter for users with successful profile creation
+    // Get list of existing profiles from database to verify successful creation
+    const existingProfileIds = new Set(
+      await database.getExistingProfileIds(Object.values(userMapping))
+    );
+
+    // Filter for users with successful profile creation (check database instead of results file)
     const usersToProcess = users.filter(user => 
-      successfulProfiles.has(user.original_id) &&
-      userMapping[user.original_id]
+      userMapping[user.original_id] &&
+      existingProfileIds.has(userMapping[user.original_id])
     );
 
     const skippedUsers = users.length - usersToProcess.length;

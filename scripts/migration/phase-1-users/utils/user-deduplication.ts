@@ -32,16 +32,16 @@ export class UserDeduplicator {
 
     // Index buyers by email (only active ones)
     buyers
-      .filter(buyer => !buyer.deleted_at && buyer.email)
+      .filter(buyer => !buyer.is_deleted && buyer.email)
       .forEach(buyer => {
-        buyerEmails.set(buyer.email.toLowerCase(), buyer);
+        buyerEmails.set(buyer.email!.toLowerCase(), buyer);
       });
 
     // Index stylists by email (only active ones)
     stylists
-      .filter(stylist => !stylist.deleted_at && stylist.email)
+      .filter(stylist => !stylist.is_deleted && stylist.email)
       .forEach(stylist => {
-        stylistEmails.set(stylist.email.toLowerCase(), stylist);
+        stylistEmails.set(stylist.email!.toLowerCase(), stylist);
       });
 
     // Find overlapping emails
@@ -98,25 +98,25 @@ export class UserDeduplicator {
     // Process remaining buyers
     buyers
       .filter(buyer => 
-        !buyer.deleted_at && 
+        !buyer.is_deleted && 
         buyer.email && 
         !processedEmails.has(buyer.email.toLowerCase())
       )
       .forEach(buyer => {
         consolidatedUsers.push(this.convertBuyerToUser(buyer));
-        processedEmails.add(buyer.email.toLowerCase());
+        processedEmails.add(buyer.email!.toLowerCase());
       });
 
     // Process remaining stylists
     stylists
       .filter(stylist => 
-        !stylist.deleted_at && 
+        !stylist.is_deleted && 
         stylist.email && 
         !processedEmails.has(stylist.email.toLowerCase())
       )
       .forEach(stylist => {
         consolidatedUsers.push(this.convertStylistToUser(stylist));
-        processedEmails.add(stylist.email.toLowerCase());
+        processedEmails.add(stylist.email!.toLowerCase());
       });
 
     this.logger.success(`Consolidated ${consolidatedUsers.length} unique users`, {
@@ -241,7 +241,7 @@ export class UserDeduplicator {
     return {
       id: stylist.id, // Use stylist ID as primary
       full_name: stylist.name || buyer.name || null,
-      email: stylist.email || buyer.email,
+      email: stylist.email || buyer.email!,
       phone_number: stylist.phone_number || buyer.phone_number,
       bankid_verified: stylist.bankid_verified || buyer.bankid_verified,
       role: 'stylist',
@@ -258,10 +258,10 @@ export class UserDeduplicator {
       stylist_details: {
         bio: stylist.bio,
         can_travel: stylist.can_travel,
-        has_own_place: true, // Default assumption
+        has_own_place: stylist.has_own_place,
         travel_distance_km: stylist.travel_distance,
-        instagram_profile: stylist.instagram_profile,
-        facebook_profile: stylist.facebook_profile,
+        instagram_profile: stylist.instagram_profile || null,
+        facebook_profile: stylist.facebook_profile || null,
         tiktok_profile: null,
         youtube_profile: null,
         snapchat_profile: null,
@@ -302,7 +302,7 @@ export class UserDeduplicator {
     return {
       id: buyer.id, // Use buyer ID as primary
       full_name: buyer.name || stylist.name || null,
-      email: buyer.email || stylist.email,
+      email: buyer.email || stylist.email!,
       phone_number: buyer.phone_number || stylist.phone_number,
       bankid_verified: buyer.bankid_verified || stylist.bankid_verified,
       role: 'customer',
@@ -347,8 +347,8 @@ export class UserDeduplicator {
   private convertBuyerToUser(buyer: MySQLBuyer): ConsolidatedUser {
     return {
       id: buyer.id,
-      full_name: buyer.name,
-      email: buyer.email,
+      full_name: buyer.name || null,
+      email: buyer.email!,
       phone_number: buyer.phone_number,
       bankid_verified: buyer.bankid_verified,
       role: 'customer',
@@ -387,8 +387,8 @@ export class UserDeduplicator {
   private convertStylistToUser(stylist: MySQLStylist): ConsolidatedUser {
     return {
       id: stylist.id,
-      full_name: stylist.name,
-      email: stylist.email,
+      full_name: stylist.name || null,
+      email: stylist.email!,
       phone_number: stylist.phone_number,
       bankid_verified: stylist.bankid_verified,
       role: 'stylist',
@@ -399,10 +399,10 @@ export class UserDeduplicator {
       stylist_details: {
         bio: stylist.bio,
         can_travel: stylist.can_travel,
-        has_own_place: true,
+        has_own_place: stylist.has_own_place,
         travel_distance_km: stylist.travel_distance,
-        instagram_profile: stylist.instagram_profile,
-        facebook_profile: stylist.facebook_profile,
+        instagram_profile: stylist.instagram_profile || null,
+        facebook_profile: stylist.facebook_profile || null,
         tiktok_profile: null,
         youtube_profile: null,
         snapchat_profile: null,

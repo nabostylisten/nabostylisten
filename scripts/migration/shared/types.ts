@@ -5,54 +5,57 @@
 // Raw MySQL table structures (from dump file)
 export interface MySQLBuyer {
   id: string; // VARCHAR(36)
-  name: string | null;
-  email: string;
+  name: string;
+  email: string | null;
   phone_number: string | null;
+  default_address_id: string | null;
+  is_deleted: boolean;
   phone_verified: boolean;
   email_verified: boolean;
   bankid_verified: boolean;
+  sms_enabled: boolean;
+  email_enabled: boolean;
   last_login_at: string | null;
-  password: string;
-  gender: string | null;
   created_at: string; // MySQL datetime(6)
   updated_at: string; // MySQL datetime(6)
   deleted_at: string | null;
+  gender: string | null;
   stripe_customer_id: string | null;
-  is_blocked: boolean;
-  sms_enabled: boolean;
-  email_enabled: boolean;
   profile_picture_uploaded: boolean;
-  default_address_id: string | null;
+  is_blocked: boolean;
 }
 
 export interface MySQLStylist {
   id: string; // VARCHAR(36)
-  name: string | null;
-  email: string;
+  name: string;
+  email: string | null;
   phone_number: string | null;
+  default_address_id: string | null;
+  is_deleted: boolean;
   phone_verified: boolean;
   email_verified: boolean;
   bankid_verified: boolean;
+  sms_enabled: boolean;
+  email_enabled: boolean;
   last_login_at: string | null;
-  password: string;
-  gender: string | null;
   created_at: string; // MySQL datetime(6)
   updated_at: string; // MySQL datetime(6)
   deleted_at: string | null;
+  gender: string | null;
+  stripe_account_id: string | null;
   bio: string | null;
+  commission_percentage: number | null;
+  facebook_profile: string;
+  instagram_profile: string;
+  twitter_profile: string;
+  is_active: boolean;
   can_travel: boolean;
   travel_distance: number | null;
-  instagram_profile: string | null;
-  facebook_profile: string | null;
-  twitter_profile: string | null;
-  stripe_account_id: string | null;
-  commission_percentage: number | null;
-  is_active: boolean;
   salon_id: string | null;
-  sms_enabled: boolean;
-  email_enabled: boolean;
+  stripe_onboarding_completed: boolean;
+  scheduler_resource_id: number | null;
   profile_picture_uploaded: boolean;
-  default_address_id: string | null;
+  has_own_place: boolean;
 }
 
 // Transformation types

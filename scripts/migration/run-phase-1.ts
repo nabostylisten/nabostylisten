@@ -54,7 +54,7 @@ async function main() {
     const initialCounts = await database.getCurrentCounts();
     logger.stats('Initial Database State', initialCounts);
 
-    // Phase 1 Steps
+    // Phase 1 Steps (streamlined migration using database triggers)
     const steps = [
       {
         name: 'Step 1: Extract Users',
@@ -62,24 +62,14 @@ async function main() {
         description: 'Extract and validate user data from MySQL dump'
       },
       {
-        name: 'Step 2: Create Auth Users',
+        name: 'Step 2: Create Auth Users & Profiles',
         script: 'phase-1-users/02-create-auth-users.ts',
-        description: 'Create Supabase Auth users with confirmed emails'
+        description: 'Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)'
       },
       {
-        name: 'Step 3: Create Profiles',
-        script: 'phase-1-users/03-create-profiles.ts',
-        description: 'Create profile records in database'
-      },
-      {
-        name: 'Step 4: Create Stylist Details',
+        name: 'Step 3: Create Stylist Details',
         script: 'phase-1-users/04-create-stylist-details.ts',
         description: 'Create stylist-specific data records'
-      },
-      {
-        name: 'Step 5: Create User Preferences',
-        script: 'phase-1-users/05-create-user-preferences.ts',
-        description: 'Create notification preferences for all users'
       }
     ];
 

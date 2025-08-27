@@ -56,8 +56,8 @@ async function main() {
     ]);
 
     // Filter out soft-deleted records
-    const activeBuyers = buyers.filter(buyer => !buyer.deleted_at);
-    const activeStylists = stylists.filter(stylist => !stylist.deleted_at);
+    const activeBuyers = buyers.filter(buyer => !buyer.is_deleted);
+    const activeStylists = stylists.filter(stylist => !stylist.is_deleted);
 
     logger.info('Filtered active users', {
       active_buyers: activeBuyers.length,

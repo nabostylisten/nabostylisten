@@ -1,0 +1,1030 @@
+{
+  "metadata": {
+    "created_at": "2025-08-27T13:52:03.592Z",
+    "total_processed": 170,
+    "successful": 170,
+    "errors": 0
+  },
+  "results": [
+    {
+      "original_id": "06698bdc-60a0-4512-963f-96e58b22c3d0",
+      "supabase_id": "0d28af80-552d-48ca-802e-7ff05b909eae",
+      "email": "example@example.com",
+      "success": true
+    },
+    {
+      "original_id": "c813a87a-4fb5-4864-b2c0-0657b2b4b538",
+      "supabase_id": "11bae07d-81b3-4326-b7e2-120642f7a066",
+      "email": "swati@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "7e2bfdf5-ea3f-499d-a4a3-e353f07ddea9",
+      "supabase_id": "f8f097b9-1783-40ac-904c-bb3011fb7494",
+      "email": "five@example.com",
+      "success": true
+    },
+    {
+      "original_id": "647a2bfe-e74e-47f7-a62d-ba66a24f4d9a",
+      "supabase_id": "53b79e9d-61ec-4ac9-be90-98c219136a27",
+      "email": "amadu@nabostylisten.no",
+      "success": true
+    },
+    {
+      "original_id": "bd6e6f4e-f6e5-433a-af1b-2ef2f52785b5",
+      "supabase_id": "1ecee29b-05f5-4213-a388-e87621c570e5",
+      "email": "pooja@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "dc3cec08-6bd4-46c9-ae6c-ab26b2ced4be",
+      "supabase_id": "af8aa179-af2e-49d9-9202-9b73c81c8dda",
+      "email": "shruti.a.kudache@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "1fcd4cc6-926c-4289-87b5-784d1ffe3350",
+      "supabase_id": "0586d279-4fed-442e-be0b-afc706377a91",
+      "email": "qqq@example.com",
+      "success": true
+    },
+    {
+      "original_id": "52734b9e-e775-4144-b498-5818002089db",
+      "supabase_id": "54fab002-149e-472a-8bc3-51613c3e25a3",
+      "email": "sghosh1792@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "86b06f53-a1e4-49a5-99a3-432d4736b27d",
+      "supabase_id": "984662c2-ce32-4f92-abe7-aa621a1dbdda",
+      "email": "hy@example.com",
+      "success": true
+    },
+    {
+      "original_id": "8edb2561-fde6-483e-9c47-b8e27865ffd8",
+      "supabase_id": "469f088e-2324-4429-9f5b-0803ff7f764c",
+      "email": "g@g.com",
+      "success": true
+    },
+    {
+      "original_id": "e37b0038-7b3f-40fe-9277-e49f3b0ea57e",
+      "supabase_id": "0f368687-4917-4fcb-811b-5524cf1d3eda",
+      "email": "nn@example.com",
+      "success": true
+    },
+    {
+      "original_id": "00b1e604-3fdd-489f-825b-15287571bf6c",
+      "supabase_id": "af428eaa-693f-492a-a505-8fd106be56a7",
+      "email": "ggh@exm.com",
+      "success": true
+    },
+    {
+      "original_id": "0104f267-ff2b-4515-b418-9f4747ad258a",
+      "supabase_id": "8c21815b-c2ca-4578-aef9-056f73c6a82d",
+      "email": "plot@example.com",
+      "success": true
+    },
+    {
+      "original_id": "192c39b4-36b0-4658-99c0-6fc8017106bb",
+      "supabase_id": "a18a7383-f8c2-4dc3-b67d-6b0dc927b52f",
+      "email": "desy@exmample.com",
+      "success": true
+    },
+    {
+      "original_id": "1e0591da-959b-4167-a8ca-7213002bc9cf",
+      "supabase_id": "49e689fa-86f3-4dce-a684-121cf64a9551",
+      "email": "trd@example.com",
+      "success": true
+    },
+    {
+      "original_id": "2025c2ee-4f07-4aea-bf24-4a6fc2798844",
+      "supabase_id": "7ff02b6e-fb38-45b0-9942-902e41cfe1b8",
+      "email": "plot6@example.com",
+      "success": true
+    },
+    {
+      "original_id": "207e697e-665a-4181-a6d5-f1490d911948",
+      "supabase_id": "a4ee395a-1613-46ab-9393-f718dc127af9",
+      "email": "sfsdfas@fafsd.dfdf",
+      "success": true
+    },
+    {
+      "original_id": "20ab0ab1-bb08-4c19-b395-09722c3d23b6",
+      "supabase_id": "f4f0904a-6a6e-4855-b469-f6d46ff54b4b",
+      "email": "adsfkk@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "21bf60d7-b60d-4c32-9417-4e203b7ff9b3",
+      "supabase_id": "70ed36f1-0a97-44f4-abd8-a8be52e38d01",
+      "email": "shruti29kudache@gma.com",
+      "success": true
+    },
+    {
+      "original_id": "2352a29b-4f3e-484d-8062-aa68ecbc20ed",
+      "supabase_id": "e285598b-00ec-4b51-9116-61bc0ec2863d",
+      "email": "ouiasd@example.com",
+      "success": true
+    },
+    {
+      "original_id": "2607c961-063c-4f50-9230-dff6145d1870",
+      "supabase_id": "f1252743-73cb-4814-bd7f-37fed751194f",
+      "email": "yrt@exampp.com",
+      "success": true
+    },
+    {
+      "original_id": "2746fc4a-cc71-4a72-9a99-fb10e133405e",
+      "supabase_id": "01d5916e-16f7-45a0-95cd-08a311a8b0b5",
+      "email": "stylist4@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "27ba80bb-7562-404f-86ed-15d2ce449a76",
+      "supabase_id": "6efa5e5a-034d-402f-8e4a-917fc6296c43",
+      "email": "pooja@example.com",
+      "success": true
+    },
+    {
+      "original_id": "27f449b5-0a29-41b1-ba9b-1ec5f358fd6f",
+      "supabase_id": "4eb0df84-34d9-43ee-a2a2-1dd0a5c79a65",
+      "email": "stylistsix@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "299fc62e-5d1e-458d-8d3c-1ed41a0e2ac3",
+      "supabase_id": "2c1e4e82-b44b-4310-a593-648c73bf89eb",
+      "email": "stylist8@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "29ac2388-22b3-431e-8246-c2acceeacef4",
+      "supabase_id": "566eec1b-21f4-4fe0-904f-12d9c93237b0",
+      "email": "ss@sp.ci",
+      "success": true
+    },
+    {
+      "original_id": "2e9e088a-02a8-4f16-86da-454161ee7be3",
+      "supabase_id": "6a7de026-f6a9-45bd-8c35-1e8d51107976",
+      "email": "testttt@example.voo",
+      "success": true
+    },
+    {
+      "original_id": "2ff3664f-6c98-4365-bf65-be6272d88bcd",
+      "supabase_id": "83633c84-8d5b-4f81-95f4-c7fb5d425b9c",
+      "email": "abc@xyz.com",
+      "success": true
+    },
+    {
+      "original_id": "314c5ca6-132f-4aca-a51a-0bc4577ddc5a",
+      "supabase_id": "bf9177f2-0e47-4619-a0fe-194b0642ccdd",
+      "email": "indStylist3@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "36c29a25-7db3-4ef3-bc00-b2844f1ed742",
+      "supabase_id": "5722c658-f40b-4344-b3b9-bcbaa6c52c12",
+      "email": "test@testng.com",
+      "success": true
+    },
+    {
+      "original_id": "37ee5e8a-5938-44c2-b850-69d94698f917",
+      "supabase_id": "45a32e83-1946-482a-a2fb-631becd46ad4",
+      "email": "ssthree@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "384b9af4-72f3-47dc-b8ad-c3ac4f57cbfb",
+      "supabase_id": "877e5bdb-379c-4a55-a470-d7ecfd9d9101",
+      "email": "a@example.com",
+      "success": true
+    },
+    {
+      "original_id": "3927fc9e-92d5-4b9c-bcb9-6d1b7f83a1da",
+      "supabase_id": "d395ec69-72a8-48cd-b9b9-f566bf84d529",
+      "email": "amit99@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "3b5cde98-9c87-49fc-bbc1-d05a8cfebd2e",
+      "supabase_id": "a7b5902f-820f-402d-bcc8-e157d15ef67c",
+      "email": "afdsfsd@esf.dfd",
+      "success": true
+    },
+    {
+      "original_id": "3cacd183-764d-4bf6-a8ed-77be380f5869",
+      "supabase_id": "b45380bc-03a7-49d1-82ec-97426ef1d714",
+      "email": "yfbu@example.com",
+      "success": true
+    },
+    {
+      "original_id": "3f03b1d0-e5a3-4670-a5e7-8e9c50ab2e5d",
+      "supabase_id": "54130c01-3368-4f60-8d82-aa904abccc15",
+      "email": "jubgy@example.com",
+      "success": true
+    },
+    {
+      "original_id": "40215c1b-f977-45ba-aff0-b45e7ddce015",
+      "supabase_id": "6473a96b-b5ba-4d74-8734-7b8d77dc0109",
+      "email": "zx@example.com",
+      "success": true
+    },
+    {
+      "original_id": "42e09fab-712d-43a7-a8a3-e2288f7b7803",
+      "supabase_id": "3d9a7b10-d676-4ecb-b984-913fd342a579",
+      "email": "rahul111@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "446c88d8-e958-43b3-8a4a-236636cd7c20",
+      "supabase_id": "80261e2f-8e4b-43c6-8a50-870fefd0543b",
+      "email": "testSty5@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "44bead70-f378-40b1-b48a-85b5bb8ab6e3",
+      "supabase_id": "4ef031e8-546e-495e-8667-f3298a8380b6",
+      "email": "hybf@example.com",
+      "success": true
+    },
+    {
+      "original_id": "44cc1a57-701d-481d-9fab-dcc36ce9343b",
+      "supabase_id": "74e59c3b-9a21-44ee-a607-0c5f2c97cdc7",
+      "email": "style1@a1.com",
+      "success": true
+    },
+    {
+      "original_id": "46644565-e372-47a0-9675-4d1c64e04531",
+      "supabase_id": "af50ed82-78b0-4f81-adfc-e1c92713780d",
+      "email": "oui@example.coo",
+      "success": true
+    },
+    {
+      "original_id": "4ac90719-a4b7-4c80-abc7-a2fdd9abb4ef",
+      "supabase_id": "b3c245e9-42fe-446a-98f8-e2a11ef9d5bf",
+      "email": "zsfd@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "4b229ac1-8cce-40d5-935d-2b62b0daeb4a",
+      "supabase_id": "2995ef2c-5844-45c9-b846-51579302b4c2",
+      "email": "havard@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "4d23c930-582a-4437-b8dc-f2535335542f",
+      "supabase_id": "4d9e93ef-dc1f-455a-9f6a-09fee6aa4e19",
+      "email": "z@example.com",
+      "success": true
+    },
+    {
+      "original_id": "4e276109-46b0-4dbf-9f64-eece67c1f470",
+      "supabase_id": "e4d9bf95-641b-41f9-9cd1-318242f52c0b",
+      "email": "testSty6@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "4f34d4a7-0121-4c2b-aa32-ae71bb167e68",
+      "supabase_id": "25172860-1f65-4794-84a5-ac40d0fc0d6b",
+      "email": "testw@examplee.co",
+      "success": true
+    },
+    {
+      "original_id": "4f8b208e-41dc-494d-a483-295ae68c8d87",
+      "supabase_id": "8160bb3c-ce8c-4445-beb9-ecc738c571b6",
+      "email": "te@n.mn",
+      "success": true
+    },
+    {
+      "original_id": "533879c9-8ca4-4898-96a2-a8901779fecf",
+      "supabase_id": "42cf0409-cb70-4ba6-a058-6e379648da84",
+      "email": "hsj@hd.com",
+      "success": true
+    },
+    {
+      "original_id": "54ff784b-e8b0-47c8-ba25-0e3c3e613f96",
+      "supabase_id": "b840cb6d-c82d-4ec6-bc40-ddc010b07ba3",
+      "email": "plot2@example.com",
+      "success": true
+    },
+    {
+      "original_id": "550d8bd4-6a08-4d89-82b5-d6e0be4c9906",
+      "supabase_id": "10a364ce-56e0-4e50-8f7d-8023c57fde3f",
+      "email": "sssss@example.com",
+      "success": true
+    },
+    {
+      "original_id": "554a6eb4-97bc-4bf9-9a9f-df18fffa3e35",
+      "supabase_id": "c9f8df47-5ab5-4dc5-ba2b-306316249700",
+      "email": "sdfadfd@fs.ere",
+      "success": true
+    },
+    {
+      "original_id": "55ebafe6-d4b9-43e2-82a4-18dd79cf7385",
+      "supabase_id": "67246d26-b9d2-4215-b6e7-c1f7e49d83d9",
+      "email": "indStylist1@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "5663be75-a30c-45ab-823f-b819d2ed5d5f",
+      "supabase_id": "faed04ce-a9cf-4f54-8a86-1a6152b2db5c",
+      "email": "shrutitestqa@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "57870eaa-b7c9-4387-9ae4-6e80a7b46a07",
+      "supabase_id": "04d14fe6-4aa7-4afc-8a41-647864e424b0",
+      "email": "a1@example.com",
+      "success": true
+    },
+    {
+      "original_id": "58214a2f-3e20-4492-b783-09b05a1fe7b5",
+      "supabase_id": "71f88143-ddb3-4f3f-8916-4aefdceb4841",
+      "email": "ivarnakken1441@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "5ab77982-37fd-4448-8f40-a4cc7dd2ab1f",
+      "supabase_id": "fcedfdf9-a27d-459d-81ff-d610274dadb8",
+      "email": "gisf@cd.co",
+      "success": true
+    },
+    {
+      "original_id": "5ad1a273-e318-4da6-8bc6-dce44754a107",
+      "supabase_id": "9dcc975c-ec31-4c25-b207-f70719b212ee",
+      "email": "dfsdgdsgf@fddsfaf.dfs",
+      "success": true
+    },
+    {
+      "original_id": "5c390788-71d7-4219-8aff-376717f1a1cd",
+      "supabase_id": "02db0023-d499-4ec3-bbf1-a26f1a489391",
+      "email": "avinash.hemagire@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "5f81a02b-d769-43ec-8cb0-f57aa96e9b18",
+      "supabase_id": "5318200e-8055-470f-8398-7e52ea63c18f",
+      "email": "333@example.com",
+      "success": true
+    },
+    {
+      "original_id": "5fca7d50-a1d1-473f-ac90-417d4cf606a9",
+      "supabase_id": "c2bf23e0-6e64-4d38-935e-0a4f73aeabdf",
+      "email": "tomas@tomaserdis.com",
+      "success": true
+    },
+    {
+      "original_id": "5febf253-d594-4b9f-b1b2-2c5bc9913d1f",
+      "supabase_id": "8d0af4f4-7214-44a0-9300-f66cc61b0690",
+      "email": "avinash365@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "66648681-ae24-4159-bd4b-7a5fdfe5e08a",
+      "supabase_id": "17eaaaca-09ed-4541-ab57-a85966868b05",
+      "email": "plot3@example.com",
+      "success": true
+    },
+    {
+      "original_id": "68aedb6e-541f-4b87-ae8b-031e4f38655d",
+      "supabase_id": "a0a81647-d7f3-45ff-adc2-13778b128e6b",
+      "email": "test903@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "699f1dff-b627-410d-bf72-f1a1910d9d0e",
+      "supabase_id": "4a46f4f8-6df0-4039-9bcd-ba28ed55beaf",
+      "email": "ss@ss.vv",
+      "success": true
+    },
+    {
+      "original_id": "69ab6591-5e66-4753-85bb-1976a8fb7386",
+      "supabase_id": "169ad688-ee35-4f29-9295-5557ec0ac0a3",
+      "email": "jay@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "6b20043f-4953-4a12-969b-99541d6cda6e",
+      "supabase_id": "90185a49-7dfb-4c65-b5e6-71d1abcd6008",
+      "email": "sdfsdfsdf@sdfsdf.dfd",
+      "success": true
+    },
+    {
+      "original_id": "6b679d68-ccb8-489f-917f-bf901f2181a9",
+      "supabase_id": "6ff9a7ef-9d3e-4807-ad32-d9de1eddd71a",
+      "email": "shre@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "6c2ebdcb-a4c9-4fd9-bd14-f7a6a132f166",
+      "supabase_id": "990601f5-0d35-4deb-afa7-14595deb5dcb",
+      "email": "test@examplee.com",
+      "success": true
+    },
+    {
+      "original_id": "6c8ab5c1-7962-4504-8205-1ee1a9334644",
+      "supabase_id": "60627b6c-96ee-4caa-b2ae-329d2115b954",
+      "email": "jay1@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "6dafe37b-cef3-43e4-a2e2-fa1a421bf0f0",
+      "supabase_id": "8cce878a-1054-4ee4-bd9c-33905c429812",
+      "email": "test124@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "6e33fc9f-8032-4902-8379-1c64d31ee4c4",
+      "supabase_id": "2b78c5dc-b6a6-45c6-917a-ac81f564c190",
+      "email": "indStylist2@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "6e731073-93c1-49a0-af4b-200bca6d270b",
+      "supabase_id": "a9bb1e6a-d25d-4937-9591-44e6609b3d87",
+      "email": "reall@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "6fc822c4-c7cb-401f-95a1-98bb10b8e879",
+      "supabase_id": "a3438a0f-bb51-42c7-ab09-d9c3081403f1",
+      "email": "tr@r.com",
+      "success": true
+    },
+    {
+      "original_id": "713cdba4-a22c-4cc1-9e8b-9b0b1f24c55f",
+      "supabase_id": "cdcc5719-934d-4660-91de-860e23d3f7aa",
+      "email": "dsdgsfg@dfg.fds",
+      "success": true
+    },
+    {
+      "original_id": "71591bf5-77d7-4974-b1bc-5d4b4692271c",
+      "supabase_id": "cf9d0560-4a58-43cb-90a8-d4e7cbcda4cc",
+      "email": "111@example.com",
+      "success": true
+    },
+    {
+      "original_id": "72298093-9e88-493c-adb3-d8187253382f",
+      "supabase_id": "48803243-8ac5-4dbd-9bdf-68084a3c0c9a",
+      "email": "sk@sk.com",
+      "success": true
+    },
+    {
+      "original_id": "73543559-4ed9-4e3a-b17e-2f145ef21f81",
+      "supabase_id": "c98e89fd-6c08-403a-b24a-3fef9abfdaca",
+      "email": "amit92@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "74ce8efd-f9d9-484b-ba6e-ed74ecb0bfe8",
+      "supabase_id": "de672b26-b975-488d-a023-8072c974f691",
+      "email": "nabostylist@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "7575ad92-7b8b-4ffa-a203-6eac5f2cf445",
+      "supabase_id": "fee16dcf-d473-48c0-b5b8-484d9df1de07",
+      "email": "teststy4@example.com",
+      "success": true
+    },
+    {
+      "original_id": "79774ba9-665f-463b-8e23-3c23ab676904",
+      "supabase_id": "47ee3376-0175-4a43-b7d8-c099b718168e",
+      "email": "aa@example.com",
+      "success": true
+    },
+    {
+      "original_id": "798d8dcc-a390-4442-9345-4fdc1598c5e3",
+      "supabase_id": "6b8332d5-5daa-46e6-bb76-4f36c58739ec",
+      "email": "sae@nabo.com",
+      "success": true
+    },
+    {
+      "original_id": "799d442f-9416-4f2a-ad6b-6bf78abffc05",
+      "supabase_id": "d3b1ace0-5aff-4396-b11a-de87e63f898f",
+      "email": "d@j.ca",
+      "success": true
+    },
+    {
+      "original_id": "7b98973e-143b-48fc-b3d2-cf8887d490dd",
+      "supabase_id": "4433a7c4-05ab-4cc3-9727-d8c59f38df53",
+      "email": "testSty2@example.com",
+      "success": true
+    },
+    {
+      "original_id": "8000f3bd-4723-4a0b-8e0e-c84b3099fc4e",
+      "supabase_id": "f5c097db-de14-4d93-9bdd-a687b59a2cd6",
+      "email": "a@gma.com",
+      "success": true
+    },
+    {
+      "original_id": "81afc4b5-b62b-43f3-b595-db737eacb8cd",
+      "supabase_id": "6ea4f884-c65f-4b4e-b100-ffbe40826438",
+      "email": "testSty7@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "8493747c-2185-40c2-ae0a-44994c9cd5bf",
+      "supabase_id": "40767de0-77a3-436f-8ab0-1fdd4df0b9e1",
+      "email": "mhjhn@example.com",
+      "success": true
+    },
+    {
+      "original_id": "859c2b7a-fcfe-4b0b-8bcb-3337890aef6f",
+      "supabase_id": "06c9779d-ec0b-4dc9-944a-9bd402999608",
+      "email": "aaa@example.com",
+      "success": true
+    },
+    {
+      "original_id": "8662450b-2818-45d2-8053-da48d4fca76c",
+      "supabase_id": "f80ba36a-2ec6-43b9-a930-b89d5e9c1be9",
+      "email": "hdhdh@example.com",
+      "success": true
+    },
+    {
+      "original_id": "8a5606ef-7bad-4963-89d3-58bb37501b98",
+      "supabase_id": "221636e2-f8da-48cc-b2a7-f36d23c3f4d0",
+      "email": "test@vb.com",
+      "success": true
+    },
+    {
+      "original_id": "8e911850-9a79-49c3-8c70-d564ce4094a0",
+      "supabase_id": "f33df550-445f-4beb-b1bb-1e6f076a147b",
+      "email": "jay123@example.com",
+      "success": true
+    },
+    {
+      "original_id": "8f412e8f-5642-4123-8085-95b7aa456049",
+      "supabase_id": "1febd75e-0b91-4b22-80ef-53afc69cb007",
+      "email": "ss@example.com",
+      "success": true
+    },
+    {
+      "original_id": "8f9a537f-560e-46d1-b8f4-b1d215b150fb",
+      "supabase_id": "8f1fd946-54ab-4f25-908e-74851957039c",
+      "email": "as@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "8fbfd11f-c8e5-467c-9233-07738714fd9e",
+      "supabase_id": "e9f5dd5c-5a06-4e4a-861d-c64196e938d9",
+      "email": "ss@a.com",
+      "success": true
+    },
+    {
+      "original_id": "90435b4a-151e-4f15-967b-1d44e894edba",
+      "supabase_id": "258ae496-377b-4bb2-8a23-1a7ff4d1b965",
+      "email": "sdfsdaff@dfd.fgf",
+      "success": true
+    },
+    {
+      "original_id": "91590c88-7818-4a5b-b6f0-245e37be7f71",
+      "supabase_id": "85222452-cb9c-4841-83fd-f08ee05106fa",
+      "email": "dsafsdfs@dsf.sf",
+      "success": true
+    },
+    {
+      "original_id": "938078d7-abd8-4c13-82a9-8c80a5d97572",
+      "supabase_id": "fd19662d-c203-4c85-8d55-5b7578ffbb8f",
+      "email": "newsty@example.com",
+      "success": true
+    },
+    {
+      "original_id": "95de3f24-af9b-42ba-b80a-3f7253e18597",
+      "supabase_id": "f6110fe5-0fd3-420c-b5ad-9a0dd1dbf2cd",
+      "email": "asdd@example.com",
+      "success": true
+    },
+    {
+      "original_id": "9603d0a1-8781-40d4-94e4-46808f6049ad",
+      "supabase_id": "28c5207b-b13e-49a8-a981-c95d3a19fcb4",
+      "email": "dessy@xample.com",
+      "success": true
+    },
+    {
+      "original_id": "962826a1-11b7-4896-aff3-f538ad55ee75",
+      "supabase_id": "b1595095-ee50-4ccb-b77a-3fffdd147696",
+      "email": "ten@example.com",
+      "success": true
+    },
+    {
+      "original_id": "96717e4e-9dc6-4a41-bceb-5e6095856cfe",
+      "supabase_id": "4422bbc3-07cd-44a0-9efb-b1968635ee5a",
+      "email": "taraaa@examplle.com",
+      "success": true
+    },
+    {
+      "original_id": "9970f5fc-6cf4-4d26-a826-69660c0e32b4",
+      "supabase_id": "eaabd21f-8378-4600-b1a1-cf30e312f067",
+      "email": "stwo@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "9cc1dd2e-3faa-4619-b276-0341eb93ec7b",
+      "supabase_id": "d15745b5-733f-4b2a-80f2-12ebd695b73f",
+      "email": "erer@example.com",
+      "success": true
+    },
+    {
+      "original_id": "9eb27d7d-981c-4ea5-a71e-96b443e16070",
+      "supabase_id": "f8e80ee7-afc3-4829-ad32-dd4276a99a83",
+      "email": "s@ss.com",
+      "success": true
+    },
+    {
+      "original_id": "9fb5d65f-fb62-4dbb-b75d-0b052859ceae",
+      "supabase_id": "e46c86b0-a785-4b5e-b379-c4c4bf47b9c3",
+      "email": "three@example.com",
+      "success": true
+    },
+    {
+      "original_id": "a120d18c-1dc8-4024-b8ca-2a193fb9c18c",
+      "supabase_id": "c191efde-33dd-493d-9688-491d835e7789",
+      "email": "qastylisttest@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "a2117615-8624-4d5f-988c-ff30ffe634a6",
+      "supabase_id": "9c44acb7-5f4f-469c-920d-96496d4424fe",
+      "email": "ss@s.co",
+      "success": true
+    },
+    {
+      "original_id": "a3be8a25-dda6-4406-a4fc-bba604269c38",
+      "supabase_id": "5e6ae228-a62a-4433-9c98-695a460b84ac",
+      "email": "ingeborg2809@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "a537a7c3-bfc1-4cbd-937b-957dc7be112c",
+      "supabase_id": "30ae23c5-e2c8-4cdb-8501-ccfe34fcfa18",
+      "email": "dgfg@example.com",
+      "success": true
+    },
+    {
+      "original_id": "a5dcd02c-33da-4592-b46d-62a4f6a5a6ae",
+      "supabase_id": "a0acf6a4-5cc3-40de-94b4-7192f9b55e18",
+      "email": "r@example.com",
+      "success": true
+    },
+    {
+      "original_id": "a9450771-beee-43cf-bd42-2013441b4a7b",
+      "supabase_id": "7fef3f85-d20a-42ae-a303-b967dddfba95",
+      "email": "stylist123@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "aa4257ac-2803-43f4-b7bd-ea22a58efe7a",
+      "supabase_id": "c2a18ab1-f0ce-4b5a-9ff4-4cba23caa71a",
+      "email": "zxc1@example.com",
+      "success": true
+    },
+    {
+      "original_id": "ab437d74-caa9-4db9-ae02-e515a5713835",
+      "supabase_id": "a0a8ee32-eab4-4330-bf52-c1ec9408d560",
+      "email": "r@example1.com",
+      "success": true
+    },
+    {
+      "original_id": "b040a53a-d527-4b80-bbef-a5741818b6bb",
+      "supabase_id": "6676f042-58c5-4484-a861-75c5ec8f4fc7",
+      "email": "plot5@example.com",
+      "success": true
+    },
+    {
+      "original_id": "b0ba535b-793a-4d99-8b58-b75275b97c7e",
+      "supabase_id": "67fd0066-3f10-4e2a-81d2-96c98c161787",
+      "email": "stylist3@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "b19f2c71-31ab-4b9e-bfd8-571d11020729",
+      "supabase_id": "a6db7e2d-2d00-4c69-ad3d-2149ef3602d5",
+      "email": "ds@example.com",
+      "success": true
+    },
+    {
+      "original_id": "b624c754-584a-4c4c-94c9-9b08db395b77",
+      "supabase_id": "4afcae8a-cde0-4a89-8d9a-ae7019526612",
+      "email": "test@test.ts",
+      "success": true
+    },
+    {
+      "original_id": "b716fb31-b63f-4e45-b8ed-d9949a9e506d",
+      "supabase_id": "f206271a-97f7-4f18-9085-dd10307e05b6",
+      "email": "adf@example.com",
+      "success": true
+    },
+    {
+      "original_id": "b8243a28-e417-4208-91bf-ecb494a9b161",
+      "supabase_id": "82c91b74-ed91-4906-9733-d7797687ed97",
+      "email": "gshreya179@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "bfee9db2-f49d-4118-b1bf-845ebabd5538",
+      "supabase_id": "b6defcca-793e-4152-8bba-ec4b50a34734",
+      "email": "zz@example.com",
+      "success": true
+    },
+    {
+      "original_id": "bff3b318-3567-4a04-8c62-6eed5b5c9780",
+      "supabase_id": "bc32268d-fb10-4c45-937b-6deb2353e526",
+      "email": "yjbu@example.com",
+      "success": true
+    },
+    {
+      "original_id": "c026d6b9-7276-4e6f-9a2a-e841528c3cbc",
+      "supabase_id": "1ae48fd1-c626-4a15-8511-92723e62d1c7",
+      "email": "stylist7@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "c0702cfc-50d2-469f-be7c-9c10f06c70e9",
+      "supabase_id": "ee1c86ed-1e3f-4954-a275-d9ba39865282",
+      "email": "s@sa.co",
+      "success": true
+    },
+    {
+      "original_id": "c2c99863-d29f-4070-a132-b869d171eeae",
+      "supabase_id": "a846ec13-4083-4594-a132-3270e7cb54e5",
+      "email": "jhgjb@example.com",
+      "success": true
+    },
+    {
+      "original_id": "c4742625-d466-4874-973b-ffcd029e43b2",
+      "supabase_id": "3be54e29-6bf8-4768-99c2-5a0947e79bc0",
+      "email": "w@k.mj",
+      "success": true
+    },
+    {
+      "original_id": "c8ea79f0-fb94-4248-9737-e23a4c076b7b",
+      "supabase_id": "7302133d-33eb-4521-8779-7ac231698968",
+      "email": "ooo@example.com",
+      "success": true
+    },
+    {
+      "original_id": "c992fe43-1d6c-46fe-bbe3-c81064131c27",
+      "supabase_id": "2e36c1de-5451-4fb7-9088-7060bb485e4d",
+      "email": "command@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "ccbf0b8c-4688-4ab7-9129-4bf3e9889551",
+      "supabase_id": "9dd1f134-00e9-41ca-abd3-094e796f9706",
+      "email": "zxc@example.com",
+      "success": true
+    },
+    {
+      "original_id": "ce1530fe-ed00-48ad-af91-2fee3b5ed1a7",
+      "supabase_id": "6aca280b-2af3-4c00-aace-d71ef01b34ef",
+      "email": "nabosalonstylist@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "ce275f77-8e26-4be1-a373-99f8a118cd74",
+      "supabase_id": "e3f494a3-d902-4e12-a6c9-36c730cb938f",
+      "email": "shymu@mail.com",
+      "success": true
+    },
+    {
+      "original_id": "ce864bfd-e90e-4658-997e-534c4ffa4dbe",
+      "supabase_id": "282a3ec3-7bd1-4b3e-b47a-b0470450977f",
+      "email": "tr@ree.com",
+      "success": true
+    },
+    {
+      "original_id": "cecf2d34-6486-49c1-bc49-7a2929b9ff47",
+      "supabase_id": "a289e58d-23e9-4e5c-aa5e-df51efcd6b53",
+      "email": "sfive@example.com",
+      "success": true
+    },
+    {
+      "original_id": "d124bc51-f1a7-4603-bca3-2ba41dd7311f",
+      "supabase_id": "880d64b4-02ce-4f8a-a816-b83402045961",
+      "email": "asd@example.com",
+      "success": true
+    },
+    {
+      "original_id": "d1bc40ff-6c36-4295-8917-0d40dd18068b",
+      "supabase_id": "038cc65a-b20c-401a-9c45-527ffdd2e72f",
+      "email": "ssfour@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "d2212848-50ba-421d-a3a8-61c39d610672",
+      "supabase_id": "5325a853-7c14-4f92-9760-3c51e1d547a3",
+      "email": "stylist12@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "d24297a0-e8ca-486a-a0d6-54a06bb1d8d4",
+      "supabase_id": "ed55251b-ede0-4e64-b22f-b90b56c4f5cd",
+      "email": "aaaa@example.com",
+      "success": true
+    },
+    {
+      "original_id": "d4a042b9-4e8e-48c9-ab54-cea4b22a9a06",
+      "supabase_id": "aa8dd940-fd96-46f6-9aac-2306a608d5a1",
+      "email": "d@ds.cc",
+      "success": true
+    },
+    {
+      "original_id": "d5fc6b61-84e9-4c7d-a861-4d1f0b0a11b9",
+      "supabase_id": "00cef5d2-e223-4233-b927-3a76552c3ca3",
+      "email": "rahul@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "d63d31c8-b589-454f-89d9-ba56d576f46b",
+      "supabase_id": "21bc14b5-72d6-4f60-bdab-9417db30b7da",
+      "email": "a@a.com",
+      "success": true
+    },
+    {
+      "original_id": "d6d934b2-5a96-4232-88c0-d2c313ed44b5",
+      "supabase_id": "d7640a6a-ddad-4c10-a9d2-b46051d9bcac",
+      "email": "qwewqe@example.com",
+      "success": true
+    },
+    {
+      "original_id": "dcb9f6f7-3cdd-4c25-be33-2d5316155971",
+      "supabase_id": "d18da7b2-ed4d-4743-851a-aa34ee7b6903",
+      "email": "testSty1@example.com",
+      "success": true
+    },
+    {
+      "original_id": "de6cbc6d-732c-402e-931c-c96395f15093",
+      "supabase_id": "4693800e-0325-4672-85e9-41bc5c40e98a",
+      "email": "htfvyj@examplle.com",
+      "success": true
+    },
+    {
+      "original_id": "dfa9ea2b-a22a-45f4-a1d0-dc05bfab7fa8",
+      "supabase_id": "0dc5c8d4-d48a-4c25-8768-63ad1fadb43c",
+      "email": "gt@g.bm",
+      "success": true
+    },
+    {
+      "original_id": "e054eb95-cdd3-4f5f-9d08-f35114f1aeb6",
+      "supabase_id": "8ad91315-23af-4b4d-b8e5-17916fec1a46",
+      "email": "abc@axyz.com",
+      "success": true
+    },
+    {
+      "original_id": "e1510117-43a8-409f-936a-f52d6e18cda2",
+      "supabase_id": "bc34bfff-5969-469a-8e6a-7853bc4d47c6",
+      "email": "s@sc.cm",
+      "success": true
+    },
+    {
+      "original_id": "e2cb1aee-8c59-4ad4-a539-350926c956f7",
+      "supabase_id": "2ac2ee28-142b-4fa5-b0da-dd2119bc9c24",
+      "email": "stylist11@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "e40d7a96-25a6-49aa-878e-fd0ca0389561",
+      "supabase_id": "affe294e-dd3e-42f5-b4dc-ab97aee91f53",
+      "email": "stylistseven@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "e49c5e7b-c236-4d9e-917a-25f597b6101e",
+      "supabase_id": "f33af650-bd81-4958-b177-139f6cb3d6cb",
+      "email": "twelve@example.com",
+      "success": true
+    },
+    {
+      "original_id": "e6c0b30e-78c2-4827-8dd7-f306536159f4",
+      "supabase_id": "0a7c572c-5e98-4c02-8c64-23b5581fd4c1",
+      "email": "q@example.com",
+      "success": true
+    },
+    {
+      "original_id": "e83cfdda-2c92-4bf3-9a8a-f10670df7523",
+      "supabase_id": "353a0f46-dddf-47d6-a595-0ee91731c006",
+      "email": "dfd@sw.co",
+      "success": true
+    },
+    {
+      "original_id": "e83fde99-9686-43d2-85e0-4806630173b4",
+      "supabase_id": "f5fec3eb-d506-4fbd-ab82-1ded7ed88e43",
+      "email": "test21@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "e86770d7-a505-437c-8ffa-2b413357f29d",
+      "supabase_id": "3bbdfa48-40fe-4105-8197-304ebc0cd8fd",
+      "email": "four@example.com",
+      "success": true
+    },
+    {
+      "original_id": "e9502ef9-ce05-4ee5-807a-1d09495501fa",
+      "supabase_id": "29d41fac-1047-4382-8d97-0f2eef0c0bbf",
+      "email": "stylist1@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "eaab1338-2114-4d7e-9306-efc2bbc3968a",
+      "supabase_id": "9227d65e-3594-466b-8560-f046b291461c",
+      "email": "test123@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "eae82fa5-b980-417f-8baf-e3f1ee1920a2",
+      "supabase_id": "7ead844e-3b8c-4043-b3bb-73d146d7ba05",
+      "email": "sd@exm.com",
+      "success": true
+    },
+    {
+      "original_id": "ed152c1c-f083-4595-8b9d-2e056be88f00",
+      "supabase_id": "311eb742-ae37-4199-8ff8-06c431c11ded",
+      "email": "asdfsfadsfsd@sfesdfs.fdd",
+      "success": true
+    },
+    {
+      "original_id": "ee3644da-2aed-4a43-a1be-6d878c7e0309",
+      "supabase_id": "bdc469e9-6c98-4060-b6f9-f228ad185c11",
+      "email": "ddd@example.com",
+      "success": true
+    },
+    {
+      "original_id": "effad59f-5961-4cd8-b9a9-27e7a3e42c30",
+      "supabase_id": "94c571c4-9113-4c36-8fc4-10c14193285e",
+      "email": "stylist6@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "f04a144c-05c3-4446-9d7b-0a7ea4f8e783",
+      "supabase_id": "965cb329-4d65-477e-a44b-19929ada382c",
+      "email": "renuka@ymirlabs.com",
+      "success": true
+    },
+    {
+      "original_id": "f18e0917-0317-4d0f-8b5a-6c139b3f08fc",
+      "supabase_id": "46b57194-8aba-46c3-ba14-2fb41fde042b",
+      "email": "stylist2@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "f1fef71d-d4f8-4aeb-b3c4-125e31edc6fb",
+      "supabase_id": "f5493bd0-240d-4205-8029-f7ca22697f9c",
+      "email": "adt@example.com",
+      "success": true
+    },
+    {
+      "original_id": "f6ba7b8b-0f5b-4afe-8071-c26b3ef614af",
+      "supabase_id": "dc689f16-18ee-43c6-bcee-343952d489a2",
+      "email": "efsdfsdf@edsf.dfd",
+      "success": true
+    },
+    {
+      "original_id": "f79df5d4-b5f2-4875-8a1a-871fe7279aa7",
+      "supabase_id": "c01d02c0-625f-4dec-a0c8-dc138a3e9582",
+      "email": "mail@mailinator.com",
+      "success": true
+    },
+    {
+      "original_id": "f8d2ef1b-4a03-4f71-871d-cdf1a9baa264",
+      "supabase_id": "a3101a2a-9ac4-4c9a-8485-fae792d4d46e",
+      "email": "qqaq@example.com",
+      "success": true
+    },
+    {
+      "original_id": "f9502471-b675-4bcb-802d-b533f0671623",
+      "supabase_id": "fefc933f-737c-4bd4-ae07-dbaf21c74241",
+      "email": "test@ex.com",
+      "success": true
+    },
+    {
+      "original_id": "f9b45578-c5dd-4d99-92b4-34f75a3fec0a",
+      "supabase_id": "9b4d64ee-cad7-4a41-9f7d-e9b1b577f6e2",
+      "email": "testymirqa@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "fa61a57d-52bb-4c18-925f-b43e6c6f4dec",
+      "supabase_id": "14a1d042-4a58-4837-8d6b-27515eba5c77",
+      "email": "philip.cylo@gmail.com",
+      "success": true
+    },
+    {
+      "original_id": "fcbf670c-5c8f-45a8-87ab-832789041a1c",
+      "supabase_id": "8db48909-1cdc-486e-a11c-1a5b6ddb62fb",
+      "email": "jninm@example.com",
+      "success": true
+    },
+    {
+      "original_id": "fda3a42e-1963-4cb4-81e3-cda5e759a1a3",
+      "supabase_id": "81d3cf06-bc08-420b-8416-c3ec8db219bf",
+      "email": "kuhlni@example.com",
+      "success": true
+    },
+    {
+      "original_id": "ffcbe12d-982a-43d0-bfe5-b95d5c2e2812",
+      "supabase_id": "7232dd38-1ab5-46c3-b1f8-44d81d6a8509",
+      "email": "test@bh.com",
+      "success": true
+    }
+  ]
+}

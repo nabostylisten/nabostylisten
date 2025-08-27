@@ -356,4 +356,50 @@ export class MigrationDatabase {
   getDumpFilePath(): string {
     return this.config.dumpFilePath;
   }
+
+  /**
+   * Get existing profile IDs from database
+   */
+  async getExistingProfileIds(profileIds?: string[]): Promise<string[]> {
+    try {
+      // If no specific IDs requested, get all profile IDs
+      if (!profileIds || profileIds.length === 0) {
+        const { data, error } = await this.supabase.from('profiles').select('id');
+        
+        if (error) {
+          this.logger.error('Failed to get existing profile IDs', error);
+          return [];
+        }
+        
+        return data?.map(p => p.id) || [];
+      }
+
+      // For large numbers of IDs, chunk them to avoid URI too long error
+      const chunkSize = 100;
+      const allExistingIds: string[] = [];
+
+      for (let i = 0; i < profileIds.length; i += chunkSize) {
+        const chunk = profileIds.slice(i, i + chunkSize);
+        
+        const { data, error } = await this.supabase
+          .from('profiles')
+          .select('id')
+          .in('id', chunk);
+          
+        if (error) {
+          this.logger.error(`Failed to get existing profile IDs for chunk ${i}`, error);
+          continue;
+        }
+        
+        if (data) {
+          allExistingIds.push(...data.map(p => p.id));
+        }
+      }
+      
+      return allExistingIds;
+    } catch (error) {
+      this.logger.error('Failed to get existing profile IDs', error);
+      return [];
+    }
+  }
 }

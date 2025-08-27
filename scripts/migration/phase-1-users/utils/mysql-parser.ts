@@ -63,19 +63,42 @@ export class MySQLParser {
       'gi'
     );
 
-    // Pattern to extract column definitions
+    // More flexible pattern to extract column definitions that handles MySQL dump formatting
     const createTablePattern = new RegExp(
-      `CREATE TABLE \`${tableName}\`\\s*\\([^;]+\\);`,
-      'gi'
+      `CREATE TABLE \`${tableName}\`\\s*\\(((?:[^;]|;(?![^\\(]*\\)))*?)\\)\\s*ENGINE`,
+      'gis'
     );
 
     // First, extract column names from CREATE TABLE statement
     const createTableMatch = createTablePattern.exec(dumpContent);
     if (!createTableMatch) {
-      throw new Error(`Could not find CREATE TABLE statement for ${tableName}`);
+      // Fallback: try simpler pattern without ENGINE clause
+      const simpleCreateTablePattern = new RegExp(
+        `CREATE TABLE \`${tableName}\`\\s*\\(((?:[^;]|;(?![^\\(]*\\)))*?)\\);`,
+        'gis'
+      );
+      
+      const fallbackMatch = simpleCreateTablePattern.exec(dumpContent);
+      if (!fallbackMatch) {
+        throw new Error(`Could not find CREATE TABLE statement for ${tableName}`);
+      }
+      
+      return this.parseTableStructure(fallbackMatch[1], tableName, dumpContent, insertPattern);
     }
 
-    const columns = this.extractColumnNames(createTableMatch[0]);
+    return this.parseTableStructure(createTableMatch[1], tableName, dumpContent, insertPattern);
+  }
+
+  /**
+   * Parse table structure and extract data
+   */
+  private parseTableStructure(
+    tableDefinition: string, 
+    tableName: string, 
+    dumpContent: string, 
+    insertPattern: RegExp
+  ): Record<string, string | null>[] {
+    const columns = this.extractColumnNames(tableDefinition);
     this.logger.debug(`Found columns for ${tableName}:`, columns);
 
     // Extract all INSERT statements
@@ -106,19 +129,26 @@ export class MySQLParser {
   }
 
   /**
-   * Extract column names from CREATE TABLE statement
+   * Extract column names from table definition (content inside CREATE TABLE parentheses)
    */
-  private extractColumnNames(createTableStatement: string): string[] {
-    const columnPattern = /`(\w+)`\s+[^,)]+/g;
+  private extractColumnNames(tableDefinition: string): string[] {
     const columns: string[] = [];
-    let match;
-
-    while ((match = columnPattern.exec(createTableStatement)) !== null) {
-      const columnName = match[1];
+    
+    // Split by comma and process each line
+    const lines = tableDefinition.split(',');
+    
+    for (const line of lines) {
+      const trimmedLine = line.trim();
       
-      // Skip indexes, keys, and constraints
-      if (!['PRIMARY', 'KEY', 'INDEX', 'CONSTRAINT', 'UNIQUE'].includes(columnName.toUpperCase())) {
-        columns.push(columnName);
+      // Skip if it's a constraint, key, or index definition
+      if (trimmedLine.match(/^\s*(PRIMARY\s+KEY|KEY|UNIQUE\s+KEY|INDEX|CONSTRAINT|FOREIGN\s+KEY)/i)) {
+        continue;
+      }
+      
+      // Extract column name - should start with backticks
+      const columnMatch = trimmedLine.match(/^\s*`(\w+)`/);
+      if (columnMatch) {
+        columns.push(columnMatch[1]);
       }
     }
 
@@ -215,24 +245,24 @@ export class MySQLParser {
   private mapToBuyer(raw: Record<string, string | null>): MySQLBuyer {
     return {
       id: raw.id || '',
-      name: raw.name || null,
-      email: raw.email || '',
+      name: raw.name || '',
+      email: raw.email || null,
       phone_number: raw.phone_number || null,
+      default_address_id: raw.default_address_id || null,
+      is_deleted: raw.is_deleted === '1',
       phone_verified: raw.phone_verified === '1',
       email_verified: raw.email_verified === '1',
       bankid_verified: raw.bankid_verified === '1',
+      sms_enabled: raw.sms_enabled === '1',
+      email_enabled: raw.email_enabled === '1',
       last_login_at: raw.last_login_at || null,
-      password: raw.password || '',
-      gender: raw.gender || null,
       created_at: raw.created_at || new Date().toISOString(),
       updated_at: raw.updated_at || new Date().toISOString(),
       deleted_at: raw.deleted_at || null,
+      gender: raw.gender || null,
       stripe_customer_id: raw.stripe_customer_id || null,
-      is_blocked: raw.is_blocked === '1',
-      sms_enabled: raw.sms_enabled === '1',
-      email_enabled: raw.email_enabled === '1',
       profile_picture_uploaded: raw.profile_picture_uploaded === '1',
-      default_address_id: raw.default_address_id || null
+      is_blocked: raw.is_blocked === '1'
     };
   }
 
@@ -242,32 +272,35 @@ export class MySQLParser {
   private mapToStylist(raw: Record<string, string | null>): MySQLStylist {
     return {
       id: raw.id || '',
-      name: raw.name || null,
-      email: raw.email || '',
+      name: raw.name || '',
+      email: raw.email || null,
       phone_number: raw.phone_number || null,
+      default_address_id: raw.default_address_id || null,
+      is_deleted: raw.is_deleted === '1',
       phone_verified: raw.phone_verified === '1',
       email_verified: raw.email_verified === '1',
       bankid_verified: raw.bankid_verified === '1',
+      sms_enabled: raw.sms_enabled === '1',
+      email_enabled: raw.email_enabled === '1',
       last_login_at: raw.last_login_at || null,
-      password: raw.password || '',
-      gender: raw.gender || null,
       created_at: raw.created_at || new Date().toISOString(),
       updated_at: raw.updated_at || new Date().toISOString(),
       deleted_at: raw.deleted_at || null,
+      gender: raw.gender || null,
+      stripe_account_id: raw.stripe_account_id || null,
       bio: raw.bio || null,
+      commission_percentage: raw.commission_percentage ? parseFloat(raw.commission_percentage) : null,
+      facebook_profile: raw.facebook_profile || '',
+      instagram_profile: raw.instagram_profile || '',
+      twitter_profile: raw.twitter_profile || '',
+      is_active: raw.is_active === '1',
       can_travel: raw.can_travel === '1',
       travel_distance: raw.travel_distance ? parseInt(raw.travel_distance, 10) : null,
-      instagram_profile: raw.instagram_profile || null,
-      facebook_profile: raw.facebook_profile || null,
-      twitter_profile: raw.twitter_profile || null,
-      stripe_account_id: raw.stripe_account_id || null,
-      commission_percentage: raw.commission_percentage ? parseFloat(raw.commission_percentage) : null,
-      is_active: raw.is_active === '1',
       salon_id: raw.salon_id || null,
-      sms_enabled: raw.sms_enabled === '1',
-      email_enabled: raw.email_enabled === '1',
+      stripe_onboarding_completed: raw.stripe_onboarding_completed === '1',
+      scheduler_resource_id: raw.scheduler_resource_id ? parseInt(raw.scheduler_resource_id, 10) : null,
       profile_picture_uploaded: raw.profile_picture_uploaded === '1',
-      default_address_id: raw.default_address_id || null
+      has_own_place: raw.has_own_place === '1'
     };
   }
 

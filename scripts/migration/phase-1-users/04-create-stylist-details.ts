@@ -50,12 +50,17 @@ async function main() {
         .map((r: any) => r.original_id)
     );
 
-    // Filter for stylists with successful profile creation
+    // Get list of existing profiles from database to verify successful creation
+    const existingProfileIds = new Set(
+      await database.getExistingProfileIds(Object.values(userMapping))
+    );
+
+    // Filter for stylists with successful profile creation (check database instead of results file)
     const stylistsToProcess = users.filter(user => 
       user.role === 'stylist' && 
       user.stylist_details && 
-      successfulProfiles.has(user.original_id) &&
-      userMapping[user.original_id]
+      userMapping[user.original_id] &&
+      existingProfileIds.has(userMapping[user.original_id])
     );
 
     const totalStylists = users.filter(u => u.role === 'stylist').length;

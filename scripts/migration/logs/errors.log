@@ -1791,3 +1791,15 @@ Data: "duplicate key value violates unique constraint \"user_preferences_user_id
 Data: "duplicate key value violates unique constraint \"user_preferences_user_id_key\""
 [2025-08-27T13:52:23.602Z] [ERROR] Failed to create user preferences for test@bh.com
 Data: "duplicate key value violates unique constraint \"user_preferences_user_id_key\""
+[2025-08-27T14:11:15.440Z] [ERROR] Validation found 2 errors
+[2025-08-27T14:13:02.657Z] [ERROR] ❌ Step 1: Extract Addresses failed
+Data: {
+  "message": "Cannot access 'process' before initialization.",
+  "stack": "ReferenceError: Cannot access 'process' before initialization.\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:165:45)\n    at new Promise (:1:11)\n    at runScript (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:164:14)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:92:15)"
+}
+[2025-08-27T14:13:02.657Z] [ERROR] Phase 2 migration failed after 0s
+Data: {
+  "message": "Cannot access 'process' before initialization.",
+  "stack": "ReferenceError: Cannot access 'process' before initialization.\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:165:45)\n    at new Promise (:1:11)\n    at runScript (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:164:14)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:92:15)"
+}
+[2025-08-27T14:13:02.657Z] [ERROR] 🚨 Phase 2 Address Migration failed - check logs for details

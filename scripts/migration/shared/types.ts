@@ -181,3 +181,17 @@ export interface MigrationProgress {
   estimated_remaining?: string;
   errors: ValidationError[];
 }
+
+// Phase 2: Address Migration Types
+export interface AddressMigrationStats {
+  total_addresses: number;
+  active_addresses: number; // Not soft deleted or salon addresses
+  processed_addresses: number;
+  skipped_addresses: number;
+  addresses_with_coordinates: number;
+  buyer_addresses: number;
+  stylist_addresses: number;
+  created_addresses: number; // Updated in step 2
+  primary_address_updates: number; // Updated in step 3
+  errors: number;
+}

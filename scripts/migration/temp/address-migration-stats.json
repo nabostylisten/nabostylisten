@@ -1,0 +1,12 @@
+{
+  "total_addresses": 10,
+  "active_addresses": 5,
+  "processed_addresses": 5,
+  "skipped_addresses": 0,
+  "addresses_with_coordinates": 0,
+  "buyer_addresses": 0,
+  "stylist_addresses": 5,
+  "created_addresses": 5,
+  "primary_address_updates": 5,
+  "errors": 0
+}

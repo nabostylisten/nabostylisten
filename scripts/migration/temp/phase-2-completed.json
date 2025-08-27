@@ -1,0 +1,31 @@
+{
+  "completed_at": "2025-08-27T14:13:17.284Z",
+  "duration_seconds": 1,
+  "initial_counts": {
+    "profiles": 437,
+    "stylist_details": 170,
+    "user_preferences": 437,
+    "addresses": 0,
+    "services": 0,
+    "bookings": 0,
+    "payments": 0,
+    "chats": 0,
+    "chat_messages": 0,
+    "reviews": 0,
+    "media": 0
+  },
+  "final_counts": {
+    "profiles": 437,
+    "stylist_details": 170,
+    "user_preferences": 437,
+    "addresses": 5,
+    "services": 0,
+    "bookings": 0,
+    "payments": 0,
+    "chats": 0,
+    "chat_messages": 0,
+    "reviews": 0,
+    "media": 0
+  },
+  "addresses_migrated": 5
+}

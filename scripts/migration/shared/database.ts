@@ -358,6 +358,78 @@ export class MigrationDatabase {
   }
 
   /**
+   * Create address record
+   */
+  async createAddress(
+    address: Database["public"]["Tables"]["addresses"]["Insert"]
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabase
+        .from("addresses")
+        .insert(address);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Update address primary flag
+   */
+  async updateAddressPrimary(
+    addressId: string,
+    isPrimary: boolean
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabase
+        .from("addresses")
+        .update({ is_primary: isPrimary })
+        .eq("id", addressId);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Get count of primary addresses
+   */
+  async getPrimaryAddressCount(): Promise<number> {
+    try {
+      const { count, error } = await this.supabase
+        .from("addresses")
+        .select("*", { count: "exact", head: true })
+        .eq("is_primary", true);
+
+      if (error) {
+        this.logger.error('Failed to get primary address count', error);
+        return -1;
+      }
+
+      return count || 0;
+    } catch (error) {
+      this.logger.error('Failed to get primary address count', error);
+      return -1;
+    }
+  }
+
+  /**
    * Get existing profile IDs from database
    */
   async getExistingProfileIds(profileIds?: string[]): Promise<string[]> {

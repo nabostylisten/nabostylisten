@@ -6,6 +6,26 @@ import { readFileSync } from 'fs';
 import type { MySQLBuyer, MySQLStylist } from '../../shared/types';
 import type { MigrationLogger } from '../../shared/logger';
 
+// Address data from MySQL
+export interface MySQLAddress {
+  id: string;
+  buyer_id: string | null;
+  stylist_id: string | null;
+  salon_id: string | null;
+  formatted_address: string | null;
+  street_name: string | null;
+  street_no: string | null;
+  city: string | null;
+  zipcode: string | null;
+  country: string | null;
+  short_address: string | null;
+  tag: string | null;
+  coordinates: string | null; // MySQL POINT format
+  created_at: string;
+  updated_at: string;
+  deleted_at: string | null;
+}
+
 export class MySQLParser {
   private logger: MigrationLogger;
   private dumpFilePath: string;
@@ -47,6 +67,24 @@ export class MySQLParser {
       return stylists.map(stylist => this.mapToStylist(stylist));
     } catch (error) {
       this.logger.error('Failed to extract stylist records', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Extract address records from MySQL dump file
+   */
+  async extractAddresses(): Promise<MySQLAddress[]> {
+    this.logger.info('Extracting address records from MySQL dump');
+    
+    try {
+      const dumpContent = readFileSync(this.dumpFilePath, 'utf-8');
+      const addresses = this.extractTableData(dumpContent, 'address');
+      
+      this.logger.success(`Extracted ${addresses.length} address records`);
+      return addresses.map(address => this.mapToAddress(address));
+    } catch (error) {
+      this.logger.error('Failed to extract address records', error);
       throw error;
     }
   }
@@ -301,6 +339,30 @@ export class MySQLParser {
       scheduler_resource_id: raw.scheduler_resource_id ? parseInt(raw.scheduler_resource_id, 10) : null,
       profile_picture_uploaded: raw.profile_picture_uploaded === '1',
       has_own_place: raw.has_own_place === '1'
+    };
+  }
+
+  /**
+   * Map raw data to MySQLAddress interface
+   */
+  private mapToAddress(raw: Record<string, string | null>): MySQLAddress {
+    return {
+      id: raw.id || '',
+      buyer_id: raw.buyer_id || null,
+      stylist_id: raw.stylist_id || null,
+      salon_id: raw.salon_id || null,
+      formatted_address: raw.formatted_address || null,
+      street_name: raw.street_name || null,
+      street_no: raw.street_no || null,
+      city: raw.city || null,
+      zipcode: raw.zipcode || null,
+      country: raw.country || null,
+      short_address: raw.short_address || null,
+      tag: raw.tag || null,
+      coordinates: raw.coordinates || null,
+      created_at: raw.created_at || new Date().toISOString(),
+      updated_at: raw.updated_at || new Date().toISOString(),
+      deleted_at: raw.deleted_at || null
     };
   }
 

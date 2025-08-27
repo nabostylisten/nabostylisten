@@ -150,6 +150,18 @@ export async function GET(request: NextRequest) {
 **Schedule**: `0 3 1 * *` (3:00 AM UTC, 1st of every month)  
 **Purpose**: Delete chat messages older than 5 years to comply with data retention policies
 
+### 2. Payment Processing
+
+**Path**: `/api/cron/payment-processing`  
+**Schedule**: `0 */6 * * *` (Every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC)  
+**Purpose**: Capture payments 24 hours before bookings and send confirmation emails
+
+### 3. Payout Processing
+
+**Path**: `/api/cron/payout-processing`  
+**Schedule**: `0 * * * *` (Every hour)  
+**Purpose**: Process payouts to stylists after service completion and send notifications
+
 #### Business Logic
 
 - Preserves recent chat history for customer service and dispute resolution
@@ -375,11 +387,63 @@ When automated recovery fails:
 
 ## Future Enhancements
 
+### Payment Processing Details
+
+#### Rolling Window Strategy
+
+The payment processing cron uses a 6-hour rolling window to ensure no bookings are missed:
+
+- **Window Size**: Checks bookings starting 24-30 hours from now
+- **Overlap**: Each run has a 6-hour overlap with the next
+- **Duplicate Prevention**: Uses `payment_captured_at` field to track processed payments
+
+**Example Timeline:**
+```
+Monday 00:00 - Checks bookings Tuesday 00:00-06:00
+Monday 06:00 - Checks bookings Tuesday 06:00-12:00
+Monday 12:00 - Checks bookings Tuesday 12:00-18:00
+Monday 18:00 - Checks bookings Tuesday 18:00-00:00
+```
+
+#### Technical Implementation
+
+```typescript
+// Calculate 6-hour window
+const windowStart = addHours(now, 24); // 24 hours from now
+const windowEnd = addHours(now, 30);   // 30 hours from now
+
+// Query with duplicate prevention
+const { data: bookings } = await supabase
+  .from("bookings")
+  .select(/* booking details */)
+  .eq("status", "confirmed")
+  .gte("start_time", windowStart.toISOString())
+  .lt("start_time", windowEnd.toISOString())
+  .is("payment_captured_at", null); // Only uncaptured payments
+```
+
+### Payout Processing Details
+
+#### Service Completion Window
+
+The payout processing cron processes completed bookings:
+
+- **Window**: Bookings that ended 1-2 hours ago
+- **Status Check**: Only processes bookings with status "completed"
+- **Prerequisites**: Payment must have been captured (`payment_captured_at` not null)
+- **Tracking**: Uses `payout_processed_at` to prevent duplicate payouts
+
+#### Notification Flow
+
+1. **Stylist Notification**: "Utbetaling behandlet" with payout details
+2. **Customer Notification**: "Tjeneste fullført" service completion confirmation
+3. **Database Updates**: Both booking and payment tables updated with timestamps
+
 ### Planned Cron Jobs
 
 1. **Booking Reminders** (Daily)
    - Send reminders 24 hours before appointments
-   - Notify about payment capture
+   - Coordinate with payment capture process
 
 2. **Abandoned Cart Recovery** (Daily)
    - Identify incomplete bookings

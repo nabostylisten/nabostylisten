@@ -16,6 +16,10 @@
     {
       "path": "/api/cron/payout-processing",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/weekly-analytics-report",
+      "schedule": "0 8 * * 1"
     }
   ]
 }

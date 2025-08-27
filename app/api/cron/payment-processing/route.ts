@@ -6,10 +6,7 @@ import { PaymentNotificationEmail } from "@/transactional/emails/payment-notific
 import { capturePaymentBeforeAppointment } from "@/server/stripe.actions";
 import { addHours, format } from "date-fns";
 import { nb } from "date-fns/locale";
-import {
-  calculatePlatformFee,
-  DEFAULT_PLATFORM_CONFIG,
-} from "@/schemas/platform-config.schema";
+import { calculatePlatformFee } from "@/schemas/platform-config.schema";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 
 export async function POST(request: NextRequest) {

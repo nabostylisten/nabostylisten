@@ -9810,3 +9810,105 @@ Data: [
   "setup_intent_id"
 ]
 [2025-08-27T18:19:34.824Z] [DEBUG] Parsed 1888 records from payment
+[2025-08-27T18:29:17.485Z] [DEBUG] Parsing chat table from dump file
+[2025-08-27T18:29:17.487Z] [DEBUG] Found columns for chat:
+Data: [
+  "id",
+  "buyer_id",
+  "stylist_id",
+  "buyer_has_unread",
+  "stylist_has_unread",
+  "created_at",
+  "updated_at",
+  "booking_id",
+  "is_active",
+  "stylist_id",
+  "booking_id"
+]
+[2025-08-27T18:29:17.489Z] [DEBUG] Parsed 0 records from chat
+[2025-08-27T18:29:17.489Z] [DEBUG] Parsing message table from dump file
+[2025-08-27T18:29:17.492Z] [DEBUG] Found columns for message:
+Data: [
+  "id",
+  "message",
+  "is_image",
+  "is_from",
+  "chat_id",
+  "is_unread",
+  "created_at"
+]
+[2025-08-27T18:29:17.493Z] [DEBUG] Parsed 68 records from message
+[2025-08-27T18:29:17.494Z] [DEBUG] Parsing booking table from dump file
+[2025-08-27T18:29:17.496Z] [DEBUG] Found columns for booking:
+Data: [
+  "id",
+  "buyer_id",
+  "stylist_id",
+  "date_time",
+  "duration",
+  "amount",
+  "currency",
+  "status",
+  "additional_notes",
+  "formatted_address",
+  "short_address",
+  "address_id",
+  "payment_id",
+  "chat_id",
+  "created_at",
+  "updated_at",
+  "scheduler_booking_id",
+  "service"
+]
+[2025-08-27T18:29:17.496Z] [DEBUG] Parsed 5 records from booking
+[2025-08-27T18:29:17.502Z] [DEBUG] Parsing chat table from dump file
+[2025-08-27T18:29:17.505Z] [DEBUG] Found columns for chat:
+Data: [
+  "id",
+  "buyer_id",
+  "stylist_id",
+  "buyer_has_unread",
+  "stylist_has_unread",
+  "created_at",
+  "updated_at",
+  "booking_id",
+  "is_active",
+  "stylist_id",
+  "booking_id"
+]
+[2025-08-27T18:29:17.506Z] [DEBUG] Parsed 0 records from chat
+[2025-08-27T18:29:17.506Z] [DEBUG] Parsing message table from dump file
+[2025-08-27T18:29:17.509Z] [DEBUG] Found columns for message:
+Data: [
+  "id",
+  "message",
+  "is_image",
+  "is_from",
+  "chat_id",
+  "is_unread",
+  "created_at"
+]
+[2025-08-27T18:29:17.510Z] [DEBUG] Parsed 68 records from message
+[2025-08-27T18:29:17.511Z] [DEBUG] Parsing booking table from dump file
+[2025-08-27T18:29:17.513Z] [DEBUG] Found columns for booking:
+Data: [
+  "id",
+  "buyer_id",
+  "stylist_id",
+  "date_time",
+  "duration",
+  "amount",
+  "currency",
+  "status",
+  "additional_notes",
+  "formatted_address",
+  "short_address",
+  "address_id",
+  "payment_id",
+  "chat_id",
+  "created_at",
+  "updated_at",
+  "scheduler_booking_id",
+  "service"
+]
+[2025-08-27T18:29:17.513Z] [DEBUG] Parsed 5 records from booking

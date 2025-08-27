@@ -1,0 +1,13 @@
+{
+  "completed_at": "2025-08-27T18:29:17.500Z",
+  "duration_seconds": 0,
+  "total_chats": 0,
+  "total_messages": 0,
+  "successfully_created_chats": 0,
+  "successfully_created_messages": 0,
+  "successfully_created_media": 0,
+  "failed_chat_creations": 0,
+  "failed_message_creations": 0,
+  "chat_success_rate": "NaN%",
+  "message_success_rate": "NaN%"
+}

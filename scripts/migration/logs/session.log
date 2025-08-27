@@ -16428,3 +16428,152 @@ Data: {
 [2025-08-27T18:19:34.849Z] [INFO ]   - Orphaned payments: 0
 [2025-08-27T18:19:34.849Z] [INFO ]   - Booking-payment mismatches: 0
 [2025-08-27T18:19:34.849Z] [INFO ]   - Amount discrepancies: 0
+
+
+=== Migration Session Started: 2025-08-27T18:29:17.480Z ===
+[2025-08-27T18:29:17.480Z] [INFO ] 🚀 Starting Phase 6: Communication System Migration
+[2025-08-27T18:29:17.481Z] [INFO ] ============================================================
+[2025-08-27T18:29:17.481Z] [INFO ] 📤 Step 1: Extracting chats and messages from MySQL...
+[2025-08-27T18:29:17.481Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:29:17.483Z ===
+[2025-08-27T18:29:17.483Z] [INFO ] Starting chat and message extraction from MySQL...
+[2025-08-27T18:29:17.484Z] [INFO ] Parsing chats, messages, and bookings from MySQL dump...
+[2025-08-27T18:29:17.484Z] [INFO ] Parsing chat table from MySQL dump
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.489Z] [SUCCESS] Parsed 0 records from chat
+[2025-08-27T18:29:17.489Z] [INFO ] Parsing message table from MySQL dump
+[2025-08-27T18:29:17.493Z] [SUCCESS] Parsed 68 records from message
+[2025-08-27T18:29:17.493Z] [INFO ] Parsing booking table from MySQL dump
+[2025-08-27T18:29:17.496Z] [SUCCESS] Parsed 5 records from booking
+[2025-08-27T18:29:17.497Z] [INFO ] Found 0 chats, 68 messages, and 5 bookings in MySQL
+[2025-08-27T18:29:17.497Z] [INFO ] Created booking mapping for 5 bookings
+[2025-08-27T18:29:17.497Z] [INFO ] Found 5 migrated booking IDs
+[2025-08-27T18:29:17.497Z] [INFO ] Chat and message extraction completed:
+[2025-08-27T18:29:17.497Z] [INFO ]   - Total MySQL chats: 0
+[2025-08-27T18:29:17.497Z] [INFO ]   - Total MySQL messages: 68
+[2025-08-27T18:29:17.497Z] [INFO ]   - Active chats: 0
+[2025-08-27T18:29:17.497Z] [INFO ]   - Successfully processed chats: 0
+[2025-08-27T18:29:17.497Z] [INFO ]   - Successfully processed messages: 0
+[2025-08-27T18:29:17.497Z] [INFO ]   - Skipped chats: 0
+[2025-08-27T18:29:17.497Z] [INFO ]   - Skipped messages: 68
+[2025-08-27T18:29:17.497Z] [INFO ]   - Image messages: 0
+[2025-08-27T18:29:17.497Z] [INFO ] Sender distribution:
+[2025-08-27T18:29:17.497Z] [INFO ] Skipped message reasons:
+[2025-08-27T18:29:17.498Z] [INFO ]   - Chat was not processed: 68
+[2025-08-27T18:29:17.498Z] [INFO ] ✅ Chat and message extraction completed successfully
+[2025-08-27T18:29:17.498Z] [INFO ]    📊 MySQL chats: 0 (0 active)
+[2025-08-27T18:29:17.498Z] [INFO ]    📊 MySQL messages: 68
+[2025-08-27T18:29:17.498Z] [INFO ]    ✨ Processed chats: 0
+[2025-08-27T18:29:17.498Z] [INFO ]    ✨ Processed messages: 0
+[2025-08-27T18:29:17.498Z] [INFO ]    🖼️  Image messages: 0
+[2025-08-27T18:29:17.498Z] [WARN ]    ⚠️  Skipped chats: 0
+[2025-08-27T18:29:17.498Z] [WARN ]    ⚠️  Skipped messages: 68
+[2025-08-27T18:29:17.498Z] [INFO ] 
+📥 Step 2: Creating chats and messages in Supabase...
+[2025-08-27T18:29:17.498Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:29:17.498Z ===
+[2025-08-27T18:29:17.498Z] [INFO ] Starting chat and message creation in Supabase...
+[2025-08-27T18:29:17.498Z] [INFO ] Loaded 0 chats and 0 messages to create
+[2025-08-27T18:29:17.500Z] [INFO ] Connected to Supabase
+[2025-08-27T18:29:17.500Z] [INFO ] Phase 1: Creating chats...
+[2025-08-27T18:29:17.500Z] [INFO ] Phase 2: Creating messages...
+[2025-08-27T18:29:17.500Z] [INFO ] Phase 3: Creating media records for image messages...
+[2025-08-27T18:29:17.500Z] [INFO ] Chat and message creation completed:
+[2025-08-27T18:29:17.500Z] [INFO ]   - Total chats to create: 0
+[2025-08-27T18:29:17.500Z] [INFO ]   - Total messages to create: 0
+[2025-08-27T18:29:17.500Z] [INFO ]   - Successfully created chats: 0
+[2025-08-27T18:29:17.500Z] [INFO ]   - Successfully created messages: 0
+[2025-08-27T18:29:17.500Z] [INFO ]   - Successfully created media: 0
+[2025-08-27T18:29:17.500Z] [INFO ]   - Failed chat creations: 0
+[2025-08-27T18:29:17.500Z] [INFO ]   - Failed message creations: 0
+[2025-08-27T18:29:17.500Z] [INFO ]   - Duration: 0.00s
+[2025-08-27T18:29:17.500Z] [INFO ]   - Chat success rate: NaN%
+[2025-08-27T18:29:17.500Z] [INFO ]   - Message success rate: NaN%
+[2025-08-27T18:29:17.500Z] [INFO ] ✅ Chat and message creation completed successfully
+[2025-08-27T18:29:17.500Z] [INFO ]    📊 Chats created: 0/0
+[2025-08-27T18:29:17.501Z] [INFO ]    📊 Messages created: 0/0
+[2025-08-27T18:29:17.501Z] [INFO ]    📊 Media records created: 0
+[2025-08-27T18:29:17.501Z] [INFO ]    ⏱️  Duration: 0.00s
+[2025-08-27T18:29:17.501Z] [INFO ] 
+🔍 Step 3: Validating migration integrity...
+[2025-08-27T18:29:17.501Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:29:17.501Z ===
+[2025-08-27T18:29:17.501Z] [INFO ] Starting chat migration validation...
+[2025-08-27T18:29:17.501Z] [INFO ] Connected to both data sources
+[2025-08-27T18:29:17.501Z] [INFO ] Parsing chat table from MySQL dump
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.506Z] [SUCCESS] Parsed 0 records from chat
+[2025-08-27T18:29:17.506Z] [INFO ] Parsing message table from MySQL dump
+[2025-08-27T18:29:17.510Z] [SUCCESS] Parsed 68 records from message
+[2025-08-27T18:29:17.510Z] [INFO ] Parsing booking table from MySQL dump
+[2025-08-27T18:29:17.513Z] [SUCCESS] Parsed 5 records from booking
+[2025-08-27T18:29:17.513Z] [INFO ] MySQL: 0 active chats, 68 messages
+[2025-08-27T18:29:17.538Z] [INFO ] PostgreSQL: 0 chats, 0 messages
+[2025-08-27T18:29:17.573Z] [INFO ] Validating message counts per chat...
+[2025-08-27T18:29:17.573Z] [INFO ] Chat message distribution:
+[2025-08-27T18:29:17.573Z] [INFO ]   - Average messages per chat: 0.00
+[2025-08-27T18:29:17.573Z] [INFO ]   - Max messages in a chat: 0
+[2025-08-27T18:29:17.573Z] [INFO ]   - Min messages in a chat: 0
+[2025-08-27T18:29:17.574Z] [INFO ] ✅ Chat migration validation PASSED
+[2025-08-27T18:29:17.574Z] [INFO ] Validation summary:
+[2025-08-27T18:29:17.574Z] [INFO ]   - Total MySQL active chats: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Total MySQL messages: 68
+[2025-08-27T18:29:17.574Z] [INFO ]   - Total PostgreSQL chats: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Total PostgreSQL messages: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Missing chats: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Missing messages: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Orphaned chats: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Orphaned messages: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Chat-booking mismatches: 0
+[2025-08-27T18:29:17.574Z] [INFO ]   - Message sender mismatches: 0
+[2025-08-27T18:29:17.574Z] [INFO ] ✅ Migration validation PASSED
+[2025-08-27T18:29:17.574Z] [INFO ]    📊 MySQL chats → PostgreSQL chats: 0 → 0
+[2025-08-27T18:29:17.574Z] [INFO ]    📊 MySQL messages → PostgreSQL messages: 68 → 0
+[2025-08-27T18:29:17.574Z] [INFO ] 
+============================================================
+[2025-08-27T18:29:17.574Z] [INFO ] 🎉 Phase 6 Migration Completed Successfully!
+[2025-08-27T18:29:17.574Z] [INFO ] ============================================================
+[2025-08-27T18:29:17.574Z] [INFO ] 📊 MIGRATION SUMMARY:
+[2025-08-27T18:29:17.574Z] [INFO ]    • Total duration: 0s
+[2025-08-27T18:29:17.574Z] [INFO ]    • MySQL chats processed: 0 (from 0 total, 0 active)
+[2025-08-27T18:29:17.574Z] [INFO ]    • MySQL messages processed: 0 (from 68 total)
+[2025-08-27T18:29:17.574Z] [INFO ]    • PostgreSQL chats created: 0/0 (0%)
+[2025-08-27T18:29:17.574Z] [INFO ]    • PostgreSQL messages created: 0/0 (0%)
+[2025-08-27T18:29:17.574Z] [INFO ]    • Media records created: 0
+[2025-08-27T18:29:17.574Z] [INFO ]    • Migration validation: ✅ PASSED
+[2025-08-27T18:29:17.574Z] [INFO ] 📋 SKIPPED DATA:
+[2025-08-27T18:29:17.574Z] [INFO ]    • Inactive chats: 0
+[2025-08-27T18:29:17.574Z] [INFO ]    • Invalid messages: 68
+[2025-08-27T18:29:17.575Z] [INFO ] 📄 Detailed statistics saved to: /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-6-migration-stats.json

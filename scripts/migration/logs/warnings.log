@@ -414,3 +414,33 @@
 [2025-08-27T18:19:34.774Z] [WARN ] Payment already exists for intent pi_3Ravq9DaNfPoezcB1INAfKO4, skipping
 [2025-08-27T18:19:34.774Z] [WARN ] Payment already exists for intent pi_3RYTBeDaNfPoezcB2VgYeDso, skipping
 [2025-08-27T18:19:34.842Z] [WARN ] Found 1886 missing payments
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.488Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.498Z] [WARN ]    ⚠️  Skipped chats: 0
+[2025-08-27T18:29:17.498Z] [WARN ]    ⚠️  Skipped messages: 68
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:29:17.505Z] [WARN ] Column count mismatch for chat. Expected 11, got 9

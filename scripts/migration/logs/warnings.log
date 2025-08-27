@@ -407,3 +407,10 @@
 [2025-08-27T14:13:16.425Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0��Yh\�\�M@79|҉�%@
 [2025-08-27T14:13:16.425Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0�G\�\�\�%@\�}-�\�\�M@
 [2025-08-27T14:13:16.425Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0lZ)rQ#@Q�B\�yaN@
+[2025-08-27T18:15:35.141Z] [WARN ] Could not load booking mappings, will use original booking IDs
+[2025-08-27T18:16:21.056Z] [WARN ] Could not load booking mappings, will use original booking IDs
+[2025-08-27T18:16:22.992Z] [WARN ] Found 1888 missing payments
+[2025-08-27T18:19:08.356Z] [WARN ] Found 1886 missing payments
+[2025-08-27T18:19:34.774Z] [WARN ] Payment already exists for intent pi_3Ravq9DaNfPoezcB1INAfKO4, skipping
+[2025-08-27T18:19:34.774Z] [WARN ] Payment already exists for intent pi_3RYTBeDaNfPoezcB2VgYeDso, skipping
+[2025-08-27T18:19:34.842Z] [WARN ] Found 1886 missing payments

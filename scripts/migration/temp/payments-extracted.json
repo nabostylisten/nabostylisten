@@ -1,0 +1,73 @@
+{
+  "extracted_at": "2025-08-27T18:19:34.715Z",
+  "processedPayments": [
+    {
+      "id": "59dc6992-670a-4533-a5e4-e06a73fc8aba",
+      "booking_id": "4bbd6832-c31f-4456-a5c8-298fb2ed88ab",
+      "payment_intent_id": "pi_3Ravq9DaNfPoezcB1INAfKO4",
+      "original_amount": 228,
+      "discount_amount": 0,
+      "final_amount": 228,
+      "platform_fee": 45.6,
+      "stylist_payout": 182.4,
+      "affiliate_commission": 0,
+      "currency": "NOK",
+      "discount_code": null,
+      "discount_percentage": null,
+      "discount_fixed_amount": null,
+      "affiliate_id": null,
+      "affiliate_commission_percentage": null,
+      "stripe_application_fee_amount": 4560,
+      "stylist_transfer_id": "tr_3Ravq9DaNfPoezcB1AEdntDo",
+      "status": "succeeded",
+      "created_at": "2025-06-16 13:58:55.198857",
+      "updated_at": "2025-06-19 03:30:51.000000",
+      "authorized_at": null,
+      "captured_at": "2025-06-19 03:30:51.000000",
+      "succeeded_at": "2025-06-19 03:30:51.000000",
+      "payout_initiated_at": "2025-06-19 03:30:51.000000",
+      "payout_completed_at": null,
+      "refunded_amount": 0,
+      "refund_reason": null
+    },
+    {
+      "id": "a2c31f75-5c54-4f6e-a38f-021cecec7cdf",
+      "booking_id": "4fbb10f5-35c9-40d4-a9ab-31af521c7799",
+      "payment_intent_id": "pi_3RYTBeDaNfPoezcB2VgYeDso",
+      "original_amount": 118,
+      "discount_amount": 0,
+      "final_amount": 118,
+      "platform_fee": 23.6,
+      "stylist_payout": 94.4,
+      "affiliate_commission": 0,
+      "currency": "NOK",
+      "discount_code": null,
+      "discount_percentage": null,
+      "discount_fixed_amount": null,
+      "affiliate_id": null,
+      "affiliate_commission_percentage": null,
+      "stripe_application_fee_amount": 2360,
+      "stylist_transfer_id": "tr_3RYTBeDaNfPoezcB2xIYmdtA",
+      "status": "succeeded",
+      "created_at": "2025-06-10 14:25:41.831559",
+      "updated_at": "2025-06-12 21:59:01.000000",
+      "authorized_at": null,
+      "captured_at": "2025-06-12 21:59:01.000000",
+      "succeeded_at": "2025-06-12 21:59:01.000000",
+      "payout_initiated_at": "2025-06-12 21:59:01.000000",
+      "payout_completed_at": null,
+      "refunded_amount": 0,
+      "refund_reason": null
+    }
+  ],
+  "metadata": {
+    "total_mysql_payments": 1888,
+    "total_mysql_bookings": 5,
+    "processed_payments": 2,
+    "skipped_payments": 1886,
+    "unique_bookings": 2,
+    "status_distribution": {
+      "succeeded": 2
+    }
+  }
+}

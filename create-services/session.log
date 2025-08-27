@@ -1,0 +1,71 @@
+
+
+=== Migration Session Started: 2025-08-27T14:24:45.305Z ===
+[2025-08-27T14:24:45.307Z] [INFO ] Starting Phase 3 Step 4: Create Services
+[2025-08-27T14:24:45.307Z] [INFO ] Creating 14 services...
+[2025-08-27T14:24:45.319Z] [ERROR] ❌ Failed to create service this is the service for bridal hair bhbnbn n n nbbn: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.322Z] [ERROR] ❌ Failed to create service A keratin treatment is a process that smooths and often straightens hair. You might also hear it ...: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.323Z] [ERROR] ❌ Failed to create service Hhhhhwyyyyyyy: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.325Z] [ERROR] ❌ Failed to create service Test Query.: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.326Z] [ERROR] ❌ Failed to create service Test Query: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.327Z] [ERROR] ❌ Failed to create service Random Text: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.328Z] [ERROR] ❌ Failed to create service Randomvvv: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.329Z] [ERROR] ❌ Failed to create service AS: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.330Z] [ERROR] ❌ Failed to create service new stylist ombre service: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.331Z] [ERROR] ❌ Failed to create service hey: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.333Z] [ERROR] ❌ Failed to create service highlights testy: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.334Z] [ERROR] ❌ Failed to create service Random Text tygggggg today: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.335Z] [ERROR] ❌ Failed to create service qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf...: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.336Z] [ERROR] ❌ Failed to create service this is the description for: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:24:45.336Z] [SUCCESS] ✅ Services created successfully!
+[2025-08-27T14:24:45.336Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T14:24:45.336Z] [INFO ]    - Total processed: 14
+[2025-08-27T14:24:45.336Z] [INFO ]    - Successfully created: 0
+[2025-08-27T14:24:45.336Z] [INFO ]    - Failed: 14
+[2025-08-27T14:24:45.336Z] [WARN ] ⚠️  14 services failed to create. Check logs for details.
+[2025-08-27T14:24:45.339Z] [INFO ] 🔢 Final database count: 0 services
+
+
+=== Migration Session Started: 2025-08-27T14:29:28.543Z ===
+[2025-08-27T14:29:28.544Z] [INFO ] Starting Phase 3 Step 4: Create Services
+[2025-08-27T14:29:28.544Z] [INFO ] Creating 14 services...
+[2025-08-27T14:29:28.571Z] [ERROR] ❌ Failed to create service this is the service for bridal hair bhbnbn n n nbbn: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.580Z] [ERROR] ❌ Failed to create service A keratin treatment is a process that smooths and often straightens hair. You might also hear it ...: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.586Z] [ERROR] ❌ Failed to create service Hhhhhwyyyyyyy: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.588Z] [ERROR] ❌ Failed to create service Test Query.: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.589Z] [ERROR] ❌ Failed to create service Test Query: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.590Z] [ERROR] ❌ Failed to create service Random Text: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.592Z] [ERROR] ❌ Failed to create service Randomvvv: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.593Z] [ERROR] ❌ Failed to create service AS: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.594Z] [ERROR] ❌ Failed to create service new stylist ombre service: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.595Z] [ERROR] ❌ Failed to create service hey: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.596Z] [ERROR] ❌ Failed to create service highlights testy: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.597Z] [ERROR] ❌ Failed to create service Random Text tygggggg today: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.598Z] [ERROR] ❌ Failed to create service qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf...: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.599Z] [ERROR] ❌ Failed to create service this is the description for: insert or update on table "services" violates foreign key constraint "services_stylist_id_fkey"
+[2025-08-27T14:29:28.600Z] [SUCCESS] ✅ Services created successfully!
+[2025-08-27T14:29:28.600Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T14:29:28.600Z] [INFO ]    - Total processed: 14
+[2025-08-27T14:29:28.600Z] [INFO ]    - Successfully created: 0
+[2025-08-27T14:29:28.600Z] [INFO ]    - Failed: 14
+[2025-08-27T14:29:28.600Z] [WARN ] ⚠️  14 services failed to create. Check logs for details.
+[2025-08-27T14:29:28.601Z] [INFO ] 🔢 Final database count: 0 services
+
+
+=== Migration Session Started: 2025-08-27T14:32:01.048Z ===
+[2025-08-27T14:32:01.049Z] [INFO ] Starting Phase 3 Step 4: Create Services
+[2025-08-27T14:32:01.050Z] [INFO ] Creating 8 services...
+[2025-08-27T14:32:01.075Z] [INFO ] ✅ Created service: this is the service for bridal hair bhbnbn n n nbbn (15134499-5bf3-424d-993e-8d275e26a8a4)
+[2025-08-27T14:32:01.083Z] [INFO ] ✅ Created service: Test Query. (5b829c6e-61d0-467a-84d6-926c8e762bab)
+[2025-08-27T14:32:01.090Z] [INFO ] ✅ Created service: Test Query (623bcf63-b00d-4bf6-9c0c-ea6f147e752d)
+[2025-08-27T14:32:01.092Z] [INFO ] ✅ Created service: new stylist ombre service (b417e646-9f26-46fa-ba06-22c64adbd7af)
+[2025-08-27T14:32:01.093Z] [INFO ] ✅ Created service: hey (bec866f8-2ecc-408b-b975-5dd1019bfdf3)
+[2025-08-27T14:32:01.095Z] [INFO ] ✅ Created service: highlights testy (cdfb4756-abc7-4737-b842-9d0f30b6ee24)
+[2025-08-27T14:32:01.096Z] [INFO ] ✅ Created service: qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf... (dcf0c3c0-7cfd-4b38-9769-c3b031140d48)
+[2025-08-27T14:32:01.098Z] [INFO ] ✅ Created service: this is the description for (dde86f5c-f29f-4bfb-a659-93e9186f4c5f)
+[2025-08-27T14:32:01.098Z] [SUCCESS] ✅ Services created successfully!
+[2025-08-27T14:32:01.098Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T14:32:01.098Z] [INFO ]    - Total processed: 8
+[2025-08-27T14:32:01.098Z] [INFO ]    - Successfully created: 8
+[2025-08-27T14:32:01.099Z] [INFO ]    - Failed: 0
+[2025-08-27T14:32:01.100Z] [INFO ] 🔢 Final database count: 8 services

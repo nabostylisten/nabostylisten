@@ -1,0 +1,109 @@
+
+
+=== Migration Session Started: 2025-08-27T14:24:45.115Z ===
+[2025-08-27T14:24:45.116Z] [INFO ] Starting Phase 3 Step 2: Create Service Categories
+[2025-08-27T14:24:45.117Z] [INFO ] Creating 39 service categories...
+[2025-08-27T14:24:45.117Z] [INFO ] Processing 0 top-level categories first...
+[2025-08-27T14:24:45.117Z] [INFO ] Processing 39 subcategories...
+[2025-08-27T14:24:45.144Z] [ERROR] ❌ Failed to create subcategory balayage: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.153Z] [ERROR] ❌ Failed to create subcategory halloween makeup: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.161Z] [ERROR] ❌ Failed to create subcategory pedicure: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.163Z] [ERROR] ❌ Failed to create subcategory lash lift: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.165Z] [ERROR] ❌ Failed to create subcategory colouring lashes: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.166Z] [ERROR] ❌ Failed to create subcategory bridal makeup: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.167Z] [ERROR] ❌ Failed to create subcategory natural makeup: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.168Z] [ERROR] ❌ Failed to create subcategory bridal hair: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.169Z] [ERROR] ❌ Failed to create subcategory haircut: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.171Z] [ERROR] ❌ Failed to create subcategory extentions refill: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.172Z] [ERROR] ❌ Failed to create subcategory false lashes: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.173Z] [ERROR] ❌ Failed to create subcategory fluffy brows makeup: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.174Z] [ERROR] ❌ Failed to create subcategory permanent brow (powder eyebrow): insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.175Z] [ERROR] ❌ Failed to create subcategory browlift: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.176Z] [ERROR] ❌ Failed to create subcategory removing/fixing: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.177Z] [ERROR] ❌ Failed to create subcategory ombre: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.178Z] [ERROR] ❌ Failed to create subcategory Soft Gel extentions nytt sett fransk manikyr: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.179Z] [ERROR] ❌ Failed to create subcategory hair colouring: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.180Z] [ERROR] ❌ Failed to create subcategory manscaping: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.181Z] [ERROR] ❌ Failed to create subcategory keratin treatment: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.183Z] [ERROR] ❌ Failed to create subcategory anti permanent: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.184Z] [ERROR] ❌ Failed to create subcategory party makeup: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.185Z] [ERROR] ❌ Failed to create subcategory bleaching: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.186Z] [ERROR] ❌ Failed to create subcategory highlights: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.186Z] [ERROR] ❌ Failed to create subcategory colouring brows w/ bleach: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.187Z] [ERROR] ❌ Failed to create subcategory shellac nails: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.188Z] [ERROR] ❌ Failed to create subcategory browlamination: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.189Z] [ERROR] ❌ Failed to create subcategory haircut bangs: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.190Z] [ERROR] ❌ Failed to create subcategory full cover makeup: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.191Z] [ERROR] ❌ Failed to create subcategory extentions classic: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.192Z] [ERROR] ❌ Failed to create subcategory treatments (hairmasks etc): insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.194Z] [ERROR] ❌ Failed to create subcategory glowy makeup: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.195Z] [ERROR] ❌ Failed to create subcategory extentions volume: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.196Z] [ERROR] ❌ Failed to create subcategory hairstyling: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.197Z] [ERROR] ❌ Failed to create subcategory shaping brows: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.198Z] [ERROR] ❌ Failed to create subcategory extentions removing: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.198Z] [ERROR] ❌ Failed to create subcategory french manicure: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.199Z] [ERROR] ❌ Failed to create subcategory extentions mega volume: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.200Z] [ERROR] ❌ Failed to create subcategory classic manicure: insert or update on table "service_categories" violates foreign key constraint "service_categories_parent_category_id_fkey"
+[2025-08-27T14:24:45.200Z] [SUCCESS] ✅ Service categories created successfully!
+[2025-08-27T14:24:45.201Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T14:24:45.201Z] [INFO ]    - Total processed: 39
+[2025-08-27T14:24:45.201Z] [INFO ]    - Successfully created: 0
+[2025-08-27T14:24:45.201Z] [INFO ]    - Failed: 39
+[2025-08-27T14:24:45.201Z] [INFO ]    - Top-level categories: 0
+[2025-08-27T14:24:45.201Z] [INFO ]    - Subcategories: 0
+[2025-08-27T14:24:45.201Z] [WARN ] ⚠️  39 categories failed to create. Check logs for details.
+[2025-08-27T14:24:45.203Z] [INFO ] 🔢 Final database count: 0 service categories
+
+
+=== Migration Session Started: 2025-08-27T14:28:42.600Z ===
+[2025-08-27T14:28:42.602Z] [INFO ] Starting Phase 3 Step 2: Create Service Categories
+[2025-08-27T14:28:42.602Z] [INFO ] Creating 39 service categories...
+[2025-08-27T14:28:42.602Z] [INFO ] Processing 0 top-level categories first...
+[2025-08-27T14:28:42.602Z] [INFO ] Processing 39 subcategories...
+[2025-08-27T14:28:42.616Z] [INFO ] ✅ Created subcategory: balayage
+[2025-08-27T14:28:42.619Z] [INFO ] ✅ Created subcategory: halloween makeup
+[2025-08-27T14:28:42.621Z] [INFO ] ✅ Created subcategory: pedicure
+[2025-08-27T14:28:42.623Z] [INFO ] ✅ Created subcategory: lash lift
+[2025-08-27T14:28:42.625Z] [INFO ] ✅ Created subcategory: colouring lashes
+[2025-08-27T14:28:42.626Z] [INFO ] ✅ Created subcategory: bridal makeup
+[2025-08-27T14:28:42.627Z] [INFO ] ✅ Created subcategory: natural makeup
+[2025-08-27T14:28:42.629Z] [INFO ] ✅ Created subcategory: bridal hair
+[2025-08-27T14:28:42.630Z] [INFO ] ✅ Created subcategory: haircut
+[2025-08-27T14:28:42.631Z] [INFO ] ✅ Created subcategory: extentions refill
+[2025-08-27T14:28:42.633Z] [INFO ] ✅ Created subcategory: false lashes
+[2025-08-27T14:28:42.634Z] [INFO ] ✅ Created subcategory: fluffy brows makeup
+[2025-08-27T14:28:42.635Z] [INFO ] ✅ Created subcategory: permanent brow (powder eyebrow)
+[2025-08-27T14:28:42.637Z] [INFO ] ✅ Created subcategory: browlift
+[2025-08-27T14:28:42.638Z] [INFO ] ✅ Created subcategory: removing/fixing
+[2025-08-27T14:28:42.640Z] [INFO ] ✅ Created subcategory: ombre
+[2025-08-27T14:28:42.641Z] [INFO ] ✅ Created subcategory: Soft Gel extentions nytt sett fransk manikyr
+[2025-08-27T14:28:42.642Z] [INFO ] ✅ Created subcategory: hair colouring
+[2025-08-27T14:28:42.643Z] [INFO ] ✅ Created subcategory: manscaping
+[2025-08-27T14:28:42.644Z] [INFO ] ✅ Created subcategory: keratin treatment
+[2025-08-27T14:28:42.644Z] [INFO ] ✅ Created subcategory: anti permanent
+[2025-08-27T14:28:42.645Z] [INFO ] ✅ Created subcategory: party makeup
+[2025-08-27T14:28:42.646Z] [INFO ] ✅ Created subcategory: bleaching
+[2025-08-27T14:28:42.647Z] [INFO ] ✅ Created subcategory: highlights
+[2025-08-27T14:28:42.648Z] [INFO ] ✅ Created subcategory: colouring brows w/ bleach
+[2025-08-27T14:28:42.649Z] [INFO ] ✅ Created subcategory: shellac nails
+[2025-08-27T14:28:42.650Z] [INFO ] ✅ Created subcategory: browlamination
+[2025-08-27T14:28:42.651Z] [INFO ] ✅ Created subcategory: haircut bangs
+[2025-08-27T14:28:42.652Z] [INFO ] ✅ Created subcategory: full cover makeup
+[2025-08-27T14:28:42.653Z] [INFO ] ✅ Created subcategory: extentions classic
+[2025-08-27T14:28:42.653Z] [INFO ] ✅ Created subcategory: treatments (hairmasks etc)
+[2025-08-27T14:28:42.655Z] [INFO ] ✅ Created subcategory: glowy makeup
+[2025-08-27T14:28:42.656Z] [INFO ] ✅ Created subcategory: extentions volume
+[2025-08-27T14:28:42.657Z] [INFO ] ✅ Created subcategory: hairstyling
+[2025-08-27T14:28:42.658Z] [INFO ] ✅ Created subcategory: shaping brows
+[2025-08-27T14:28:42.659Z] [INFO ] ✅ Created subcategory: extentions removing
+[2025-08-27T14:28:42.660Z] [INFO ] ✅ Created subcategory: french manicure
+[2025-08-27T14:28:42.661Z] [INFO ] ✅ Created subcategory: extentions mega volume
+[2025-08-27T14:28:42.661Z] [INFO ] ✅ Created subcategory: classic manicure
+[2025-08-27T14:28:42.662Z] [SUCCESS] ✅ Service categories created successfully!
+[2025-08-27T14:28:42.662Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T14:28:42.662Z] [INFO ]    - Total processed: 39
+[2025-08-27T14:28:42.662Z] [INFO ]    - Successfully created: 39
+[2025-08-27T14:28:42.662Z] [INFO ]    - Failed: 0
+[2025-08-27T14:28:42.662Z] [INFO ]    - Top-level categories: 0
+[2025-08-27T14:28:42.662Z] [INFO ]    - Subcategories: 39
+[2025-08-27T14:28:42.663Z] [INFO ] 🔢 Final database count: 44 service categories

@@ -30,7 +30,7 @@ export class MySQLParser {
   private logger: MigrationLogger;
   private dumpFilePath: string;
 
-  constructor(logger: MigrationLogger, dumpFilePath: string) {
+  constructor(dumpFilePath: string, logger: MigrationLogger) {
     this.logger = logger;
     this.dumpFilePath = dumpFilePath;
   }
@@ -85,6 +85,24 @@ export class MySQLParser {
       return addresses.map(address => this.mapToAddress(address));
     } catch (error) {
       this.logger.error('Failed to extract address records', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generic method to parse any table from MySQL dump
+   */
+  async parseTable<T>(tableName: string): Promise<T[]> {
+    this.logger.info(`Parsing ${tableName} table from MySQL dump`);
+    
+    try {
+      const dumpContent = readFileSync(this.dumpFilePath, 'utf-8');
+      const records = this.extractTableData(dumpContent, tableName);
+      
+      this.logger.success(`Parsed ${records.length} records from ${tableName}`);
+      return records as T[];
+    } catch (error) {
+      this.logger.error(`Failed to parse ${tableName} table`, error);
       throw error;
     }
   }

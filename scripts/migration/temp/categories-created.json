@@ -1,0 +1,285 @@
+{
+  "metadata": {
+    "created_at": "2025-08-27T14:28:42.662Z",
+    "total_processed": 39,
+    "successful_creations": 39,
+    "failed_creations": 0,
+    "top_level_categories_created": 0,
+    "subcategories_created": 39
+  },
+  "results": [
+    {
+      "original_id": "002d1ce4-0ca5-4629-b574-be52d395d51c",
+      "supabase_id": "002d1ce4-0ca5-4629-b574-be52d395d51c",
+      "name": "balayage",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "0ac0cd03-cb38-4935-815d-4c3a1582b763",
+      "supabase_id": "0ac0cd03-cb38-4935-815d-4c3a1582b763",
+      "name": "halloween makeup",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "0ce7ad34-5d38-4dc5-b0a6-750e3bd6bf87",
+      "supabase_id": "0ce7ad34-5d38-4dc5-b0a6-750e3bd6bf87",
+      "name": "pedicure",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "1035b2c9-a1ea-4ba4-afbc-92b50a821691",
+      "supabase_id": "1035b2c9-a1ea-4ba4-afbc-92b50a821691",
+      "name": "lash lift",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "1368bb37-5195-499b-be73-d6ae2ed96a5d",
+      "supabase_id": "1368bb37-5195-499b-be73-d6ae2ed96a5d",
+      "name": "colouring lashes",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "16b16198-35e6-4908-add2-3e5c93357cbb",
+      "supabase_id": "16b16198-35e6-4908-add2-3e5c93357cbb",
+      "name": "bridal makeup",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "26dca8c0-2b32-4e6c-b46a-7e4cb35a9ab7",
+      "supabase_id": "26dca8c0-2b32-4e6c-b46a-7e4cb35a9ab7",
+      "name": "natural makeup",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "28519da8-1934-481b-82b3-73cccea51a4c",
+      "supabase_id": "28519da8-1934-481b-82b3-73cccea51a4c",
+      "name": "bridal hair",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "28bf8e07-a0ba-443a-9844-0573c520fee3",
+      "supabase_id": "28bf8e07-a0ba-443a-9844-0573c520fee3",
+      "name": "haircut",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "31f69498-8562-4e98-96f1-cdfa9d58f477",
+      "supabase_id": "31f69498-8562-4e98-96f1-cdfa9d58f477",
+      "name": "extentions refill",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "39c41eae-c187-4076-a1bf-99daa34f6e60",
+      "supabase_id": "39c41eae-c187-4076-a1bf-99daa34f6e60",
+      "name": "false lashes",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "3b2702dc-4107-4806-8a99-c71d769bb48f",
+      "supabase_id": "3b2702dc-4107-4806-8a99-c71d769bb48f",
+      "name": "fluffy brows makeup",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "3bbfdedd-dea0-47f0-85f2-d7d25fbf01dc",
+      "supabase_id": "3bbfdedd-dea0-47f0-85f2-d7d25fbf01dc",
+      "name": "permanent brow (powder eyebrow)",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "43268ca7-c66d-4487-9cac-f9fecabb9711",
+      "supabase_id": "43268ca7-c66d-4487-9cac-f9fecabb9711",
+      "name": "browlift",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "4345e6b7-0790-4c8f-a29d-76bb2cb9a070",
+      "supabase_id": "4345e6b7-0790-4c8f-a29d-76bb2cb9a070",
+      "name": "removing/fixing",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "4a86b11d-5524-482e-93a9-22f9cedd0caf",
+      "supabase_id": "4a86b11d-5524-482e-93a9-22f9cedd0caf",
+      "name": "ombre",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "4b890c19-f14c-4be9-931d-21a9c1ceacdc",
+      "supabase_id": "4b890c19-f14c-4be9-931d-21a9c1ceacdc",
+      "name": "Soft Gel extentions nytt sett fransk manikyr",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "529ea0fa-52e7-4167-ad05-632931f7d117",
+      "supabase_id": "529ea0fa-52e7-4167-ad05-632931f7d117",
+      "name": "hair colouring",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "54157299-4b44-4eb6-b711-021652a9c093",
+      "supabase_id": "54157299-4b44-4eb6-b711-021652a9c093",
+      "name": "manscaping",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "5d0e1e74-eb3e-43be-960b-74aceea4f994",
+      "supabase_id": "5d0e1e74-eb3e-43be-960b-74aceea4f994",
+      "name": "keratin treatment",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "7af21e81-aba4-4f13-a862-920b8ec24a88",
+      "supabase_id": "7af21e81-aba4-4f13-a862-920b8ec24a88",
+      "name": "anti permanent",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "81a66ced-2c11-427d-b93d-e2110286a0cb",
+      "supabase_id": "81a66ced-2c11-427d-b93d-e2110286a0cb",
+      "name": "party makeup",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "8d8a6abe-8e5d-49c4-b286-ed415f4cfc8c",
+      "supabase_id": "8d8a6abe-8e5d-49c4-b286-ed415f4cfc8c",
+      "name": "bleaching",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "8ef34e53-62e9-4c05-9824-71257848d8a5",
+      "supabase_id": "8ef34e53-62e9-4c05-9824-71257848d8a5",
+      "name": "highlights",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "98172e14-f875-47df-9262-4896947db540",
+      "supabase_id": "98172e14-f875-47df-9262-4896947db540",
+      "name": "colouring brows w/ bleach",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "9a620194-1f84-43c9-aad6-755dbc68c7c3",
+      "supabase_id": "9a620194-1f84-43c9-aad6-755dbc68c7c3",
+      "name": "shellac nails",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "9f776e6c-0212-4d2d-9922-785f06ec75b2",
+      "supabase_id": "9f776e6c-0212-4d2d-9922-785f06ec75b2",
+      "name": "browlamination",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "a063ff00-e5eb-49f8-b985-cc8e5b32108b",
+      "supabase_id": "a063ff00-e5eb-49f8-b985-cc8e5b32108b",
+      "name": "haircut bangs",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "aba19105-a151-4a5f-931e-e997ef2ee0e1",
+      "supabase_id": "aba19105-a151-4a5f-931e-e997ef2ee0e1",
+      "name": "full cover makeup",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "b39c1e38-4b9b-4dcc-9727-a26e2a61b148",
+      "supabase_id": "b39c1e38-4b9b-4dcc-9727-a26e2a61b148",
+      "name": "extentions classic",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "be3a2050-0cb7-4290-8972-6da04bdbb706",
+      "supabase_id": "be3a2050-0cb7-4290-8972-6da04bdbb706",
+      "name": "treatments (hairmasks etc)",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "be84ce26-5ea7-49ec-9719-c6442688d488",
+      "supabase_id": "be84ce26-5ea7-49ec-9719-c6442688d488",
+      "name": "glowy makeup",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "bec590c7-1578-4922-89e3-542b8951ec05",
+      "supabase_id": "bec590c7-1578-4922-89e3-542b8951ec05",
+      "name": "extentions volume",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "c1cb6477-31e8-41e0-8132-ef3b898f2167",
+      "supabase_id": "c1cb6477-31e8-41e0-8132-ef3b898f2167",
+      "name": "hairstyling",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "c22c5495-b9de-4fed-9e47-5bb47376f9ed",
+      "supabase_id": "c22c5495-b9de-4fed-9e47-5bb47376f9ed",
+      "name": "shaping brows",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "ca88813f-25c7-4fbf-b3bc-6b786f5ff849",
+      "supabase_id": "ca88813f-25c7-4fbf-b3bc-6b786f5ff849",
+      "name": "extentions removing",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "cc60a8c4-46a6-42d4-b13e-0a699c67d752",
+      "supabase_id": "cc60a8c4-46a6-42d4-b13e-0a699c67d752",
+      "name": "french manicure",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "d763509f-bab9-4b27-98da-1e332838e797",
+      "supabase_id": "d763509f-bab9-4b27-98da-1e332838e797",
+      "name": "extentions mega volume",
+      "is_top_level": false,
+      "success": true
+    },
+    {
+      "original_id": "de9179a6-88f3-485a-a0cc-a631cb1f658b",
+      "supabase_id": "de9179a6-88f3-485a-a0cc-a631cb1f658b",
+      "name": "classic manicure",
+      "is_top_level": false,
+      "success": true
+    }
+  ]
+}

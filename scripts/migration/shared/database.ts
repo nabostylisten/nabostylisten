@@ -474,4 +474,118 @@ export class MigrationDatabase {
       return [];
     }
   }
+
+  /**
+   * Create service category record
+   */
+  async createServiceCategory(
+    category: Database["public"]["Tables"]["service_categories"]["Insert"]
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabase
+        .from("service_categories")
+        .insert(category);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Get count of service categories
+   */
+  async getServiceCategoryCount(): Promise<number> {
+    try {
+      const { count, error } = await this.supabase
+        .from("service_categories")
+        .select("*", { count: "exact", head: true });
+
+      if (error) {
+        this.logger.error('Failed to get service category count', error);
+        return -1;
+      }
+
+      return count || 0;
+    } catch (error) {
+      this.logger.error('Failed to get service category count', error);
+      return -1;
+    }
+  }
+
+  /**
+   * Create service record
+   */
+  async createService(
+    service: Database["public"]["Tables"]["services"]["Insert"]
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabase
+        .from("services")
+        .insert(service);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Create service-category junction record
+   */
+  async createServiceCategoryJunction(
+    junction: Database["public"]["Tables"]["service_service_categories"]["Insert"]
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { error } = await this.supabase
+        .from("service_service_categories")
+        .insert(junction);
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Get count of services
+   */
+  async getServiceCount(): Promise<number> {
+    try {
+      const { count, error } = await this.supabase
+        .from("services")
+        .select("*", { count: "exact", head: true });
+
+      if (error) {
+        this.logger.error('Failed to get service count', error);
+        return -1;
+      }
+
+      return count || 0;
+    } catch (error) {
+      this.logger.error('Failed to get service count', error);
+      return -1;
+    }
+  }
 }

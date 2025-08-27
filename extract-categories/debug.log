@@ -1,0 +1,17 @@
+[2025-08-27T14:24:45.050Z] [DEBUG] Parsing category table from dump file
+[2025-08-27T14:24:45.053Z] [DEBUG] Found columns for category:
+Data: [
+  "id",
+  "name",
+  "description"
+]
+[2025-08-27T14:24:45.054Z] [DEBUG] Parsed 0 records from category
+[2025-08-27T14:24:45.054Z] [DEBUG] Parsing subcategory table from dump file
+[2025-08-27T14:24:45.066Z] [DEBUG] Found columns for subcategory:
+Data: [
+  "id",
+  "name",
+  "description",
+  "category_id"
+]
+[2025-08-27T14:24:45.067Z] [DEBUG] Parsed 39 records from subcategory

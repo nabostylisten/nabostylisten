@@ -1,0 +1,114 @@
+[2025-08-27T14:24:45.221Z] [DEBUG] Parsing service table from dump file
+[2025-08-27T14:24:45.229Z] [DEBUG] Found columns for service:
+Data: [
+  "id",
+  "stylist_id",
+  "subcategory_id",
+  "duration",
+  "amount",
+  "currency",
+  "is_published",
+  "created_at",
+  "updated_at",
+  "deleted_at",
+  "description"
+]
+[2025-08-27T14:24:45.266Z] [DEBUG] Parsed 18 records from service
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: this is the service for bridal hair bhbnbn n n nbbn (15134499-5bf3-424d-993e-8d275e26a8a4)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: A keratin treatment is a process that smooths and often straightens hair. You might also hear it ... (22200ca1-9318-44b0-8efe-bc8655b0017e)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: Hhhhhwyyyyyyy (22a8c96b-9f5b-405c-8323-ad648637382b)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: Test Query. (5b829c6e-61d0-467a-84d6-926c8e762bab)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: Test Query (623bcf63-b00d-4bf6-9c0c-ea6f147e752d)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: Random Text (944810b9-c508-4c8e-b314-4d0e0d4bf17c)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: Randomvvv (9c4a96fa-cf04-432b-843e-e49d5b6e109e)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: AS (a4d2c3ed-cee6-414a-be21-1ba7a534227d)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: new stylist ombre service (b417e646-9f26-46fa-ba06-22c64adbd7af)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: hey (bec866f8-2ecc-408b-b975-5dd1019bfdf3)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: highlights testy (cdfb4756-abc7-4737-b842-9d0f30b6ee24)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: Random Text tygggggg today (d40afb2b-0ef3-400b-86dd-cffffde49df5)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf... (dcf0c3c0-7cfd-4b38-9769-c3b031140d48)
+[2025-08-27T14:24:45.267Z] [DEBUG] ✓ Transformed service: this is the description for (dde86f5c-f29f-4bfb-a659-93e9186f4c5f)
+[2025-08-27T14:28:56.580Z] [DEBUG] Parsing service table from dump file
+[2025-08-27T14:28:56.587Z] [DEBUG] Found columns for service:
+Data: [
+  "id",
+  "stylist_id",
+  "subcategory_id",
+  "duration",
+  "amount",
+  "currency",
+  "is_published",
+  "created_at",
+  "updated_at",
+  "deleted_at",
+  "description"
+]
+[2025-08-27T14:28:56.621Z] [DEBUG] Parsed 18 records from service
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: this is the service for bridal hair bhbnbn n n nbbn (15134499-5bf3-424d-993e-8d275e26a8a4)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: A keratin treatment is a process that smooths and often straightens hair. You might also hear it ... (22200ca1-9318-44b0-8efe-bc8655b0017e)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: Hhhhhwyyyyyyy (22a8c96b-9f5b-405c-8323-ad648637382b)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: Test Query. (5b829c6e-61d0-467a-84d6-926c8e762bab)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: Test Query (623bcf63-b00d-4bf6-9c0c-ea6f147e752d)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: Random Text (944810b9-c508-4c8e-b314-4d0e0d4bf17c)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: Randomvvv (9c4a96fa-cf04-432b-843e-e49d5b6e109e)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: AS (a4d2c3ed-cee6-414a-be21-1ba7a534227d)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: new stylist ombre service (b417e646-9f26-46fa-ba06-22c64adbd7af)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: hey (bec866f8-2ecc-408b-b975-5dd1019bfdf3)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: highlights testy (cdfb4756-abc7-4737-b842-9d0f30b6ee24)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: Random Text tygggggg today (d40afb2b-0ef3-400b-86dd-cffffde49df5)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf... (dcf0c3c0-7cfd-4b38-9769-c3b031140d48)
+[2025-08-27T14:28:56.621Z] [DEBUG] ✓ Transformed service: this is the description for (dde86f5c-f29f-4bfb-a659-93e9186f4c5f)
+[2025-08-27T14:29:21.853Z] [DEBUG] Parsing service table from dump file
+[2025-08-27T14:29:21.860Z] [DEBUG] Found columns for service:
+Data: [
+  "id",
+  "stylist_id",
+  "subcategory_id",
+  "duration",
+  "amount",
+  "currency",
+  "is_published",
+  "created_at",
+  "updated_at",
+  "deleted_at",
+  "description"
+]
+[2025-08-27T14:29:21.896Z] [DEBUG] Parsed 18 records from service
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: this is the service for bridal hair bhbnbn n n nbbn (15134499-5bf3-424d-993e-8d275e26a8a4)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: A keratin treatment is a process that smooths and often straightens hair. You might also hear it ... (22200ca1-9318-44b0-8efe-bc8655b0017e)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: Hhhhhwyyyyyyy (22a8c96b-9f5b-405c-8323-ad648637382b)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: Test Query. (5b829c6e-61d0-467a-84d6-926c8e762bab)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: Test Query (623bcf63-b00d-4bf6-9c0c-ea6f147e752d)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: Random Text (944810b9-c508-4c8e-b314-4d0e0d4bf17c)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: Randomvvv (9c4a96fa-cf04-432b-843e-e49d5b6e109e)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: AS (a4d2c3ed-cee6-414a-be21-1ba7a534227d)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: new stylist ombre service (b417e646-9f26-46fa-ba06-22c64adbd7af)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: hey (bec866f8-2ecc-408b-b975-5dd1019bfdf3)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: highlights testy (cdfb4756-abc7-4737-b842-9d0f30b6ee24)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: Random Text tygggggg today (d40afb2b-0ef3-400b-86dd-cffffde49df5)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf... (dcf0c3c0-7cfd-4b38-9769-c3b031140d48)
+[2025-08-27T14:29:21.896Z] [DEBUG] ✓ Transformed service: this is the description for (dde86f5c-f29f-4bfb-a659-93e9186f4c5f)
+[2025-08-27T14:31:51.007Z] [DEBUG] Parsing service table from dump file
+[2025-08-27T14:31:51.015Z] [DEBUG] Found columns for service:
+Data: [
+  "id",
+  "stylist_id",
+  "subcategory_id",
+  "duration",
+  "amount",
+  "currency",
+  "is_published",
+  "created_at",
+  "updated_at",
+  "deleted_at",
+  "description"
+]
+[2025-08-27T14:31:51.046Z] [DEBUG] Parsed 18 records from service
+[2025-08-27T14:31:51.046Z] [DEBUG] ✓ Transformed service: this is the service for bridal hair bhbnbn n n nbbn (15134499-5bf3-424d-993e-8d275e26a8a4)
+[2025-08-27T14:31:51.046Z] [DEBUG] ✓ Transformed service: Test Query. (5b829c6e-61d0-467a-84d6-926c8e762bab)
+[2025-08-27T14:31:51.046Z] [DEBUG] ✓ Transformed service: Test Query (623bcf63-b00d-4bf6-9c0c-ea6f147e752d)
+[2025-08-27T14:31:51.046Z] [DEBUG] ✓ Transformed service: new stylist ombre service (b417e646-9f26-46fa-ba06-22c64adbd7af)
+[2025-08-27T14:31:51.047Z] [DEBUG] ✓ Transformed service: hey (bec866f8-2ecc-408b-b975-5dd1019bfdf3)
+[2025-08-27T14:31:51.047Z] [DEBUG] ✓ Transformed service: highlights testy (cdfb4756-abc7-4737-b842-9d0f30b6ee24)
+[2025-08-27T14:31:51.047Z] [DEBUG] ✓ Transformed service: qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf... (dcf0c3c0-7cfd-4b38-9769-c3b031140d48)
+[2025-08-27T14:31:51.047Z] [DEBUG] ✓ Transformed service: this is the description for (dde86f5c-f29f-4bfb-a659-93e9186f4c5f)

@@ -1,0 +1,21 @@
+
+
+=== Migration Session Started: 2025-08-27T14:29:58.314Z ===
+[2025-08-27T14:29:58.316Z] [INFO ] Found 11 unique stylist IDs in services
+[2025-08-27T14:29:58.332Z] [INFO ] Found 437 existing profiles
+[2025-08-27T14:29:58.332Z] [INFO ] Existing stylist IDs: 0
+[2025-08-27T14:29:58.332Z] [INFO ] Missing stylist IDs: 11
+[2025-08-27T14:29:58.332Z] [WARN ] Missing stylist IDs:
+Data: [
+  "9603d0a1-8781-40d4-94e4-46808f6049ad",
+  "4c6b3e10-43c5-4bb5-96d5-f531ea307bf5",
+  "69ab6591-5e66-4753-85bb-1976a8fb7386",
+  "4ac90719-a4b7-4c80-abc7-a2fdd9abb4ef",
+  "db7f9be8-1bd9-4982-8f28-fe9692676516",
+  "0722bfc7-8e09-45fe-a0b9-d3cd5bf9340c",
+  "938078d7-abd8-4c13-82a9-8c80a5d97572",
+  "e86770d7-a505-437c-8ffa-2b413357f29d",
+  "74ce8efd-f9d9-484b-ba6e-ed74ecb0bfe8",
+  "a0462be3-c8fe-4c2f-8f75-a02e18d1b2a5",
+  "42e09fab-712d-43a7-a8a3-e2288f7b7803"
+]

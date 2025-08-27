@@ -1,0 +1,121 @@
+{
+  "metadata": {
+    "extracted_at": "2025-08-27T14:31:51.047Z",
+    "total_services": 8,
+    "total_category_relationships": 8
+  },
+  "services": [
+    {
+      "id": "15134499-5bf3-424d-993e-8d275e26a8a4",
+      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "title": "this is the service for bridal hair bhbnbn n n nbbn",
+      "description": null,
+      "price": 118,
+      "currency": "nok",
+      "duration_minutes": 10,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    },
+    {
+      "id": "5b829c6e-61d0-467a-84d6-926c8e762bab",
+      "stylist_id": "ef651125-f7f1-41fa-bdb8-fd746b026b04",
+      "title": "Test Query.",
+      "description": null,
+      "price": 33,
+      "currency": "nok",
+      "duration_minutes": 3,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    },
+    {
+      "id": "623bcf63-b00d-4bf6-9c0c-ea6f147e752d",
+      "stylist_id": "8644170e-11b5-45d1-8ba7-c0770d5106a5",
+      "title": "Test Query",
+      "description": null,
+      "price": 12,
+      "currency": "nok",
+      "duration_minutes": 50,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    },
+    {
+      "id": "b417e646-9f26-46fa-ba06-22c64adbd7af",
+      "stylist_id": "674e1467-70b3-4e00-975f-27f803c8ac07",
+      "title": "new stylist ombre service",
+      "description": null,
+      "price": 1000,
+      "currency": "nok",
+      "duration_minutes": 1000,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    },
+    {
+      "id": "bec866f8-2ecc-408b-b975-5dd1019bfdf3",
+      "stylist_id": "70af22aa-70ed-4997-8513-51e77c53f77a",
+      "title": "hey",
+      "description": null,
+      "price": 0,
+      "currency": "nok",
+      "duration_minutes": 0,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    },
+    {
+      "id": "cdfb4756-abc7-4737-b842-9d0f30b6ee24",
+      "stylist_id": "2f4ff0da-1eec-47f9-a9d0-ac2e96c2970c",
+      "title": "highlights testy",
+      "description": null,
+      "price": 100,
+      "currency": "nok",
+      "duration_minutes": 10,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    },
+    {
+      "id": "dcf0c3c0-7cfd-4b38-9769-c3b031140d48",
+      "stylist_id": "732c52cc-be2c-4c2c-bb40-923b4bdd869a",
+      "title": "qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf...",
+      "description": "qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf gdfgdf ggfdg fg fg fg f gf gf g fg f gd f g df gg fg f gf gf gf g fg fg f gf g fg f gd d fd fs f sf sf sdffdfdfdfdfdfdffddffdfd fd d fd fd sf. fdf ds fss sffff fffffff ffffffffffffffsdfd nfkdnf nsdfkj nsjfnjkdsnfjdsnfjnsdjfnjsdnfdf fdsfsdfsd dsf ds fsdfsdf sfd sfdfsdfdsfsdfsdf dsfdsfdsfdsfs fds sdfd fsd ds ddfdfsdfdgsgfddbgbgdbsgfdnfgdsngfbsfgvsfgbdhn ghhdfghdfjgfnhjgfnhjfgnhjnfgjhnjfnhjfnjhnjhnfgjnhfjnhjnfhjnfgjnhjfnhjfnghjnfg",
+      "price": 1000,
+      "currency": "nok",
+      "duration_minutes": 50,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    },
+    {
+      "id": "dde86f5c-f29f-4bfb-a659-93e9186f4c5f",
+      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "title": "this is the description for",
+      "description": null,
+      "price": 10,
+      "currency": "nok",
+      "duration_minutes": 10,
+      "is_published": false,
+      "at_customer_place": false,
+      "at_stylist_place": true,
+      "includes": [],
+      "requirements": []
+    }
+  ]
+}

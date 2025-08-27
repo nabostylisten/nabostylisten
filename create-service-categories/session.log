@@ -1,0 +1,37 @@
+
+
+=== Migration Session Started: 2025-08-27T14:24:45.376Z ===
+[2025-08-27T14:24:45.378Z] [INFO ] Starting Phase 3 Step 5: Create Service-Category Relationships
+[2025-08-27T14:24:45.378Z] [INFO ] Creating 14 service-category relationships...
+[2025-08-27T14:24:45.389Z] [ERROR] ❌ Failed to create service-category link 15134499-5bf3-424d-993e-8d275e26a8a4 -> 28519da8-1934-481b-82b3-73cccea51a4c: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.391Z] [ERROR] ❌ Failed to create service-category link 22200ca1-9318-44b0-8efe-bc8655b0017e -> 5d0e1e74-eb3e-43be-960b-74aceea4f994: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.393Z] [ERROR] ❌ Failed to create service-category link 22a8c96b-9f5b-405c-8323-ad648637382b -> fefb9d93-1748-48ea-8b82-eb2fd5e02eaf: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.395Z] [ERROR] ❌ Failed to create service-category link 5b829c6e-61d0-467a-84d6-926c8e762bab -> 002d1ce4-0ca5-4629-b574-be52d395d51c: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.396Z] [ERROR] ❌ Failed to create service-category link 623bcf63-b00d-4bf6-9c0c-ea6f147e752d -> 28519da8-1934-481b-82b3-73cccea51a4c: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.397Z] [ERROR] ❌ Failed to create service-category link 944810b9-c508-4c8e-b314-4d0e0d4bf17c -> f6b1a466-2de3-43d4-9a01-72dc8571509c: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.398Z] [ERROR] ❌ Failed to create service-category link 9c4a96fa-cf04-432b-843e-e49d5b6e109e -> be3a2050-0cb7-4290-8972-6da04bdbb706: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.399Z] [ERROR] ❌ Failed to create service-category link a4d2c3ed-cee6-414a-be21-1ba7a534227d -> 28bf8e07-a0ba-443a-9844-0573c520fee3: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.400Z] [ERROR] ❌ Failed to create service-category link b417e646-9f26-46fa-ba06-22c64adbd7af -> 4a86b11d-5524-482e-93a9-22f9cedd0caf: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.401Z] [ERROR] ❌ Failed to create service-category link bec866f8-2ecc-408b-b975-5dd1019bfdf3 -> fa47cb96-4a4d-4c83-9a10-f160ecae7011: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.402Z] [ERROR] ❌ Failed to create service-category link cdfb4756-abc7-4737-b842-9d0f30b6ee24 -> 8ef34e53-62e9-4c05-9824-71257848d8a5: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.403Z] [ERROR] ❌ Failed to create service-category link d40afb2b-0ef3-400b-86dd-cffffde49df5 -> a063ff00-e5eb-49f8-b985-cc8e5b32108b: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.404Z] [ERROR] ❌ Failed to create service-category link dcf0c3c0-7cfd-4b38-9769-c3b031140d48 -> 28bf8e07-a0ba-443a-9844-0573c520fee3: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.405Z] [ERROR] ❌ Failed to create service-category link dde86f5c-f29f-4bfb-a659-93e9186f4c5f -> be84ce26-5ea7-49ec-9719-c6442688d488: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:24:45.405Z] [SUCCESS] ✅ Service-category relationships created successfully!
+[2025-08-27T14:24:45.405Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T14:24:45.405Z] [INFO ]    - Total processed: 14
+[2025-08-27T14:24:45.405Z] [INFO ]    - Successfully created: 0
+[2025-08-27T14:24:45.405Z] [INFO ]    - Failed: 14
+[2025-08-27T14:24:45.405Z] [WARN ] ⚠️  14 service-category links failed to create. Check logs for details.
+
+
+=== Migration Session Started: 2025-08-27T14:32:05.664Z ===
+[2025-08-27T14:32:05.665Z] [INFO ] Starting Phase 3 Step 5: Create Service-Category Relationships
+[2025-08-27T14:32:05.665Z] [INFO ] Creating 8 service-category relationships...
+[2025-08-27T14:32:05.704Z] [ERROR] ❌ Failed to create service-category link bec866f8-2ecc-408b-b975-5dd1019bfdf3 -> fa47cb96-4a4d-4c83-9a10-f160ecae7011: insert or update on table "service_service_categories" violates foreign key constraint "service_service_categories_category_id_fkey"
+[2025-08-27T14:32:05.710Z] [SUCCESS] ✅ Service-category relationships created successfully!
+[2025-08-27T14:32:05.710Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T14:32:05.710Z] [INFO ]    - Total processed: 8
+[2025-08-27T14:32:05.710Z] [INFO ]    - Successfully created: 7
+[2025-08-27T14:32:05.710Z] [INFO ]    - Failed: 1
+[2025-08-27T14:32:05.710Z] [WARN ] ⚠️  1 service-category links failed to create. Check logs for details.

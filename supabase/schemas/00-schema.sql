@@ -253,9 +253,16 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     -- Stripe Integration
     stripe_payment_intent_id text,
     
+    -- Payment capture tracking
+    payment_captured_at timestamp with time zone, -- When payment was captured
+    
+    -- Payout tracking
+    payout_processed_at timestamp with time zone, -- When payout was sent to stylist after service completion
+    
     -- Email tracking
     customer_receipt_email_sent_at timestamp with time zone,
-    stylist_notification_email_sent_at timestamp with time zone
+    stylist_notification_email_sent_at timestamp with time zone,
+    payout_email_sent_at timestamp with time zone -- When payout notification was sent
 );
 
 -- Junction table to link a single booking to multiple services

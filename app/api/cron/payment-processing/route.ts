@@ -10,6 +10,7 @@ import {
   calculatePlatformFee,
   DEFAULT_PLATFORM_CONFIG,
 } from "@/schemas/platform-config.schema";
+import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,15 +21,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Calculate the target date range (24 hours from now for payment capture)
+    // Calculate the target date range with a 6-hour window
+    // We check for bookings 24-30 hours from now to ensure no gaps
     const now = new Date();
-    const paymentCaptureTime = addHours(now, 24); // 24 hours from now
+    const windowStart = addHours(now, 24); // 24 hours from now
+    const windowEnd = addHours(now, 30); // 30 hours from now (6-hour window)
 
     console.log(
-      `[PAYMENT_PROCESSING] Processing payments for bookings at ${paymentCaptureTime.toISOString()}`,
+      `[PAYMENT_PROCESSING] Processing payments for bookings between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`,
     );
 
-    // Query confirmed bookings that need payment processing (24 hours before start)
+    // Query confirmed bookings that need payment processing
+    // Using a 6-hour window to ensure no bookings are missed
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
       .select(`
@@ -37,14 +41,14 @@ export async function POST(request: NextRequest) {
         stylist:profiles!stylist_id(id, email, full_name),
         booking_services(
           service:services(
-            name,
             title
           )
         )
       `)
       .eq("status", "confirmed")
-      .gte("start_time", addHours(paymentCaptureTime, -1).toISOString()) // 1 hour window
-      .lte("start_time", addHours(paymentCaptureTime, 1).toISOString())
+      .gte("start_time", windowStart.toISOString())
+      .lt("start_time", windowEnd.toISOString())
+      .is("payment_captured_at", null); // Only process if not already captured
 
     if (bookingsError) {
       console.error(
@@ -72,8 +76,16 @@ export async function POST(request: NextRequest) {
     // Process each booking
     for (const booking of bookings) {
       try {
+        // Skip if payment was already captured (defensive check)
+        if (booking.payment_captured_at) {
+          console.log(
+            `[PAYMENT_PROCESSING] Skipping booking ${booking.id} - payment already captured at ${booking.payment_captured_at}`,
+          );
+          continue;
+        }
+
         console.log(
-          `[PAYMENT_PROCESSING] Processing payment for booking ${booking.id}`,
+          `[PAYMENT_PROCESSING] Processing payment for booking ${booking.id} (starts at ${booking.start_time})`,
         );
 
         // Capture the payment using the implemented server action
@@ -86,6 +98,19 @@ export async function POST(request: NextRequest) {
           );
           errorsCount++;
           continue;
+        }
+
+        // Update the booking to mark payment as captured
+        const { error: updateError } = await supabase
+          .from("bookings")
+          .update({ payment_captured_at: now.toISOString() })
+          .eq("id", booking.id);
+
+        if (updateError) {
+          console.error(
+            `[PAYMENT_PROCESSING] Failed to update payment_captured_at for booking ${booking.id}:`,
+            updateError,
+          );
         }
 
         console.log(
@@ -116,14 +141,14 @@ export async function POST(request: NextRequest) {
                 { locale: nb },
               );
               const serviceName = booking.booking_services
-                ?.map((bs) => bs.service?.title || bs.service?.name)
+                ?.map((bs) => bs.service?.title)
                 .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
               const { error: customerPaymentEmailError } = await sendEmail({
                 to: [booking.customer.email],
                 subject: `Betaling bekreftet - ${serviceName}`,
                 react: PaymentNotificationEmail({
-                  logoUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo-email.png`,
+                  logoUrl: getNabostylistenLogoUrl(),
                   recipientProfileId: booking.customer_id,
                   recipientName: booking.customer.full_name || "Kunde",
                   recipientRole: "customer",
@@ -178,7 +203,7 @@ export async function POST(request: NextRequest) {
                 { locale: nb },
               );
               const serviceName = booking.booking_services
-                ?.map((bs) => bs.service?.title || bs.service?.name)
+                ?.map((bs) => bs.service?.title)
                 .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
               // TODO: Only send payout notification after service completion
@@ -187,7 +212,7 @@ export async function POST(request: NextRequest) {
                 to: [booking.stylist.email],
                 subject: `Betaling mottatt - ${serviceName}`,
                 react: PaymentNotificationEmail({
-                  logoUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/logo-email.png`,
+                  logoUrl: getNabostylistenLogoUrl(),
                   recipientProfileId: booking.stylist_id,
                   recipientName: booking.stylist.full_name || "Stylist",
                   recipientRole: "stylist",
@@ -197,8 +222,8 @@ export async function POST(request: NextRequest) {
                   serviceDate: bookingDate,
                   totalAmount: totalAmount,
                   currency: "NOK",
-                  platformFee: platformFee,
-                  stylistPayout: stylistPayout,
+                  platformFee: platformFeeNOK,
+                  stylistPayout: stylistPayoutNOK,
                   paymentMethod: "Bankkort", // TODO: Get actual payment method
                   transactionId: `booking_${booking.id}`, // TODO: Use actual Stripe transaction ID
                   payoutMethod: "Bankkonto", // TODO: Get actual payout method from Stripe Connect

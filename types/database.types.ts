@@ -2410,6 +2410,9 @@ export type Database = {
           end_time: string
           id: string
           message_to_stylist: string | null
+          payment_captured_at: string | null
+          payout_email_sent_at: string | null
+          payout_processed_at: string | null
           start_time: string
           status: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id: string | null
@@ -2431,6 +2434,9 @@ export type Database = {
           end_time: string
           id?: string
           message_to_stylist?: string | null
+          payment_captured_at?: string | null
+          payout_email_sent_at?: string | null
+          payout_processed_at?: string | null
           start_time: string
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id?: string | null
@@ -2452,6 +2458,9 @@ export type Database = {
           end_time?: string
           id?: string
           message_to_stylist?: string | null
+          payment_captured_at?: string | null
+          payout_email_sent_at?: string | null
+          payout_processed_at?: string | null
           start_time?: string
           status?: Database["public"]["Enums"]["booking_status"]
           stripe_payment_intent_id?: string | null

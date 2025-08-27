@@ -195,7 +195,10 @@ export async function capturePaymentBeforeAppointment(bookingId: string) {
       .eq("id", bookingId);
 
     if (updateError) {
-      console.error("Failed to update booking after payment capture:", updateError);
+      console.error(
+        "Failed to update booking after payment capture:",
+        updateError,
+      );
       return {
         data: null,
         error: "Payment captured but failed to update booking record",
@@ -321,8 +324,14 @@ export async function getCurrentUserStripeStatus() {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error("Authentication error in getCurrentUserStripeStatus:", authError);
-      return { data: null, error: "Du må være logget inn for å se inntektsinformasjon." };
+      console.error(
+        "Authentication error in getCurrentUserStripeStatus:",
+        authError,
+      );
+      return {
+        data: null,
+        error: "Du må være logget inn for å se inntektsinformasjon.",
+      };
     }
 
     // Get user profile
@@ -339,7 +348,10 @@ export async function getCurrentUserStripeStatus() {
 
     // Check if user is a stylist
     if (profile.role !== "stylist") {
-      return { data: null, error: "Kun stylister har tilgang til inntektsinformasjon." };
+      return {
+        data: null,
+        error: "Kun stylister har tilgang til inntektsinformasjon.",
+      };
     }
 
     // Get stylist details to check for Stripe account
@@ -387,7 +399,10 @@ export async function getCurrentUserStripeStatus() {
         error: null,
       };
     } else {
-      console.error("Error fetching Stripe account status:", statusResult.error);
+      console.error(
+        "Error fetching Stripe account status:",
+        statusResult.error,
+      );
       return {
         data: {
           stripeAccountId: stylistDetails.stripe_account_id,
@@ -509,8 +524,14 @@ export async function createExpressDashboardLink({
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      console.error("Authentication error in createExpressDashboardLink:", authError);
-      return { data: null, error: "Du må være logget inn for å få tilgang til dashboard." };
+      console.error(
+        "Authentication error in createExpressDashboardLink:",
+        authError,
+      );
+      return {
+        data: null,
+        error: "Du må være logget inn for å få tilgang til dashboard.",
+      };
     }
 
     // Check if user is a stylist and owns this Stripe account
@@ -535,10 +556,16 @@ export async function createExpressDashboardLink({
     }
 
     const result = await createStripeExpressDashboardLink({ stripeAccountId });
-    
+
     if (result.error) {
-      console.error("Error creating Stripe Express Dashboard link:", result.error);
-      return { data: null, error: "Kunne ikke opprette tilgang til dashboard. Prøv igjen senere." };
+      console.error(
+        "Error creating Stripe Express Dashboard link:",
+        result.error,
+      );
+      return {
+        data: null,
+        error: "Kunne ikke opprette tilgang til dashboard. Prøv igjen senere.",
+      };
     }
 
     return result;

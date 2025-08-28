@@ -3,10 +3,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
-    addressesInsertSchema,
     bookingsInsertSchema,
     bookingsUpdateSchema,
-    discountsInsertSchema,
 } from "@/schemas/database.schema";
 import type { BookingFilters, DatabaseTables } from "@/types";
 import {
@@ -22,7 +20,7 @@ import { StripeOnboardingRequired } from "@/transactional/emails/stripe-onboardi
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
-import { shouldReceiveNotification } from "@/server/preferences.actions";
+import { shouldReceiveNotification, shouldReceiveNotificationServerSide } from "@/server/preferences.actions";
 import BookingRescheduledEmail from "@/transactional/emails/booking-rescheduled";
 
 export async function getBooking(id: string) {
@@ -1751,6 +1749,7 @@ export async function rescheduleBooking({
     }
 
     // Send reschedule notification emails to both customer and stylist
+    console.log("🔄 Starting reschedule email process for booking:", bookingId);
     try {
         // Get full booking details with user information for email
         const { data: fullBooking } = await supabase
@@ -1784,18 +1783,22 @@ export async function rescheduleBooking({
             .eq("id", bookingId)
             .single();
 
+        console.log("📧 Email addresses - Customer:", fullBooking?.customer?.email, "Stylist:", fullBooking?.stylist?.email);
+
         if (fullBooking?.customer?.email && fullBooking?.stylist?.email) {
             // Check user preferences for reschedule notifications
             const [canSendToCustomer, canSendToStylist] = await Promise.all([
-                shouldReceiveNotification(
+                shouldReceiveNotificationServerSide(
                     fullBooking.customer_id,
                     "booking_status_updates",
                 ),
-                shouldReceiveNotification(
+                shouldReceiveNotificationServerSide(
                     fullBooking.stylist_id,
                     "booking_status_updates",
                 ),
             ]);
+
+            console.log("🔔 Notification preferences - Customer:", canSendToCustomer, "Stylist:", canSendToStylist);
 
             if (canSendToCustomer || canSendToStylist) {
                 // Prepare common email data
@@ -1856,8 +1859,11 @@ export async function rescheduleBooking({
                 const stylistEmailSubject =
                     `Du flyttet booking: ${serviceName}`;
 
+                console.log("📨 About to send emails - Customer subject:", customerEmailSubject, "Stylist subject:", stylistEmailSubject);
+
                 // Send email to customer (only if they want notifications)
                 if (canSendToCustomer) {
+                    console.log("📤 Sending customer reschedule email to:", fullBooking.customer.email);
                     const { error: customerEmailError } = await sendEmail({
                         to: [fullBooking.customer.email],
                         subject: customerEmailSubject,
@@ -1870,14 +1876,19 @@ export async function rescheduleBooking({
 
                     if (customerEmailError) {
                         console.error(
-                            "Error sending customer reschedule email:",
+                            "❌ Error sending customer reschedule email:",
                             customerEmailError,
                         );
+                    } else {
+                        console.log("✅ Customer reschedule email sent successfully!");
                     }
+                } else {
+                    console.log("❌ Skipping customer email - notifications disabled");
                 }
 
                 // Send email to stylist (only if they want notifications)
                 if (canSendToStylist) {
+                    console.log("📤 Sending stylist reschedule email to:", fullBooking.stylist.email);
                     const { error: stylistEmailError } = await sendEmail({
                         to: [fullBooking.stylist.email],
                         subject: stylistEmailSubject,
@@ -1890,17 +1901,27 @@ export async function rescheduleBooking({
 
                     if (stylistEmailError) {
                         console.error(
-                            "Error sending stylist reschedule email:",
+                            "❌ Error sending stylist reschedule email:",
                             stylistEmailError,
                         );
+                    } else {
+                        console.log("✅ Stylist reschedule email sent successfully!");
                     }
+                } else {
+                    console.log("❌ Skipping stylist email - notifications disabled");
                 }
+            } else {
+                console.log("❌ Skipping all emails - both notifications disabled");
             }
+        } else {
+            console.log("❌ Missing email addresses - Customer:", !!fullBooking?.customer?.email, "Stylist:", !!fullBooking?.stylist?.email);
         }
     } catch (emailError) {
-        console.error("Error sending reschedule emails:", emailError);
+        console.error("💥 FATAL: Error sending reschedule emails:", emailError);
         // Don't fail the entire operation if email fails
     }
+
+    console.log("🏁 Reschedule email process completed for booking:", bookingId);
 
     return { data: updatedBooking, error: null };
 }

@@ -62,7 +62,9 @@ export const BookingRescheduledEmail = ({
 
   const explanationMessage =
     recipientType === "customer"
-      ? `${stylistName} har flyttet din booking med følgende begrunnelse: "${rescheduleReason}". Vi beklager eventuelle ulemper dette måtte medføre.`
+      ? rescheduleReason && rescheduleReason.trim().length > 0
+        ? `${stylistName} har flyttet din booking med følgende begrunnelse: "${rescheduleReason}". Vi beklager eventuelle ulemper dette måtte medføre.`
+        : `${stylistName} har flyttet din booking til et nytt tidspunkt. Vi beklager eventuelle ulemper dette måtte medføre.`
       : `Du har flyttet bookingen med ${customerName}. Kunden har mottatt informasjon om den nye tiden.`;
 
   return (

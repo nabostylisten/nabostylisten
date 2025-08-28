@@ -627,7 +627,7 @@ export async function createIdentityVerificationForCurrentUser() {
     // Get stylist details
     const { data: stylistDetails, error: stylistError } = await supabase
       .from("stylist_details")
-      .select("stripe_verification_session_id")
+      .select("stripe_verification_session_id, identity_verification_completed_at")
       .eq("profile_id", user.id)
       .single();
 
@@ -635,12 +635,28 @@ export async function createIdentityVerificationForCurrentUser() {
       return { data: null, error: "Kunne ikke finne stylistinformasjon." };
     }
 
-    // Check if verification session already exists
-    if (stylistDetails.stripe_verification_session_id) {
+    // Check if verification is already completed
+    if (stylistDetails.identity_verification_completed_at) {
       return {
         data: null,
-        error: "Identitetsverifisering er allerede startet.",
+        error: "Identitetsverifisering er allerede fullført.",
       };
+    }
+
+    // If there's an existing session, check its status
+    if (stylistDetails.stripe_verification_session_id) {
+      const statusResult = await getIdentityVerificationSessionStatus(
+        stylistDetails.stripe_verification_session_id
+      );
+      
+      if (statusResult.data?.status === "processing" || statusResult.data?.status === "verified") {
+        return {
+          data: null,
+          error: "Identitetsverifisering pågår allerede.",
+        };
+      }
+      
+      // If status is requires_input or failed, we'll create a new session
     }
 
     // Create verification session
@@ -655,11 +671,12 @@ export async function createIdentityVerificationForCurrentUser() {
       return { data: null, error: verificationResult.error };
     }
 
-    // Store session ID in database
+    // Store session ID in database (replace any existing session ID)
     const { error: updateError } = await supabase
       .from("stylist_details")
       .update({
         stripe_verification_session_id: verificationResult.data.sessionId,
+        identity_verification_completed_at: null, // Reset completion status for new session
       })
       .eq("profile_id", user.id);
 

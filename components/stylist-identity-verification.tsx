@@ -68,28 +68,28 @@ export function StylistIdentityVerification({
               <Alert>
                 <AlertTitle>Verifisering startet</AlertTitle>
                 <AlertDescription>
-                  Du har allerede startet identitetsverifisering. Hvis du ikke fullførte prosessen,
-                  kan du oppdatere siden for å få en ny link.
+                  Du har allerede startet identitetsverifisering. Hvis du ikke fullførte prosessen
+                  eller dokumentene ble avvist, kan du prøve igjen med en ny verifisering.
                 </AlertDescription>
               </Alert>
-            ) : (
-              <div className="text-center">
-                <Button
-                  onClick={handleStartVerification}
-                  disabled={isCreating}
-                  className="w-full sm:w-auto"
-                >
-                  {isCreating ? (
-                    "Starter verifisering..."
-                  ) : (
-                    <>
-                      <ExternalLink className="h-4 w-4 mr-2" />
-                      Start identitetsverifisering
-                    </>
-                  )}
-                </Button>
-              </div>
-            )}
+            ) : null}
+
+            <div className="text-center">
+              <Button
+                onClick={handleStartVerification}
+                disabled={isCreating}
+                className="w-full sm:w-auto"
+              >
+                {isCreating ? (
+                  "Starter verifisering..."
+                ) : (
+                  <>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    {hasVerificationSession ? "Prøv identitetsverifisering igjen" : "Start identitetsverifisering"}
+                  </>
+                )}
+              </Button>
+            </div>
 
             <div className="text-xs text-muted-foreground text-center">
               Ved å fortsette godtar du at Stripe behandler identitetsinformasjonen din

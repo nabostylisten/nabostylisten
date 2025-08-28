@@ -3,12 +3,26 @@
 import { useQuery } from "@tanstack/react-query";
 import { checkIdentityVerificationStatus } from "@/server/stripe.actions";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, AlertTriangle, XCircle, Clock } from "lucide-react";
+import {
+  CheckCircle,
+  AlertTriangle,
+  XCircle,
+  Clock,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
+import { useAuth } from "@/hooks/use-auth";
+import { Spinner } from "../ui/kibo-ui/spinner";
 
 function IdentityVerificationReturnSkeleton() {
   return (
@@ -38,12 +52,18 @@ function IdentityVerificationReturnSkeleton() {
 }
 
 export function IdentityVerificationReturnContent() {
-  const { data: verificationData, isLoading, error } = useQuery({
+  const {
+    data: verificationData,
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["identity-verification-status"],
     queryFn: checkIdentityVerificationStatus,
     refetchOnWindowFocus: false,
     retry: 2,
   });
+
+  const { profile, loading: isLoadingProfile } = useAuth();
 
   if (isLoading) {
     return <IdentityVerificationReturnSkeleton />;
@@ -51,7 +71,10 @@ export function IdentityVerificationReturnContent() {
 
   // Handle errors
   if (error || verificationData?.error || !verificationData?.data) {
-    const errorMessage = error?.message || verificationData?.error || "Kunne ikke laste verifiseringsstatus";
+    const errorMessage =
+      error?.message ||
+      verificationData?.error ||
+      "Kunne ikke laste verifiseringsstatus";
 
     return (
       <div className="container max-w-2xl mx-auto py-12">
@@ -109,39 +132,44 @@ export function IdentityVerificationReturnContent() {
         description: "Din identitet er bekreftet og du kan nå motta betalinger",
         alertType: "success" as const,
         alertTitle: "Verifiseringen er fullført",
-        alertMessage: "Du kan nå opprette tjenester og motta betalinger fra kunder.",
+        alertMessage:
+          "Du kan nå opprette tjenester og motta betalinger fra kunder.",
       };
     }
 
     switch (status) {
-      case 'verified':
+      case "verified":
         return {
           icon: <CheckCircle className="h-12 w-12 text-green-500" />,
           title: "Verifisering fullført!",
           description: "Din identitet er bekreftet",
           alertType: "success" as const,
           alertTitle: "Identitet verifisert",
-          alertMessage: "Verifiseringen din er fullført. Du kan nå motta betalinger.",
+          alertMessage:
+            "Verifiseringen din er fullført. Du kan nå motta betalinger.",
         };
 
-      case 'processing':
+      case "processing":
         return {
           icon: <Clock className="h-12 w-12 text-blue-500" />,
           title: "Verifisering behandles",
           description: "Vi behandler identitetsdokumentet ditt",
           alertType: "info" as const,
           alertTitle: "Behandling pågår",
-          alertMessage: "Dette tar vanligvis 1-3 minutter. Du vil motta en e-post når verifiseringen er ferdig.",
+          alertMessage:
+            "Dette tar vanligvis 1-3 minutter. Du vil motta en e-post når verifiseringen er ferdig.",
         };
 
-      case 'requires_input':
+      case "requires_input":
         return {
           icon: <AlertTriangle className="h-12 w-12 text-amber-500" />,
           title: "Mer informasjon kreves",
-          description: "Vi trenger tilleggsinformasjon for å fullføre verifiseringen",
+          description:
+            "Vi trenger tilleggsinformasjon for å fullføre verifiseringen",
           alertType: "warning" as const,
           alertTitle: "Handling kreves",
-          alertMessage: "Vennligst start en ny verifiseringssesjon eller kontakt support for hjelp.",
+          alertMessage:
+            "Vennligst start en ny verifiseringssesjon eller kontakt support for hjelp.",
         };
 
       default:
@@ -151,7 +179,8 @@ export function IdentityVerificationReturnContent() {
           description: "Vi kunne ikke fastslå statusen for verifiseringen din",
           alertType: "warning" as const,
           alertTitle: "Ukjent status",
-          alertMessage: "Vennligst kontakt support for å avklare statusen på verifiseringen din.",
+          alertMessage:
+            "Vennligst kontakt support for å avklare statusen på verifiseringen din.",
         };
     }
   };
@@ -169,30 +198,46 @@ export function IdentityVerificationReturnContent() {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            <Alert variant={statusContent.alertType === "error" ? "destructive" : "default"}>
+            <Alert
+              variant={
+                statusContent.alertType === "error" ? "destructive" : "default"
+              }
+            >
               <AlertTitle>{statusContent.alertTitle}</AlertTitle>
               <AlertDescription>{statusContent.alertMessage}</AlertDescription>
             </Alert>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              {completedAt || status === 'verified' ? (
+              {completedAt || status === "verified" ? (
                 <>
-                  <Button asChild>
-                    <Link href="/stylist/stripe">
-                      Gå til Stripe-dashboard
+                  <Button asChild disabled={isLoadingProfile}>
+                    <Link href={`/profiler/${profile?.id}/profil`}>
+                      Gå til profil
+                      {isLoadingProfile ? (
+                        <Spinner className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
                     </Link>
                   </Button>
-                  <Button variant="outline" asChild>
-                    <Link href="/profiler/mine/mine-tjenester">
+                  <Button variant="outline" asChild disabled={isLoadingProfile}>
+                    <Link href={`/profiler/${profile?.id}/mine-tjenester`}>
                       Opprett tjenester
+                      {isLoadingProfile ? (
+                        <Spinner className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
                     </Link>
                   </Button>
                 </>
+              ) : status === "requires_input" || !hasSession ? (
+                <Button asChild>
+                  <Link href="/stylist/stripe">Prøv igjen</Link>
+                </Button>
               ) : (
                 <Button asChild>
-                  <Link href="/stylist/stripe">
-                    Tilbake til oversikt
-                  </Link>
+                  <Link href="/stylist/stripe">Tilbake til oversikt</Link>
                 </Button>
               )}
             </div>

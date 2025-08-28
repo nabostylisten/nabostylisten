@@ -16,12 +16,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar, Clock, AlertTriangle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { rescheduleBooking } from "@/server/booking.actions";
-import { createUnavailability } from "@/server/availability.actions";
+import { addUnavailability } from "@/server/availability.actions";
 
 interface RescheduleConfirmationDialogProps {
   open: boolean;
@@ -45,7 +46,9 @@ export function RescheduleConfirmationDialog({
   customerName,
 }: RescheduleConfirmationDialogProps) {
   const router = useRouter();
-  const [availabilityOption, setAvailabilityOption] = useState<"available" | "unavailable">("available");
+  const [availabilityOption, setAvailabilityOption] = useState<
+    "available" | "unavailable"
+  >("available");
   const [hasInformedCustomer, setHasInformedCustomer] = useState(false);
   const [rescheduleReason, setRescheduleReason] = useState("");
 
@@ -68,12 +71,13 @@ export function RescheduleConfirmationDialog({
       }
 
       // If user wants to make old slot unavailable, create unavailability
-      if (availabilityOption === "unavailable") {
-        await createUnavailability({
-          start_time: currentStartTime.toISOString(),
-          end_time: currentEndTime.toISOString(),
-          reason: "Flyttet booking",
-        });
+      if (availabilityOption === "unavailable" && result.data?.stylist_id) {
+        await addUnavailability(
+          result.data.stylist_id,
+          currentStartTime,
+          currentEndTime,
+          "Flyttet booking"
+        );
       }
 
       return result.data;
@@ -93,11 +97,6 @@ export function RescheduleConfirmationDialog({
       toast.error("Du må bekrefte at du har informert kunden");
       return;
     }
-    
-    if (!rescheduleReason.trim()) {
-      toast.error("Vennligst oppgi en grunn for flyttingen");
-      return;
-    }
 
     rescheduleBookingMutation.mutate();
   };
@@ -106,7 +105,7 @@ export function RescheduleConfirmationDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[700px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <AlertTriangle className="w-5 h-5 text-amber-500" />
@@ -119,44 +118,60 @@ export function RescheduleConfirmationDialog({
 
         <div className="space-y-6 py-4">
           {/* Time Change Summary */}
-          <div className="space-y-3 p-4 bg-muted rounded-lg">
-            <div>
-              <Label className="text-muted-foreground">Fra:</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <Calendar className="w-4 h-4" />
-                <span className="text-sm">
-                  {format(currentStartTime, "EEEE d. MMMM yyyy", { locale: nb })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm">
-                  {format(currentStartTime, "HH:mm")} - {format(currentEndTime, "HH:mm")}
-                </span>
-              </div>
-            </div>
-            
-            <div className="border-t pt-3">
-              <Label className="text-green-600">Til:</Label>
-              <div className="flex items-center gap-2 mt-1 text-green-600">
-                <Calendar className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {format(newStartTime, "EEEE d. MMMM yyyy", { locale: nb })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2 mt-1 text-green-600">
-                <Clock className="w-4 h-4" />
-                <span className="text-sm font-medium">
-                  {format(newStartTime, "HH:mm")} - {format(newEndTime, "HH:mm")}
-                </span>
-              </div>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm text-purple-800 dark:text-purple-200">
+                  Fra
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm">
+                    {format(currentStartTime, "EEEE d. MMMM yyyy", {
+                      locale: nb,
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm">
+                    {format(currentStartTime, "HH:mm")} -{" "}
+                    {format(currentEndTime, "HH:mm")}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm text-green-800 dark:text-green-200">
+                  Til
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <Calendar className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {format(newStartTime, "EEEE d. MMMM yyyy", { locale: nb })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                  <Clock className="w-4 h-4" />
+                  <span className="text-sm font-medium">
+                    {format(newStartTime, "HH:mm")} -{" "}
+                    {format(newEndTime, "HH:mm")}
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Reason for Rescheduling */}
           <div className="space-y-2">
             <Label htmlFor="reason">
-              Grunn for flytting (vises for kunden)
+              Grunn for flytting (valgfritt - vises for kunden)
             </Label>
             <Textarea
               id="reason"
@@ -172,17 +187,25 @@ export function RescheduleConfirmationDialog({
             <Label>Hva skal gjøres med det gamle tidspunktet?</Label>
             <RadioGroup
               value={availabilityOption}
-              onValueChange={(value) => setAvailabilityOption(value as "available" | "unavailable")}
+              onValueChange={(value) =>
+                setAvailabilityOption(value as "available" | "unavailable")
+              }
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="available" id="available" />
-                <Label htmlFor="available" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor="available"
+                  className="font-normal cursor-pointer"
+                >
                   Gjør tidspunktet tilgjengelig for andre bookinger
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="unavailable" id="unavailable" />
-                <Label htmlFor="unavailable" className="font-normal cursor-pointer">
+                <Label
+                  htmlFor="unavailable"
+                  className="font-normal cursor-pointer"
+                >
                   Hold tidspunktet utilgjengelig
                 </Label>
               </div>
@@ -194,7 +217,9 @@ export function RescheduleConfirmationDialog({
             <Checkbox
               id="informed"
               checked={hasInformedCustomer}
-              onCheckedChange={(checked) => setHasInformedCustomer(checked as boolean)}
+              onCheckedChange={(checked) =>
+                setHasInformedCustomer(checked as boolean)
+              }
             />
             <div className="grid gap-1.5 leading-none">
               <Label
@@ -204,7 +229,8 @@ export function RescheduleConfirmationDialog({
                 Jeg har informert {customerName} om denne endringen
               </Label>
               <p className="text-xs text-amber-700">
-                Bekreft at du har snakket med kunden om flyttingen via booking-chatten eller telefon
+                Bekreft at du har snakket med kunden om flyttingen via
+                booking-chatten eller telefon
               </p>
             </div>
           </div>
@@ -220,9 +246,13 @@ export function RescheduleConfirmationDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={!hasInformedCustomer || !rescheduleReason.trim() || rescheduleBookingMutation.isPending}
+            disabled={
+              !hasInformedCustomer || rescheduleBookingMutation.isPending
+            }
           >
-            {rescheduleBookingMutation.isPending ? "Flytter booking..." : "Flytt booking"}
+            {rescheduleBookingMutation.isPending
+              ? "Flytter booking..."
+              : "Flytt booking"}
           </Button>
         </DialogFooter>
       </DialogContent>

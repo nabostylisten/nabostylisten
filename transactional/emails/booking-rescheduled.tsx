@@ -47,7 +47,7 @@ export const BookingRescheduledEmail = ({
   serviceName = "Hårklipp og styling",
   originalBookingDate = "15. januar 2024",
   originalBookingTime = "14:00 - 15:30",
-  newBookingDate = "16. januar 2024", 
+  newBookingDate = "16. januar 2024",
   newBookingTime = "10:00 - 11:30",
   rescheduleReason = "Uforutsette omstendigheter",
   location = "Hjemme hos deg",
@@ -55,13 +55,15 @@ export const BookingRescheduledEmail = ({
 }: BookingRescheduledEmailProps) => {
   const previewText = `Booking flyttet: ${serviceName} - ny tid ${newBookingTime}`;
 
-  const greetingMessage = recipientType === "customer"
-    ? `Hei ${customerName}! Din booking hos ${stylistName} er blitt flyttet til et nytt tidspunkt.`
-    : `Hei ${stylistName}! Du har flyttet bookingen med ${customerName} til et nytt tidspunkt.`;
+  const greetingMessage =
+    recipientType === "customer"
+      ? `Hei ${customerName}! Din booking hos ${stylistName} er blitt flyttet til et nytt tidspunkt.`
+      : `Hei ${stylistName}! Du har flyttet bookingen med ${customerName} til et nytt tidspunkt.`;
 
-  const explanationMessage = recipientType === "customer"
-    ? `${stylistName} har flyttet din booking med følgende begrunnelse: "${rescheduleReason}". Vi beklager eventuelle ulemper dette måtte medføre.`
-    : `Du har flyttet bookingen med ${customerName}. Kunden har mottatt informasjon om den nye tiden.`;
+  const explanationMessage =
+    recipientType === "customer"
+      ? `${stylistName} har flyttet din booking med følgende begrunnelse: "${rescheduleReason}". Vi beklager eventuelle ulemper dette måtte medføre.`
+      : `Du har flyttet bookingen med ${customerName}. Kunden har mottatt informasjon om den nye tiden.`;
 
   return (
     <Html>
@@ -79,25 +81,19 @@ export const BookingRescheduledEmail = ({
             />
           </Section>
 
-          <Heading style={heading}>
-            Booking flyttet
-          </Heading>
+          <Heading style={heading}>Booking flyttet</Heading>
 
-          <Text style={paragraph}>
-            {greetingMessage}
-          </Text>
+          <Text style={paragraph}>{greetingMessage}</Text>
 
           {/* Status section with calendar icon */}
           <Section style={statusSection}>
             <Text style={statusLabel}>Status:</Text>
-            <Text style={{ ...statusValue, color: colors.warning }}>
+            <Text style={{ ...statusValue, color: colors.primary }}>
               Flyttet
             </Text>
           </Section>
 
-          <Text style={paragraph}>
-            {explanationMessage}
-          </Text>
+          <Text style={paragraph}>{explanationMessage}</Text>
 
           {/* Original booking details */}
           <Section style={originalBookingSection}>
@@ -148,15 +144,17 @@ export const BookingRescheduledEmail = ({
             </div>
           </Section>
 
-          {/* Reschedule reason */}
-          <Section style={reasonSection}>
-            <Text style={reasonLabel}>
-              {recipientType === "customer" 
-                ? `Begrunnelse fra ${stylistName}:` 
-                : "Din begrunnelse for flytting:"}
-            </Text>
-            <Text style={reasonText}>{rescheduleReason}</Text>
-          </Section>
+          {/* Reschedule reason - only show if reason is provided */}
+          {rescheduleReason && rescheduleReason.trim().length > 0 && (
+            <Section style={reasonSection}>
+              <Text style={reasonLabel}>
+                {recipientType === "customer"
+                  ? `Begrunnelse fra ${stylistName}:`
+                  : "Din begrunnelse for flytting:"}
+              </Text>
+              <Text style={reasonText}>{rescheduleReason}</Text>
+            </Section>
+          )}
 
           {/* Call to Action */}
           <Section style={ctaSection}>
@@ -176,8 +174,9 @@ export const BookingRescheduledEmail = ({
           {recipientType === "customer" && (
             <Section style={reminderSection}>
               <Text style={reminderText}>
-                <strong>Husk:</strong> Den nye tiden er {newBookingTime} den {newBookingDate}. 
-                Vi anbefaler å legge dette inn i kalenderen din med en påminnelse.
+                <strong>Husk:</strong> Den nye tiden er {newBookingTime} den{" "}
+                {newBookingDate}. Vi anbefaler å legge dette inn i kalenderen
+                din med en påminnelse.
               </Text>
             </Section>
           )}
@@ -210,7 +209,8 @@ BookingRescheduledEmail.PreviewProps = {
   originalBookingTime: "14:00 - 15:30",
   newBookingDate: "16. januar 2024",
   newBookingTime: "10:00 - 11:30",
-  rescheduleReason: "Måtte flytte på grunn av sykdom, beklager det korte varselet",
+  rescheduleReason:
+    "Måtte flytte på grunn av sykdom, beklager det korte varselet",
   location: "Hjemme hos deg",
   recipientType: "customer" as const,
 } as BookingRescheduledEmailProps;
@@ -233,9 +233,9 @@ const link = baseStyles.link;
 const statusSection = {
   ...sectionStyles.infoSection,
   border: "2px solid",
-  borderColor: colors.warning,
+  borderColor: colors.primary,
   textAlign: "center" as const,
-  backgroundColor: "#fef3c7", // Light yellow background
+  backgroundColor: colors.muted, // Light purple background
 };
 
 const statusLabel = {
@@ -250,14 +250,14 @@ const statusLabel = {
 const statusValue = {
   fontSize: "20px",
   fontWeight: "600",
-  color: colors.warning,
+  color: colors.primary,
   margin: "0",
 };
 
 const originalBookingSection = {
   ...sectionStyles.infoSection,
-  border: "1px solid #e5e7eb",
-  backgroundColor: "#f9fafb",
+  border: "1px solid #c4b5fd", // Light purple border
+  backgroundColor: "#f3f4f6", // Neutral light gray
 };
 
 const originalSectionHeader = {
@@ -295,29 +295,29 @@ const detailLabel = textStyles.detailLabel;
 
 const reasonSection = {
   ...sectionStyles.messageSection,
-  backgroundColor: "#fef3c7",
-  border: "1px solid #f59e0b",
+  backgroundColor: colors.muted, // Light purple background
+  border: `1px solid ${colors.primary}`,
 };
 
 const reasonLabel = {
   ...textStyles.messageHeader,
-  color: "#92400e",
+  color: colors.foreground,
 };
 
 const reasonText = {
   ...textStyles.messageContent,
-  color: "#92400e",
+  color: colors.mutedForeground,
   fontStyle: "italic",
 };
 
 const reminderSection = {
   ...sectionStyles.infoSection,
-  backgroundColor: "#dbeafe",
-  border: "1px solid #3b82f6",
+  backgroundColor: colors.accent, // Light green background for reminder
+  border: `1px solid ${colors.accentForeground}`,
 };
 
 const reminderText = {
   ...textStyles.detailValue,
-  color: "#1e40af",
+  color: colors.accentForeground,
   textAlign: "center" as const,
 };

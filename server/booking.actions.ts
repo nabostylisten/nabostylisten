@@ -23,6 +23,7 @@ import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 import { shouldReceiveNotification } from "@/server/preferences.actions";
+import BookingRescheduledEmail from "@/transactional/emails/booking-rescheduled";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -1431,7 +1432,10 @@ export async function sendPostPaymentEmails(bookingId: string) {
             .single();
 
         if (bookingError || !booking) {
-            console.error("Error fetching booking for post-payment emails:", bookingError);
+            console.error(
+                "Error fetching booking for post-payment emails:",
+                bookingError,
+            );
             return { error: "Booking not found", data: null };
         }
 
@@ -1441,15 +1445,21 @@ export async function sendPostPaymentEmails(bookingId: string) {
         }
 
         // Check if emails have already been sent to prevent duplicates
-        if (booking.customer_receipt_email_sent_at && booking.stylist_notification_email_sent_at) {
-            console.log("Post-payment emails already sent for booking:", bookingId);
+        if (
+            booking.customer_receipt_email_sent_at &&
+            booking.stylist_notification_email_sent_at
+        ) {
+            console.log(
+                "Post-payment emails already sent for booking:",
+                bookingId,
+            );
             return {
                 data: {
                     emailsSent: 2,
                     totalAttempted: 2,
                     customerNotified: true,
                     stylistNotified: true,
-                    message: "Emails already sent"
+                    message: "Emails already sent",
                 },
                 error: null,
             };
@@ -1517,12 +1527,13 @@ export async function sendPostPaymentEmails(bookingId: string) {
                         bookingTime,
                         location: location as "stylist" | "customer",
                         customerAddress,
-                        messageFromCustomer: booking.message_to_stylist || undefined,
+                        messageFromCustomer: booking.message_to_stylist ||
+                            undefined,
                         totalPrice: booking.total_price,
                         currency: "NOK",
                         estimatedDuration: booking.total_duration_minutes,
                     }),
-                })
+                }),
             );
         }
 
@@ -1545,13 +1556,14 @@ export async function sendPostPaymentEmails(bookingId: string) {
                         requestedTime: bookingTime,
                         location: location,
                         customerAddress: customerAddress,
-                        messageFromCustomer: booking.message_to_stylist || undefined,
+                        messageFromCustomer: booking.message_to_stylist ||
+                            undefined,
                         totalPrice: booking.total_price,
                         currency: "NOK",
                         estimatedDuration: booking.total_duration_minutes,
                         urgency: "medium" as const,
                     }),
-                })
+                }),
             );
         }
 
@@ -1576,16 +1588,22 @@ export async function sendPostPaymentEmails(bookingId: string) {
         // Determine which emails were successfully sent
         let customerEmailSent = false;
         let stylistEmailSent = false;
-        
-        if (canSendToCustomer && canSendToStylist && emailResults.length === 2) {
+
+        if (
+            canSendToCustomer && canSendToStylist && emailResults.length === 2
+        ) {
             // Both emails attempted
             customerEmailSent = emailResults[0].status === "fulfilled";
             stylistEmailSent = emailResults[1].status === "fulfilled";
-        } else if (canSendToCustomer && !canSendToStylist && emailResults.length === 1) {
+        } else if (
+            canSendToCustomer && !canSendToStylist && emailResults.length === 1
+        ) {
             // Only customer email attempted
             customerEmailSent = emailResults[0].status === "fulfilled";
-        } else if (!canSendToCustomer && canSendToStylist && emailResults.length === 1) {
-            // Only stylist email attempted  
+        } else if (
+            !canSendToCustomer && canSendToStylist && emailResults.length === 1
+        ) {
+            // Only stylist email attempted
             stylistEmailSent = emailResults[0].status === "fulfilled";
         }
 
@@ -1595,7 +1613,7 @@ export async function sendPostPaymentEmails(bookingId: string) {
             stylist_notification_email_sent_at: string;
         }> = {};
         const now = new Date().toISOString();
-        
+
         if (customerEmailSent && !booking.customer_receipt_email_sent_at) {
             updateData.customer_receipt_email_sent_at = now;
         }
@@ -1609,9 +1627,12 @@ export async function sendPostPaymentEmails(bookingId: string) {
                 .from("bookings")
                 .update(updateData)
                 .eq("id", bookingId);
-                
+
             if (updateError) {
-                console.error("Failed to update email tracking fields:", updateError);
+                console.error(
+                    "Failed to update email tracking fields:",
+                    updateError,
+                );
                 // Don't fail the entire operation, just log the error
             }
         }
@@ -1670,7 +1691,10 @@ export async function rescheduleBooking({
 
     // Check if user is the assigned stylist
     if (booking.stylist_id !== user.id) {
-        return { error: "Not authorized to reschedule this booking", data: null };
+        return {
+            error: "Not authorized to reschedule this booking",
+            data: null,
+        };
     }
 
     // Only allow rescheduling for pending or confirmed bookings
@@ -1707,7 +1731,9 @@ export async function rescheduleBooking({
     };
 
     // Validate update data
-    const { success, data: validatedData } = bookingsUpdateSchema.safeParse(updateData);
+    const { success, data: validatedData } = bookingsUpdateSchema.safeParse(
+        updateData,
+    );
     if (!success) {
         return { error: "Invalid booking data", data: null };
     }
@@ -1788,12 +1814,16 @@ export async function rescheduleBooking({
                 const newStart = new Date(fullBooking.start_time);
                 const newEnd = new Date(fullBooking.end_time);
 
-                const originalBookingDate = format(originalStart, "EEEE d. MMMM yyyy", {
-                    locale: nb,
-                });
-                const originalBookingTime = `${format(originalStart, "HH:mm")} - ${
-                    format(originalEnd, "HH:mm")
-                }`;
+                const originalBookingDate = format(
+                    originalStart,
+                    "EEEE d. MMMM yyyy",
+                    {
+                        locale: nb,
+                    },
+                );
+                const originalBookingTime = `${
+                    format(originalStart, "HH:mm")
+                } - ${format(originalEnd, "HH:mm")}`;
 
                 const newBookingDate = format(newStart, "EEEE d. MMMM yyyy", {
                     locale: nb,
@@ -1807,9 +1837,6 @@ export async function rescheduleBooking({
                 if (fullBooking.address_id && fullBooking.addresses) {
                     location = "Hjemme hos deg";
                 }
-
-                // Import the email template (we'll need to add this import at the top)
-                const { BookingRescheduledEmail } = await import("@/transactional/emails/booking-rescheduled");
 
                 const emailProps = {
                     customerName: fullBooking.customer.full_name || "Kunde",
@@ -1826,7 +1853,8 @@ export async function rescheduleBooking({
                 };
 
                 const customerEmailSubject = `Booking flyttet: ${serviceName}`;
-                const stylistEmailSubject = `Du flyttet booking: ${serviceName}`;
+                const stylistEmailSubject =
+                    `Du flyttet booking: ${serviceName}`;
 
                 // Send email to customer (only if they want notifications)
                 if (canSendToCustomer) {
@@ -1848,7 +1876,7 @@ export async function rescheduleBooking({
                     }
                 }
 
-                // Send email to stylist (only if they want notifications)  
+                // Send email to stylist (only if they want notifications)
                 if (canSendToStylist) {
                     const { error: stylistEmailError } = await sendEmail({
                         to: [fullBooking.stylist.email],

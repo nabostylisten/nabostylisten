@@ -55,6 +55,8 @@ interface BookingSchedulerProps {
   serviceDurationMinutes: number;
   onTimeSlotSelect: (startTime: Date, endTime: Date) => void;
   selectedStartTime?: Date;
+  currentBookingStart?: Date;
+  currentBookingEnd?: Date;
 }
 
 export function BookingScheduler({
@@ -62,6 +64,8 @@ export function BookingScheduler({
   serviceDurationMinutes,
   onTimeSlotSelect,
   selectedStartTime,
+  currentBookingStart,
+  currentBookingEnd,
 }: BookingSchedulerProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -291,6 +295,25 @@ export function BookingScheduler({
     [selectedStartTime, requiredHours]
   );
 
+  // Check if a time slot is part of the current booking (for move booking)
+  const isSlotCurrentBooking = useCallback(
+    (date: Date, hour: number) => {
+      if (!currentBookingStart || !currentBookingEnd) return false;
+
+      const slotStart = new Date(date);
+      slotStart.setHours(hour, 0, 0, 0);
+      const slotEnd = new Date(date);
+      slotEnd.setHours(hour + 1, 0, 0, 0);
+
+      return (
+        isSameDay(date, currentBookingStart) &&
+        slotStart >= currentBookingStart &&
+        slotStart < currentBookingEnd
+      );
+    },
+    [currentBookingStart, currentBookingEnd]
+  );
+
   // Get all hours for display (work hours only)
   const getDisplayHours = useCallback(() => {
     const startHour = parseInt(workSchedule.startTime.split(":")[0]);
@@ -440,6 +463,7 @@ export function BookingScheduler({
                     const isUnavailable = isTimeSlotUnavailable(day, hour);
                     const canSelect = canSelectTimeSlot(day, hour);
                     const isSelected = isSlotSelected(day, hour);
+                    const isCurrentBooking = isSlotCurrentBooking(day, hour);
 
                     return (
                       <div
@@ -450,17 +474,28 @@ export function BookingScheduler({
                           isAvailable &&
                             !isUnavailable &&
                             canSelect &&
+                            !isCurrentBooking &&
                             "bg-green-100 hover:bg-green-200",
                           isAvailable &&
                             !isUnavailable &&
                             !canSelect &&
+                            !isCurrentBooking &&
                             "bg-yellow-100 cursor-not-allowed",
-                          isUnavailable && "bg-gray-200 cursor-not-allowed",
+                          isUnavailable &&
+                            !isCurrentBooking &&
+                            "bg-gray-200 cursor-not-allowed",
+                          isCurrentBooking &&
+                            "bg-purple-200 border-purple-500 cursor-not-allowed",
                           isSelected &&
                             "bg-blue-200 animate-pulse border-blue-400"
                         )}
                         onClick={() => {
-                          if (isAvailable && !isUnavailable && canSelect) {
+                          if (
+                            isAvailable &&
+                            !isUnavailable &&
+                            canSelect &&
+                            !isCurrentBooking
+                          ) {
                             handleTimeSlotClick(day, hour);
                           }
                         }}
@@ -470,11 +505,19 @@ export function BookingScheduler({
                             Valgt
                           </div>
                         )}
-                        {isAvailable && !isUnavailable && !canSelect && (
-                          <div className="text-xs text-yellow-700">
-                            For kort tid
+                        {isCurrentBooking && (
+                          <div className="text-xs font-medium text-purple-700">
+                            Nåværende
                           </div>
                         )}
+                        {isAvailable &&
+                          !isUnavailable &&
+                          !canSelect &&
+                          !isCurrentBooking && (
+                            <div className="text-xs text-yellow-700">
+                              For kort tid
+                            </div>
+                          )}
                       </div>
                     );
                   })}
@@ -497,12 +540,17 @@ export function BookingScheduler({
               <div className="w-5 h-5 bg-gray-100 border-2 border-gray-300 rounded" />
               <span className="font-medium">Ikke tilgjengelig</span>
             </div>
+            {currentBookingStart && currentBookingEnd && (
+              <div className="flex items-center gap-2">
+                <div className="w-5 h-5 bg-purple-100 border-2 border-purple-300 rounded" />
+                <span className="font-medium">Nåværende booking</span>
+              </div>
+            )}
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-blue-200 border-2 border-blue-300 rounded" />
               <span className="font-medium">Valgt tid</span>
             </div>
           </div>
-
         </CardContent>
       </Card>
 

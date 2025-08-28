@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ArrowLeft, Calendar, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, AlertCircle, MessageSquare } from "lucide-react";
+import Link from "next/link";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { MoveBookingScheduler } from "./move-booking-scheduler";
@@ -62,6 +63,12 @@ export function MoveBookingContent({
           <ArrowLeft className="w-4 h-4 mr-2" />
           Tilbake til booking
         </Button>
+        <Button variant="outline" asChild>
+          <Link href={`/bookinger/${bookingId}/chat`}>
+            <MessageSquare className="w-4 h-4 mr-2" />
+            Åpne chat
+          </Link>
+        </Button>
       </div>
 
       {/* Title Card */}
@@ -89,34 +96,42 @@ export function MoveBookingContent({
             <Separator />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <h3 className="font-semibold">Nåværende tidspunkt:</h3>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4" />
-                  <span>{format(currentStart, "EEEE d. MMMM yyyy", { locale: nb })}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    {format(currentStart, "HH:mm")} - {format(currentEnd, "HH:mm")}
-                  </span>
-                </div>
-              </div>
-
-              {selectedStartTime && selectedEndTime && (
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-green-600">Nytt tidspunkt:</h3>
-                  <div className="flex items-center gap-2 text-green-600">
+              <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30">
+                <CardHeader>
+                  <CardTitle className="text-lg text-purple-800 dark:text-purple-200">Nåværende tidspunkt</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
                     <Calendar className="w-4 h-4" />
-                    <span>{format(selectedStartTime, "EEEE d. MMMM yyyy", { locale: nb })}</span>
+                    <span>{format(currentStart, "EEEE d. MMMM yyyy", { locale: nb })}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-green-600">
+                  <div className="flex items-center gap-2 text-purple-700 dark:text-purple-300">
                     <Clock className="w-4 h-4" />
                     <span>
-                      {format(selectedStartTime, "HH:mm")} - {format(selectedEndTime, "HH:mm")}
+                      {format(currentStart, "HH:mm")} - {format(currentEnd, "HH:mm")}
                     </span>
                   </div>
-                </div>
+                </CardContent>
+              </Card>
+
+              {selectedStartTime && selectedEndTime && (
+                <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
+                  <CardHeader>
+                    <CardTitle className="text-lg text-green-800 dark:text-green-200">Nytt tidspunkt</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                      <Calendar className="w-4 h-4" />
+                      <span>{format(selectedStartTime, "EEEE d. MMMM yyyy", { locale: nb })}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+                      <Clock className="w-4 h-4" />
+                      <span>
+                        {format(selectedStartTime, "HH:mm")} - {format(selectedEndTime, "HH:mm")}
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
               )}
             </div>
 

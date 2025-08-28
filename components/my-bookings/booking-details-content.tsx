@@ -136,7 +136,7 @@ export function BookingDetailsContent({
           badge: (
             <Badge
               variant="outline"
-              className="text-yellow-600 border-yellow-200"
+              className="text-yellow-600 border-yellow-200 w-fit"
             >
               Venter på bekreftelse
             </Badge>
@@ -149,7 +149,7 @@ export function BookingDetailsContent({
           badge: (
             <Badge
               variant="outline"
-              className="text-green-600 border-green-200"
+              className="text-green-600 border-green-200 w-fit"
             >
               Bekreftet
             </Badge>
@@ -160,7 +160,10 @@ export function BookingDetailsContent({
       case "cancelled":
         return {
           badge: (
-            <Badge variant="outline" className="text-red-600 border-red-200">
+            <Badge
+              variant="outline"
+              className="text-red-600 border-red-200 w-fit"
+            >
               Avlyst
             </Badge>
           ),

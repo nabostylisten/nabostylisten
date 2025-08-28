@@ -42,7 +42,7 @@ export function MoveBookingScheduler({
         </CardHeader>
         <CardContent>
           <div className="text-sm text-muted-foreground mb-4">
-            Det opprinnelige tidspunktet vises med grå bakgrunn. Velg et nytt ledig tidspunkt for bookingen.
+            Det opprinnelige tidspunktet vises med lilla bakgrunn. Velg et nytt ledig tidspunkt for bookingen.
           </div>
         </CardContent>
       </Card>
@@ -53,6 +53,8 @@ export function MoveBookingScheduler({
         serviceDurationMinutes={serviceDurationMinutes}
         onTimeSlotSelect={handleTimeSlotSelect}
         selectedStartTime={selectedStartTime}
+        currentBookingStart={currentBookingStart}
+        currentBookingEnd={currentBookingEnd}
       />
     </div>
   );

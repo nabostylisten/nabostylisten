@@ -70,6 +70,35 @@ export const DiscountLimitsConfigSchema = z.object({
 });
 
 /**
+ * Booking rules configuration schema
+ * Stored in platform_config table with key 'booking_rules'
+ */
+export const BookingRulesConfigSchema = z.object({
+    reschedule: z.object({
+        minimumNoticeHours: z
+            .number()
+            .min(0)
+            .describe("Minimum hours notice required to reschedule a booking"),
+        allowRescheduleForPendingBookings: z
+            .boolean()
+            .describe("Whether pending bookings can be rescheduled"),
+        allowRescheduleForConfirmedBookings: z
+            .boolean()
+            .describe("Whether confirmed bookings can be rescheduled"),
+    }),
+    cancellation: z.object({
+        fullRefundHours: z
+            .number()
+            .min(0)
+            .describe("Hours before appointment for full refund"),
+        partialRefundHours: z
+            .number()
+            .min(0)
+            .describe("Hours before appointment for partial refund"),
+    }),
+});
+
+/**
  * Complete platform config entry schema
  * This represents a single row in the platform_config table
  */
@@ -93,6 +122,7 @@ export const CONFIG_KEY_SCHEMAS = {
     platform_fees: PlatformFeesConfigSchema,
     payment_config: PaymentConfigSchema,
     discount_limits: DiscountLimitsConfigSchema,
+    booking_rules: BookingRulesConfigSchema,
 } as const;
 
 /**
@@ -131,6 +161,7 @@ export const CompletePlatformConfigSchema = z.object({
     fees: PlatformFeesConfigSchema,
     payment: PaymentConfigSchema,
     discounts: DiscountLimitsConfigSchema,
+    bookingRules: BookingRulesConfigSchema,
 });
 
 /**
@@ -139,6 +170,7 @@ export const CompletePlatformConfigSchema = z.object({
 export type PlatformFeesConfig = z.infer<typeof PlatformFeesConfigSchema>;
 export type PaymentConfig = z.infer<typeof PaymentConfigSchema>;
 export type DiscountLimitsConfig = z.infer<typeof DiscountLimitsConfigSchema>;
+export type BookingRulesConfig = z.infer<typeof BookingRulesConfigSchema>;
 export type PlatformConfigEntry = z.infer<typeof PlatformConfigEntrySchema>;
 export type CompletePlatformConfig = z.infer<
     typeof CompletePlatformConfigSchema
@@ -166,6 +198,17 @@ export const DEFAULT_PLATFORM_CONFIG: CompletePlatformConfig = {
     discounts: {
         maxPercentageDiscount: 0.50,
         maxFixedDiscountNOK: 5000,
+    },
+    bookingRules: {
+        reschedule: {
+            minimumNoticeHours: 2,
+            allowRescheduleForPendingBookings: true,
+            allowRescheduleForConfirmedBookings: true,
+        },
+        cancellation: {
+            fullRefundHours: 48,
+            partialRefundHours: 24,
+        },
     },
 };
 
@@ -199,6 +242,12 @@ export function entriesToConfig(
                     entry.config_value,
                 ) as DiscountLimitsConfig;
                 break;
+            case "booking_rules":
+                config.bookingRules = validateConfigValue(
+                    entry.config_key,
+                    entry.config_value,
+                ) as BookingRulesConfig;
+                break;
         }
     }
 
@@ -215,6 +264,7 @@ export function mergeWithDefaults(
         fees: partial.fees || DEFAULT_PLATFORM_CONFIG.fees,
         payment: partial.payment || DEFAULT_PLATFORM_CONFIG.payment,
         discounts: partial.discounts || DEFAULT_PLATFORM_CONFIG.discounts,
+        bookingRules: partial.bookingRules || DEFAULT_PLATFORM_CONFIG.bookingRules,
     };
 }
 

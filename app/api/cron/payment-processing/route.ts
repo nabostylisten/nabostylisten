@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
 
     // Query confirmed bookings that need payment processing
     // Using a 6-hour window to ensure no bookings are missed
+    // For rescheduled bookings, we use the current start_time (not the original rescheduled_from time)
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")
       .select(`
@@ -81,8 +82,14 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
+        // Check if this booking was rescheduled
+        const isRescheduled = !!booking.rescheduled_from;
+        const rescheduleInfo = isRescheduled 
+          ? ` (rescheduled from ${booking.rescheduled_from})`
+          : "";
+        
         console.log(
-          `[PAYMENT_PROCESSING] Processing payment for booking ${booking.id} (starts at ${booking.start_time})`,
+          `[PAYMENT_PROCESSING] Processing payment for booking ${booking.id} (starts at ${booking.start_time})${rescheduleInfo}`,
         );
 
         // Capture the payment using the implemented server action

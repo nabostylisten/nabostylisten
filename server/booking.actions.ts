@@ -1633,3 +1633,246 @@ export async function sendPostPaymentEmails(bookingId: string) {
         };
     }
 }
+
+/**
+ * Reschedule a booking to a new time slot
+ * Only stylists can reschedule their own bookings
+ */
+export async function rescheduleBooking({
+    bookingId,
+    newStartTime,
+    newEndTime,
+    rescheduleReason,
+}: {
+    bookingId: string;
+    newStartTime: string;
+    newEndTime: string;
+    rescheduleReason: string;
+}) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+
+    // Get booking details to verify access and get current times
+    const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .select("*")
+        .eq("id", bookingId)
+        .single();
+
+    if (bookingError || !booking) {
+        return { error: "Booking not found", data: null };
+    }
+
+    // Check if user is the assigned stylist
+    if (booking.stylist_id !== user.id) {
+        return { error: "Not authorized to reschedule this booking", data: null };
+    }
+
+    // Only allow rescheduling for pending or confirmed bookings
+    if (booking.status !== "pending" && booking.status !== "confirmed") {
+        return {
+            error: "Can only reschedule pending or confirmed bookings",
+            data: null,
+        };
+    }
+
+    // Validate new times
+    const newStart = new Date(newStartTime);
+    const newEnd = new Date(newEndTime);
+    const now = new Date();
+
+    if (newStart >= newEnd) {
+        return { error: "End time must be after start time", data: null };
+    }
+
+    if (newStart <= now) {
+        return { error: "New booking time must be in the future", data: null };
+    }
+
+    // Store original start time for tracking
+    const originalStartTime = booking.start_time;
+
+    // Prepare update data
+    const updateData: DatabaseTables["bookings"]["Update"] = {
+        start_time: newStartTime,
+        end_time: newEndTime,
+        rescheduled_from: originalStartTime,
+        rescheduled_at: new Date().toISOString(),
+        reschedule_reason: rescheduleReason.trim(),
+    };
+
+    // Validate update data
+    const { success, data: validatedData } = bookingsUpdateSchema.safeParse(updateData);
+    if (!success) {
+        return { error: "Invalid booking data", data: null };
+    }
+
+    // Update the booking
+    const { data: updatedBooking, error: updateError } = await supabase
+        .from("bookings")
+        .update(validatedData)
+        .eq("id", bookingId)
+        .select()
+        .single();
+
+    if (updateError || !updatedBooking) {
+        return { error: "Failed to reschedule booking", data: null };
+    }
+
+    // Send reschedule notification emails to both customer and stylist
+    try {
+        // Get full booking details with user information for email
+        const { data: fullBooking } = await supabase
+            .from("bookings")
+            .select(`
+                *,
+                customer:profiles!bookings_customer_id_fkey(
+                    id,
+                    full_name,
+                    email
+                ),
+                stylist:profiles!bookings_stylist_id_fkey(
+                    id,
+                    full_name,
+                    email
+                ),
+                addresses(
+                    street_address,
+                    city,
+                    postal_code,
+                    entry_instructions
+                ),
+                booking_services(
+                    services(
+                        id,
+                        title,
+                        description
+                    )
+                )
+            `)
+            .eq("id", bookingId)
+            .single();
+
+        if (fullBooking?.customer?.email && fullBooking?.stylist?.email) {
+            // Check user preferences for reschedule notifications
+            const [canSendToCustomer, canSendToStylist] = await Promise.all([
+                shouldReceiveNotification(
+                    fullBooking.customer_id,
+                    "booking_status_updates",
+                ),
+                shouldReceiveNotification(
+                    fullBooking.stylist_id,
+                    "booking_status_updates",
+                ),
+            ]);
+
+            if (canSendToCustomer || canSendToStylist) {
+                // Prepare common email data
+                const services = fullBooking.booking_services?.map((bs) =>
+                    bs.services
+                ).filter(Boolean) || [];
+                const serviceName = services.length > 0
+                    ? services[0]?.title || "Booking"
+                    : "Booking";
+                const serviceNameWithCount = services.length > 1
+                    ? `${serviceName} +${services.length - 1} til`
+                    : serviceName;
+
+                const originalStart = new Date(originalStartTime);
+                const originalEnd = new Date(booking.end_time);
+                const newStart = new Date(fullBooking.start_time);
+                const newEnd = new Date(fullBooking.end_time);
+
+                const originalBookingDate = format(originalStart, "EEEE d. MMMM yyyy", {
+                    locale: nb,
+                });
+                const originalBookingTime = `${format(originalStart, "HH:mm")} - ${
+                    format(originalEnd, "HH:mm")
+                }`;
+
+                const newBookingDate = format(newStart, "EEEE d. MMMM yyyy", {
+                    locale: nb,
+                });
+                const newBookingTime = `${format(newStart, "HH:mm")} - ${
+                    format(newEnd, "HH:mm")
+                }`;
+
+                // Determine location text
+                let location = "Hos stylisten";
+                if (fullBooking.address_id && fullBooking.addresses) {
+                    location = "Hjemme hos deg";
+                }
+
+                // Import the email template (we'll need to add this import at the top)
+                const { BookingRescheduledEmail } = await import("@/transactional/emails/booking-rescheduled");
+
+                const emailProps = {
+                    customerName: fullBooking.customer.full_name || "Kunde",
+                    stylistName: fullBooking.stylist.full_name || "Stylist",
+                    bookingId: bookingId,
+                    stylistId: fullBooking.stylist_id,
+                    serviceName: serviceNameWithCount,
+                    originalBookingDate,
+                    originalBookingTime,
+                    newBookingDate,
+                    newBookingTime,
+                    rescheduleReason: rescheduleReason,
+                    location,
+                };
+
+                const customerEmailSubject = `Booking flyttet: ${serviceName}`;
+                const stylistEmailSubject = `Du flyttet booking: ${serviceName}`;
+
+                // Send email to customer (only if they want notifications)
+                if (canSendToCustomer) {
+                    const { error: customerEmailError } = await sendEmail({
+                        to: [fullBooking.customer.email],
+                        subject: customerEmailSubject,
+                        react: BookingRescheduledEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            ...emailProps,
+                            recipientType: "customer",
+                        }),
+                    });
+
+                    if (customerEmailError) {
+                        console.error(
+                            "Error sending customer reschedule email:",
+                            customerEmailError,
+                        );
+                    }
+                }
+
+                // Send email to stylist (only if they want notifications)  
+                if (canSendToStylist) {
+                    const { error: stylistEmailError } = await sendEmail({
+                        to: [fullBooking.stylist.email],
+                        subject: stylistEmailSubject,
+                        react: BookingRescheduledEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            ...emailProps,
+                            recipientType: "stylist",
+                        }),
+                    });
+
+                    if (stylistEmailError) {
+                        console.error(
+                            "Error sending stylist reschedule email:",
+                            stylistEmailError,
+                        );
+                    }
+                }
+            }
+        }
+    } catch (emailError) {
+        console.error("Error sending reschedule emails:", emailError);
+        // Don't fail the entire operation if email fails
+    }
+
+    return { data: updatedBooking, error: null };
+}

@@ -8,7 +8,6 @@ import {
   Clock,
   MapPin,
   User,
-  MoreHorizontal,
   MessageSquare,
   CreditCard,
   Home,
@@ -26,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getReviewByBookingId } from "@/server/review.actions";
 import type { Database } from "@/types/database.types";
 import { BookingStatusDialog } from "./booking-status-dialog";
+import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
 
@@ -242,6 +242,13 @@ export function BookingCard({
               )}
             </div>
             <div className="flex gap-2">
+              {/* Stylist-specific actions dropdown */}
+              {userRole === "stylist" && (
+                <BookingActionsDropdown
+                  bookingId={booking.id}
+                  bookingStatus={booking.status}
+                />
+              )}
               {/* Stylist-specific actions for pending bookings */}
               {userRole === "stylist" && booking.status === "pending" && (
                 <Button

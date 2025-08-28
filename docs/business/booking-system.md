@@ -106,6 +106,52 @@ The booking system enables authenticated customers to convert their shopping car
 
 ### Booking Process Flow
 
+#### Booking Rescheduling Workflow ⭐ **NEW**
+
+The rescheduling process is designed to be stylist-initiated to maintain control and prevent customer confusion:
+
+**Step 1: Access Rescheduling**
+
+- Stylists can access "Flytt" action from multiple locations:
+  - Booking cards in their booking overview
+  - Booking details page header actions
+  - Booking chat interface actions
+- Only available for "pending" and "confirmed" bookings
+- Disabled for "cancelled" or "completed" bookings
+
+**Step 2: Select New Time**
+
+- Dedicated rescheduling page at `/bookinger/[bookingId]/flytt`
+- Reuses existing booking scheduler with service duration calculations
+- Shows current booking time with visual indication
+- Prevents selection of the same time slot
+- Automatic end time calculation based on service duration
+
+**Step 3: Confirm Reschedule**
+
+- Comprehensive confirmation dialog showing:
+  - Old time (crossed out) vs new time (highlighted)
+  - Service details and customer information
+  - Required reschedule reason textarea
+  - Old time slot availability options (available/unavailable)
+  - Mandatory customer notification confirmation checkbox
+
+**Step 4: Process and Notify**
+
+- Database updates with complete audit trail
+- Payment timing automatically recalculated
+- Email notifications sent to both customer and stylist
+- Booking status preserved (remains "pending" or "confirmed")
+- Success confirmation with updated booking details
+
+**Business Safeguards**:
+
+- Cannot reschedule without providing a reason
+- Must confirm customer has been informed
+- Prevents accidental double-booking
+- Maintains payment integrity
+- Complete audit trail for accountability
+
 #### Phase 1: Order Review
 
 - **Cart Summary Display**:
@@ -286,6 +332,7 @@ The booking process is now implemented as a guided 4-step stepper system that pr
 - Customer receipt emails with payment confirmation and booking details
 - Stylist booking request emails sent only after successful payment
 - Status update emails for both customers and stylists
+- **Booking reschedule emails** ⭐ **NEW**: Specialized template showing old vs new times
 - Branded email templates following Nabostylisten design system
 - SMS reminders (if implemented)
 - In-app chat channel creation
@@ -339,12 +386,14 @@ The booking process is now implemented as a guided 4-step stepper system that pr
    - Clear visual feedback for form completion status
 
 7. **Booking Data Management**:
+
    - Complete booking data collection across all steps
    - State persistence during step navigation
    - Data validation before final submission
    - Integration ready for payment processing
 
 8. **Post-Booking Management** ⭐ **NEW**:
+
    - Unified booking detail access at `/bookinger/[bookingId]`
    - Role-based access control (customer, stylist, admin)
    - Status management for stylists (confirm/cancel with messages)
@@ -352,12 +401,24 @@ The booking process is now implemented as a guided 4-step stepper system that pr
    - Simplified URL structure for email links and sharing
 
 9. **Post-Payment Email System** ⭐ **NEW**:
+
    - Automated email sending triggered from checkout success page
    - Customer receipt emails with payment confirmation details
    - Stylist booking request emails sent only after successful payment
    - Background email processing to avoid blocking checkout experience
    - Respect for user notification preferences
    - Comprehensive booking details in all communications
+
+10. **Booking Rescheduling System** ⭐ **NEW**:
+    - **Stylist-Only Rescheduling**: Only stylists can reschedule bookings to prevent customer confusion
+    - **Multi-Entry Point Access**: "Flytt" action available from booking cards, details page, and chat interface
+    - **Dedicated Rescheduling Page**: Full-featured scheduler at `/bookinger/[id]/flytt` for selecting new times
+    - **Comprehensive Confirmation Dialog**: Review old vs new times with mandatory customer notification
+    - **Database Tracking**: Complete audit trail with original time, new time, reason, and timestamp
+    - **Payment Integration**: Automatic payment timing recalculation for rescheduled bookings
+    - **Email Notifications**: Specialized reschedule email template sent to both parties
+    - **Availability Management**: Stylist choice for old time slot (available/unavailable)
+    - **Business Rule Enforcement**: Minimum notice requirements and status validation
 
 ### 📋 Planned Features
 
@@ -442,6 +503,42 @@ The booking process is now implemented as a guided 4-step stepper system that pr
 - Less than 24 hours: partial refund or credit
 - No-show policy enforcement
 - Stylist-initiated cancellations: full refund + compensation
+
+### Booking Rescheduling Rules ⭐ **NEW**
+
+**Stylist-Initiated Rescheduling**:
+
+- Only stylists can reschedule existing bookings
+- Available for bookings with "pending" or "confirmed" status
+- Cannot reschedule "cancelled" or "completed" bookings
+- New time must be in the future (cannot reschedule to past times)
+- Must provide a reason for the reschedule (visible to customer)
+
+**Minimum Notice Requirements**:
+
+- Configurable minimum notice period (default: 2 hours)
+- Platform administrators can adjust minimum notice requirements
+- Rules apply to both pending and confirmed bookings
+
+**Payment Handling**:
+
+- Payment timing recalculated based on new appointment time
+- Payment capture occurs 24 hours before new appointment time
+- No double-charging - original payment authorization remains valid
+- Rescheduled bookings processed in payment cron job based on new timing
+
+**Old Time Slot Management**:
+
+- Stylist chooses whether to make old time slot available to other customers
+- Option 1: "Make available" - releases time for new bookings
+- Option 2: "Keep unavailable" - blocks time to prevent overbooking
+
+**Customer Notification Requirements**:
+
+- Stylist must confirm they have informed the customer via chat/phone
+- Mandatory checkbox prevents accidental rescheduling without communication
+- Automatic email notifications sent to both customer and stylist
+- Customer receives explanation of new time and reason for change
 
 ## Error Handling & Edge Cases
 

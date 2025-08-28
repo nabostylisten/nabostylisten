@@ -40,6 +40,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { BookingStatusDialog } from "./booking-status-dialog";
+import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { BookingDetailsSkeleton } from "./booking-details-skeleton";
 import { BookingNoteDialog } from "../booking/booking-note-dialog";
 import { BookingNoteCard } from "../booking/booking-note-card";
@@ -224,6 +225,13 @@ export function BookingDetailsContent({
                 <div className="flex items-center gap-2">
                   {statusInfo.icon}
                   {statusInfo.badge}
+                  {/* Stylist actions dropdown */}
+                  {userRole === "stylist" && (
+                    <BookingActionsDropdown
+                      bookingId={booking.id}
+                      bookingStatus={booking.status}
+                    />
+                  )}
                   {/* Stylist actions for pending bookings */}
                   {userRole === "stylist" && booking.status === "pending" && (
                     <Button

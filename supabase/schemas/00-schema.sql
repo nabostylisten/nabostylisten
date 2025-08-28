@@ -262,7 +262,12 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     -- Email tracking
     customer_receipt_email_sent_at timestamp with time zone,
     stylist_notification_email_sent_at timestamp with time zone,
-    payout_email_sent_at timestamp with time zone -- When payout notification was sent
+    payout_email_sent_at timestamp with time zone, -- When payout notification was sent
+    
+    -- Reschedule tracking
+    rescheduled_from timestamp with time zone, -- Original start time if booking was moved
+    rescheduled_at timestamp with time zone, -- When the reschedule happened
+    reschedule_reason text -- Optional message from stylist explaining the reschedule
 );
 
 -- Junction table to link a single booking to multiple services

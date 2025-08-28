@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ArrowLeft, Calendar, MessageCircle, User } from "lucide-react";
 import Link from "next/link";
+import { BookingActionsDropdown } from "@/components/my-bookings/booking-actions-dropdown";
 import { useCallback, useEffect, useState, useRef } from "react";
 import {
   createChatMessage,
@@ -283,6 +284,14 @@ export function BookingChatContent({
             <Badge variant={getStatusVariant(bookingStatus)}>
               {getStatusLabel(bookingStatus)}
             </Badge>
+            
+            {/* Stylist actions dropdown */}
+            {isCurrentUserStylist && (
+              <BookingActionsDropdown
+                bookingId={bookingId}
+                bookingStatus={bookingStatus}
+              />
+            )}
           </div>
         </CardContent>
       </Card>

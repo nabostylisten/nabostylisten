@@ -6,15 +6,19 @@ import {
   captureStripePaymentIntent,
   createConnectedAccountWithDatabase,
   createCustomerWithDatabase,
+  createIdentityVerificationSession,
   createStripeAccountOnboardingLink,
   createStripeExpressDashboardLink,
   createStripePaymentIntent,
   createStripeRefund,
   deleteStripeCustomerAddress,
+  getIdentityVerificationSessionStatus,
   getStripeAccountStatus as getStripeAccountStatusService,
   type StripeCustomerUpdateParams,
   updateStripeCustomer,
 } from "@/lib/stripe/connect";
+import { getPublicUrl } from "@/lib/utils";
+import { canCreateServices } from "@/lib/stylist-onboarding-status";
 
 // TODO: Implement Stripe-related server actions
 
@@ -354,10 +358,10 @@ export async function getCurrentUserStripeStatus() {
       };
     }
 
-    // Get stylist details to check for Stripe account
+    // Get stylist details to check for Stripe account and identity verification
     const { data: stylistDetails, error: stylistError } = await supabase
       .from("stylist_details")
-      .select("*")
+      .select("*, stripe_verification_session_id, identity_verification_completed_at")
       .eq("profile_id", user.id)
       .single();
 
@@ -384,9 +388,11 @@ export async function getCurrentUserStripeStatus() {
     });
 
     if (statusResult.data) {
-      const isFullyOnboarded = statusResult.data.charges_enabled &&
-        statusResult.data.details_submitted &&
-        statusResult.data.payouts_enabled;
+      // Use the new canCreateServices function to determine if fully onboarded
+      const isFullyOnboarded = canCreateServices(
+        statusResult.data,
+        stylistDetails.identity_verification_completed_at
+      );
 
       return {
         data: {
@@ -572,5 +578,179 @@ export async function createExpressDashboardLink({
   } catch (error) {
     console.error("Unexpected error in createExpressDashboardLink:", error);
     return { data: null, error: "En uventet feil oppstod. Prøv igjen senere." };
+  }
+}
+
+/**
+ * Create identity verification session for the current user
+ * Server action wrapper around service function
+ */
+export async function createIdentityVerificationForCurrentUser() {
+  const supabase = await createClient();
+
+  try {
+    // Check if user is authenticated
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return {
+        data: null,
+        error: "Du må være logget inn for å starte identitetsverifisering.",
+      };
+    }
+
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from("profiles")
+      .select("email, full_name, role")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError || !profile || !profile.email) {
+      return {
+        data: null,
+        error: "Kunne ikke finne brukerprofil eller e-postadresse.",
+      };
+    }
+
+    // Check if user is a stylist
+    if (profile.role !== "stylist") {
+      return {
+        data: null,
+        error: "Kun stylister kan utføre identitetsverifisering.",
+      };
+    }
+
+    // Get stylist details
+    const { data: stylistDetails, error: stylistError } = await supabase
+      .from("stylist_details")
+      .select("stripe_verification_session_id")
+      .eq("profile_id", user.id)
+      .single();
+
+    if (stylistError || !stylistDetails) {
+      return { data: null, error: "Kunne ikke finne stylistinformasjon." };
+    }
+
+    // Check if verification session already exists
+    if (stylistDetails.stripe_verification_session_id) {
+      return {
+        data: null,
+        error: "Identitetsverifisering er allerede startet.",
+      };
+    }
+
+    // Create verification session
+    const verificationResult = await createIdentityVerificationSession({
+      profileId: user.id,
+      email: profile.email,
+      returnUrl:
+        `${getPublicUrl()}/stylist/stripe/identity-verification/return`,
+    });
+
+    if (verificationResult.error || !verificationResult.data) {
+      return { data: null, error: verificationResult.error };
+    }
+
+    // Store session ID in database
+    const { error: updateError } = await supabase
+      .from("stylist_details")
+      .update({
+        stripe_verification_session_id: verificationResult.data.sessionId,
+      })
+      .eq("profile_id", user.id);
+
+    if (updateError) {
+      console.error("Failed to store verification session ID:", updateError);
+      return {
+        data: null,
+        error: "Kunne ikke lagre verifiseringssesjon.",
+      };
+    }
+
+    return {
+      data: {
+        verificationUrl: verificationResult.data.url,
+        sessionId: verificationResult.data.sessionId,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error(
+      "Unexpected error in createIdentityVerificationForCurrentUser:",
+      error,
+    );
+    return {
+      data: null,
+      error: "En uventet feil oppstod. Prøv igjen senere.",
+    };
+  }
+}
+
+/**
+ * Check identity verification status for the current user
+ * Server action wrapper around service function
+ */
+export async function checkIdentityVerificationStatus() {
+  const supabase = await createClient();
+
+  try {
+    // Check if user is authenticated
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return { data: null, error: "Not authenticated" };
+    }
+
+    // Get stylist details with verification info
+    const { data: stylistDetails, error: stylistError } = await supabase
+      .from("stylist_details")
+      .select(
+        "stripe_verification_session_id, identity_verification_completed_at",
+      )
+      .eq("profile_id", user.id)
+      .single();
+
+    if (stylistError || !stylistDetails) {
+      return { data: null, error: "Stylist details not found" };
+    }
+
+    if (!stylistDetails.stripe_verification_session_id) {
+      return {
+        data: {
+          status: "not_started",
+          hasSession: false,
+          completedAt: null,
+        },
+        error: null,
+      };
+    }
+
+    // Get session status from Stripe
+    const sessionResult = await getIdentityVerificationSessionStatus({
+      sessionId: stylistDetails.stripe_verification_session_id,
+    });
+
+    return {
+      data: {
+        status: sessionResult.data?.status || "unknown",
+        hasSession: true,
+        completedAt: stylistDetails.identity_verification_completed_at,
+        sessionData: sessionResult.data,
+      },
+      error: sessionResult.error,
+    };
+  } catch (error) {
+    console.error("Error checking identity verification status:", error);
+    return {
+      data: null,
+      error: "Failed to check verification status",
+    };
   }
 }

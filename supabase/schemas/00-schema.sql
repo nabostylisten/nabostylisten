@@ -80,7 +80,11 @@ CREATE TABLE IF NOT EXISTS public.stylist_details (
     other_social_media_urls text[],
 
     -- Payment Integration
-    stripe_account_id text -- CRITICAL for stylist payouts via Stripe Connect
+    stripe_account_id text, -- CRITICAL for stylist payouts via Stripe Connect
+    
+    -- Identity Verification
+    stripe_verification_session_id text, -- Stripe Identity verification session ID
+    identity_verification_completed_at timestamp with time zone -- When identity verification was completed
 );
 
 -- Table for addresses associated with a user

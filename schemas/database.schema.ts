@@ -83,6 +83,43 @@ export const UserRoleSchema = z.union([
   z.literal("admin"),
 ]);
 
+export const stripeInvoiceStatusSchema = z.union([
+  z.literal("draft"),
+  z.literal("open"),
+  z.literal("paid"),
+  z.literal("uncollectible"),
+  z.literal("void"),
+  z.literal("deleted"),
+]);
+
+export const stripePricingTiersSchema = z.union([
+  z.literal("graduated"),
+  z.literal("volume"),
+]);
+
+export const stripePricingTypeSchema = z.union([
+  z.literal("one_time"),
+  z.literal("recurring"),
+]);
+
+export const stripeSubscriptionScheduleStatusSchema = z.union([
+  z.literal("not_started"),
+  z.literal("active"),
+  z.literal("completed"),
+  z.literal("released"),
+  z.literal("canceled"),
+]);
+
+export const stripeSubscriptionStatusSchema = z.union([
+  z.literal("trialing"),
+  z.literal("active"),
+  z.literal("canceled"),
+  z.literal("incomplete"),
+  z.literal("incomplete_expired"),
+  z.literal("past_due"),
+  z.literal("unpaid"),
+]);
+
 export const jsonSchema: z.ZodSchema<Json> = z.lazy(() =>
   z
     .union([
@@ -1217,33 +1254,57 @@ export const recurringUnavailabilityExceptionsRelationshipsSchema = z.tuple([
 ]);
 
 export const reviewsRowSchema = z.object({
-  booking_id: z.string(),
-  comment: z.string().nullable(),
-  created_at: z.string(),
-  customer_id: z.string(),
+  billing_zip: z.string().nullable(),
+  charge: z.string().nullable(),
+  closed_reason: z.string().nullable(),
+  created: z.number().nullable(),
   id: z.string(),
-  rating: z.number(),
-  stylist_id: z.string(),
+  ip_address: z.string().nullable(),
+  ip_address_location: jsonSchema.nullable(),
+  livemode: z.boolean().nullable(),
+  object: z.string().nullable(),
+  open: z.boolean().nullable(),
+  opened_reason: z.string().nullable(),
+  payment_intent: z.string().nullable(),
+  reason: z.string().nullable(),
+  session: z.string().nullable(),
+  updated_at: z.string(),
 });
 
 export const reviewsInsertSchema = z.object({
-  booking_id: z.string(),
-  comment: z.string().optional().nullable(),
-  created_at: z.string().optional(),
-  customer_id: z.string(),
-  id: z.string().optional(),
-  rating: z.number(),
-  stylist_id: z.string(),
+  billing_zip: z.string().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  closed_reason: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  id: z.string(),
+  ip_address: z.string().optional().nullable(),
+  ip_address_location: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  open: z.boolean().optional().nullable(),
+  opened_reason: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  session: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
 });
 
 export const reviewsUpdateSchema = z.object({
-  booking_id: z.string().optional(),
-  comment: z.string().optional().nullable(),
-  created_at: z.string().optional(),
-  customer_id: z.string().optional(),
+  billing_zip: z.string().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  closed_reason: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
   id: z.string().optional(),
-  rating: z.number().optional(),
-  stylist_id: z.string().optional(),
+  ip_address: z.string().optional().nullable(),
+  ip_address_location: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  open: z.boolean().optional().nullable(),
+  opened_reason: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  session: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
 });
 
 export const reviewsRelationshipsSchema = z.tuple([
@@ -1434,11 +1495,13 @@ export const stylistDetailsRowSchema = z.object({
   created_at: z.string(),
   facebook_profile: z.string().nullable(),
   has_own_place: z.boolean(),
+  identity_verification_completed_at: z.string().nullable(),
   instagram_profile: z.string().nullable(),
   other_social_media_urls: z.array(z.string()).nullable(),
   profile_id: z.string(),
   snapchat_profile: z.string().nullable(),
   stripe_account_id: z.string().nullable(),
+  stripe_verification_session_id: z.string().nullable(),
   tiktok_profile: z.string().nullable(),
   travel_distance_km: z.number().nullable(),
   updated_at: z.string(),
@@ -1451,11 +1514,13 @@ export const stylistDetailsInsertSchema = z.object({
   created_at: z.string().optional(),
   facebook_profile: z.string().optional().nullable(),
   has_own_place: z.boolean().optional(),
+  identity_verification_completed_at: z.string().optional().nullable(),
   instagram_profile: z.string().optional().nullable(),
   other_social_media_urls: z.array(z.string()).optional().nullable(),
   profile_id: z.string(),
   snapchat_profile: z.string().optional().nullable(),
   stripe_account_id: z.string().optional().nullable(),
+  stripe_verification_session_id: z.string().optional().nullable(),
   tiktok_profile: z.string().optional().nullable(),
   travel_distance_km: z.number().optional().nullable(),
   updated_at: z.string().optional(),
@@ -1468,11 +1533,13 @@ export const stylistDetailsUpdateSchema = z.object({
   created_at: z.string().optional(),
   facebook_profile: z.string().optional().nullable(),
   has_own_place: z.boolean().optional(),
+  identity_verification_completed_at: z.string().optional().nullable(),
   instagram_profile: z.string().optional().nullable(),
   other_social_media_urls: z.array(z.string()).optional().nullable(),
   profile_id: z.string().optional(),
   snapchat_profile: z.string().optional().nullable(),
   stripe_account_id: z.string().optional().nullable(),
+  stripe_verification_session_id: z.string().optional().nullable(),
   tiktok_profile: z.string().optional().nullable(),
   travel_distance_km: z.number().optional().nullable(),
   updated_at: z.string().optional(),
@@ -1707,13 +1774,1594 @@ export const nearbyServicesReturnsSchema = z.array(
     address_city: z.string(),
     address_postal_code: z.string(),
     address_country: z.string(),
-    address_lat: z.number(),
     address_lng: z.number(),
+    address_lat: z.number(),
     distance_meters: z.number(),
     total_reviews: z.number(),
     average_rating: z.number(),
   }),
 );
+
+export const chargesRowSchema = z.object({
+  amount: z.number().nullable(),
+  amount_refunded: z.number().nullable(),
+  application: z.string().nullable(),
+  application_fee: z.string().nullable(),
+  balance_transaction: z.string().nullable(),
+  captured: z.boolean().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  customer: z.string().nullable(),
+  description: z.string().nullable(),
+  destination: z.string().nullable(),
+  dispute: z.string().nullable(),
+  failure_code: z.string().nullable(),
+  failure_message: z.string().nullable(),
+  fraud_details: jsonSchema.nullable(),
+  id: z.string(),
+  invoice: z.string().nullable(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  object: z.string().nullable(),
+  on_behalf_of: z.string().nullable(),
+  order: z.string().nullable(),
+  outcome: jsonSchema.nullable(),
+  paid: z.boolean().nullable(),
+  payment_intent: z.string().nullable(),
+  payment_method_details: jsonSchema.nullable(),
+  receipt_email: z.string().nullable(),
+  receipt_number: z.string().nullable(),
+  refunded: z.boolean().nullable(),
+  refunds: jsonSchema.nullable(),
+  review: z.string().nullable(),
+  shipping: jsonSchema.nullable(),
+  source: jsonSchema.nullable(),
+  source_transfer: z.string().nullable(),
+  statement_descriptor: z.string().nullable(),
+  status: z.string().nullable(),
+  transfer_group: z.string().nullable(),
+  updated: z.number().nullable(),
+  updated_at: z.string(),
+});
+
+export const chargesInsertSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_refunded: z.number().optional().nullable(),
+  application: z.string().optional().nullable(),
+  application_fee: z.string().optional().nullable(),
+  balance_transaction: z.string().optional().nullable(),
+  captured: z.boolean().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  destination: z.string().optional().nullable(),
+  dispute: z.string().optional().nullable(),
+  failure_code: z.string().optional().nullable(),
+  failure_message: z.string().optional().nullable(),
+  fraud_details: jsonSchema.optional().nullable(),
+  id: z.string(),
+  invoice: z.string().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  order: z.string().optional().nullable(),
+  outcome: jsonSchema.optional().nullable(),
+  paid: z.boolean().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  payment_method_details: jsonSchema.optional().nullable(),
+  receipt_email: z.string().optional().nullable(),
+  receipt_number: z.string().optional().nullable(),
+  refunded: z.boolean().optional().nullable(),
+  refunds: jsonSchema.optional().nullable(),
+  review: z.string().optional().nullable(),
+  shipping: jsonSchema.optional().nullable(),
+  source: jsonSchema.optional().nullable(),
+  source_transfer: z.string().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_group: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const chargesUpdateSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_refunded: z.number().optional().nullable(),
+  application: z.string().optional().nullable(),
+  application_fee: z.string().optional().nullable(),
+  balance_transaction: z.string().optional().nullable(),
+  captured: z.boolean().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  destination: z.string().optional().nullable(),
+  dispute: z.string().optional().nullable(),
+  failure_code: z.string().optional().nullable(),
+  failure_message: z.string().optional().nullable(),
+  fraud_details: jsonSchema.optional().nullable(),
+  id: z.string().optional(),
+  invoice: z.string().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  order: z.string().optional().nullable(),
+  outcome: jsonSchema.optional().nullable(),
+  paid: z.boolean().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  payment_method_details: jsonSchema.optional().nullable(),
+  receipt_email: z.string().optional().nullable(),
+  receipt_number: z.string().optional().nullable(),
+  refunded: z.boolean().optional().nullable(),
+  refunds: jsonSchema.optional().nullable(),
+  review: z.string().optional().nullable(),
+  shipping: jsonSchema.optional().nullable(),
+  source: jsonSchema.optional().nullable(),
+  source_transfer: z.string().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_group: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const couponsRowSchema = z.object({
+  amount_off: z.number().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  duration: z.string().nullable(),
+  duration_in_months: z.number().nullable(),
+  id: z.string(),
+  livemode: z.boolean().nullable(),
+  max_redemptions: z.number().nullable(),
+  metadata: jsonSchema.nullable(),
+  name: z.string().nullable(),
+  object: z.string().nullable(),
+  percent_off: z.number().nullable(),
+  percent_off_precise: z.number().nullable(),
+  redeem_by: z.number().nullable(),
+  times_redeemed: z.number().nullable(),
+  updated: z.number().nullable(),
+  updated_at: z.string(),
+  valid: z.boolean().nullable(),
+});
+
+export const couponsInsertSchema = z.object({
+  amount_off: z.number().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  duration: z.string().optional().nullable(),
+  duration_in_months: z.number().optional().nullable(),
+  id: z.string(),
+  livemode: z.boolean().optional().nullable(),
+  max_redemptions: z.number().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  name: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  percent_off: z.number().optional().nullable(),
+  percent_off_precise: z.number().optional().nullable(),
+  redeem_by: z.number().optional().nullable(),
+  times_redeemed: z.number().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  valid: z.boolean().optional().nullable(),
+});
+
+export const couponsUpdateSchema = z.object({
+  amount_off: z.number().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  duration: z.string().optional().nullable(),
+  duration_in_months: z.number().optional().nullable(),
+  id: z.string().optional(),
+  livemode: z.boolean().optional().nullable(),
+  max_redemptions: z.number().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  name: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  percent_off: z.number().optional().nullable(),
+  percent_off_precise: z.number().optional().nullable(),
+  redeem_by: z.number().optional().nullable(),
+  times_redeemed: z.number().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  valid: z.boolean().optional().nullable(),
+});
+
+export const creditNotesRowSchema = z.object({
+  amount: z.number().nullable(),
+  amount_shipping: z.number().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  customer: z.string().nullable(),
+  customer_balance_transaction: z.string().nullable(),
+  discount_amount: z.number().nullable(),
+  discount_amounts: jsonSchema.nullable(),
+  id: z.string(),
+  invoice: z.string().nullable(),
+  lines: jsonSchema.nullable(),
+  livemode: z.boolean().nullable(),
+  memo: z.string().nullable(),
+  metadata: jsonSchema.nullable(),
+  number: z.string().nullable(),
+  object: z.string().nullable(),
+  out_of_band_amount: z.number().nullable(),
+  pdf: z.string().nullable(),
+  reason: z.string().nullable(),
+  refund: z.string().nullable(),
+  shipping_cost: jsonSchema.nullable(),
+  status: z.string().nullable(),
+  subtotal: z.number().nullable(),
+  subtotal_excluding_tax: z.number().nullable(),
+  tax_amounts: jsonSchema.nullable(),
+  total: z.number().nullable(),
+  total_excluding_tax: z.number().nullable(),
+  type: z.string().nullable(),
+  voided_at: z.string().nullable(),
+});
+
+export const creditNotesInsertSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_shipping: z.number().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  customer_balance_transaction: z.string().optional().nullable(),
+  discount_amount: z.number().optional().nullable(),
+  discount_amounts: jsonSchema.optional().nullable(),
+  id: z.string(),
+  invoice: z.string().optional().nullable(),
+  lines: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  memo: z.string().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  number: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  out_of_band_amount: z.number().optional().nullable(),
+  pdf: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  refund: z.string().optional().nullable(),
+  shipping_cost: jsonSchema.optional().nullable(),
+  status: z.string().optional().nullable(),
+  subtotal: z.number().optional().nullable(),
+  subtotal_excluding_tax: z.number().optional().nullable(),
+  tax_amounts: jsonSchema.optional().nullable(),
+  total: z.number().optional().nullable(),
+  total_excluding_tax: z.number().optional().nullable(),
+  type: z.string().optional().nullable(),
+  voided_at: z.string().optional().nullable(),
+});
+
+export const creditNotesUpdateSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_shipping: z.number().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  customer_balance_transaction: z.string().optional().nullable(),
+  discount_amount: z.number().optional().nullable(),
+  discount_amounts: jsonSchema.optional().nullable(),
+  id: z.string().optional(),
+  invoice: z.string().optional().nullable(),
+  lines: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  memo: z.string().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  number: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  out_of_band_amount: z.number().optional().nullable(),
+  pdf: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  refund: z.string().optional().nullable(),
+  shipping_cost: jsonSchema.optional().nullable(),
+  status: z.string().optional().nullable(),
+  subtotal: z.number().optional().nullable(),
+  subtotal_excluding_tax: z.number().optional().nullable(),
+  tax_amounts: jsonSchema.optional().nullable(),
+  total: z.number().optional().nullable(),
+  total_excluding_tax: z.number().optional().nullable(),
+  type: z.string().optional().nullable(),
+  voided_at: z.string().optional().nullable(),
+});
+
+export const customersRowSchema = z.object({
+  address: jsonSchema.nullable(),
+  balance: z.number().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  default_source: z.string().nullable(),
+  deleted: z.boolean(),
+  delinquent: z.boolean().nullable(),
+  description: z.string().nullable(),
+  discount: jsonSchema.nullable(),
+  email: z.string().nullable(),
+  id: z.string(),
+  invoice_prefix: z.string().nullable(),
+  invoice_settings: jsonSchema.nullable(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  name: z.string().nullable(),
+  next_invoice_sequence: z.number().nullable(),
+  object: z.string().nullable(),
+  phone: z.string().nullable(),
+  preferred_locales: jsonSchema.nullable(),
+  shipping: jsonSchema.nullable(),
+  tax_exempt: z.string().nullable(),
+  updated_at: z.string(),
+});
+
+export const customersInsertSchema = z.object({
+  address: jsonSchema.optional().nullable(),
+  balance: z.number().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  default_source: z.string().optional().nullable(),
+  deleted: z.boolean().optional(),
+  delinquent: z.boolean().optional().nullable(),
+  description: z.string().optional().nullable(),
+  discount: jsonSchema.optional().nullable(),
+  email: z.string().optional().nullable(),
+  id: z.string(),
+  invoice_prefix: z.string().optional().nullable(),
+  invoice_settings: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  name: z.string().optional().nullable(),
+  next_invoice_sequence: z.number().optional().nullable(),
+  object: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  preferred_locales: jsonSchema.optional().nullable(),
+  shipping: jsonSchema.optional().nullable(),
+  tax_exempt: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const customersUpdateSchema = z.object({
+  address: jsonSchema.optional().nullable(),
+  balance: z.number().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  default_source: z.string().optional().nullable(),
+  deleted: z.boolean().optional(),
+  delinquent: z.boolean().optional().nullable(),
+  description: z.string().optional().nullable(),
+  discount: jsonSchema.optional().nullable(),
+  email: z.string().optional().nullable(),
+  id: z.string().optional(),
+  invoice_prefix: z.string().optional().nullable(),
+  invoice_settings: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  name: z.string().optional().nullable(),
+  next_invoice_sequence: z.number().optional().nullable(),
+  object: z.string().optional().nullable(),
+  phone: z.string().optional().nullable(),
+  preferred_locales: jsonSchema.optional().nullable(),
+  shipping: jsonSchema.optional().nullable(),
+  tax_exempt: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const disputesRowSchema = z.object({
+  amount: z.number().nullable(),
+  balance_transactions: jsonSchema.nullable(),
+  charge: z.string().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  evidence: jsonSchema.nullable(),
+  evidence_details: jsonSchema.nullable(),
+  id: z.string(),
+  is_charge_refundable: z.boolean().nullable(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  object: z.string().nullable(),
+  payment_intent: z.string().nullable(),
+  reason: z.string().nullable(),
+  status: z.string().nullable(),
+  updated: z.number().nullable(),
+  updated_at: z.string(),
+});
+
+export const disputesInsertSchema = z.object({
+  amount: z.number().optional().nullable(),
+  balance_transactions: jsonSchema.optional().nullable(),
+  charge: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  evidence: jsonSchema.optional().nullable(),
+  evidence_details: jsonSchema.optional().nullable(),
+  id: z.string(),
+  is_charge_refundable: z.boolean().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const disputesUpdateSchema = z.object({
+  amount: z.number().optional().nullable(),
+  balance_transactions: jsonSchema.optional().nullable(),
+  charge: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  evidence: jsonSchema.optional().nullable(),
+  evidence_details: jsonSchema.optional().nullable(),
+  id: z.string().optional(),
+  is_charge_refundable: z.boolean().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const earlyFraudWarningsRowSchema = z.object({
+  actionable: z.boolean().nullable(),
+  charge: z.string().nullable(),
+  created: z.number().nullable(),
+  fraud_type: z.string().nullable(),
+  id: z.string(),
+  livemode: z.boolean().nullable(),
+  object: z.string().nullable(),
+  payment_intent: z.string().nullable(),
+  updated_at: z.string(),
+});
+
+export const earlyFraudWarningsInsertSchema = z.object({
+  actionable: z.boolean().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  fraud_type: z.string().optional().nullable(),
+  id: z.string(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const earlyFraudWarningsUpdateSchema = z.object({
+  actionable: z.boolean().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  fraud_type: z.string().optional().nullable(),
+  id: z.string().optional(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const eventsRowSchema = z.object({
+  api_version: z.string().nullable(),
+  created: z.number().nullable(),
+  data: jsonSchema.nullable(),
+  id: z.string(),
+  livemode: z.boolean().nullable(),
+  object: z.string().nullable(),
+  pending_webhooks: z.number().nullable(),
+  request: z.string().nullable(),
+  type: z.string().nullable(),
+  updated: z.number().nullable(),
+  updated_at: z.string(),
+});
+
+export const eventsInsertSchema = z.object({
+  api_version: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  data: jsonSchema.optional().nullable(),
+  id: z.string(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  pending_webhooks: z.number().optional().nullable(),
+  request: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const eventsUpdateSchema = z.object({
+  api_version: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  data: jsonSchema.optional().nullable(),
+  id: z.string().optional(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  pending_webhooks: z.number().optional().nullable(),
+  request: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const invoicesRowSchema = z.object({
+  account_country: z.string().nullable(),
+  account_name: z.string().nullable(),
+  account_tax_ids: jsonSchema.nullable(),
+  amount_due: z.number().nullable(),
+  amount_paid: z.number().nullable(),
+  amount_remaining: z.number().nullable(),
+  application_fee_amount: z.number().nullable(),
+  attempt_count: z.number().nullable(),
+  attempted: z.boolean().nullable(),
+  auto_advance: z.boolean().nullable(),
+  billing_reason: z.string().nullable(),
+  charge: z.string().nullable(),
+  collection_method: z.string().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  custom_fields: jsonSchema.nullable(),
+  customer: z.string().nullable(),
+  customer_address: jsonSchema.nullable(),
+  customer_email: z.string().nullable(),
+  customer_name: z.string().nullable(),
+  customer_phone: z.string().nullable(),
+  customer_shipping: jsonSchema.nullable(),
+  customer_tax_exempt: z.string().nullable(),
+  customer_tax_ids: jsonSchema.nullable(),
+  default_payment_method: z.string().nullable(),
+  default_source: z.string().nullable(),
+  default_tax_rates: jsonSchema.nullable(),
+  description: z.string().nullable(),
+  discount: jsonSchema.nullable(),
+  discounts: jsonSchema.nullable(),
+  due_date: z.number().nullable(),
+  ending_balance: z.number().nullable(),
+  footer: z.string().nullable(),
+  hosted_invoice_url: z.string().nullable(),
+  id: z.string(),
+  invoice_pdf: z.string().nullable(),
+  last_finalization_error: jsonSchema.nullable(),
+  lines: jsonSchema.nullable(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  next_payment_attempt: z.number().nullable(),
+  number: z.string().nullable(),
+  object: z.string().nullable(),
+  on_behalf_of: z.string().nullable(),
+  paid: z.boolean().nullable(),
+  payment_intent: z.string().nullable(),
+  payment_settings: jsonSchema.nullable(),
+  period_end: z.number().nullable(),
+  period_start: z.number().nullable(),
+  post_payment_credit_notes_amount: z.number().nullable(),
+  pre_payment_credit_notes_amount: z.number().nullable(),
+  receipt_number: z.string().nullable(),
+  starting_balance: z.number().nullable(),
+  statement_descriptor: z.string().nullable(),
+  status: stripeInvoiceStatusSchema.nullable(),
+  status_transitions: jsonSchema.nullable(),
+  subscription: z.string().nullable(),
+  subtotal: z.number().nullable(),
+  tax: z.number().nullable(),
+  total: z.number().nullable(),
+  total_discount_amounts: jsonSchema.nullable(),
+  total_tax_amounts: jsonSchema.nullable(),
+  transfer_data: jsonSchema.nullable(),
+  updated_at: z.string(),
+  webhooks_delivered_at: z.number().nullable(),
+});
+
+export const invoicesInsertSchema = z.object({
+  account_country: z.string().optional().nullable(),
+  account_name: z.string().optional().nullable(),
+  account_tax_ids: jsonSchema.optional().nullable(),
+  amount_due: z.number().optional().nullable(),
+  amount_paid: z.number().optional().nullable(),
+  amount_remaining: z.number().optional().nullable(),
+  application_fee_amount: z.number().optional().nullable(),
+  attempt_count: z.number().optional().nullable(),
+  attempted: z.boolean().optional().nullable(),
+  auto_advance: z.boolean().optional().nullable(),
+  billing_reason: z.string().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  collection_method: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  custom_fields: jsonSchema.optional().nullable(),
+  customer: z.string().optional().nullable(),
+  customer_address: jsonSchema.optional().nullable(),
+  customer_email: z.string().optional().nullable(),
+  customer_name: z.string().optional().nullable(),
+  customer_phone: z.string().optional().nullable(),
+  customer_shipping: jsonSchema.optional().nullable(),
+  customer_tax_exempt: z.string().optional().nullable(),
+  customer_tax_ids: jsonSchema.optional().nullable(),
+  default_payment_method: z.string().optional().nullable(),
+  default_source: z.string().optional().nullable(),
+  default_tax_rates: jsonSchema.optional().nullable(),
+  description: z.string().optional().nullable(),
+  discount: jsonSchema.optional().nullable(),
+  discounts: jsonSchema.optional().nullable(),
+  due_date: z.number().optional().nullable(),
+  ending_balance: z.number().optional().nullable(),
+  footer: z.string().optional().nullable(),
+  hosted_invoice_url: z.string().optional().nullable(),
+  id: z.string(),
+  invoice_pdf: z.string().optional().nullable(),
+  last_finalization_error: jsonSchema.optional().nullable(),
+  lines: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  next_payment_attempt: z.number().optional().nullable(),
+  number: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  paid: z.boolean().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  payment_settings: jsonSchema.optional().nullable(),
+  period_end: z.number().optional().nullable(),
+  period_start: z.number().optional().nullable(),
+  post_payment_credit_notes_amount: z.number().optional().nullable(),
+  pre_payment_credit_notes_amount: z.number().optional().nullable(),
+  receipt_number: z.string().optional().nullable(),
+  starting_balance: z.number().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  status: stripeInvoiceStatusSchema.optional().nullable(),
+  status_transitions: jsonSchema.optional().nullable(),
+  subscription: z.string().optional().nullable(),
+  subtotal: z.number().optional().nullable(),
+  tax: z.number().optional().nullable(),
+  total: z.number().optional().nullable(),
+  total_discount_amounts: jsonSchema.optional().nullable(),
+  total_tax_amounts: jsonSchema.optional().nullable(),
+  transfer_data: jsonSchema.optional().nullable(),
+  updated_at: z.string().optional(),
+  webhooks_delivered_at: z.number().optional().nullable(),
+});
+
+export const invoicesUpdateSchema = z.object({
+  account_country: z.string().optional().nullable(),
+  account_name: z.string().optional().nullable(),
+  account_tax_ids: jsonSchema.optional().nullable(),
+  amount_due: z.number().optional().nullable(),
+  amount_paid: z.number().optional().nullable(),
+  amount_remaining: z.number().optional().nullable(),
+  application_fee_amount: z.number().optional().nullable(),
+  attempt_count: z.number().optional().nullable(),
+  attempted: z.boolean().optional().nullable(),
+  auto_advance: z.boolean().optional().nullable(),
+  billing_reason: z.string().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  collection_method: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  custom_fields: jsonSchema.optional().nullable(),
+  customer: z.string().optional().nullable(),
+  customer_address: jsonSchema.optional().nullable(),
+  customer_email: z.string().optional().nullable(),
+  customer_name: z.string().optional().nullable(),
+  customer_phone: z.string().optional().nullable(),
+  customer_shipping: jsonSchema.optional().nullable(),
+  customer_tax_exempt: z.string().optional().nullable(),
+  customer_tax_ids: jsonSchema.optional().nullable(),
+  default_payment_method: z.string().optional().nullable(),
+  default_source: z.string().optional().nullable(),
+  default_tax_rates: jsonSchema.optional().nullable(),
+  description: z.string().optional().nullable(),
+  discount: jsonSchema.optional().nullable(),
+  discounts: jsonSchema.optional().nullable(),
+  due_date: z.number().optional().nullable(),
+  ending_balance: z.number().optional().nullable(),
+  footer: z.string().optional().nullable(),
+  hosted_invoice_url: z.string().optional().nullable(),
+  id: z.string().optional(),
+  invoice_pdf: z.string().optional().nullable(),
+  last_finalization_error: jsonSchema.optional().nullable(),
+  lines: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  next_payment_attempt: z.number().optional().nullable(),
+  number: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  paid: z.boolean().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  payment_settings: jsonSchema.optional().nullable(),
+  period_end: z.number().optional().nullable(),
+  period_start: z.number().optional().nullable(),
+  post_payment_credit_notes_amount: z.number().optional().nullable(),
+  pre_payment_credit_notes_amount: z.number().optional().nullable(),
+  receipt_number: z.string().optional().nullable(),
+  starting_balance: z.number().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  status: stripeInvoiceStatusSchema.optional().nullable(),
+  status_transitions: jsonSchema.optional().nullable(),
+  subscription: z.string().optional().nullable(),
+  subtotal: z.number().optional().nullable(),
+  tax: z.number().optional().nullable(),
+  total: z.number().optional().nullable(),
+  total_discount_amounts: jsonSchema.optional().nullable(),
+  total_tax_amounts: jsonSchema.optional().nullable(),
+  transfer_data: jsonSchema.optional().nullable(),
+  updated_at: z.string().optional(),
+  webhooks_delivered_at: z.number().optional().nullable(),
+});
+
+export const invoicesRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("invoices_customer_fkey"),
+    columns: z.tuple([z.literal("customer")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("customers"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("invoices_subscription_fkey"),
+    columns: z.tuple([z.literal("subscription")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("subscriptions"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const migrationsRowSchema = z.object({
+  executed_at: z.string().nullable(),
+  hash: z.string(),
+  id: z.number(),
+  name: z.string(),
+});
+
+export const migrationsInsertSchema = z.object({
+  executed_at: z.string().optional().nullable(),
+  hash: z.string(),
+  id: z.number(),
+  name: z.string(),
+});
+
+export const migrationsUpdateSchema = z.object({
+  executed_at: z.string().optional().nullable(),
+  hash: z.string().optional(),
+  id: z.number().optional(),
+  name: z.string().optional(),
+});
+
+export const paymentIntentsRowSchema = z.object({
+  amount: z.number().nullable(),
+  amount_capturable: z.number().nullable(),
+  amount_details: jsonSchema.nullable(),
+  amount_received: z.number().nullable(),
+  application: z.string().nullable(),
+  application_fee_amount: z.number().nullable(),
+  automatic_payment_methods: z.string().nullable(),
+  canceled_at: z.number().nullable(),
+  cancellation_reason: z.string().nullable(),
+  capture_method: z.string().nullable(),
+  client_secret: z.string().nullable(),
+  confirmation_method: z.string().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  customer: z.string().nullable(),
+  description: z.string().nullable(),
+  id: z.string(),
+  invoice: z.string().nullable(),
+  last_payment_error: z.string().nullable(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  next_action: z.string().nullable(),
+  object: z.string().nullable(),
+  on_behalf_of: z.string().nullable(),
+  payment_method: z.string().nullable(),
+  payment_method_options: jsonSchema.nullable(),
+  payment_method_types: jsonSchema.nullable(),
+  processing: z.string().nullable(),
+  receipt_email: z.string().nullable(),
+  review: z.string().nullable(),
+  setup_future_usage: z.string().nullable(),
+  shipping: jsonSchema.nullable(),
+  statement_descriptor: z.string().nullable(),
+  statement_descriptor_suffix: z.string().nullable(),
+  status: z.string().nullable(),
+  transfer_data: jsonSchema.nullable(),
+  transfer_group: z.string().nullable(),
+});
+
+export const paymentIntentsInsertSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_capturable: z.number().optional().nullable(),
+  amount_details: jsonSchema.optional().nullable(),
+  amount_received: z.number().optional().nullable(),
+  application: z.string().optional().nullable(),
+  application_fee_amount: z.number().optional().nullable(),
+  automatic_payment_methods: z.string().optional().nullable(),
+  canceled_at: z.number().optional().nullable(),
+  cancellation_reason: z.string().optional().nullable(),
+  capture_method: z.string().optional().nullable(),
+  client_secret: z.string().optional().nullable(),
+  confirmation_method: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  id: z.string(),
+  invoice: z.string().optional().nullable(),
+  last_payment_error: z.string().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  next_action: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  payment_method: z.string().optional().nullable(),
+  payment_method_options: jsonSchema.optional().nullable(),
+  payment_method_types: jsonSchema.optional().nullable(),
+  processing: z.string().optional().nullable(),
+  receipt_email: z.string().optional().nullable(),
+  review: z.string().optional().nullable(),
+  setup_future_usage: z.string().optional().nullable(),
+  shipping: jsonSchema.optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  statement_descriptor_suffix: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_data: jsonSchema.optional().nullable(),
+  transfer_group: z.string().optional().nullable(),
+});
+
+export const paymentIntentsUpdateSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_capturable: z.number().optional().nullable(),
+  amount_details: jsonSchema.optional().nullable(),
+  amount_received: z.number().optional().nullable(),
+  application: z.string().optional().nullable(),
+  application_fee_amount: z.number().optional().nullable(),
+  automatic_payment_methods: z.string().optional().nullable(),
+  canceled_at: z.number().optional().nullable(),
+  cancellation_reason: z.string().optional().nullable(),
+  capture_method: z.string().optional().nullable(),
+  client_secret: z.string().optional().nullable(),
+  confirmation_method: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  id: z.string().optional(),
+  invoice: z.string().optional().nullable(),
+  last_payment_error: z.string().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  next_action: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  payment_method: z.string().optional().nullable(),
+  payment_method_options: jsonSchema.optional().nullable(),
+  payment_method_types: jsonSchema.optional().nullable(),
+  processing: z.string().optional().nullable(),
+  receipt_email: z.string().optional().nullable(),
+  review: z.string().optional().nullable(),
+  setup_future_usage: z.string().optional().nullable(),
+  shipping: jsonSchema.optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  statement_descriptor_suffix: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_data: jsonSchema.optional().nullable(),
+  transfer_group: z.string().optional().nullable(),
+});
+
+export const paymentMethodsRowSchema = z.object({
+  billing_details: jsonSchema.nullable(),
+  card: jsonSchema.nullable(),
+  created: z.number().nullable(),
+  customer: z.string().nullable(),
+  id: z.string(),
+  metadata: jsonSchema.nullable(),
+  object: z.string().nullable(),
+  type: z.string().nullable(),
+});
+
+export const paymentMethodsInsertSchema = z.object({
+  billing_details: jsonSchema.optional().nullable(),
+  card: jsonSchema.optional().nullable(),
+  created: z.number().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  id: z.string(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+});
+
+export const paymentMethodsUpdateSchema = z.object({
+  billing_details: jsonSchema.optional().nullable(),
+  card: jsonSchema.optional().nullable(),
+  created: z.number().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  id: z.string().optional(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+});
+
+export const payoutsRowSchema = z.object({
+  amount: z.number().nullable(),
+  amount_reversed: z.number().nullable(),
+  arrival_date: z.string().nullable(),
+  automatic: z.boolean().nullable(),
+  balance_transaction: z.string().nullable(),
+  bank_account: jsonSchema.nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  date: z.string().nullable(),
+  description: z.string().nullable(),
+  destination: z.string().nullable(),
+  failure_balance_transaction: z.string().nullable(),
+  failure_code: z.string().nullable(),
+  failure_message: z.string().nullable(),
+  id: z.string(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  method: z.string().nullable(),
+  object: z.string().nullable(),
+  recipient: z.string().nullable(),
+  source_transaction: z.string().nullable(),
+  source_type: z.string().nullable(),
+  statement_description: z.string().nullable(),
+  statement_descriptor: z.string().nullable(),
+  status: z.string().nullable(),
+  transfer_group: z.string().nullable(),
+  type: z.string().nullable(),
+  updated: z.number().nullable(),
+  updated_at: z.string(),
+});
+
+export const payoutsInsertSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_reversed: z.number().optional().nullable(),
+  arrival_date: z.string().optional().nullable(),
+  automatic: z.boolean().optional().nullable(),
+  balance_transaction: z.string().optional().nullable(),
+  bank_account: jsonSchema.optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  date: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  destination: z.string().optional().nullable(),
+  failure_balance_transaction: z.string().optional().nullable(),
+  failure_code: z.string().optional().nullable(),
+  failure_message: z.string().optional().nullable(),
+  id: z.string(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  method: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  recipient: z.string().optional().nullable(),
+  source_transaction: z.string().optional().nullable(),
+  source_type: z.string().optional().nullable(),
+  statement_description: z.string().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_group: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const payoutsUpdateSchema = z.object({
+  amount: z.number().optional().nullable(),
+  amount_reversed: z.number().optional().nullable(),
+  arrival_date: z.string().optional().nullable(),
+  automatic: z.boolean().optional().nullable(),
+  balance_transaction: z.string().optional().nullable(),
+  bank_account: jsonSchema.optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  date: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  destination: z.string().optional().nullable(),
+  failure_balance_transaction: z.string().optional().nullable(),
+  failure_code: z.string().optional().nullable(),
+  failure_message: z.string().optional().nullable(),
+  id: z.string().optional(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  method: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  recipient: z.string().optional().nullable(),
+  source_transaction: z.string().optional().nullable(),
+  source_type: z.string().optional().nullable(),
+  statement_description: z.string().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_group: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const plansRowSchema = z.object({
+  active: z.boolean().nullable(),
+  aggregate_usage: z.string().nullable(),
+  amount: z.number().nullable(),
+  billing_scheme: z.string().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  id: z.string(),
+  interval: z.string().nullable(),
+  interval_count: z.number().nullable(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  nickname: z.string().nullable(),
+  object: z.string().nullable(),
+  product: z.string().nullable(),
+  tiers_mode: z.string().nullable(),
+  transform_usage: z.string().nullable(),
+  trial_period_days: z.number().nullable(),
+  updated_at: z.string(),
+  usage_type: z.string().nullable(),
+});
+
+export const plansInsertSchema = z.object({
+  active: z.boolean().optional().nullable(),
+  aggregate_usage: z.string().optional().nullable(),
+  amount: z.number().optional().nullable(),
+  billing_scheme: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  id: z.string(),
+  interval: z.string().optional().nullable(),
+  interval_count: z.number().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  nickname: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  product: z.string().optional().nullable(),
+  tiers_mode: z.string().optional().nullable(),
+  transform_usage: z.string().optional().nullable(),
+  trial_period_days: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  usage_type: z.string().optional().nullable(),
+});
+
+export const plansUpdateSchema = z.object({
+  active: z.boolean().optional().nullable(),
+  aggregate_usage: z.string().optional().nullable(),
+  amount: z.number().optional().nullable(),
+  billing_scheme: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  id: z.string().optional(),
+  interval: z.string().optional().nullable(),
+  interval_count: z.number().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  nickname: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  product: z.string().optional().nullable(),
+  tiers_mode: z.string().optional().nullable(),
+  transform_usage: z.string().optional().nullable(),
+  trial_period_days: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  usage_type: z.string().optional().nullable(),
+});
+
+export const pricesRowSchema = z.object({
+  active: z.boolean().nullable(),
+  billing_scheme: z.string().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  id: z.string(),
+  livemode: z.boolean().nullable(),
+  lookup_key: z.string().nullable(),
+  metadata: jsonSchema.nullable(),
+  nickname: z.string().nullable(),
+  object: z.string().nullable(),
+  product: z.string().nullable(),
+  recurring: jsonSchema.nullable(),
+  tiers_mode: stripePricingTiersSchema.nullable(),
+  transform_quantity: jsonSchema.nullable(),
+  type: stripePricingTypeSchema.nullable(),
+  unit_amount: z.number().nullable(),
+  unit_amount_decimal: z.string().nullable(),
+  updated_at: z.string(),
+});
+
+export const pricesInsertSchema = z.object({
+  active: z.boolean().optional().nullable(),
+  billing_scheme: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  id: z.string(),
+  livemode: z.boolean().optional().nullable(),
+  lookup_key: z.string().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  nickname: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  product: z.string().optional().nullable(),
+  recurring: jsonSchema.optional().nullable(),
+  tiers_mode: stripePricingTiersSchema.optional().nullable(),
+  transform_quantity: jsonSchema.optional().nullable(),
+  type: stripePricingTypeSchema.optional().nullable(),
+  unit_amount: z.number().optional().nullable(),
+  unit_amount_decimal: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const pricesUpdateSchema = z.object({
+  active: z.boolean().optional().nullable(),
+  billing_scheme: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  id: z.string().optional(),
+  livemode: z.boolean().optional().nullable(),
+  lookup_key: z.string().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  nickname: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  product: z.string().optional().nullable(),
+  recurring: jsonSchema.optional().nullable(),
+  tiers_mode: stripePricingTiersSchema.optional().nullable(),
+  transform_quantity: jsonSchema.optional().nullable(),
+  type: stripePricingTypeSchema.optional().nullable(),
+  unit_amount: z.number().optional().nullable(),
+  unit_amount_decimal: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const pricesRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("prices_product_fkey"),
+    columns: z.tuple([z.literal("product")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("products"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const productsRowSchema = z.object({
+  active: z.boolean().nullable(),
+  created: z.number().nullable(),
+  default_price: z.string().nullable(),
+  description: z.string().nullable(),
+  id: z.string(),
+  images: jsonSchema.nullable(),
+  livemode: z.boolean().nullable(),
+  marketing_features: jsonSchema.nullable(),
+  metadata: jsonSchema.nullable(),
+  name: z.string().nullable(),
+  object: z.string().nullable(),
+  package_dimensions: jsonSchema.nullable(),
+  shippable: z.boolean().nullable(),
+  statement_descriptor: z.string().nullable(),
+  unit_label: z.string().nullable(),
+  updated: z.number().nullable(),
+  updated_at: z.string(),
+  url: z.string().nullable(),
+});
+
+export const productsInsertSchema = z.object({
+  active: z.boolean().optional().nullable(),
+  created: z.number().optional().nullable(),
+  default_price: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  id: z.string(),
+  images: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  marketing_features: jsonSchema.optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  name: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  package_dimensions: jsonSchema.optional().nullable(),
+  shippable: z.boolean().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  unit_label: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  url: z.string().optional().nullable(),
+});
+
+export const productsUpdateSchema = z.object({
+  active: z.boolean().optional().nullable(),
+  created: z.number().optional().nullable(),
+  default_price: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  id: z.string().optional(),
+  images: jsonSchema.optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  marketing_features: jsonSchema.optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  name: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  package_dimensions: jsonSchema.optional().nullable(),
+  shippable: z.boolean().optional().nullable(),
+  statement_descriptor: z.string().optional().nullable(),
+  unit_label: z.string().optional().nullable(),
+  updated: z.number().optional().nullable(),
+  updated_at: z.string().optional(),
+  url: z.string().optional().nullable(),
+});
+
+export const refundsRowSchema = z.object({
+  amount: z.number().nullable(),
+  balance_transaction: z.string().nullable(),
+  charge: z.string().nullable(),
+  created: z.number().nullable(),
+  currency: z.string().nullable(),
+  destination_details: jsonSchema.nullable(),
+  id: z.string(),
+  metadata: jsonSchema.nullable(),
+  object: z.string().nullable(),
+  payment_intent: z.string().nullable(),
+  reason: z.string().nullable(),
+  receipt_number: z.string().nullable(),
+  source_transfer_reversal: z.string().nullable(),
+  status: z.string().nullable(),
+  transfer_reversal: z.string().nullable(),
+  updated_at: z.string(),
+});
+
+export const refundsInsertSchema = z.object({
+  amount: z.number().optional().nullable(),
+  balance_transaction: z.string().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  destination_details: jsonSchema.optional().nullable(),
+  id: z.string(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  receipt_number: z.string().optional().nullable(),
+  source_transfer_reversal: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_reversal: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const refundsUpdateSchema = z.object({
+  amount: z.number().optional().nullable(),
+  balance_transaction: z.string().optional().nullable(),
+  charge: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  currency: z.string().optional().nullable(),
+  destination_details: jsonSchema.optional().nullable(),
+  id: z.string().optional(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  payment_intent: z.string().optional().nullable(),
+  reason: z.string().optional().nullable(),
+  receipt_number: z.string().optional().nullable(),
+  source_transfer_reversal: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  transfer_reversal: z.string().optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const setupIntentsRowSchema = z.object({
+  cancellation_reason: z.string().nullable(),
+  created: z.number().nullable(),
+  customer: z.string().nullable(),
+  description: z.string().nullable(),
+  id: z.string(),
+  latest_attempt: z.string().nullable(),
+  mandate: z.string().nullable(),
+  object: z.string().nullable(),
+  on_behalf_of: z.string().nullable(),
+  payment_method: z.string().nullable(),
+  single_use_mandate: z.string().nullable(),
+  status: z.string().nullable(),
+  usage: z.string().nullable(),
+});
+
+export const setupIntentsInsertSchema = z.object({
+  cancellation_reason: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  id: z.string(),
+  latest_attempt: z.string().optional().nullable(),
+  mandate: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  payment_method: z.string().optional().nullable(),
+  single_use_mandate: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  usage: z.string().optional().nullable(),
+});
+
+export const setupIntentsUpdateSchema = z.object({
+  cancellation_reason: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  description: z.string().optional().nullable(),
+  id: z.string().optional(),
+  latest_attempt: z.string().optional().nullable(),
+  mandate: z.string().optional().nullable(),
+  object: z.string().optional().nullable(),
+  on_behalf_of: z.string().optional().nullable(),
+  payment_method: z.string().optional().nullable(),
+  single_use_mandate: z.string().optional().nullable(),
+  status: z.string().optional().nullable(),
+  usage: z.string().optional().nullable(),
+});
+
+export const subscriptionItemsRowSchema = z.object({
+  billing_thresholds: jsonSchema.nullable(),
+  created: z.number().nullable(),
+  deleted: z.boolean().nullable(),
+  id: z.string(),
+  metadata: jsonSchema.nullable(),
+  object: z.string().nullable(),
+  price: z.string().nullable(),
+  quantity: z.number().nullable(),
+  subscription: z.string().nullable(),
+  tax_rates: jsonSchema.nullable(),
+});
+
+export const subscriptionItemsInsertSchema = z.object({
+  billing_thresholds: jsonSchema.optional().nullable(),
+  created: z.number().optional().nullable(),
+  deleted: z.boolean().optional().nullable(),
+  id: z.string(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  price: z.string().optional().nullable(),
+  quantity: z.number().optional().nullable(),
+  subscription: z.string().optional().nullable(),
+  tax_rates: jsonSchema.optional().nullable(),
+});
+
+export const subscriptionItemsUpdateSchema = z.object({
+  billing_thresholds: jsonSchema.optional().nullable(),
+  created: z.number().optional().nullable(),
+  deleted: z.boolean().optional().nullable(),
+  id: z.string().optional(),
+  metadata: jsonSchema.optional().nullable(),
+  object: z.string().optional().nullable(),
+  price: z.string().optional().nullable(),
+  quantity: z.number().optional().nullable(),
+  subscription: z.string().optional().nullable(),
+  tax_rates: jsonSchema.optional().nullable(),
+});
+
+export const subscriptionItemsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("subscription_items_price_fkey"),
+    columns: z.tuple([z.literal("price")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("prices"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("subscription_items_subscription_fkey"),
+    columns: z.tuple([z.literal("subscription")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("subscriptions"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const subscriptionSchedulesRowSchema = z.object({
+  application: z.string().nullable(),
+  canceled_at: z.number().nullable(),
+  completed_at: z.number().nullable(),
+  created: z.number(),
+  current_phase: jsonSchema.nullable(),
+  customer: z.string(),
+  default_settings: jsonSchema.nullable(),
+  end_behavior: z.string().nullable(),
+  id: z.string(),
+  livemode: z.boolean(),
+  metadata: jsonSchema,
+  object: z.string().nullable(),
+  phases: jsonSchema,
+  released_at: z.number().nullable(),
+  released_subscription: z.string().nullable(),
+  status: stripeSubscriptionScheduleStatusSchema,
+  subscription: z.string().nullable(),
+  test_clock: z.string().nullable(),
+});
+
+export const subscriptionSchedulesInsertSchema = z.object({
+  application: z.string().optional().nullable(),
+  canceled_at: z.number().optional().nullable(),
+  completed_at: z.number().optional().nullable(),
+  created: z.number(),
+  current_phase: jsonSchema.optional().nullable(),
+  customer: z.string(),
+  default_settings: jsonSchema.optional().nullable(),
+  end_behavior: z.string().optional().nullable(),
+  id: z.string(),
+  livemode: z.boolean(),
+  metadata: jsonSchema,
+  object: z.string().optional().nullable(),
+  phases: jsonSchema,
+  released_at: z.number().optional().nullable(),
+  released_subscription: z.string().optional().nullable(),
+  status: stripeSubscriptionScheduleStatusSchema,
+  subscription: z.string().optional().nullable(),
+  test_clock: z.string().optional().nullable(),
+});
+
+export const subscriptionSchedulesUpdateSchema = z.object({
+  application: z.string().optional().nullable(),
+  canceled_at: z.number().optional().nullable(),
+  completed_at: z.number().optional().nullable(),
+  created: z.number().optional(),
+  current_phase: jsonSchema.optional().nullable(),
+  customer: z.string().optional(),
+  default_settings: jsonSchema.optional().nullable(),
+  end_behavior: z.string().optional().nullable(),
+  id: z.string().optional(),
+  livemode: z.boolean().optional(),
+  metadata: jsonSchema.optional(),
+  object: z.string().optional().nullable(),
+  phases: jsonSchema.optional(),
+  released_at: z.number().optional().nullable(),
+  released_subscription: z.string().optional().nullable(),
+  status: stripeSubscriptionScheduleStatusSchema.optional(),
+  subscription: z.string().optional().nullable(),
+  test_clock: z.string().optional().nullable(),
+});
+
+export const subscriptionsRowSchema = z.object({
+  application_fee_percent: z.number().nullable(),
+  billing_cycle_anchor: z.number().nullable(),
+  billing_thresholds: jsonSchema.nullable(),
+  cancel_at: z.number().nullable(),
+  cancel_at_period_end: z.boolean().nullable(),
+  canceled_at: z.number().nullable(),
+  collection_method: z.string().nullable(),
+  created: z.number().nullable(),
+  current_period_end: z.number().nullable(),
+  current_period_start: z.number().nullable(),
+  customer: z.string().nullable(),
+  days_until_due: z.number().nullable(),
+  default_payment_method: z.string().nullable(),
+  default_source: z.string().nullable(),
+  default_tax_rates: jsonSchema.nullable(),
+  discount: jsonSchema.nullable(),
+  ended_at: z.number().nullable(),
+  id: z.string(),
+  items: jsonSchema.nullable(),
+  latest_invoice: z.string().nullable(),
+  livemode: z.boolean().nullable(),
+  metadata: jsonSchema.nullable(),
+  next_pending_invoice_item_invoice: z.number().nullable(),
+  object: z.string().nullable(),
+  pause_collection: jsonSchema.nullable(),
+  pending_invoice_item_interval: jsonSchema.nullable(),
+  pending_setup_intent: z.string().nullable(),
+  pending_update: jsonSchema.nullable(),
+  plan: z.string().nullable(),
+  schedule: z.string().nullable(),
+  start_date: z.number().nullable(),
+  status: stripeSubscriptionStatusSchema.nullable(),
+  transfer_data: jsonSchema.nullable(),
+  trial_end: jsonSchema.nullable(),
+  trial_start: jsonSchema.nullable(),
+  updated_at: z.string(),
+});
+
+export const subscriptionsInsertSchema = z.object({
+  application_fee_percent: z.number().optional().nullable(),
+  billing_cycle_anchor: z.number().optional().nullable(),
+  billing_thresholds: jsonSchema.optional().nullable(),
+  cancel_at: z.number().optional().nullable(),
+  cancel_at_period_end: z.boolean().optional().nullable(),
+  canceled_at: z.number().optional().nullable(),
+  collection_method: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  current_period_end: z.number().optional().nullable(),
+  current_period_start: z.number().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  days_until_due: z.number().optional().nullable(),
+  default_payment_method: z.string().optional().nullable(),
+  default_source: z.string().optional().nullable(),
+  default_tax_rates: jsonSchema.optional().nullable(),
+  discount: jsonSchema.optional().nullable(),
+  ended_at: z.number().optional().nullable(),
+  id: z.string(),
+  items: jsonSchema.optional().nullable(),
+  latest_invoice: z.string().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  next_pending_invoice_item_invoice: z.number().optional().nullable(),
+  object: z.string().optional().nullable(),
+  pause_collection: jsonSchema.optional().nullable(),
+  pending_invoice_item_interval: jsonSchema.optional().nullable(),
+  pending_setup_intent: z.string().optional().nullable(),
+  pending_update: jsonSchema.optional().nullable(),
+  plan: z.string().optional().nullable(),
+  schedule: z.string().optional().nullable(),
+  start_date: z.number().optional().nullable(),
+  status: stripeSubscriptionStatusSchema.optional().nullable(),
+  transfer_data: jsonSchema.optional().nullable(),
+  trial_end: jsonSchema.optional().nullable(),
+  trial_start: jsonSchema.optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const subscriptionsUpdateSchema = z.object({
+  application_fee_percent: z.number().optional().nullable(),
+  billing_cycle_anchor: z.number().optional().nullable(),
+  billing_thresholds: jsonSchema.optional().nullable(),
+  cancel_at: z.number().optional().nullable(),
+  cancel_at_period_end: z.boolean().optional().nullable(),
+  canceled_at: z.number().optional().nullable(),
+  collection_method: z.string().optional().nullable(),
+  created: z.number().optional().nullable(),
+  current_period_end: z.number().optional().nullable(),
+  current_period_start: z.number().optional().nullable(),
+  customer: z.string().optional().nullable(),
+  days_until_due: z.number().optional().nullable(),
+  default_payment_method: z.string().optional().nullable(),
+  default_source: z.string().optional().nullable(),
+  default_tax_rates: jsonSchema.optional().nullable(),
+  discount: jsonSchema.optional().nullable(),
+  ended_at: z.number().optional().nullable(),
+  id: z.string().optional(),
+  items: jsonSchema.optional().nullable(),
+  latest_invoice: z.string().optional().nullable(),
+  livemode: z.boolean().optional().nullable(),
+  metadata: jsonSchema.optional().nullable(),
+  next_pending_invoice_item_invoice: z.number().optional().nullable(),
+  object: z.string().optional().nullable(),
+  pause_collection: jsonSchema.optional().nullable(),
+  pending_invoice_item_interval: jsonSchema.optional().nullable(),
+  pending_setup_intent: z.string().optional().nullable(),
+  pending_update: jsonSchema.optional().nullable(),
+  plan: z.string().optional().nullable(),
+  schedule: z.string().optional().nullable(),
+  start_date: z.number().optional().nullable(),
+  status: stripeSubscriptionStatusSchema.optional().nullable(),
+  transfer_data: jsonSchema.optional().nullable(),
+  trial_end: jsonSchema.optional().nullable(),
+  trial_start: jsonSchema.optional().nullable(),
+  updated_at: z.string().optional(),
+});
+
+export const subscriptionsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("subscriptions_customer_fkey"),
+    columns: z.tuple([z.literal("customer")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("customers"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
+export const taxIdsRowSchema = z.object({
+  country: z.string().nullable(),
+  created: z.number(),
+  customer: z.string().nullable(),
+  id: z.string(),
+  livemode: z.boolean().nullable(),
+  object: z.string().nullable(),
+  owner: jsonSchema.nullable(),
+  type: z.string().nullable(),
+  value: z.string().nullable(),
+});
+
+export const taxIdsInsertSchema = z.object({
+  country: z.string().optional().nullable(),
+  created: z.number(),
+  customer: z.string().optional().nullable(),
+  id: z.string(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  owner: jsonSchema.optional().nullable(),
+  type: z.string().optional().nullable(),
+  value: z.string().optional().nullable(),
+});
+
+export const taxIdsUpdateSchema = z.object({
+  country: z.string().optional().nullable(),
+  created: z.number().optional(),
+  customer: z.string().optional().nullable(),
+  id: z.string().optional(),
+  livemode: z.boolean().optional().nullable(),
+  object: z.string().optional().nullable(),
+  owner: jsonSchema.optional().nullable(),
+  type: z.string().optional().nullable(),
+  value: z.string().optional().nullable(),
+});
 
 export const spatialRefSysRowSchema = z.object({
   auth_name: z.string().nullable(),
@@ -1780,9 +3428,9 @@ export const geometryColumnsUpdateSchema = z.object({
 });
 
 export const postgisDeprecateArgsSchema = z.object({
-  newname: z.string(),
-  oldname: z.string(),
   version: z.string(),
+  oldname: z.string(),
+  newname: z.string(),
 });
 
 export const postgisDeprecateReturnsSchema = z.undefined();
@@ -1803,10 +3451,10 @@ export const postgisScriptsPgsqlVersionArgsSchema = z.object({});
 export const postgisScriptsPgsqlVersionReturnsSchema = z.string();
 
 export const postgisSelectivityArgsSchema = z.object({
-  att_name: z.string(),
-  geom: z.unknown(),
   mode: z.string().optional(),
+  geom: z.unknown(),
   tbl: z.unknown(),
+  att_name: z.string(),
 });
 
 export const postgisSelectivityReturnsSchema = z.number();
@@ -1922,8 +3570,8 @@ export const stMaxdistanceArgsSchema = z.object({
 export const stMaxdistanceReturnsSchema = z.number();
 
 export const stOrderingequalsArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stOrderingequalsReturnsSchema = z.boolean();
@@ -1955,10 +3603,10 @@ export const stTouchesArgsSchema = z.object({
 export const stTouchesReturnsSchema = z.boolean();
 
 export const stVoronoiArgsSchema = z.object({
-  return_polygons: z.boolean().optional(),
   g1: z.unknown(),
   clip: z.unknown().optional(),
   tolerance: z.number().optional(),
+  return_polygons: z.boolean().optional(),
 });
 
 export const stVoronoiReturnsSchema = z.unknown();
@@ -1978,25 +3626,25 @@ export const addauthReturnsSchema = z.boolean();
 
 export const addgeometrycolumnArgsSchema = z.union([
   z.object({
-    new_type: z.string(),
     catalog_name: z.string(),
     schema_name: z.string(),
     table_name: z.string(),
     column_name: z.string(),
     new_srid_in: z.number(),
-    new_dim: z.number(),
-    use_typmod: z.boolean().optional(),
-  }),
-  z.object({
-    schema_name: z.string(),
-    table_name: z.string(),
-    column_name: z.string(),
-    new_srid: z.number(),
     new_type: z.string(),
     new_dim: z.number(),
     use_typmod: z.boolean().optional(),
   }),
   z.object({
+    new_dim: z.number(),
+    table_name: z.string(),
+    column_name: z.string(),
+    new_srid: z.number(),
+    new_type: z.string(),
+    use_typmod: z.boolean().optional(),
+  }),
+  z.object({
+    schema_name: z.string(),
     table_name: z.string(),
     column_name: z.string(),
     new_srid: z.number(),
@@ -2101,17 +3749,17 @@ export const disablelongtransactionsReturnsSchema = z.string();
 export const dropgeometrycolumnArgsSchema = z.union([
   z.object({
     catalog_name: z.string(),
+    column_name: z.string(),
+    table_name: z.string(),
     schema_name: z.string(),
+  }),
+  z.object({
     table_name: z.string(),
     column_name: z.string(),
   }),
   z.object({
+    table_name: z.string(),
     schema_name: z.string(),
-    table_name: z.string(),
-    column_name: z.string(),
-  }),
-  z.object({
-    table_name: z.string(),
     column_name: z.string(),
   }),
 ]);
@@ -2125,11 +3773,11 @@ export const dropgeometrytableArgsSchema = z.union([
     table_name: z.string(),
   }),
   z.object({
-    schema_name: z.string(),
     table_name: z.string(),
   }),
   z.object({
     table_name: z.string(),
+    schema_name: z.string(),
   }),
 ]);
 
@@ -2235,8 +3883,8 @@ export const geometryArgsSchema = z.union([
 export const geometryReturnsSchema = z.unknown();
 
 export const geometryAboveArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryAboveReturnsSchema = z.boolean();
@@ -2255,8 +3903,8 @@ export const geometryBelowArgsSchema = z.object({
 export const geometryBelowReturnsSchema = z.boolean();
 
 export const geometryCmpArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryCmpReturnsSchema = z.number();
@@ -2304,8 +3952,8 @@ export const geometryEqArgsSchema = z.object({
 export const geometryEqReturnsSchema = z.boolean();
 
 export const geometryGeArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryGeReturnsSchema = z.boolean();
@@ -2341,8 +3989,8 @@ export const geometryGistSortsupport2dArgsSchema = z.object({
 export const geometryGistSortsupport2dReturnsSchema = z.undefined();
 
 export const geometryGtArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryGtReturnsSchema = z.boolean();
@@ -2360,22 +4008,22 @@ export const geometryInArgsSchema = z.object({
 export const geometryInReturnsSchema = z.unknown();
 
 export const geometryLeArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryLeReturnsSchema = z.boolean();
 
 export const geometryLeftArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryLeftReturnsSchema = z.boolean();
 
 export const geometryLtArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryLtReturnsSchema = z.boolean();
@@ -2387,8 +4035,8 @@ export const geometryOutArgsSchema = z.object({
 export const geometryOutReturnsSchema = z.unknown();
 
 export const geometryOveraboveArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryOveraboveReturnsSchema = z.boolean();
@@ -2442,8 +4090,8 @@ export const geometryRightArgsSchema = z.object({
 export const geometryRightReturnsSchema = z.boolean();
 
 export const geometrySameArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometrySameReturnsSchema = z.boolean();
@@ -2680,8 +4328,8 @@ export const postgisConstraintDimsArgsSchema = z.object({
 export const postgisConstraintDimsReturnsSchema = z.number();
 
 export const postgisConstraintSridArgsSchema = z.object({
-  geomschema: z.string(),
   geomtable: z.string(),
+  geomschema: z.string(),
   geomcolumn: z.string(),
 });
 
@@ -2792,8 +4440,8 @@ export const postgisSvnVersionArgsSchema = z.object({});
 export const postgisSvnVersionReturnsSchema = z.string();
 
 export const postgisTypeNameArgsSchema = z.object({
-  coord_dimension: z.number(),
   geomname: z.string(),
+  coord_dimension: z.number(),
   use_new_name: z.boolean().optional(),
 });
 
@@ -2838,8 +4486,8 @@ export const spheroidOutArgsSchema = z.object({
 export const spheroidOutReturnsSchema = z.unknown();
 
 export const st3dclosestpointArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dclosestpointReturnsSchema = z.unknown();
@@ -2858,22 +4506,22 @@ export const st3dlengthArgsSchema = z.object({
 export const st3dlengthReturnsSchema = z.number();
 
 export const st3dlongestlineArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dlongestlineReturnsSchema = z.unknown();
 
 export const st3dmakeboxArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dmakeboxReturnsSchema = z.unknown();
 
 export const st3dmaxdistanceArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dmaxdistanceReturnsSchema = z.number();
@@ -2885,8 +4533,8 @@ export const st3dperimeterArgsSchema = z.object({
 export const st3dperimeterReturnsSchema = z.number();
 
 export const st3dshortestlineArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dshortestlineReturnsSchema = z.unknown();
@@ -2905,9 +4553,9 @@ export const stAngleArgsSchema = z.union([
   }),
   z.object({
     pt2: z.unknown(),
-    pt3: z.unknown(),
     pt4: z.unknown().optional(),
     pt1: z.unknown(),
+    pt3: z.unknown(),
   }),
 ]);
 
@@ -3057,8 +4705,8 @@ export const stAskmlArgsSchema = z.union([
 export const stAskmlReturnsSchema = z.string();
 
 export const stAslatlontextArgsSchema = z.object({
-  tmpl: z.string().optional(),
   geom: z.unknown(),
+  tmpl: z.string().optional(),
 });
 
 export const stAslatlontextReturnsSchema = z.string();
@@ -3115,41 +4763,41 @@ export const stAstextReturnsSchema = z.string();
 export const stAstwkbArgsSchema = z.union([
   z.object({
     prec: z.number().optional(),
-    with_boxes: z.boolean().optional(),
-    with_sizes: z.boolean().optional(),
-    prec_m: z.number().optional(),
     geom: z.array(z.unknown()),
     ids: z.array(z.number()),
     prec_z: z.number().optional(),
-  }),
-  z.object({
-    prec_z: z.number().optional(),
-    prec: z.number().optional(),
-    geom: z.unknown(),
+    prec_m: z.number().optional(),
     with_sizes: z.boolean().optional(),
     with_boxes: z.boolean().optional(),
+  }),
+  z.object({
+    prec: z.number().optional(),
+    geom: z.unknown(),
+    with_boxes: z.boolean().optional(),
+    with_sizes: z.boolean().optional(),
     prec_m: z.number().optional(),
+    prec_z: z.number().optional(),
   }),
 ]);
 
 export const stAstwkbReturnsSchema = z.string();
 
 export const stAsx3dArgsSchema = z.object({
-  options: z.number().optional(),
   geom: z.unknown(),
   maxdecimaldigits: z.number().optional(),
+  options: z.number().optional(),
 });
 
 export const stAsx3dReturnsSchema = z.string();
 
 export const stAzimuthArgsSchema = z.union([
   z.object({
-    geog1: z.unknown(),
     geog2: z.unknown(),
+    geog1: z.unknown(),
   }),
   z.object({
-    geom2: z.unknown(),
     geom1: z.unknown(),
+    geom2: z.unknown(),
   }),
 ]);
 
@@ -3162,8 +4810,8 @@ export const stBoundaryArgsSchema = z.object({
 export const stBoundaryReturnsSchema = z.unknown();
 
 export const stBoundingdiagonalArgsSchema = z.object({
-  geom: z.unknown(),
   fits: z.boolean().optional(),
+  geom: z.unknown(),
 });
 
 export const stBoundingdiagonalReturnsSchema = z.unknown();
@@ -3171,13 +4819,13 @@ export const stBoundingdiagonalReturnsSchema = z.unknown();
 export const stBufferArgsSchema = z.union([
   z.object({
     geom: z.unknown(),
+    options: z.string().optional(),
     radius: z.number(),
-    quadsegs: z.number(),
   }),
   z.object({
-    radius: z.number(),
+    quadsegs: z.number(),
     geom: z.unknown(),
-    options: z.string().optional(),
+    radius: z.number(),
   }),
 ]);
 
@@ -3231,8 +4879,8 @@ export const stCollectArgsSchema = z.union([
     "": z.array(z.unknown()),
   }),
   z.object({
-    geom2: z.unknown(),
     geom1: z.unknown(),
+    geom2: z.unknown(),
   }),
 ]);
 
@@ -3251,8 +4899,8 @@ export const stCollectionhomogenizeArgsSchema = z.object({
 export const stCollectionhomogenizeReturnsSchema = z.unknown();
 
 export const stConcavehullArgsSchema = z.object({
-  param_pctconvex: z.number(),
   param_geom: z.unknown(),
+  param_pctconvex: z.number(),
   param_allow_holes: z.boolean().optional(),
 });
 
@@ -3280,16 +4928,16 @@ export const stCurvetolineArgsSchema = z.object({
 export const stCurvetolineReturnsSchema = z.unknown();
 
 export const stDelaunaytrianglesArgsSchema = z.object({
-  flags: z.number().optional(),
-  tolerance: z.number().optional(),
   g1: z.unknown(),
+  tolerance: z.number().optional(),
+  flags: z.number().optional(),
 });
 
 export const stDelaunaytrianglesReturnsSchema = z.unknown();
 
 export const stDifferenceArgsSchema = z.object({
-  gridsize: z.number().optional(),
   geom1: z.unknown(),
+  gridsize: z.number().optional(),
   geom2: z.unknown(),
 });
 
@@ -3311,12 +4959,12 @@ export const stDisjointReturnsSchema = z.boolean();
 export const stDistanceArgsSchema = z.union([
   z.object({
     geog1: z.unknown(),
-    geog2: z.unknown(),
     use_spheroid: z.boolean().optional(),
+    geog2: z.unknown(),
   }),
   z.object({
-    geom1: z.unknown(),
     geom2: z.unknown(),
+    geom1: z.unknown(),
   }),
 ]);
 
@@ -3337,8 +4985,8 @@ export const stDistancesphereArgsSchema = z.union([
 export const stDistancesphereReturnsSchema = z.number();
 
 export const stDistancespheroidArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stDistancespheroidReturnsSchema = z.number();
@@ -3385,20 +5033,20 @@ export const stEnvelopeReturnsSchema = z.unknown();
 export const stExpandArgsSchema = z.union([
   z.object({
     box: z.unknown(),
-    dx: z.number(),
-    dy: z.number(),
     dz: z.number().optional(),
+    dy: z.number(),
+    dx: z.number(),
   }),
   z.object({
     dy: z.number(),
-    dx: z.number(),
     box: z.unknown(),
+    dx: z.number(),
   }),
   z.object({
     geom: z.unknown(),
-    dy: z.number(),
-    dz: z.number().optional(),
     dm: z.number().optional(),
+    dz: z.number().optional(),
+    dy: z.number(),
     dx: z.number(),
   }),
 ]);
@@ -3424,8 +5072,8 @@ export const stForce2dArgsSchema = z.object({
 export const stForce2dReturnsSchema = z.unknown();
 
 export const stForce3dArgsSchema = z.object({
-  geom: z.unknown(),
   zvalue: z.number().optional(),
+  geom: z.unknown(),
 });
 
 export const stForce3dReturnsSchema = z.unknown();
@@ -3438,15 +5086,15 @@ export const stForce3dmArgsSchema = z.object({
 export const stForce3dmReturnsSchema = z.unknown();
 
 export const stForce3dzArgsSchema = z.object({
-  zvalue: z.number().optional(),
   geom: z.unknown(),
+  zvalue: z.number().optional(),
 });
 
 export const stForce3dzReturnsSchema = z.unknown();
 
 export const stForce4dArgsSchema = z.object({
-  mvalue: z.number().optional(),
   zvalue: z.number().optional(),
+  mvalue: z.number().optional(),
   geom: z.unknown(),
 });
 
@@ -3490,13 +5138,13 @@ export const stForcesfsReturnsSchema = z.unknown();
 
 export const stGeneratepointsArgsSchema = z.union([
   z.object({
-    npoints: z.number(),
     area: z.unknown(),
+    npoints: z.number(),
+    seed: z.number(),
   }),
   z.object({
     npoints: z.number(),
     area: z.unknown(),
-    seed: z.number(),
   }),
 ]);
 
@@ -3522,12 +5170,12 @@ export const stGeographyfromtextReturnsSchema = z.unknown();
 
 export const stGeohashArgsSchema = z.union([
   z.object({
-    geog: z.unknown(),
+    geom: z.unknown(),
     maxchars: z.number().optional(),
   }),
   z.object({
-    geom: z.unknown(),
     maxchars: z.number().optional(),
+    geog: z.unknown(),
   }),
 ]);
 
@@ -3648,10 +5296,10 @@ export const stHausdorffdistanceArgsSchema = z.object({
 export const stHausdorffdistanceReturnsSchema = z.number();
 
 export const stHexagonArgsSchema = z.object({
-  cell_j: z.number(),
-  origin: z.unknown().optional(),
   size: z.number(),
   cell_i: z.number(),
+  cell_j: z.number(),
+  origin: z.unknown().optional(),
 });
 
 export const stHexagonReturnsSchema = z.unknown();
@@ -3664,8 +5312,8 @@ export const stHexagongridArgsSchema = z.object({
 export const stHexagongridReturnsSchema = z.array(z.record(z.unknown()));
 
 export const stInterpolatepointArgsSchema = z.object({
-  point: z.unknown(),
   line: z.unknown(),
+  point: z.unknown(),
 });
 
 export const stInterpolatepointReturnsSchema = z.number();
@@ -3828,16 +5476,16 @@ export const stLinetocurveArgsSchema = z.object({
 export const stLinetocurveReturnsSchema = z.unknown();
 
 export const stLocatealongArgsSchema = z.object({
-  leftrightoffset: z.number().optional(),
   geometry: z.unknown(),
   measure: z.number(),
+  leftrightoffset: z.number().optional(),
 });
 
 export const stLocatealongReturnsSchema = z.unknown();
 
 export const stLocatebetweenArgsSchema = z.object({
-  frommeasure: z.number(),
   geometry: z.unknown(),
+  frommeasure: z.number(),
   tomeasure: z.number(),
   leftrightoffset: z.number().optional(),
 });
@@ -3845,9 +5493,9 @@ export const stLocatebetweenArgsSchema = z.object({
 export const stLocatebetweenReturnsSchema = z.unknown();
 
 export const stLocatebetweenelevationsArgsSchema = z.object({
-  toelevation: z.number(),
-  fromelevation: z.number(),
   geometry: z.unknown(),
+  fromelevation: z.number(),
+  toelevation: z.number(),
 });
 
 export const stLocatebetweenelevationsReturnsSchema = z.unknown();
@@ -3870,8 +5518,8 @@ export const stMakelineArgsSchema = z.union([
     "": z.array(z.unknown()),
   }),
   z.object({
-    geom1: z.unknown(),
     geom2: z.unknown(),
+    geom1: z.unknown(),
   }),
 ]);
 
@@ -3888,8 +5536,8 @@ export const stMakevalidArgsSchema = z.union([
     "": z.unknown(),
   }),
   z.object({
-    params: z.string(),
     geom: z.unknown(),
+    params: z.string(),
   }),
 ]);
 
@@ -3908,8 +5556,8 @@ export const stMemsizeArgsSchema = z.object({
 export const stMemsizeReturnsSchema = z.number();
 
 export const stMinimumboundingcircleArgsSchema = z.object({
-  inputgeom: z.unknown(),
   segs_per_quarter: z.number().optional(),
+  inputgeom: z.unknown(),
 });
 
 export const stMinimumboundingcircleReturnsSchema = z.unknown();
@@ -4089,8 +5737,8 @@ export const stPerimeterArgsSchema = z.union([
     "": z.unknown(),
   }),
   z.object({
-    geog: z.unknown(),
     use_spheroid: z.boolean().optional(),
+    geog: z.unknown(),
   }),
 ]);
 
@@ -4136,20 +5784,20 @@ export const stPointsArgsSchema = z.object({
 export const stPointsReturnsSchema = z.unknown();
 
 export const stPointzArgsSchema = z.object({
-  srid: z.number().optional(),
   xcoordinate: z.number(),
   ycoordinate: z.number(),
   zcoordinate: z.number(),
+  srid: z.number().optional(),
 });
 
 export const stPointzReturnsSchema = z.unknown();
 
 export const stPointzmArgsSchema = z.object({
-  mcoordinate: z.number(),
+  xcoordinate: z.number(),
   ycoordinate: z.number(),
   zcoordinate: z.number(),
+  mcoordinate: z.number(),
   srid: z.number().optional(),
-  xcoordinate: z.number(),
 });
 
 export const stPointzmReturnsSchema = z.unknown();
@@ -4185,18 +5833,18 @@ export const stPolygonizeArgsSchema = z.object({
 export const stPolygonizeReturnsSchema = z.unknown();
 
 export const stProjectArgsSchema = z.object({
+  azimuth: z.number(),
   geog: z.unknown(),
   distance: z.number(),
-  azimuth: z.number(),
 });
 
 export const stProjectReturnsSchema = z.unknown();
 
 export const stQuantizecoordinatesArgsSchema = z.object({
-  prec_x: z.number(),
-  prec_m: z.number().optional(),
-  prec_z: z.number().optional(),
   prec_y: z.number().optional(),
+  prec_z: z.number().optional(),
+  prec_m: z.number().optional(),
+  prec_x: z.number(),
   g: z.unknown(),
 });
 
@@ -4250,8 +5898,8 @@ export const stSetsridArgsSchema = z.union([
 export const stSetsridReturnsSchema = z.unknown();
 
 export const stSharedpathsArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stSharedpathsReturnsSchema = z.unknown();
@@ -4270,8 +5918,8 @@ export const stShortestlineArgsSchema = z.object({
 export const stShortestlineReturnsSchema = z.unknown();
 
 export const stSimplifypolygonhullArgsSchema = z.object({
-  vertex_fraction: z.number(),
   geom: z.unknown(),
+  vertex_fraction: z.number(),
   is_outer: z.boolean().optional(),
 });
 
@@ -4285,9 +5933,9 @@ export const stSplitArgsSchema = z.object({
 export const stSplitReturnsSchema = z.unknown();
 
 export const stSquareArgsSchema = z.object({
-  cell_j: z.number(),
   size: z.number(),
   cell_i: z.number(),
+  cell_j: z.number(),
   origin: z.unknown().optional(),
 });
 
@@ -4318,9 +5966,9 @@ export const stStartpointArgsSchema = z.object({
 export const stStartpointReturnsSchema = z.unknown();
 
 export const stSubdivideArgsSchema = z.object({
-  gridsize: z.number().optional(),
   geom: z.unknown(),
   maxvertices: z.number().optional(),
+  gridsize: z.number().optional(),
 });
 
 export const stSubdivideReturnsSchema = z.array(z.unknown());
@@ -4352,18 +6000,18 @@ export const stSymdifferenceArgsSchema = z.object({
 export const stSymdifferenceReturnsSchema = z.unknown();
 
 export const stSymmetricdifferenceArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const stSymmetricdifferenceReturnsSchema = z.unknown();
 
 export const stTileenvelopeArgsSchema = z.object({
-  zoom: z.number(),
-  x: z.number(),
   y: z.number(),
-  bounds: z.unknown().optional(),
   margin: z.number().optional(),
+  bounds: z.unknown().optional(),
+  x: z.number(),
+  zoom: z.number(),
 });
 
 export const stTileenvelopeReturnsSchema = z.unknown();
@@ -4372,16 +6020,16 @@ export const stTransformArgsSchema = z.union([
   z.object({
     geom: z.unknown(),
     from_proj: z.string(),
-    to_proj: z.string(),
-  }),
-  z.object({
-    geom: z.unknown(),
-    from_proj: z.string(),
     to_srid: z.number(),
   }),
   z.object({
     geom: z.unknown(),
     to_proj: z.string(),
+  }),
+  z.object({
+    geom: z.unknown(),
+    to_proj: z.string(),
+    from_proj: z.string(),
   }),
 ]);
 
@@ -4400,19 +6048,19 @@ export const stUnionArgsSchema = z.union([
   z.object({
     geom1: z.unknown(),
     geom2: z.unknown(),
+    gridsize: z.number(),
   }),
   z.object({
-    gridsize: z.number(),
-    geom1: z.unknown(),
     geom2: z.unknown(),
+    geom1: z.unknown(),
   }),
 ]);
 
 export const stUnionReturnsSchema = z.unknown();
 
 export const stVoronoilinesArgsSchema = z.object({
-  tolerance: z.number().optional(),
   g1: z.unknown(),
+  tolerance: z.number().optional(),
   extend_to: z.unknown().optional(),
 });
 
@@ -4420,8 +6068,8 @@ export const stVoronoilinesReturnsSchema = z.unknown();
 
 export const stVoronoipolygonsArgsSchema = z.object({
   g1: z.unknown(),
-  extend_to: z.unknown().optional(),
   tolerance: z.number().optional(),
+  extend_to: z.unknown().optional(),
 });
 
 export const stVoronoipolygonsReturnsSchema = z.unknown();
@@ -4439,9 +6087,9 @@ export const stWkttosqlArgsSchema = z.object({
 export const stWkttosqlReturnsSchema = z.unknown();
 
 export const stWrapxArgsSchema = z.object({
+  wrap: z.number(),
   geom: z.unknown(),
   move: z.number(),
-  wrap: z.number(),
 });
 
 export const stWrapxReturnsSchema = z.unknown();
@@ -4519,11 +6167,11 @@ export const unlockrowsArgsSchema = z.object({
 export const unlockrowsReturnsSchema = z.number();
 
 export const updategeometrysridArgsSchema = z.object({
-  catalogn_name: z.string(),
   schema_name: z.string(),
   table_name: z.string(),
   column_name: z.string(),
   new_srid_in: z.number(),
+  catalogn_name: z.string(),
 });
 
 export const updategeometrysridReturnsSchema = z.string();

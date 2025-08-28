@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/permissions";
 import { getStripeAccountStatus } from "@/server/stripe.actions";
 import { StylistStripeOnboarding } from "./stylist-stripe-onboarding";
+import { StylistIdentityVerification } from "@/components/stylist-identity-verification";
 
 export default async function StylistStripePage() {
   const supabase = await createClient();
@@ -34,10 +35,10 @@ export default async function StylistStripePage() {
     redirect("/"); // Redirect non-stylists to home page
   }
 
-  // Get stylist details to check for Stripe account
+  // Get stylist details to check for Stripe account and identity verification
   const { data: stylistDetails, error: stylistError } = await supabase
     .from("stylist_details")
-    .select("*")
+    .select("*, stripe_verification_session_id, identity_verification_completed_at")
     .eq("profile_id", user.id)
     .single();
 
@@ -61,13 +62,13 @@ export default async function StylistStripePage() {
       if (statusResult.data) {
         stripeAccountStatus = statusResult.data;
 
-        // Check if onboarding is complete
-        // Account is considered ready if charges are enabled and details are submitted
-        needsOnboarding = !(
-          statusResult.data.charges_enabled &&
+        // Check if basic Stripe onboarding is complete
+        const basicStripeComplete = statusResult.data.charges_enabled &&
           statusResult.data.details_submitted &&
-          statusResult.data.payouts_enabled
-        );
+          statusResult.data.payouts_enabled;
+
+        // Account needs onboarding if basic Stripe is not complete
+        needsOnboarding = !basicStripeComplete;
       }
     } catch (error) {
       console.error("Error fetching Stripe account status:", error);
@@ -76,6 +77,18 @@ export default async function StylistStripePage() {
     }
   }
 
+  // Check if basic Stripe onboarding is complete but identity verification is needed
+  if (!needsOnboarding && stripeAccountStatus?.payouts_enabled && !stylistDetails.identity_verification_completed_at) {
+    // Show identity verification step
+    return (
+      <StylistIdentityVerification
+        userId={user.id}
+        hasVerificationSession={!!stylistDetails.stripe_verification_session_id}
+      />
+    );
+  }
+
+  // Show regular Stripe onboarding if not complete, or success screen if everything is done
   return (
     <StylistStripeOnboarding
       userId={user.id}

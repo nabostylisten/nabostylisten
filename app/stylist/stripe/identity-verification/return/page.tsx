@@ -1,0 +1,47 @@
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { IdentityVerificationReturnContent } from "@/components/stripe/identity-verification-return-content";
+
+export default async function IdentityVerificationReturnPage() {
+  const supabase = await createClient();
+
+  // Fast server-side checks for authentication and authorization
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    redirect(
+      `/auth/login?redirect=${encodeURIComponent("/stylist/stripe/identity-verification/return")}`
+    );
+  }
+
+  // Get user profile to check role
+  const { data: profile, error: profileError } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError || !profile) {
+    redirect("/auth/login");
+  }
+
+  // Check if user is a stylist
+  if (profile.role !== "stylist") {
+    redirect("/");
+  }
+
+  // Get stylist details to ensure they exist
+  const { data: stylistDetails, error: stylistError } = await supabase
+    .from("stylist_details")
+    .select("profile_id")
+    .eq("profile_id", user.id)
+    .single();
+
+  if (stylistError || !stylistDetails) {
+    console.error("Stylist details not found for approved stylist:", user.id);
+    redirect("/");
+  }
+
+  // All authorization checks passed, render client component
+  return <IdentityVerificationReturnContent />;
+}

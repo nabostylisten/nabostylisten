@@ -747,3 +747,82 @@ export async function createStripeExpressDashboardLink({
     };
   }
 }
+
+/**
+ * Create a Stripe Identity verification session
+ * Pure Stripe operation - no database interaction
+ */
+export async function createIdentityVerificationSession({
+  profileId,
+  email,
+  returnUrl,
+}: {
+  profileId: string;
+  email: string;
+  returnUrl: string;
+}) {
+  try {
+    const verificationSession =
+      await stripe.identity.verificationSessions.create({
+        type: "document",
+        provided_details: {
+          email,
+        },
+        return_url: returnUrl,
+        metadata: {
+          profile_id: profileId,
+        },
+      });
+
+    return {
+      data: {
+        sessionId: verificationSession.id,
+        url: verificationSession.url,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error creating identity verification session:", error);
+    return {
+      data: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create verification session",
+    };
+  }
+}
+
+/**
+ * Get the status of a Stripe Identity verification session
+ * Pure Stripe operation - no database interaction
+ */
+export async function getIdentityVerificationSessionStatus({
+  sessionId,
+}: {
+  sessionId: string;
+}) {
+  try {
+    const session =
+      await stripe.identity.verificationSessions.retrieve(sessionId);
+
+    return {
+      data: {
+        id: session.id,
+        status: session.status,
+        verified_outputs: session.verified_outputs,
+        last_error: session.last_error,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error retrieving identity verification session:", error);
+    return {
+      data: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to get verification status",
+    };
+  }
+}

@@ -33,6 +33,7 @@ interface StylistStripeOnboardingProps {
   needsOnboarding: boolean;
   stripeAccountId?: string | null;
   stripeAccountStatus?: GetStripeAccountStatusResult["data"] | null;
+  isCompletelyDone?: boolean;
 }
 
 export function StylistStripeOnboarding({
@@ -41,23 +42,24 @@ export function StylistStripeOnboarding({
   needsOnboarding,
   stripeAccountId,
   stripeAccountStatus,
+  isCompletelyDone = false,
 }: StylistStripeOnboardingProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(5);
 
-  // Countdown effect for completed onboarding
+  // Countdown effect for completed onboarding (both Stripe and identity verification)
   useEffect(() => {
-    if (!needsOnboarding && countdown > 0) {
+    if (isCompletelyDone && countdown > 0) {
       const timer = setTimeout(() => {
         setCountdown(countdown - 1);
       }, 1000);
 
       return () => clearTimeout(timer);
-    } else if (!needsOnboarding && countdown === 0) {
+    } else if (isCompletelyDone && countdown === 0) {
       router.push(`/profiler/${userId}`);
     }
-  }, [needsOnboarding, countdown, router, userId]);
+  }, [isCompletelyDone, countdown, router, userId]);
 
   const handleCreateOnboardingLink = async () => {
     if (!stripeAccountId) {
@@ -91,8 +93,9 @@ export function StylistStripeOnboarding({
     }
   };
 
-  if (!needsOnboarding) {
-    // Show completion message with countdown
+  // Handle completed states
+  if (isCompletelyDone) {
+    // Show completion message with countdown (only when EVERYTHING is complete)
     return (
       <div className="container mx-auto max-w-2xl px-4 py-8">
         <BlurFade delay={0.1} duration={0.5} inView>
@@ -158,6 +161,14 @@ export function StylistStripeOnboarding({
         </BlurFade>
       </div>
     );
+  }
+
+  // If basic Stripe is done but identity verification is needed, redirect to identity verification
+  if (!needsOnboarding) {
+    // This means basic Stripe onboarding is complete but identity verification is still needed
+    // The parent component should handle this case, but just in case, redirect
+    router.push("/stylist/stripe");
+    return null;
   }
 
   // Show onboarding needed UI

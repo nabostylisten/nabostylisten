@@ -25,7 +25,7 @@ export type StylistOnboardingStatus =
  * @returns Current onboarding status
  */
 export function getStylistOnboardingStatus(
-  stripeAccountStatus: any,
+  stripeAccountStatus: { charges_enabled: boolean; payouts_enabled: boolean } | null,
   hasVerificationSession: boolean,
   verificationCompletedAt: string | null
 ): StylistOnboardingStatus {
@@ -66,7 +66,7 @@ export function getStylistOnboardingStatus(
  * @returns Whether stylist can create services
  */
 export function canCreateServices(
-  stripeAccountStatus: any,
+  stripeAccountStatus: { charges_enabled: boolean; payouts_enabled: boolean } | null,
   verificationCompletedAt: string | null
 ): boolean {
   const status = getStylistOnboardingStatus(

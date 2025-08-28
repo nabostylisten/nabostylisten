@@ -88,6 +88,9 @@ export default async function StylistStripePage() {
     );
   }
 
+  // Determine if completely done (both Stripe and identity verification)
+  const isCompletelyDone = !needsOnboarding && !!stylistDetails.identity_verification_completed_at;
+  
   // Show regular Stripe onboarding if not complete, or success screen if everything is done
   return (
     <StylistStripeOnboarding
@@ -96,6 +99,7 @@ export default async function StylistStripePage() {
       needsOnboarding={needsOnboarding}
       stripeAccountId={stylistDetails.stripe_account_id}
       stripeAccountStatus={stripeAccountStatus}
+      isCompletelyDone={isCompletelyDone}
     />
   );
 }

@@ -20,6 +20,7 @@ import {
   XCircle,
   Check,
   X,
+  AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -147,7 +148,17 @@ export function StripeReturnContent() {
     status: stripeAccountStatus,
     isFullyOnboarded,
     profile,
+    stylistDetails,
   } = stripeData.data;
+
+  // Check if basic Stripe onboarding is complete (separate from identity verification)
+  const basicStripeComplete =
+    stripeAccountStatus?.charges_enabled &&
+    stripeAccountStatus?.details_submitted &&
+    stripeAccountStatus?.payouts_enabled;
+
+  const identityVerificationComplete =
+    !!stylistDetails?.identity_verification_completed_at;
 
   // Determine status and messaging
   const getStatusContent = () => {
@@ -160,6 +171,7 @@ export function StripeReturnContent() {
         alertTitle: "Ingen Stripe-konto funnet",
         alertMessage:
           "Det ser ut som du ikke har en Stripe-konto. Vennligst kontakt support for hjelp.",
+        redirectToIdentityVerification: false,
       };
     }
 
@@ -172,21 +184,39 @@ export function StripeReturnContent() {
         alertTitle: "Feil med Stripe-integrasjon",
         alertMessage:
           "Kunne ikke hente kontostatus. Vennligst kontakt support for hjelp.",
+        redirectToIdentityVerification: false,
       };
     }
 
+    // If everything is complete (both Stripe and identity verification)
     if (isFullyOnboarded) {
       return {
         icon: <CheckCircle className="h-12 w-12 text-green-500" />,
-        title: "Gratulerer!",
-        description: "Din Stripe-konto er klar til bruk",
+        title: "Alt er klart!",
+        description: "Du kan nå opprette tjenester og motta betalinger",
         alertType: "success" as const,
-        alertTitle: "Kontoen din er aktiv",
+        alertTitle: "Onboarding fullført",
         alertMessage:
           "Du kan nå motta betalinger fra kunder. Begynn å opprette tjenester for å komme i gang.",
+        redirectToIdentityVerification: false,
       };
     }
 
+    // If basic Stripe is complete but identity verification is needed
+    if (basicStripeComplete && !identityVerificationComplete) {
+      return {
+        icon: <AlertTriangle className="h-12 w-12 text-amber-500" />,
+        title: "Stripe-konto opprettet!",
+        description: "Neste steg: Identitetsverifisering",
+        alertType: "next-step" as const,
+        alertTitle: "Identitetsverifisering kreves",
+        alertMessage:
+          "Din Stripe-konto er opprettet og aktivert. For å kunne opprette tjenester må du nå verifisere identiteten din.",
+        redirectToIdentityVerification: true,
+      };
+    }
+
+    // Basic Stripe onboarding still in progress
     return {
       icon: <AlertTriangle className="h-12 w-12 text-amber-500" />,
       title: "Velkommen tilbake!",
@@ -195,6 +225,7 @@ export function StripeReturnContent() {
       alertTitle: "Kontoverifisering pågår",
       alertMessage:
         "Du vil motta en e-post når kontoen din er klar til bruk. Inntil da kan du begynne å sette opp tjenestene dine.",
+      redirectToIdentityVerification: false,
     };
   };
 
@@ -272,6 +303,27 @@ export function StripeReturnContent() {
                         )}
                       </div>
                     </div>
+
+                    {/* Show identity verification status if basic Stripe is complete */}
+                    {basicStripeComplete && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Identitetsverifisering</span>
+                        <div
+                          className={cn(
+                            "flex items-center justify-center w-6 h-6 rounded-full",
+                            identityVerificationComplete
+                              ? "bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400"
+                              : "bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400"
+                          )}
+                        >
+                          {identityVerificationComplete ? (
+                            <Check className="w-3.5 h-3.5" />
+                          ) : (
+                            <AlertTriangle className="w-3.5 h-3.5" />
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               )}
@@ -294,17 +346,30 @@ export function StripeReturnContent() {
             {/* Navigation buttons - only show if not error */}
             {statusContent.alertType !== "error" && (
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button asChild>
-                  <Link href={`/profiler/${profile.id}/profil`}>
-                    Gå til profil
-                  </Link>
-                </Button>
-                <Button variant="outline" asChild>
-                  <Link href={`/profiler/${profile.id}/mine-tjenester`}>
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Opprett tjenester
-                  </Link>
-                </Button>
+                {statusContent.redirectToIdentityVerification ? (
+                  <>
+                    <Button asChild>
+                      <Link href="/stylist/stripe">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Start identitetsverifisering
+                      </Link>
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button asChild>
+                      <Link href={`/profiler/${profile.id}/profil`}>
+                        Gå til profil
+                      </Link>
+                    </Button>
+                    <Button variant="outline" asChild>
+                      <Link href={`/profiler/${profile.id}/mine-tjenester`}>
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Opprett tjenester
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             )}
 

@@ -79,7 +79,19 @@ async function validatePayments(): Promise<ValidationResult> {
       }`,
     );
 
-    // 2. Check for missing payments (in MySQL but not in PostgreSQL)
+    // 2. Load extraction results to understand what should have been migrated
+    const extractedPaymentsPath = path.join(tempDir, "payments-extracted.json");
+    const extractedData = JSON.parse(
+      await fs.readFile(extractedPaymentsPath, "utf-8"),
+    );
+    const expectedPayments = extractedData.processedPayments;
+    const expectedPaymentIds = new Set(expectedPayments.map((p: any) => p.id));
+    
+    logger.info(
+      `Expected ${expectedPayments.length} payments to be migrated (out of ${totalMysqlPayments} total MySQL payments)`,
+    );
+
+    // 3. Check for missing payments (should have been migrated but not found in PostgreSQL)
     const { data: pgPayments, error: fetchError } = await supabase
       .from("payments")
       .select("id, booking_id, payment_intent_id, final_amount");
@@ -91,18 +103,18 @@ async function validatePayments(): Promise<ValidationResult> {
     }
 
     const pgPaymentIds = new Set(pgPayments?.map((p) => p.id) || []);
-    const missing_payments = mysqlPayments
-      .map((p) => p.id.toLowerCase())
-      .filter((id) => !pgPaymentIds.has(id));
+    const missing_payments = expectedPayments
+      .map((p: any) => p.id)
+      .filter((id: string) => !pgPaymentIds.has(id));
 
     if (missing_payments.length > 0) {
       validation_errors.push(
-        `${missing_payments.length} payments missing in PostgreSQL`,
+        `${missing_payments.length} expected payments missing in PostgreSQL`,
       );
       logger.warn(`Found ${missing_payments.length} missing payments`);
     }
 
-    // 3. Check for orphaned payments (no corresponding booking)
+    // 4. Check for orphaned payments (no corresponding booking)
     const { data: orphanedPayments, error: orphanError } = await supabase
       .from("payments")
       .select("id, booking_id")
@@ -121,7 +133,7 @@ async function validatePayments(): Promise<ValidationResult> {
       );
     }
 
-    // 4. Validate booking-payment relationships
+    // 5. Validate booking-payment relationships
     const { data: bookingsWithPaymentIntent, error: bookingError } =
       await supabase
         .from("bookings")
@@ -152,26 +164,23 @@ async function validatePayments(): Promise<ValidationResult> {
       );
     }
 
-    // 5. Validate amounts (sample check)
+    // 6. Validate amounts (sample check)
     const sampleSize = Math.min(100, pgPayments?.length || 0);
     if (pgPayments && sampleSize > 0) {
       logger.info(`Validating amounts for ${sampleSize} sample payments...`);
 
       for (let i = 0; i < sampleSize; i++) {
         const pgPayment = pgPayments[i];
-        const mysqlPayment = mysqlPayments.find((p) =>
-          p.id.toLowerCase() === pgPayment.id
-        );
+        const expectedPayment = expectedPayments.find((p: any) => p.id === pgPayment.id);
 
-        if (mysqlPayment) {
-          const mysqlTotal = parseFloat(mysqlPayment.stylist_amount) +
-            parseFloat(mysqlPayment.platform_amount);
-          const difference = Math.abs(mysqlTotal - pgPayment.final_amount);
+        if (expectedPayment) {
+          const expectedAmount = expectedPayment.final_amount;
+          const difference = Math.abs(expectedAmount - pgPayment.final_amount);
 
           if (difference > 0.01) { // Allow for small rounding differences
             amount_discrepancies.push({
               payment_id: pgPayment.id,
-              mysql_amount: mysqlTotal,
+              mysql_amount: expectedAmount,
               pg_amount: pgPayment.final_amount,
               difference,
             });
@@ -186,7 +195,7 @@ async function validatePayments(): Promise<ValidationResult> {
       }
     }
 
-    // 6. Check payment status distribution
+    // 7. Check payment status distribution
     const { data: statusDistribution, error: statusError } = await supabase
       .from("payments")
       .select("status")
@@ -246,6 +255,7 @@ async function validatePayments(): Promise<ValidationResult> {
 
     logger.info("Validation summary:");
     logger.info(`  - Total MySQL payments: ${totalMysqlPayments}`);
+    logger.info(`  - Expected migrated payments: ${expectedPayments.length}`);
     logger.info(`  - Total PostgreSQL payments: ${totalPgPayments || 0}`);
     logger.info(`  - Missing payments: ${missing_payments.length}`);
     logger.info(`  - Orphaned payments: ${orphaned_payments.length}`);

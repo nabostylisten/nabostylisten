@@ -62,7 +62,7 @@ async function main() {
     // We need to get the original user data to find default_address_id
     // This information isn't stored in ConsolidatedUser, so we need to get it from the MySQL dump
     const { MySQLParser } = await import('../phase-1-users/utils/mysql-parser');
-    const parser = new MySQLParser(logger, database.getDumpFilePath());
+    const parser = new MySQLParser(database.getDumpFilePath(), logger);
     
     logger.info('Extracting default_address_id references from MySQL data...');
     const [buyers, stylists] = await Promise.all([

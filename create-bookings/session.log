@@ -33,3 +33,19 @@ Data: {
   "completed": 2
 }
 [2025-08-27T14:43:57.444Z] [INFO ]    - Price range: 10-228 NOK (avg: 93)
+
+
+=== Migration Session Started: 2025-08-27T18:48:58.859Z ===
+[2025-08-27T18:48:58.860Z] [INFO ] Starting Phase 4 Step 2: Create Bookings in Supabase
+[2025-08-27T18:48:58.861Z] [INFO ] Creating 5 bookings in Supabase...
+[2025-08-27T18:48:58.888Z] [SUCCESS] ✅ Bookings created successfully!
+[2025-08-27T18:48:58.888Z] [INFO ] 📊 Creation Summary:
+[2025-08-27T18:48:58.888Z] [INFO ]    - Total bookings: 5
+[2025-08-27T18:48:58.888Z] [INFO ]    - Successfully created: 5
+[2025-08-27T18:48:58.888Z] [INFO ]    - Failed: 0
+[2025-08-27T18:48:58.888Z] [INFO ]    - Status distribution:
+Data: {
+  "cancelled": 3,
+  "completed": 2
+}
+[2025-08-27T18:48:58.888Z] [INFO ]    - Price range: 10-228 NOK (avg: 93)

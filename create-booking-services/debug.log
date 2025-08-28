@@ -6,3 +6,11 @@ Data: [
   "service_id"
 ]
 [2025-08-27T14:44:54.712Z] [DEBUG] Parsed 0 records from booking_services_service
+[2025-08-27T18:48:58.930Z] [DEBUG] Parsing booking_services_service table from dump file
+[2025-08-27T18:48:58.932Z] [DEBUG] Found columns for booking_services_service:
+Data: [
+  "booking_id",
+  "service_id",
+  "service_id"
+]
+[2025-08-27T18:48:58.934Z] [DEBUG] Parsed 0 records from booking_services_service

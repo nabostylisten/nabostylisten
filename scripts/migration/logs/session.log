@@ -16577,3 +16577,2014 @@ Data: {
 [2025-08-27T18:29:17.574Z] [INFO ]    • Inactive chats: 0
 [2025-08-27T18:29:17.574Z] [INFO ]    • Invalid messages: 68
 [2025-08-27T18:29:17.575Z] [INFO ] 📄 Detailed statistics saved to: /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-6-migration-stats.json
+
+
+=== Migration Session Started: 2025-08-27T18:38:21.897Z ===
+[2025-08-27T18:38:21.897Z] [INFO ] 🚀 Starting Phase 7: Reviews & Ratings Migration
+[2025-08-27T18:38:21.898Z] [INFO ] ============================================================
+[2025-08-27T18:38:21.898Z] [INFO ] 📤 Step 1: Extracting reviews from MySQL...
+[2025-08-27T18:38:21.898Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:38:21.900Z ===
+[2025-08-27T18:38:21.900Z] [INFO ] Starting review extraction from MySQL...
+[2025-08-27T18:38:21.901Z] [INFO ] Parsing ratings from MySQL dump...
+[2025-08-27T18:38:21.901Z] [INFO ] Parsing rating table from MySQL dump
+[2025-08-27T18:38:21.909Z] [SUCCESS] Parsed 6 records from rating
+[2025-08-27T18:38:21.909Z] [INFO ] Found 6 ratings in MySQL
+[2025-08-27T18:38:21.910Z] [INFO ] Found 5 migrated booking IDs
+[2025-08-27T18:38:21.910Z] [INFO ] Review extraction completed:
+[2025-08-27T18:38:21.910Z] [INFO ]   - Total MySQL ratings: 6
+[2025-08-27T18:38:21.910Z] [INFO ]   - Successfully processed: 2
+[2025-08-27T18:38:21.910Z] [INFO ]   - Skipped reviews: 4
+[2025-08-27T18:38:21.910Z] [INFO ]   - Reviews with comments: 2
+[2025-08-27T18:38:21.910Z] [INFO ]   - Reviews without comments: 0
+[2025-08-27T18:38:21.910Z] [INFO ] Rating distribution:
+[2025-08-27T18:38:21.910Z] [INFO ]   - 1 star: 1
+[2025-08-27T18:38:21.910Z] [INFO ]   - 2 stars: 0
+[2025-08-27T18:38:21.910Z] [INFO ]   - 3 stars: 0
+[2025-08-27T18:38:21.910Z] [INFO ]   - 4 stars: 0
+[2025-08-27T18:38:21.910Z] [INFO ]   - 5 stars: 1
+[2025-08-27T18:38:21.910Z] [INFO ] Skipped review reasons:
+[2025-08-27T18:38:21.910Z] [INFO ]   - Booking was not migrated to PostgreSQL: 4
+[2025-08-27T18:38:21.910Z] [INFO ] ✅ Review extraction completed successfully
+[2025-08-27T18:38:21.910Z] [INFO ]    📊 MySQL ratings: 6
+[2025-08-27T18:38:21.910Z] [INFO ]    ✨ Processed reviews: 2
+[2025-08-27T18:38:21.911Z] [INFO ]    💬 With comments: 2
+[2025-08-27T18:38:21.911Z] [INFO ]    📝 Without comments: 0
+[2025-08-27T18:38:21.911Z] [WARN ]    ⚠️  Skipped reviews: 4
+[2025-08-27T18:38:21.911Z] [INFO ]    ⭐ Rating distribution:
+[2025-08-27T18:38:21.911Z] [INFO ]       1 star: 1
+[2025-08-27T18:38:21.911Z] [INFO ]       2 stars: 0
+[2025-08-27T18:38:21.911Z] [INFO ]       3 stars: 0
+[2025-08-27T18:38:21.911Z] [INFO ]       4 stars: 0
+[2025-08-27T18:38:21.911Z] [INFO ]       5 stars: 1
+[2025-08-27T18:38:21.911Z] [INFO ] 
+📥 Step 2: Creating reviews in Supabase...
+[2025-08-27T18:38:21.911Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:38:21.911Z ===
+[2025-08-27T18:38:21.911Z] [INFO ] Starting review creation in Supabase...
+[2025-08-27T18:38:21.911Z] [INFO ] Loaded 2 reviews to create
+[2025-08-27T18:38:21.913Z] [INFO ] Connected to Supabase
+[2025-08-27T18:38:21.913Z] [INFO ] Processing batch 1/1 (2 reviews)
+[2025-08-27T18:38:21.949Z] [ERROR] Failed to create review 4597cd19-25ee-4980-bd64-54cfd293bd7b:
+Data: {
+  "code": "23503",
+  "details": "Key (customer_id)=(95d98ca8-93c5-4c93-9077-f49f2e34b7db) is not present in table \"profiles\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_customer_id_fkey\""
+}
+[2025-08-27T18:38:21.949Z] [ERROR] Failed to create review 29a67382-226d-45a8-b8f4-8cdf99d7ed10:
+Data: {
+  "code": "23503",
+  "details": "Key (customer_id)=(95d98ca8-93c5-4c93-9077-f49f2e34b7db) is not present in table \"profiles\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_customer_id_fkey\""
+}
+[2025-08-27T18:38:21.949Z] [INFO ] Batch 1 completed: 0 created, 2 failed
+[2025-08-27T18:38:21.950Z] [INFO ] Review creation completed:
+[2025-08-27T18:38:21.950Z] [INFO ]   - Total to create: 2
+[2025-08-27T18:38:21.950Z] [INFO ]   - Successfully created: 0
+[2025-08-27T18:38:21.950Z] [INFO ]   - Failed creations: 2
+[2025-08-27T18:38:21.950Z] [INFO ]   - Duration: 0.04s
+[2025-08-27T18:38:21.950Z] [INFO ]   - Success rate: 0.00%
+[2025-08-27T18:38:21.950Z] [INFO ] Created reviews rating distribution:
+[2025-08-27T18:38:21.950Z] [INFO ]   - 1 star: 0
+[2025-08-27T18:38:21.950Z] [INFO ]   - 2 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]   - 3 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]   - 4 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]   - 5 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]   - Reviews with comments: 0
+[2025-08-27T18:38:21.950Z] [INFO ]   - Reviews without comments: 0
+[2025-08-27T18:38:21.950Z] [INFO ] ✅ Review creation completed successfully
+[2025-08-27T18:38:21.950Z] [INFO ]    📊 Reviews created: 0/2
+[2025-08-27T18:38:21.950Z] [INFO ]    ⏱️  Duration: 0.04s
+[2025-08-27T18:38:21.950Z] [WARN ]    ⚠️  Failed creations: 2
+[2025-08-27T18:38:21.950Z] [INFO ]    ⭐ Created reviews rating distribution:
+[2025-08-27T18:38:21.950Z] [INFO ]       1 star: 0
+[2025-08-27T18:38:21.950Z] [INFO ]       2 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]       3 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]       4 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]       5 stars: 0
+[2025-08-27T18:38:21.950Z] [INFO ]    💬 With comments: 0
+[2025-08-27T18:38:21.950Z] [INFO ]    📝 Without comments: 0
+[2025-08-27T18:38:21.950Z] [INFO ] 
+🔍 Step 3: Validating migration integrity...
+[2025-08-27T18:38:21.950Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:38:21.951Z ===
+[2025-08-27T18:38:21.951Z] [INFO ] Starting review migration validation...
+[2025-08-27T18:38:21.951Z] [INFO ] Connected to both data sources
+[2025-08-27T18:38:21.951Z] [INFO ] Parsing rating table from MySQL dump
+[2025-08-27T18:38:21.960Z] [SUCCESS] Parsed 6 records from rating
+[2025-08-27T18:38:21.960Z] [INFO ] MySQL: 6 ratings
+[2025-08-27T18:38:21.969Z] [INFO ] PostgreSQL: 0 reviews
+[2025-08-27T18:38:21.976Z] [WARN ] Found 6 missing reviews
+[2025-08-27T18:38:21.990Z] [ERROR] ❌ Review migration validation FAILED
+[2025-08-27T18:38:21.990Z] [ERROR] Validation errors:
+[2025-08-27T18:38:21.991Z] [ERROR]   - 6 reviews missing in PostgreSQL
+[2025-08-27T18:38:21.991Z] [INFO ] Validation summary:
+[2025-08-27T18:38:21.991Z] [INFO ]   - Total MySQL ratings: 6
+[2025-08-27T18:38:21.991Z] [INFO ]   - Total PostgreSQL reviews: 0
+[2025-08-27T18:38:21.991Z] [INFO ]   - Missing reviews: 6
+[2025-08-27T18:38:21.991Z] [INFO ]   - Orphaned reviews: 0
+[2025-08-27T18:38:21.991Z] [INFO ]   - Booking-review mismatches: 0
+[2025-08-27T18:38:21.991Z] [INFO ]   - Rating discrepancies: 0
+[2025-08-27T18:38:21.991Z] [INFO ]   - Customer mismatches: 0
+[2025-08-27T18:38:21.991Z] [INFO ]   - Stylist mismatches: 0
+[2025-08-27T18:38:21.991Z] [WARN ] ⚠️  Migration validation found issues
+[2025-08-27T18:38:21.991Z] [WARN ]    Validation errors:
+[2025-08-27T18:38:21.991Z] [WARN ]    - 6 reviews missing in PostgreSQL
+[2025-08-27T18:38:21.991Z] [INFO ]    📊 MySQL ratings → PostgreSQL reviews: 6 → 0
+[2025-08-27T18:38:21.991Z] [INFO ]    ⭐ Average rating: 0.00
+[2025-08-27T18:38:21.991Z] [INFO ]    💬 Reviews with comments: 0
+[2025-08-27T18:38:21.991Z] [WARN ]    ⚠️  Missing reviews: 6
+[2025-08-27T18:38:21.991Z] [INFO ] 
+============================================================
+[2025-08-27T18:38:21.991Z] [INFO ] 🎉 Phase 7 Migration Completed Successfully!
+[2025-08-27T18:38:21.992Z] [INFO ] ============================================================
+[2025-08-27T18:38:21.992Z] [INFO ] 📊 MIGRATION SUMMARY:
+[2025-08-27T18:38:21.992Z] [INFO ]    • Total duration: 0s
+[2025-08-27T18:38:21.992Z] [INFO ]    • MySQL ratings processed: 2 (from 6 total)
+[2025-08-27T18:38:21.992Z] [INFO ]    • PostgreSQL reviews created: 0/2 (0.00%)
+[2025-08-27T18:38:21.992Z] [INFO ]    • Average rating: 0.00 stars
+[2025-08-27T18:38:21.992Z] [INFO ]    • Reviews with comments: 0
+[2025-08-27T18:38:21.992Z] [INFO ]    • Migration validation: ⚠️ ISSUES FOUND
+[2025-08-27T18:38:21.992Z] [INFO ] 📋 SKIPPED DATA:
+[2025-08-27T18:38:21.992Z] [INFO ]    • Skipped reviews: 4
+[2025-08-27T18:38:21.992Z] [WARN ] ⚠️  CREATION FAILURES:
+[2025-08-27T18:38:21.992Z] [WARN ]    • Failed review creations: 2
+[2025-08-27T18:38:21.992Z] [INFO ] ⭐ FINAL RATING DISTRIBUTION:
+[2025-08-27T18:38:21.992Z] [INFO ]    • 1 star: 1 (50.0%)
+[2025-08-27T18:38:21.992Z] [INFO ]    • 2 stars: 0 (0.0%)
+[2025-08-27T18:38:21.992Z] [INFO ]    • 3 stars: 0 (0.0%)
+[2025-08-27T18:38:21.992Z] [INFO ]    • 4 stars: 0 (0.0%)
+[2025-08-27T18:38:21.992Z] [INFO ]    • 5 stars: 1 (50.0%)
+[2025-08-27T18:38:21.992Z] [INFO ] 📄 Detailed statistics saved to: /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-7-migration-stats.json
+
+
+=== Migration Session Started: 2025-08-27T18:41:54.543Z ===
+[2025-08-27T18:41:54.545Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-08-27T18:41:54.545Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-08-27T18:41:54.545Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:41:54.545Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:41:54.561Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:41:54.590Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:41:54.590Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-08-27T18:41:54.590Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:41:54.635Z ===
+[2025-08-27T18:41:54.636Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-08-27T18:41:54.647Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:41:54.648Z] [ERROR] Phase 1 Step 1 failed
+Data: {
+  "message": "this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)",
+  "stack": "TypeError: this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:420:19)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:396:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T18:41:54.650Z] [ERROR] ❌ Step 1: Extract Users failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:41:54.650Z] [WARN ] Migration stopped due to error. To resume:
+[2025-08-27T18:41:54.650Z] [INFO ] 1. Fix the error in phase-1-users/01-extract-users.ts
+[2025-08-27T18:41:54.650Z] [INFO ] 2. Re-run this script - it will continue from where it left off
+[2025-08-27T18:41:54.650Z] [INFO ] 3. Or run individual scripts manually for debugging
+[2025-08-27T18:41:54.650Z] [ERROR] ❌ Phase 1 migration failed after 0s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:41:54.650Z] [INFO ] 
+Troubleshooting:
+[2025-08-27T18:41:54.650Z] [INFO ] 1. Check the error logs above
+[2025-08-27T18:41:54.650Z] [INFO ] 2. Verify database connection and credentials
+[2025-08-27T18:41:54.650Z] [INFO ] 3. Check that the MySQL dump file exists and is readable
+[2025-08-27T18:41:54.650Z] [INFO ] 4. Run individual scripts to isolate the issue
+
+
+=== Migration Session Started: 2025-08-27T18:42:21.838Z ===
+[2025-08-27T18:42:21.839Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-08-27T18:42:21.840Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-08-27T18:42:21.840Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:42:21.840Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:42:21.853Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:42:21.878Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:42:21.878Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-08-27T18:42:21.878Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:42:21.920Z ===
+[2025-08-27T18:42:21.921Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-08-27T18:42:21.933Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:42:21.934Z] [ERROR] Phase 1 Step 1 failed
+Data: {
+  "message": "this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)",
+  "stack": "TypeError: this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:420:19)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:396:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T18:42:21.935Z] [ERROR] ❌ Step 1: Extract Users failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:42:21.936Z] [WARN ] Migration stopped due to error. To resume:
+[2025-08-27T18:42:21.936Z] [INFO ] 1. Fix the error in phase-1-users/01-extract-users.ts
+[2025-08-27T18:42:21.936Z] [INFO ] 2. Re-run this script - it will continue from where it left off
+[2025-08-27T18:42:21.936Z] [INFO ] 3. Or run individual scripts manually for debugging
+[2025-08-27T18:42:21.936Z] [ERROR] ❌ Phase 1 migration failed after 0s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:42:21.936Z] [INFO ] 
+Troubleshooting:
+[2025-08-27T18:42:21.936Z] [INFO ] 1. Check the error logs above
+[2025-08-27T18:42:21.936Z] [INFO ] 2. Verify database connection and credentials
+[2025-08-27T18:42:21.936Z] [INFO ] 3. Check that the MySQL dump file exists and is readable
+[2025-08-27T18:42:21.936Z] [INFO ] 4. Run individual scripts to isolate the issue
+
+
+=== Migration Session Started: 2025-08-27T18:42:48.118Z ===
+[2025-08-27T18:42:48.119Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-08-27T18:42:48.134Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:42:48.135Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-08-27T18:42:48.142Z] [SUCCESS] Parsed 278 records from buyer
+[2025-08-27T18:42:48.142Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-08-27T18:42:48.157Z] [SUCCESS] Parsed 221 records from stylist
+[2025-08-27T18:42:48.158Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:42:48.158Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:42:48.158Z] [INFO ] Extracting user data from MySQL dump...
+[2025-08-27T18:42:48.158Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-08-27T18:42:48.163Z] [SUCCESS] Extracted 278 buyer records
+[2025-08-27T18:42:48.163Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-08-27T18:42:48.180Z] [SUCCESS] Extracted 221 stylist records
+[2025-08-27T18:42:48.180Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-08-27T18:42:48.181Z] [INFO ] Validating extracted user data...
+[2025-08-27T18:42:48.181Z] [INFO ] Validating buyer records
+[2025-08-27T18:42:48.182Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-08-27T18:42:48.182Z] [INFO ] Validating stylist records
+[2025-08-27T18:42:48.182Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-08-27T18:42:48.182Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:42:48.183Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-08-27T18:42:48.183Z] [INFO ] Identifying duplicate users...
+[2025-08-27T18:42:48.183Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-08-27T18:42:48.184Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-08-27T18:42:48.184Z] [WARN ] Found 11 users with duplicate emails
+[2025-08-27T18:42:48.185Z] [INFO ] Consolidating user data...
+[2025-08-27T18:42:48.185Z] [INFO ] Consolidating users with deduplication
+[2025-08-27T18:42:48.186Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-08-27T18:42:48.186Z] [INFO ] Validating consolidated user data...
+[2025-08-27T18:42:48.187Z] [INFO ] Validating consolidated user records
+[2025-08-27T18:42:48.187Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-08-27T18:42:48.187Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-08-27T18:42:48.190Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-08-27T18:42:48.190Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+
+
+=== Migration Session Started: 2025-08-27T18:44:14.460Z ===
+[2025-08-27T18:44:14.461Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-08-27T18:44:14.461Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-08-27T18:44:14.461Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:44:14.461Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:44:14.472Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:44:14.491Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:44:14.492Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-08-27T18:44:14.492Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:44:14.533Z ===
+[2025-08-27T18:44:14.534Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-08-27T18:44:14.545Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:44:14.546Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-08-27T18:44:14.551Z] [SUCCESS] Parsed 278 records from buyer
+[2025-08-27T18:44:14.551Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-08-27T18:44:14.565Z] [SUCCESS] Parsed 221 records from stylist
+[2025-08-27T18:44:14.566Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:44:14.566Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:44:14.566Z] [INFO ] Extracting user data from MySQL dump...
+[2025-08-27T18:44:14.566Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-08-27T18:44:14.570Z] [SUCCESS] Extracted 278 buyer records
+[2025-08-27T18:44:14.570Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-08-27T18:44:14.584Z] [SUCCESS] Extracted 221 stylist records
+[2025-08-27T18:44:14.584Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-08-27T18:44:14.584Z] [INFO ] Validating extracted user data...
+[2025-08-27T18:44:14.584Z] [INFO ] Validating buyer records
+[2025-08-27T18:44:14.585Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-08-27T18:44:14.585Z] [INFO ] Validating stylist records
+[2025-08-27T18:44:14.585Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-08-27T18:44:14.585Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:44:14.586Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-08-27T18:44:14.586Z] [INFO ] Identifying duplicate users...
+[2025-08-27T18:44:14.586Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-08-27T18:44:14.586Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-08-27T18:44:14.586Z] [WARN ] Found 11 users with duplicate emails
+[2025-08-27T18:44:14.586Z] [INFO ] Consolidating user data...
+[2025-08-27T18:44:14.587Z] [INFO ] Consolidating users with deduplication
+[2025-08-27T18:44:14.587Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-08-27T18:44:14.587Z] [INFO ] Validating consolidated user data...
+[2025-08-27T18:44:14.587Z] [INFO ] Validating consolidated user records
+[2025-08-27T18:44:14.588Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-08-27T18:44:14.588Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-08-27T18:44:14.590Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-08-27T18:44:14.590Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-08-27T18:44:14.593Z] [SUCCESS] ✅ Step 1: Extract Users completed in 0s
+[2025-08-27T18:44:14.593Z] [INFO ] 
+📋 Step 2: Create Auth Users & Profiles: Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)
+[2025-08-27T18:44:14.593Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:44:14.631Z ===
+[2025-08-27T18:44:14.632Z] [INFO ] === Phase 1 Step 2: Create Supabase Auth Users ===
+[2025-08-27T18:44:14.643Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:44:14.643Z] [INFO ] Loading consolidated user data...
+[2025-08-27T18:44:14.644Z] [INFO ] Loaded 437 consolidated users
+[2025-08-27T18:45:53.361Z] [INFO ] Auth User Creation Summary:
+  Total Processed: 437
+  Successfully Created: 437
+  Skipped (Already Exists): 0
+  Errors: 0
+  Success Rate: 100%
+  Status: ✅ SUCCESS
+[2025-08-27T18:45:53.362Z] [SUCCESS] Phase 1 Step 2 completed
+Data: {
+  "auth_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/auth-users-created.json",
+  "user_mapping_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-id-mapping.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-08-27T18:45:53.368Z] [SUCCESS] ✅ Step 2: Create Auth Users & Profiles completed in 99s
+[2025-08-27T18:45:53.368Z] [INFO ] 
+📋 Step 3: Create Stylist Details: Create stylist-specific data records
+[2025-08-27T18:45:53.369Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/04-create-stylist-details.ts
+
+
+=== Migration Session Started: 2025-08-27T18:45:53.430Z ===
+[2025-08-27T18:45:53.431Z] [INFO ] === Phase 1 Step 4: Create Stylist Details Records ===
+[2025-08-27T18:45:53.457Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:45:53.458Z] [INFO ] Loading data files...
+[2025-08-27T18:45:53.470Z] [INFO ] Processing 170 stylists (skipped 0)
+[2025-08-27T18:45:54.751Z] [INFO ] Stylist Details Creation Summary:
+  Total Stylists to Process: 170
+  Skipped (No Profile/Missing Data): 0
+  Successfully Created: 170
+  Errors: 0
+  Success Rate: 100%
+  Database Stylist Details Count: 170
+  Status: ✅ SUCCESS
+[2025-08-27T18:45:54.752Z] [SUCCESS] Phase 1 Step 4 completed
+Data: {
+  "stylist_details_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/stylist-details-created.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json",
+  "stylist_details_in_database": 170
+}
+[2025-08-27T18:45:54.754Z] [SUCCESS] ✅ Step 3: Create Stylist Details completed in 1s
+[2025-08-27T18:45:54.770Z] [INFO ] 
+🎉 === PHASE 1: USER MIGRATION COMPLETED SUCCESSFULLY ===
+[2025-08-27T18:45:54.771Z] [INFO ] Migration Summary:
+  Total Duration: 100s
+  Profiles Created: 437
+  Stylist Details Created: 170
+  User Preferences Created: 437
+  Final Profile Count: 437
+  Final Stylist Details Count: 170
+  Final User Preferences Count: 437
+[2025-08-27T18:45:54.771Z] [SUCCESS] ✅ Users can now login with OTP using their original email addresses
+[2025-08-27T18:45:54.771Z] [INFO ] 
+Next Steps:
+[2025-08-27T18:45:54.771Z] [INFO ] 1. Test user login with OTP authentication
+[2025-08-27T18:45:54.771Z] [INFO ] 2. Verify user data in the Supabase dashboard
+[2025-08-27T18:45:54.771Z] [INFO ] 3. Begin Phase 2: Address and Service data migration
+[2025-08-27T18:45:54.771Z] [INFO ] 
+To test user login:
+[2025-08-27T18:45:54.771Z] [INFO ] 1. Go to your application login page
+[2025-08-27T18:45:54.771Z] [INFO ] 2. Use any email from the original MySQL database
+[2025-08-27T18:45:54.771Z] [INFO ] 3. Check that OTP email is sent and login works
+
+
+=== Migration Session Started: 2025-08-27T18:45:54.827Z ===
+[2025-08-27T18:45:54.829Z] [INFO ] 🏠 === PHASE 2: ADDRESS & GEOGRAPHIC DATA MIGRATION STARTED ===
+[2025-08-27T18:45:54.829Z] [INFO ] Migrating addresses with polymorphic relationship resolution
+[2025-08-27T18:45:54.829Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:45:54.829Z] [SUCCESS] Phase 1 completion verified ✅
+[2025-08-27T18:45:54.829Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:45:54.841Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:45:54.858Z] [INFO ] Initial Database State:
+  profiles: 437
+  stylist_details: 170
+  user_preferences: 437
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:45:54.858Z] [INFO ] 
+🔄 Executing Step 1: Extract Addresses...
+[2025-08-27T18:45:54.858Z] [INFO ] 📝 Extract and process address data from MySQL dump
+
+
+=== Migration Session Started: 2025-08-27T18:45:54.897Z ===
+[2025-08-27T18:45:54.898Z] [INFO ] === Phase 2 Step 1: Extract Address Data ===
+[2025-08-27T18:45:54.910Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:45:54.910Z] [INFO ] Loading user ID mapping from Phase 1...
+[2025-08-27T18:45:54.911Z] [INFO ] Loaded mapping for 437 users
+[2025-08-27T18:45:54.911Z] [INFO ] Extracting address records from MySQL dump...
+[2025-08-27T18:45:54.911Z] [ERROR] Phase 2 Step 1 failed
+Data: {
+  "message": "this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)",
+  "stack": "TypeError: this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:78:17)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:77:53)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:180:23)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:179:33)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:68:29)"
+}
+[2025-08-27T18:45:54.915Z] [ERROR] ❌ Step 1: Extract Addresses failed
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:45:54.915Z] [ERROR] Phase 2 migration failed after 0s
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:45:54.915Z] [ERROR] 🚨 Phase 2 Address Migration failed - check logs for details
+
+
+=== Migration Session Started: 2025-08-27T18:46:03.631Z ===
+[2025-08-27T18:46:03.632Z] [INFO ] 🏠 === PHASE 2: ADDRESS & GEOGRAPHIC DATA MIGRATION STARTED ===
+[2025-08-27T18:46:03.632Z] [INFO ] Migrating addresses with polymorphic relationship resolution
+[2025-08-27T18:46:03.632Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:46:03.632Z] [SUCCESS] Phase 1 completion verified ✅
+[2025-08-27T18:46:03.632Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:46:03.647Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:46:03.672Z] [INFO ] Initial Database State:
+  profiles: 437
+  stylist_details: 170
+  user_preferences: 437
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:46:03.672Z] [INFO ] 
+🔄 Executing Step 1: Extract Addresses...
+[2025-08-27T18:46:03.672Z] [INFO ] 📝 Extract and process address data from MySQL dump
+
+
+=== Migration Session Started: 2025-08-27T18:46:03.713Z ===
+[2025-08-27T18:46:03.714Z] [INFO ] === Phase 2 Step 1: Extract Address Data ===
+[2025-08-27T18:46:03.728Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:46:03.728Z] [INFO ] Loading user ID mapping from Phase 1...
+[2025-08-27T18:46:03.728Z] [INFO ] Loaded mapping for 437 users
+[2025-08-27T18:46:03.728Z] [INFO ] Extracting address records from MySQL dump...
+[2025-08-27T18:46:03.728Z] [ERROR] Phase 2 Step 1 failed
+Data: {
+  "message": "this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)",
+  "stack": "TypeError: this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:78:17)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:77:53)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:180:23)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:179:33)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:68:29)"
+}
+[2025-08-27T18:46:03.731Z] [ERROR] ❌ Step 1: Extract Addresses failed
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:46:03.732Z] [ERROR] Phase 2 migration failed after 0s
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:46:03.732Z] [ERROR] 🚨 Phase 2 Address Migration failed - check logs for details
+
+
+=== Migration Session Started: 2025-08-27T18:46:36.229Z ===
+[2025-08-27T18:46:36.231Z] [INFO ] 🏠 === PHASE 2: ADDRESS & GEOGRAPHIC DATA MIGRATION STARTED ===
+[2025-08-27T18:46:36.231Z] [INFO ] Migrating addresses with polymorphic relationship resolution
+[2025-08-27T18:46:36.231Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:46:36.231Z] [SUCCESS] Phase 1 completion verified ✅
+[2025-08-27T18:46:36.231Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:46:36.257Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:46:36.281Z] [INFO ] Initial Database State:
+  profiles: 437
+  stylist_details: 170
+  user_preferences: 437
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:46:36.281Z] [INFO ] 
+🔄 Executing Step 1: Extract Addresses...
+[2025-08-27T18:46:36.281Z] [INFO ] 📝 Extract and process address data from MySQL dump
+
+
+=== Migration Session Started: 2025-08-27T18:46:36.320Z ===
+[2025-08-27T18:46:36.322Z] [INFO ] === Phase 2 Step 1: Extract Address Data ===
+[2025-08-27T18:46:36.332Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:46:36.332Z] [INFO ] Loading user ID mapping from Phase 1...
+[2025-08-27T18:46:36.333Z] [INFO ] Loaded mapping for 437 users
+[2025-08-27T18:46:36.333Z] [INFO ] Extracting address records from MySQL dump...
+[2025-08-27T18:46:36.333Z] [INFO ] Extracting address records from MySQL dump
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 11
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 9
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.336Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 34
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.337Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 30
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 35
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 25
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.338Z] [WARN ] Column count mismatch for address. Expected 16, got 20
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 26
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.339Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 9
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 22
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 29
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 18
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.340Z] [WARN ] Column count mismatch for address. Expected 16, got 22
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 14
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 9
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 29
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.341Z] [WARN ] Column count mismatch for address. Expected 16, got 18
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 26
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 8
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 10
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 20
+[2025-08-27T18:46:36.342Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.343Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.343Z] [WARN ] Column count mismatch for address. Expected 16, got 21
+[2025-08-27T18:46:36.343Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.343Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.343Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:46:36.343Z] [SUCCESS] Extracted 10 address records
+[2025-08-27T18:46:36.343Z] [INFO ] Found 10 total addresses, 5 active (excluded 5 soft-deleted/salon)
+[2025-08-27T18:46:36.343Z] [INFO ] Processing address data...
+[2025-08-27T18:46:36.343Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0�G\�\�\�%@\�}-�\�\�M@
+[2025-08-27T18:46:36.344Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0}��\r�%@\�8�	\�\�M@
+[2025-08-27T18:46:36.344Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0��Yh\�\�M@79|҉�%@
+[2025-08-27T18:46:36.344Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0�G\�\�\�%@\�}-�\�\�M@
+[2025-08-27T18:46:36.344Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0lZ)rQ#@Q�B\�yaN@
+[2025-08-27T18:46:36.344Z] [INFO ] Validating processed addresses...
+[2025-08-27T18:46:36.344Z] [INFO ] Address Extraction Summary:
+  Total MySQL Addresses: 10
+  Active Addresses: 5
+  Successfully Processed: 5
+  Skipped (No User/Error): 0
+  With Coordinates: 0
+  Buyer Addresses: 0
+  Stylist Addresses: 5
+  Validation Errors: 0
+  Status: ✅ SUCCESS
+[2025-08-27T18:46:36.344Z] [SUCCESS] Phase 2 Step 1 completed successfully
+Data: {
+  "processed_addresses_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/processed-addresses.json",
+  "skipped_addresses_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/skipped-addresses.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/address-migration-stats.json"
+}
+[2025-08-27T18:46:36.347Z] [SUCCESS] ✅ Step 1: Extract Addresses completed in 0s
+[2025-08-27T18:46:36.347Z] [INFO ] 
+🔄 Executing Step 2: Create Addresses...
+[2025-08-27T18:46:36.347Z] [INFO ] 📝 Create address records in Supabase database
+
+
+=== Migration Session Started: 2025-08-27T18:46:36.384Z ===
+[2025-08-27T18:46:36.385Z] [INFO ] === Phase 2 Step 2: Create Address Records ===
+[2025-08-27T18:46:36.398Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:46:36.398Z] [INFO ] Loading processed address data...
+[2025-08-27T18:46:36.398Z] [INFO ] Loaded 5 addresses to create
+[2025-08-27T18:46:36.761Z] [INFO ] Address Creation Summary:
+  Total Addresses to Create: 5
+  Successfully Created: 5
+  Errors: 0
+  Success Rate: 100%
+  Database Address Count: 5
+  Status: ✅ SUCCESS
+[2025-08-27T18:46:36.761Z] [SUCCESS] Phase 2 Step 2 completed
+Data: {
+  "address_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/addresses-created.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/address-migration-stats.json",
+  "addresses_in_database": 5
+}
+[2025-08-27T18:46:36.763Z] [SUCCESS] ✅ Step 2: Create Addresses completed in 0s
+[2025-08-27T18:46:36.764Z] [INFO ] 
+🔄 Executing Step 3: Update Primary Flags...
+[2025-08-27T18:46:36.764Z] [INFO ] 📝 Set primary address flags based on user defaults
+
+
+=== Migration Session Started: 2025-08-27T18:46:36.811Z ===
+[2025-08-27T18:46:36.813Z] [INFO ] === Phase 2 Step 3: Update Primary Address Flags ===
+[2025-08-27T18:46:36.824Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:46:36.825Z] [INFO ] Loading required data files...
+[2025-08-27T18:46:36.825Z] [INFO ] Processing 437 users for primary address updates
+[2025-08-27T18:46:36.826Z] [INFO ] Extracting default_address_id references from MySQL data...
+[2025-08-27T18:46:36.826Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-08-27T18:46:36.832Z] [SUCCESS] Extracted 278 buyer records
+[2025-08-27T18:46:36.832Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-08-27T18:46:36.846Z] [SUCCESS] Extracted 221 stylist records
+[2025-08-27T18:46:36.846Z] [INFO ] Found 5 primary address updates to perform
+[2025-08-27T18:46:37.178Z] [INFO ] Primary Address Update Summary:
+  Total Updates Needed: 5
+  Successfully Updated: 5
+  Errors: 0
+  Success Rate: 100%
+  Primary Addresses in Database: 5
+  Total Addresses: 5
+  Status: ✅ SUCCESS
+[2025-08-27T18:46:37.179Z] [SUCCESS] Phase 2 Step 3 completed
+Data: {
+  "primary_address_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/primary-addresses-updated.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/address-migration-stats.json",
+  "primary_addresses_count": 5,
+  "total_addresses": 5
+}
+[2025-08-27T18:46:37.185Z] [SUCCESS] ✅ Step 3: Update Primary Flags completed in 0s
+[2025-08-27T18:46:37.210Z] [INFO ] 🏠 === PHASE 2: ADDRESS MIGRATION COMPLETE ===
+[2025-08-27T18:46:37.210Z] [INFO ] === FINAL STATISTICS ===:
+  Addresses Before: 0
+  Addresses After: 5
+  New Addresses Created: 5
+[2025-08-27T18:46:37.211Z] [INFO ] === DATABASE VERIFICATION ===:
+  Total Addresses: 5
+  Primary Address Count: 5
+[2025-08-27T18:46:37.212Z] [INFO ] === MIGRATION STATUS ===:
+  Total Errors: 0
+  Duration: 1s
+  Overall Status: ✅ SUCCESS
+[2025-08-27T18:46:37.212Z] [SUCCESS] 🎉 Phase 2 Address Migration completed successfully!
+Data: {
+  "completion_marker": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-2-completed.json",
+  "duration": "1s",
+  "addresses_created": 5
+}
+[2025-08-27T18:46:37.212Z] [INFO ] Next steps: Users now have properly migrated addresses with primary flags set
+
+
+=== Migration Session Started: 2025-08-27T18:47:16.295Z ===
+[2025-08-27T18:47:16.297Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-08-27T18:47:16.297Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-08-27T18:47:16.297Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:47:16.297Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:47:16.309Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:47:16.332Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:47:16.332Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-08-27T18:47:16.333Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:47:16.376Z ===
+[2025-08-27T18:47:16.377Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-08-27T18:47:16.388Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:47:16.389Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-08-27T18:47:16.394Z] [SUCCESS] Parsed 278 records from buyer
+[2025-08-27T18:47:16.394Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-08-27T18:47:16.408Z] [SUCCESS] Parsed 221 records from stylist
+[2025-08-27T18:47:16.409Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:47:16.409Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:47:16.409Z] [INFO ] Extracting user data from MySQL dump...
+[2025-08-27T18:47:16.409Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-08-27T18:47:16.413Z] [SUCCESS] Extracted 278 buyer records
+[2025-08-27T18:47:16.413Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-08-27T18:47:16.426Z] [SUCCESS] Extracted 221 stylist records
+[2025-08-27T18:47:16.427Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-08-27T18:47:16.427Z] [INFO ] Validating extracted user data...
+[2025-08-27T18:47:16.427Z] [INFO ] Validating buyer records
+[2025-08-27T18:47:16.428Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-08-27T18:47:16.428Z] [INFO ] Validating stylist records
+[2025-08-27T18:47:16.428Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-08-27T18:47:16.429Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:47:16.429Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-08-27T18:47:16.429Z] [INFO ] Identifying duplicate users...
+[2025-08-27T18:47:16.429Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-08-27T18:47:16.429Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-08-27T18:47:16.429Z] [WARN ] Found 11 users with duplicate emails
+[2025-08-27T18:47:16.430Z] [INFO ] Consolidating user data...
+[2025-08-27T18:47:16.430Z] [INFO ] Consolidating users with deduplication
+[2025-08-27T18:47:16.431Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-08-27T18:47:16.431Z] [INFO ] Validating consolidated user data...
+[2025-08-27T18:47:16.431Z] [INFO ] Validating consolidated user records
+[2025-08-27T18:47:16.431Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-08-27T18:47:16.431Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-08-27T18:47:16.434Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-08-27T18:47:16.434Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-08-27T18:47:16.436Z] [SUCCESS] ✅ Step 1: Extract Users completed in 0s
+[2025-08-27T18:47:16.436Z] [INFO ] 
+📋 Step 2: Create Auth Users & Profiles: Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)
+[2025-08-27T18:47:16.436Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:47:16.476Z ===
+[2025-08-27T18:47:16.477Z] [INFO ] === Phase 1 Step 2: Create Supabase Auth Users ===
+[2025-08-27T18:47:16.491Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:47:16.491Z] [INFO ] Loading consolidated user data...
+[2025-08-27T18:47:16.492Z] [INFO ] Loaded 437 consolidated users
+[2025-08-27T18:48:55.975Z] [INFO ] Auth User Creation Summary:
+  Total Processed: 437
+  Successfully Created: 437
+  Skipped (Already Exists): 0
+  Errors: 0
+  Success Rate: 100%
+  Status: ✅ SUCCESS
+[2025-08-27T18:48:55.975Z] [SUCCESS] Phase 1 Step 2 completed
+Data: {
+  "auth_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/auth-users-created.json",
+  "user_mapping_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-id-mapping.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-08-27T18:48:55.982Z] [SUCCESS] ✅ Step 2: Create Auth Users & Profiles completed in 100s
+[2025-08-27T18:48:55.982Z] [INFO ] 
+📋 Step 3: Create Stylist Details: Create stylist-specific data records
+[2025-08-27T18:48:55.982Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/04-create-stylist-details.ts
+
+
+=== Migration Session Started: 2025-08-27T18:48:56.045Z ===
+[2025-08-27T18:48:56.046Z] [INFO ] === Phase 1 Step 4: Create Stylist Details Records ===
+[2025-08-27T18:48:56.070Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:48:56.070Z] [INFO ] Loading data files...
+[2025-08-27T18:48:56.084Z] [INFO ] Processing 170 stylists (skipped 0)
+[2025-08-27T18:48:57.390Z] [INFO ] Stylist Details Creation Summary:
+  Total Stylists to Process: 170
+  Skipped (No Profile/Missing Data): 0
+  Successfully Created: 170
+  Errors: 0
+  Success Rate: 100%
+  Database Stylist Details Count: 170
+  Status: ✅ SUCCESS
+[2025-08-27T18:48:57.391Z] [SUCCESS] Phase 1 Step 4 completed
+Data: {
+  "stylist_details_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/stylist-details-created.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json",
+  "stylist_details_in_database": 170
+}
+[2025-08-27T18:48:57.394Z] [SUCCESS] ✅ Step 3: Create Stylist Details completed in 1s
+[2025-08-27T18:48:57.414Z] [INFO ] 
+🎉 === PHASE 1: USER MIGRATION COMPLETED SUCCESSFULLY ===
+[2025-08-27T18:48:57.414Z] [INFO ] Migration Summary:
+  Total Duration: 101s
+  Profiles Created: 437
+  Stylist Details Created: 170
+  User Preferences Created: 437
+  Final Profile Count: 437
+  Final Stylist Details Count: 170
+  Final User Preferences Count: 437
+[2025-08-27T18:48:57.414Z] [SUCCESS] ✅ Users can now login with OTP using their original email addresses
+[2025-08-27T18:48:57.414Z] [INFO ] 
+Next Steps:
+[2025-08-27T18:48:57.414Z] [INFO ] 1. Test user login with OTP authentication
+[2025-08-27T18:48:57.414Z] [INFO ] 2. Verify user data in the Supabase dashboard
+[2025-08-27T18:48:57.414Z] [INFO ] 3. Begin Phase 2: Address and Service data migration
+[2025-08-27T18:48:57.415Z] [INFO ] 
+To test user login:
+[2025-08-27T18:48:57.415Z] [INFO ] 1. Go to your application login page
+[2025-08-27T18:48:57.415Z] [INFO ] 2. Use any email from the original MySQL database
+[2025-08-27T18:48:57.415Z] [INFO ] 3. Check that OTP email is sent and login works
+
+
+=== Migration Session Started: 2025-08-27T18:48:57.477Z ===
+[2025-08-27T18:48:57.478Z] [INFO ] 🏠 === PHASE 2: ADDRESS & GEOGRAPHIC DATA MIGRATION STARTED ===
+[2025-08-27T18:48:57.478Z] [INFO ] Migrating addresses with polymorphic relationship resolution
+[2025-08-27T18:48:57.479Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:48:57.479Z] [SUCCESS] Phase 1 completion verified ✅
+[2025-08-27T18:48:57.479Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:48:57.493Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:48:57.513Z] [INFO ] Initial Database State:
+  profiles: 437
+  stylist_details: 170
+  user_preferences: 437
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:48:57.513Z] [INFO ] 
+🔄 Executing Step 1: Extract Addresses...
+[2025-08-27T18:48:57.513Z] [INFO ] 📝 Extract and process address data from MySQL dump
+
+
+=== Migration Session Started: 2025-08-27T18:48:57.555Z ===
+[2025-08-27T18:48:57.556Z] [INFO ] === Phase 2 Step 1: Extract Address Data ===
+[2025-08-27T18:48:57.567Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:48:57.567Z] [INFO ] Loading user ID mapping from Phase 1...
+[2025-08-27T18:48:57.567Z] [INFO ] Loaded mapping for 437 users
+[2025-08-27T18:48:57.567Z] [INFO ] Extracting address records from MySQL dump...
+[2025-08-27T18:48:57.567Z] [INFO ] Extracting address records from MySQL dump
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 11
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.570Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 9
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.571Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 34
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.572Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 30
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 35
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 25
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.573Z] [WARN ] Column count mismatch for address. Expected 16, got 20
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 26
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.574Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 9
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 22
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 29
+[2025-08-27T18:48:57.575Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 18
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 22
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 14
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.576Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 9
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 29
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 18
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 26
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.577Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 8
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 10
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 1
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 20
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 21
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.578Z] [WARN ] Column count mismatch for address. Expected 16, got 15
+[2025-08-27T18:48:57.579Z] [SUCCESS] Extracted 10 address records
+[2025-08-27T18:48:57.579Z] [INFO ] Found 10 total addresses, 5 active (excluded 5 soft-deleted/salon)
+[2025-08-27T18:48:57.579Z] [INFO ] Processing address data...
+[2025-08-27T18:48:57.579Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0�G\�\�\�%@\�}-�\�\�M@
+[2025-08-27T18:48:57.580Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0}��\r�%@\�8�	\�\�M@
+[2025-08-27T18:48:57.580Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0��Yh\�\�M@79|҉�%@
+[2025-08-27T18:48:57.580Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0�G\�\�\�%@\�}-�\�\�M@
+[2025-08-27T18:48:57.580Z] [WARN ] Invalid POINT format: _binary \�\0\0\0\0\0lZ)rQ#@Q�B\�yaN@
+[2025-08-27T18:48:57.580Z] [INFO ] Validating processed addresses...
+[2025-08-27T18:48:57.580Z] [INFO ] Address Extraction Summary:
+  Total MySQL Addresses: 10
+  Active Addresses: 5
+  Successfully Processed: 5
+  Skipped (No User/Error): 0
+  With Coordinates: 0
+  Buyer Addresses: 0
+  Stylist Addresses: 5
+  Validation Errors: 0
+  Status: ✅ SUCCESS
+[2025-08-27T18:48:57.580Z] [SUCCESS] Phase 2 Step 1 completed successfully
+Data: {
+  "processed_addresses_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/processed-addresses.json",
+  "skipped_addresses_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/skipped-addresses.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/address-migration-stats.json"
+}
+[2025-08-27T18:48:57.583Z] [SUCCESS] ✅ Step 1: Extract Addresses completed in 0s
+[2025-08-27T18:48:57.583Z] [INFO ] 
+🔄 Executing Step 2: Create Addresses...
+[2025-08-27T18:48:57.583Z] [INFO ] 📝 Create address records in Supabase database
+
+
+=== Migration Session Started: 2025-08-27T18:48:57.620Z ===
+[2025-08-27T18:48:57.622Z] [INFO ] === Phase 2 Step 2: Create Address Records ===
+[2025-08-27T18:48:57.634Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:48:57.635Z] [INFO ] Loading processed address data...
+[2025-08-27T18:48:57.635Z] [INFO ] Loaded 5 addresses to create
+[2025-08-27T18:48:57.987Z] [INFO ] Address Creation Summary:
+  Total Addresses to Create: 5
+  Successfully Created: 5
+  Errors: 0
+  Success Rate: 100%
+  Database Address Count: 5
+  Status: ✅ SUCCESS
+[2025-08-27T18:48:57.988Z] [SUCCESS] Phase 2 Step 2 completed
+Data: {
+  "address_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/addresses-created.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/address-migration-stats.json",
+  "addresses_in_database": 5
+}
+[2025-08-27T18:48:57.990Z] [SUCCESS] ✅ Step 2: Create Addresses completed in 0s
+[2025-08-27T18:48:57.992Z] [INFO ] 
+🔄 Executing Step 3: Update Primary Flags...
+[2025-08-27T18:48:57.992Z] [INFO ] 📝 Set primary address flags based on user defaults
+
+
+=== Migration Session Started: 2025-08-27T18:48:58.047Z ===
+[2025-08-27T18:48:58.049Z] [INFO ] === Phase 2 Step 3: Update Primary Address Flags ===
+[2025-08-27T18:48:58.061Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:48:58.061Z] [INFO ] Loading required data files...
+[2025-08-27T18:48:58.062Z] [INFO ] Processing 437 users for primary address updates
+[2025-08-27T18:48:58.063Z] [INFO ] Extracting default_address_id references from MySQL data...
+[2025-08-27T18:48:58.063Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-08-27T18:48:58.069Z] [SUCCESS] Extracted 278 buyer records
+[2025-08-27T18:48:58.069Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-08-27T18:48:58.083Z] [SUCCESS] Extracted 221 stylist records
+[2025-08-27T18:48:58.084Z] [INFO ] Found 5 primary address updates to perform
+[2025-08-27T18:48:58.404Z] [INFO ] Primary Address Update Summary:
+  Total Updates Needed: 5
+  Successfully Updated: 5
+  Errors: 0
+  Success Rate: 100%
+  Primary Addresses in Database: 5
+  Total Addresses: 5
+  Status: ✅ SUCCESS
+[2025-08-27T18:48:58.404Z] [SUCCESS] Phase 2 Step 3 completed
+Data: {
+  "primary_address_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/primary-addresses-updated.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/address-migration-stats.json",
+  "primary_addresses_count": 5,
+  "total_addresses": 5
+}
+[2025-08-27T18:48:58.407Z] [SUCCESS] ✅ Step 3: Update Primary Flags completed in 0s
+[2025-08-27T18:48:58.427Z] [INFO ] 🏠 === PHASE 2: ADDRESS MIGRATION COMPLETE ===
+[2025-08-27T18:48:58.427Z] [INFO ] === FINAL STATISTICS ===:
+  Addresses Before: 0
+  Addresses After: 5
+  New Addresses Created: 5
+[2025-08-27T18:48:58.429Z] [INFO ] === DATABASE VERIFICATION ===:
+  Total Addresses: 5
+  Primary Address Count: 5
+[2025-08-27T18:48:58.429Z] [INFO ] === MIGRATION STATUS ===:
+  Total Errors: 0
+  Duration: 1s
+  Overall Status: ✅ SUCCESS
+[2025-08-27T18:48:58.429Z] [SUCCESS] 🎉 Phase 2 Address Migration completed successfully!
+Data: {
+  "completion_marker": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-2-completed.json",
+  "duration": "1s",
+  "addresses_created": 5
+}
+[2025-08-27T18:48:58.429Z] [INFO ] Next steps: Users now have properly migrated addresses with primary flags set
+
+
+=== Migration Session Started: 2025-08-27T18:48:59.103Z ===
+[2025-08-27T18:48:59.103Z] [INFO ] Starting payment extraction from MySQL...
+[2025-08-27T18:48:59.104Z] [INFO ] Parsing payments and bookings from MySQL dump...
+[2025-08-27T18:48:59.104Z] [INFO ] Parsing payment table from MySQL dump
+[2025-08-27T18:48:59.116Z] [SUCCESS] Parsed 1888 records from payment
+[2025-08-27T18:48:59.116Z] [INFO ] Parsing booking table from MySQL dump
+[2025-08-27T18:48:59.120Z] [SUCCESS] Parsed 5 records from booking
+[2025-08-27T18:48:59.120Z] [INFO ] Found 1888 payments and 5 bookings in MySQL
+[2025-08-27T18:48:59.120Z] [INFO ] Created mapping for 5 payment-booking relationships
+[2025-08-27T18:48:59.121Z] [INFO ] Found 5 migrated booking IDs
+[2025-08-27T18:48:59.125Z] [INFO ] Payment extraction completed:
+[2025-08-27T18:48:59.125Z] [INFO ]   - Total MySQL payments: 1888
+[2025-08-27T18:48:59.125Z] [INFO ]   - Total MySQL bookings: 5
+[2025-08-27T18:48:59.125Z] [INFO ]   - Successfully processed: 2
+[2025-08-27T18:48:59.125Z] [INFO ]   - Skipped payments: 1886
+[2025-08-27T18:48:59.125Z] [INFO ]   - Unique bookings with payments: 2
+[2025-08-27T18:48:59.125Z] [INFO ] Status distribution:
+[2025-08-27T18:48:59.125Z] [INFO ]   - succeeded: 2
+[2025-08-27T18:48:59.125Z] [INFO ] Skipped payment reasons:
+[2025-08-27T18:48:59.125Z] [INFO ]   - No booking found for this payment: 1883
+[2025-08-27T18:48:59.125Z] [INFO ]   - Payment has no payment_intent_id (incomplete payment): 3
+
+
+=== Migration Session Started: 2025-08-27T18:48:59.161Z ===
+[2025-08-27T18:48:59.161Z] [INFO ] Starting payment creation in Supabase...
+[2025-08-27T18:48:59.163Z] [INFO ] Loaded 2 payments to create
+[2025-08-27T18:48:59.165Z] [INFO ] Connected to Supabase
+[2025-08-27T18:48:59.165Z] [INFO ] Processing batch 1/1 (2 payments)
+[2025-08-27T18:48:59.180Z] [ERROR] Failed to check if payment already exists: [object Object]
+[2025-08-27T18:48:59.189Z] [ERROR] Failed to check if payment already exists: [object Object]
+[2025-08-27T18:48:59.193Z] [INFO ] Batch 1 completed: 2 created, 0 failed
+[2025-08-27T18:48:59.193Z] [INFO ] Payment creation completed:
+[2025-08-27T18:48:59.193Z] [INFO ]   - Total to create: 2
+[2025-08-27T18:48:59.194Z] [INFO ]   - Successfully created: 2
+[2025-08-27T18:48:59.194Z] [INFO ]   - Failed creations: 0
+[2025-08-27T18:48:59.194Z] [INFO ]   - Updated bookings: 2
+[2025-08-27T18:48:59.194Z] [INFO ]   - Duration: 0.03s
+[2025-08-27T18:48:59.194Z] [INFO ]   - Success rate: 100.00%
+
+
+=== Migration Session Started: 2025-08-27T18:48:59.230Z ===
+[2025-08-27T18:48:59.230Z] [INFO ] Starting payment migration validation...
+[2025-08-27T18:48:59.231Z] [INFO ] Connected to both data sources
+[2025-08-27T18:48:59.231Z] [INFO ] Parsing payment table from MySQL dump
+[2025-08-27T18:48:59.243Z] [SUCCESS] Parsed 1888 records from payment
+[2025-08-27T18:48:59.256Z] [INFO ] MySQL payments: 1888, PostgreSQL payments: 2
+[2025-08-27T18:48:59.259Z] [WARN ] Found 1886 missing payments
+[2025-08-27T18:48:59.263Z] [INFO ] Validating amounts for 2 sample payments...
+[2025-08-27T18:48:59.266Z] [INFO ] Payment status distribution:
+[2025-08-27T18:48:59.266Z] [INFO ]   - succeeded: 2
+[2025-08-27T18:48:59.267Z] [ERROR] ❌ Payment migration validation FAILED
+[2025-08-27T18:48:59.267Z] [ERROR] Validation errors:
+[2025-08-27T18:48:59.267Z] [ERROR]   - 1886 payments missing in PostgreSQL
+[2025-08-27T18:48:59.267Z] [INFO ] Validation summary:
+[2025-08-27T18:48:59.267Z] [INFO ]   - Total MySQL payments: 1888
+[2025-08-27T18:48:59.267Z] [INFO ]   - Total PostgreSQL payments: 2
+[2025-08-27T18:48:59.267Z] [INFO ]   - Missing payments: 1886
+[2025-08-27T18:48:59.267Z] [INFO ]   - Orphaned payments: 0
+[2025-08-27T18:48:59.267Z] [INFO ]   - Booking-payment mismatches: 0
+[2025-08-27T18:48:59.267Z] [INFO ]   - Amount discrepancies: 0
+
+
+=== Migration Session Started: 2025-08-27T18:50:04.443Z ===
+[2025-08-27T18:50:04.446Z] [INFO ] Starting payment extraction from MySQL...
+[2025-08-27T18:50:04.446Z] [INFO ] Parsing payments and bookings from MySQL dump...
+[2025-08-27T18:50:04.446Z] [INFO ] Parsing payment table from MySQL dump
+[2025-08-27T18:50:04.465Z] [SUCCESS] Parsed 1888 records from payment
+[2025-08-27T18:50:04.465Z] [INFO ] Parsing booking table from MySQL dump
+[2025-08-27T18:50:04.468Z] [SUCCESS] Parsed 5 records from booking
+[2025-08-27T18:50:04.468Z] [INFO ] Found 1888 payments and 5 bookings in MySQL
+[2025-08-27T18:50:04.468Z] [INFO ] Created mapping for 5 payment-booking relationships
+[2025-08-27T18:50:04.470Z] [INFO ] Found 5 migrated booking IDs
+[2025-08-27T18:50:04.474Z] [INFO ] Payment extraction completed:
+[2025-08-27T18:50:04.474Z] [INFO ]   - Total MySQL payments: 1888
+[2025-08-27T18:50:04.475Z] [INFO ]   - Total MySQL bookings: 5
+[2025-08-27T18:50:04.475Z] [INFO ]   - Successfully processed: 2
+[2025-08-27T18:50:04.475Z] [INFO ]   - Skipped payments: 1886
+[2025-08-27T18:50:04.475Z] [INFO ]   - Unique bookings with payments: 2
+[2025-08-27T18:50:04.475Z] [INFO ] Status distribution:
+[2025-08-27T18:50:04.475Z] [INFO ]   - succeeded: 2
+[2025-08-27T18:50:04.475Z] [INFO ] Skipped payment reasons:
+[2025-08-27T18:50:04.475Z] [INFO ]   - No booking found for this payment: 1883
+[2025-08-27T18:50:04.475Z] [INFO ]   - Payment has no payment_intent_id (incomplete payment): 3
+
+
+=== Migration Session Started: 2025-08-27T18:50:04.512Z ===
+[2025-08-27T18:50:04.512Z] [INFO ] Starting payment creation in Supabase...
+[2025-08-27T18:50:04.514Z] [INFO ] Loaded 2 payments to create
+[2025-08-27T18:50:04.516Z] [INFO ] Connected to Supabase
+[2025-08-27T18:50:04.516Z] [INFO ] Processing batch 1/1 (2 payments)
+[2025-08-27T18:50:04.542Z] [WARN ] Payment already exists for intent pi_3RYTBeDaNfPoezcB2VgYeDso, skipping
+[2025-08-27T18:50:04.543Z] [WARN ] Payment already exists for intent pi_3Ravq9DaNfPoezcB1INAfKO4, skipping
+[2025-08-27T18:50:04.543Z] [INFO ] Batch 1 completed: 0 created, 0 failed
+[2025-08-27T18:50:04.543Z] [INFO ] Payment creation completed:
+[2025-08-27T18:50:04.543Z] [INFO ]   - Total to create: 2
+[2025-08-27T18:50:04.543Z] [INFO ]   - Successfully created: 0
+[2025-08-27T18:50:04.543Z] [INFO ]   - Failed creations: 0
+[2025-08-27T18:50:04.543Z] [INFO ]   - Updated bookings: 0
+[2025-08-27T18:50:04.543Z] [INFO ]   - Duration: 0.03s
+[2025-08-27T18:50:04.543Z] [INFO ]   - Success rate: 0.00%
+
+
+=== Migration Session Started: 2025-08-27T18:50:04.582Z ===
+[2025-08-27T18:50:04.582Z] [INFO ] Starting payment migration validation...
+[2025-08-27T18:50:04.583Z] [INFO ] Connected to both data sources
+[2025-08-27T18:50:04.583Z] [INFO ] Parsing payment table from MySQL dump
+[2025-08-27T18:50:04.595Z] [SUCCESS] Parsed 1888 records from payment
+[2025-08-27T18:50:04.608Z] [INFO ] MySQL payments: 1888, PostgreSQL payments: 2
+[2025-08-27T18:50:04.612Z] [WARN ] Found 1886 missing payments
+[2025-08-27T18:50:04.616Z] [INFO ] Validating amounts for 2 sample payments...
+[2025-08-27T18:50:04.619Z] [INFO ] Payment status distribution:
+[2025-08-27T18:50:04.619Z] [INFO ]   - succeeded: 2
+[2025-08-27T18:50:04.619Z] [ERROR] ❌ Payment migration validation FAILED
+[2025-08-27T18:50:04.619Z] [ERROR] Validation errors:
+[2025-08-27T18:50:04.620Z] [ERROR]   - 1886 payments missing in PostgreSQL
+[2025-08-27T18:50:04.620Z] [INFO ] Validation summary:
+[2025-08-27T18:50:04.620Z] [INFO ]   - Total MySQL payments: 1888
+[2025-08-27T18:50:04.620Z] [INFO ]   - Total PostgreSQL payments: 2
+[2025-08-27T18:50:04.620Z] [INFO ]   - Missing payments: 1886
+[2025-08-27T18:50:04.620Z] [INFO ]   - Orphaned payments: 0
+[2025-08-27T18:50:04.620Z] [INFO ]   - Booking-payment mismatches: 0
+[2025-08-27T18:50:04.620Z] [INFO ]   - Amount discrepancies: 0
+
+
+=== Migration Session Started: 2025-08-27T18:51:17.934Z ===
+[2025-08-27T18:51:17.934Z] [INFO ] Starting payment migration validation...
+[2025-08-27T18:51:17.935Z] [INFO ] Connected to both data sources
+[2025-08-27T18:51:17.936Z] [INFO ] Parsing payment table from MySQL dump
+[2025-08-27T18:51:17.947Z] [SUCCESS] Parsed 1888 records from payment
+[2025-08-27T18:51:17.972Z] [INFO ] MySQL payments: 1888, PostgreSQL payments: 2
+[2025-08-27T18:51:17.972Z] [INFO ] Expected 2 payments to be migrated (out of 1888 total MySQL payments)
+[2025-08-27T18:51:17.985Z] [INFO ] Validating amounts for 2 sample payments...
+[2025-08-27T18:51:17.987Z] [INFO ] Payment status distribution:
+[2025-08-27T18:51:17.987Z] [INFO ]   - succeeded: 2
+[2025-08-27T18:51:17.988Z] [INFO ] ✅ Payment migration validation PASSED
+[2025-08-27T18:51:17.988Z] [INFO ] Validation summary:
+[2025-08-27T18:51:17.988Z] [INFO ]   - Total MySQL payments: 1888
+[2025-08-27T18:51:17.988Z] [INFO ]   - Expected migrated payments: 2
+[2025-08-27T18:51:17.988Z] [INFO ]   - Total PostgreSQL payments: 2
+[2025-08-27T18:51:17.988Z] [INFO ]   - Missing payments: 0
+[2025-08-27T18:51:17.988Z] [INFO ]   - Orphaned payments: 0
+[2025-08-27T18:51:17.988Z] [INFO ]   - Booking-payment mismatches: 0
+[2025-08-27T18:51:17.988Z] [INFO ]   - Amount discrepancies: 0
+
+
+=== Migration Session Started: 2025-08-27T18:51:22.497Z ===
+[2025-08-27T18:51:22.497Z] [INFO ] Starting payment extraction from MySQL...
+[2025-08-27T18:51:22.497Z] [INFO ] Parsing payments and bookings from MySQL dump...
+[2025-08-27T18:51:22.497Z] [INFO ] Parsing payment table from MySQL dump
+[2025-08-27T18:51:22.510Z] [SUCCESS] Parsed 1888 records from payment
+[2025-08-27T18:51:22.510Z] [INFO ] Parsing booking table from MySQL dump
+[2025-08-27T18:51:22.513Z] [SUCCESS] Parsed 5 records from booking
+[2025-08-27T18:51:22.514Z] [INFO ] Found 1888 payments and 5 bookings in MySQL
+[2025-08-27T18:51:22.514Z] [INFO ] Created mapping for 5 payment-booking relationships
+[2025-08-27T18:51:22.515Z] [INFO ] Found 5 migrated booking IDs
+[2025-08-27T18:51:22.519Z] [INFO ] Payment extraction completed:
+[2025-08-27T18:51:22.519Z] [INFO ]   - Total MySQL payments: 1888
+[2025-08-27T18:51:22.519Z] [INFO ]   - Total MySQL bookings: 5
+[2025-08-27T18:51:22.519Z] [INFO ]   - Successfully processed: 2
+[2025-08-27T18:51:22.519Z] [INFO ]   - Skipped payments: 1886
+[2025-08-27T18:51:22.519Z] [INFO ]   - Unique bookings with payments: 2
+[2025-08-27T18:51:22.519Z] [INFO ] Status distribution:
+[2025-08-27T18:51:22.519Z] [INFO ]   - succeeded: 2
+[2025-08-27T18:51:22.519Z] [INFO ] Skipped payment reasons:
+[2025-08-27T18:51:22.519Z] [INFO ]   - No booking found for this payment: 1883
+[2025-08-27T18:51:22.519Z] [INFO ]   - Payment has no payment_intent_id (incomplete payment): 3
+
+
+=== Migration Session Started: 2025-08-27T18:51:22.557Z ===
+[2025-08-27T18:51:22.557Z] [INFO ] Starting payment creation in Supabase...
+[2025-08-27T18:51:22.559Z] [INFO ] Loaded 2 payments to create
+[2025-08-27T18:51:22.560Z] [INFO ] Connected to Supabase
+[2025-08-27T18:51:22.560Z] [INFO ] Processing batch 1/1 (2 payments)
+[2025-08-27T18:51:22.574Z] [WARN ] Payment already exists for intent pi_3RYTBeDaNfPoezcB2VgYeDso, skipping
+[2025-08-27T18:51:22.574Z] [WARN ] Payment already exists for intent pi_3Ravq9DaNfPoezcB1INAfKO4, skipping
+[2025-08-27T18:51:22.574Z] [INFO ] Batch 1 completed: 0 created, 0 failed
+[2025-08-27T18:51:22.575Z] [INFO ] Payment creation completed:
+[2025-08-27T18:51:22.575Z] [INFO ]   - Total to create: 2
+[2025-08-27T18:51:22.575Z] [INFO ]   - Successfully created: 0
+[2025-08-27T18:51:22.575Z] [INFO ]   - Failed creations: 0
+[2025-08-27T18:51:22.575Z] [INFO ]   - Updated bookings: 0
+[2025-08-27T18:51:22.575Z] [INFO ]   - Duration: 0.02s
+[2025-08-27T18:51:22.575Z] [INFO ]   - Success rate: 0.00%
+
+
+=== Migration Session Started: 2025-08-27T18:51:22.614Z ===
+[2025-08-27T18:51:22.614Z] [INFO ] Starting payment migration validation...
+[2025-08-27T18:51:22.616Z] [INFO ] Connected to both data sources
+[2025-08-27T18:51:22.616Z] [INFO ] Parsing payment table from MySQL dump
+[2025-08-27T18:51:22.628Z] [SUCCESS] Parsed 1888 records from payment
+[2025-08-27T18:51:22.640Z] [INFO ] MySQL payments: 1888, PostgreSQL payments: 2
+[2025-08-27T18:51:22.640Z] [INFO ] Expected 2 payments to be migrated (out of 1888 total MySQL payments)
+[2025-08-27T18:51:22.644Z] [INFO ] Validating amounts for 2 sample payments...
+[2025-08-27T18:51:22.645Z] [INFO ] Payment status distribution:
+[2025-08-27T18:51:22.645Z] [INFO ]   - succeeded: 2
+[2025-08-27T18:51:22.646Z] [INFO ] ✅ Payment migration validation PASSED
+[2025-08-27T18:51:22.646Z] [INFO ] Validation summary:
+[2025-08-27T18:51:22.646Z] [INFO ]   - Total MySQL payments: 1888
+[2025-08-27T18:51:22.646Z] [INFO ]   - Expected migrated payments: 2
+[2025-08-27T18:51:22.646Z] [INFO ]   - Total PostgreSQL payments: 2
+[2025-08-27T18:51:22.646Z] [INFO ]   - Missing payments: 0
+[2025-08-27T18:51:22.646Z] [INFO ]   - Orphaned payments: 0
+[2025-08-27T18:51:22.646Z] [INFO ]   - Booking-payment mismatches: 0
+[2025-08-27T18:51:22.646Z] [INFO ]   - Amount discrepancies: 0
+
+
+=== Migration Session Started: 2025-08-27T18:51:53.932Z ===
+[2025-08-27T18:51:53.934Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-08-27T18:51:53.934Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-08-27T18:51:53.934Z] [INFO ] Verifying prerequisites...
+[2025-08-27T18:51:53.934Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-08-27T18:51:53.947Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:51:53.965Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-08-27T18:51:53.965Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-08-27T18:51:53.965Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:51:54.009Z ===
+[2025-08-27T18:51:54.010Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-08-27T18:51:54.022Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:51:54.023Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-08-27T18:51:54.028Z] [SUCCESS] Parsed 278 records from buyer
+[2025-08-27T18:51:54.028Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-08-27T18:51:54.041Z] [SUCCESS] Parsed 221 records from stylist
+[2025-08-27T18:51:54.041Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:51:54.041Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-08-27T18:51:54.041Z] [INFO ] Extracting user data from MySQL dump...
+[2025-08-27T18:51:54.041Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-08-27T18:51:54.045Z] [SUCCESS] Extracted 278 buyer records
+[2025-08-27T18:51:54.046Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-08-27T18:51:54.060Z] [SUCCESS] Extracted 221 stylist records
+[2025-08-27T18:51:54.060Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-08-27T18:51:54.060Z] [INFO ] Validating extracted user data...
+[2025-08-27T18:51:54.060Z] [INFO ] Validating buyer records
+[2025-08-27T18:51:54.061Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-08-27T18:51:54.061Z] [INFO ] Validating stylist records
+[2025-08-27T18:51:54.062Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-08-27T18:51:54.062Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:51:54.062Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-08-27T18:51:54.062Z] [INFO ] Identifying duplicate users...
+[2025-08-27T18:51:54.062Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-08-27T18:51:54.062Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-08-27T18:51:54.062Z] [WARN ] Found 11 users with duplicate emails
+[2025-08-27T18:51:54.063Z] [INFO ] Consolidating user data...
+[2025-08-27T18:51:54.063Z] [INFO ] Consolidating users with deduplication
+[2025-08-27T18:51:54.064Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-08-27T18:51:54.064Z] [INFO ] Validating consolidated user data...
+[2025-08-27T18:51:54.064Z] [INFO ] Validating consolidated user records
+[2025-08-27T18:51:54.064Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-08-27T18:51:54.064Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-08-27T18:51:54.067Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-08-27T18:51:54.067Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-08-27T18:51:54.069Z] [SUCCESS] ✅ Step 1: Extract Users completed in 0s
+[2025-08-27T18:51:54.069Z] [INFO ] 
+📋 Step 2: Create Auth Users & Profiles: Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)
+[2025-08-27T18:51:54.069Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts
+
+
+=== Migration Session Started: 2025-08-27T18:51:54.108Z ===
+[2025-08-27T18:51:54.110Z] [INFO ] === Phase 1 Step 2: Create Supabase Auth Users ===
+[2025-08-27T18:51:54.121Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-08-27T18:51:54.121Z] [INFO ] Loading consolidated user data...
+[2025-08-27T18:51:54.122Z] [INFO ] Loaded 437 consolidated users
+
+
+=== Migration Session Started: 2025-08-27T18:53:36.508Z ===
+[2025-08-27T18:53:36.509Z] [INFO ] 🚀 Starting Phase 6: Communication System Migration
+[2025-08-27T18:53:36.509Z] [INFO ] ============================================================
+[2025-08-27T18:53:36.509Z] [INFO ] 📤 Step 1: Extracting chats and messages from MySQL...
+[2025-08-27T18:53:36.509Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:53:36.511Z ===
+[2025-08-27T18:53:36.512Z] [INFO ] Starting chat and message extraction from MySQL...
+[2025-08-27T18:53:36.512Z] [INFO ] Parsing chats, messages, and bookings from MySQL dump...
+[2025-08-27T18:53:36.512Z] [INFO ] Parsing chat table from MySQL dump
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.516Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.517Z] [SUCCESS] Parsed 0 records from chat
+[2025-08-27T18:53:36.517Z] [INFO ] Parsing message table from MySQL dump
+[2025-08-27T18:53:36.521Z] [SUCCESS] Parsed 68 records from message
+[2025-08-27T18:53:36.521Z] [INFO ] Parsing booking table from MySQL dump
+[2025-08-27T18:53:36.525Z] [SUCCESS] Parsed 5 records from booking
+[2025-08-27T18:53:36.525Z] [INFO ] Found 0 chats, 68 messages, and 5 bookings in MySQL
+[2025-08-27T18:53:36.525Z] [INFO ] Created booking mapping for 5 bookings
+[2025-08-27T18:53:36.525Z] [INFO ] Found 5 migrated booking IDs
+[2025-08-27T18:53:36.526Z] [INFO ] Chat and message extraction completed:
+[2025-08-27T18:53:36.526Z] [INFO ]   - Total MySQL chats: 0
+[2025-08-27T18:53:36.526Z] [INFO ]   - Total MySQL messages: 68
+[2025-08-27T18:53:36.526Z] [INFO ]   - Active chats: 0
+[2025-08-27T18:53:36.526Z] [INFO ]   - Successfully processed chats: 0
+[2025-08-27T18:53:36.526Z] [INFO ]   - Successfully processed messages: 0
+[2025-08-27T18:53:36.526Z] [INFO ]   - Skipped chats: 0
+[2025-08-27T18:53:36.526Z] [INFO ]   - Skipped messages: 68
+[2025-08-27T18:53:36.526Z] [INFO ]   - Image messages: 0
+[2025-08-27T18:53:36.526Z] [INFO ] Sender distribution:
+[2025-08-27T18:53:36.526Z] [INFO ] Skipped message reasons:
+[2025-08-27T18:53:36.526Z] [INFO ]   - Chat was not processed: 68
+[2025-08-27T18:53:36.526Z] [INFO ] ✅ Chat and message extraction completed successfully
+[2025-08-27T18:53:36.526Z] [INFO ]    📊 MySQL chats: 0 (0 active)
+[2025-08-27T18:53:36.526Z] [INFO ]    📊 MySQL messages: 68
+[2025-08-27T18:53:36.526Z] [INFO ]    ✨ Processed chats: 0
+[2025-08-27T18:53:36.526Z] [INFO ]    ✨ Processed messages: 0
+[2025-08-27T18:53:36.526Z] [INFO ]    🖼️  Image messages: 0
+[2025-08-27T18:53:36.526Z] [WARN ]    ⚠️  Skipped chats: 0
+[2025-08-27T18:53:36.526Z] [WARN ]    ⚠️  Skipped messages: 68
+[2025-08-27T18:53:36.526Z] [INFO ] 
+📥 Step 2: Creating chats and messages in Supabase...
+[2025-08-27T18:53:36.526Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:53:36.527Z ===
+[2025-08-27T18:53:36.527Z] [INFO ] Starting chat and message creation in Supabase...
+[2025-08-27T18:53:36.527Z] [INFO ] Loaded 0 chats and 0 messages to create
+[2025-08-27T18:53:36.528Z] [INFO ] Connected to Supabase
+[2025-08-27T18:53:36.528Z] [INFO ] Phase 1: Creating chats...
+[2025-08-27T18:53:36.528Z] [INFO ] Phase 2: Creating messages...
+[2025-08-27T18:53:36.528Z] [INFO ] Phase 3: Creating media records for image messages...
+[2025-08-27T18:53:36.529Z] [INFO ] Chat and message creation completed:
+[2025-08-27T18:53:36.529Z] [INFO ]   - Total chats to create: 0
+[2025-08-27T18:53:36.529Z] [INFO ]   - Total messages to create: 0
+[2025-08-27T18:53:36.529Z] [INFO ]   - Successfully created chats: 0
+[2025-08-27T18:53:36.529Z] [INFO ]   - Successfully created messages: 0
+[2025-08-27T18:53:36.529Z] [INFO ]   - Successfully created media: 0
+[2025-08-27T18:53:36.529Z] [INFO ]   - Failed chat creations: 0
+[2025-08-27T18:53:36.529Z] [INFO ]   - Failed message creations: 0
+[2025-08-27T18:53:36.529Z] [INFO ]   - Duration: 0.00s
+[2025-08-27T18:53:36.529Z] [INFO ]   - Chat success rate: NaN%
+[2025-08-27T18:53:36.529Z] [INFO ]   - Message success rate: NaN%
+[2025-08-27T18:53:36.529Z] [INFO ] ✅ Chat and message creation completed successfully
+[2025-08-27T18:53:36.529Z] [INFO ]    📊 Chats created: 0/0
+[2025-08-27T18:53:36.529Z] [INFO ]    📊 Messages created: 0/0
+[2025-08-27T18:53:36.529Z] [INFO ]    📊 Media records created: 0
+[2025-08-27T18:53:36.529Z] [INFO ]    ⏱️  Duration: 0.00s
+[2025-08-27T18:53:36.529Z] [INFO ] 
+🔍 Step 3: Validating migration integrity...
+[2025-08-27T18:53:36.529Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:53:36.530Z ===
+[2025-08-27T18:53:36.530Z] [INFO ] Starting chat migration validation...
+[2025-08-27T18:53:36.530Z] [INFO ] Connected to both data sources
+[2025-08-27T18:53:36.530Z] [INFO ] Parsing chat table from MySQL dump
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.533Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.534Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.534Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.534Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.534Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.534Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.534Z] [WARN ] Column count mismatch for chat. Expected 11, got 9
+[2025-08-27T18:53:36.534Z] [SUCCESS] Parsed 0 records from chat
+[2025-08-27T18:53:36.534Z] [INFO ] Parsing message table from MySQL dump
+[2025-08-27T18:53:36.538Z] [SUCCESS] Parsed 68 records from message
+[2025-08-27T18:53:36.538Z] [INFO ] Parsing booking table from MySQL dump
+[2025-08-27T18:53:36.541Z] [SUCCESS] Parsed 5 records from booking
+[2025-08-27T18:53:36.541Z] [INFO ] MySQL: 0 active chats, 68 messages
+[2025-08-27T18:53:36.568Z] [INFO ] PostgreSQL: 0 chats, 0 messages
+[2025-08-27T18:53:36.575Z] [INFO ] Validating message counts per chat...
+[2025-08-27T18:53:36.575Z] [INFO ] Chat message distribution:
+[2025-08-27T18:53:36.575Z] [INFO ]   - Average messages per chat: 0.00
+[2025-08-27T18:53:36.575Z] [INFO ]   - Max messages in a chat: 0
+[2025-08-27T18:53:36.575Z] [INFO ]   - Min messages in a chat: 0
+[2025-08-27T18:53:36.576Z] [INFO ] ✅ Chat migration validation PASSED
+[2025-08-27T18:53:36.576Z] [INFO ] Validation summary:
+[2025-08-27T18:53:36.576Z] [INFO ]   - Total MySQL active chats: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Total MySQL messages: 68
+[2025-08-27T18:53:36.576Z] [INFO ]   - Total PostgreSQL chats: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Total PostgreSQL messages: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Missing chats: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Missing messages: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Orphaned chats: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Orphaned messages: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Chat-booking mismatches: 0
+[2025-08-27T18:53:36.576Z] [INFO ]   - Message sender mismatches: 0
+[2025-08-27T18:53:36.576Z] [INFO ] ✅ Migration validation PASSED
+[2025-08-27T18:53:36.576Z] [INFO ]    📊 MySQL chats → PostgreSQL chats: 0 → 0
+[2025-08-27T18:53:36.576Z] [INFO ]    📊 MySQL messages → PostgreSQL messages: 68 → 0
+[2025-08-27T18:53:36.576Z] [INFO ] 
+============================================================
+[2025-08-27T18:53:36.576Z] [INFO ] 🎉 Phase 6 Migration Completed Successfully!
+[2025-08-27T18:53:36.576Z] [INFO ] ============================================================
+[2025-08-27T18:53:36.576Z] [INFO ] 📊 MIGRATION SUMMARY:
+[2025-08-27T18:53:36.576Z] [INFO ]    • Total duration: 0s
+[2025-08-27T18:53:36.576Z] [INFO ]    • MySQL chats processed: 0 (from 0 total, 0 active)
+[2025-08-27T18:53:36.576Z] [INFO ]    • MySQL messages processed: 0 (from 68 total)
+[2025-08-27T18:53:36.576Z] [INFO ]    • PostgreSQL chats created: 0/0 (0%)
+[2025-08-27T18:53:36.576Z] [INFO ]    • PostgreSQL messages created: 0/0 (0%)
+[2025-08-27T18:53:36.576Z] [INFO ]    • Media records created: 0
+[2025-08-27T18:53:36.576Z] [INFO ]    • Migration validation: ✅ PASSED
+[2025-08-27T18:53:36.576Z] [INFO ] 📋 SKIPPED DATA:
+[2025-08-27T18:53:36.576Z] [INFO ]    • Inactive chats: 0
+[2025-08-27T18:53:36.576Z] [INFO ]    • Invalid messages: 68
+[2025-08-27T18:53:36.576Z] [INFO ] 📄 Detailed statistics saved to: /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-6-migration-stats.json
+
+
+=== Migration Session Started: 2025-08-27T18:53:40.803Z ===
+[2025-08-27T18:53:40.804Z] [INFO ] 🚀 Starting Phase 7: Reviews & Ratings Migration
+[2025-08-27T18:53:40.804Z] [INFO ] ============================================================
+[2025-08-27T18:53:40.804Z] [INFO ] 📤 Step 1: Extracting reviews from MySQL...
+[2025-08-27T18:53:40.804Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:53:40.807Z ===
+[2025-08-27T18:53:40.807Z] [INFO ] Starting review extraction from MySQL...
+[2025-08-27T18:53:40.807Z] [INFO ] Parsing ratings from MySQL dump...
+[2025-08-27T18:53:40.807Z] [INFO ] Parsing rating table from MySQL dump
+[2025-08-27T18:53:40.816Z] [SUCCESS] Parsed 6 records from rating
+[2025-08-27T18:53:40.816Z] [INFO ] Found 6 ratings in MySQL
+[2025-08-27T18:53:40.816Z] [INFO ] Found 5 migrated booking IDs
+[2025-08-27T18:53:40.816Z] [INFO ] Review extraction completed:
+[2025-08-27T18:53:40.816Z] [INFO ]   - Total MySQL ratings: 6
+[2025-08-27T18:53:40.817Z] [INFO ]   - Successfully processed: 2
+[2025-08-27T18:53:40.817Z] [INFO ]   - Skipped reviews: 4
+[2025-08-27T18:53:40.817Z] [INFO ]   - Reviews with comments: 2
+[2025-08-27T18:53:40.817Z] [INFO ]   - Reviews without comments: 0
+[2025-08-27T18:53:40.817Z] [INFO ] Rating distribution:
+[2025-08-27T18:53:40.817Z] [INFO ]   - 1 star: 1
+[2025-08-27T18:53:40.817Z] [INFO ]   - 2 stars: 0
+[2025-08-27T18:53:40.817Z] [INFO ]   - 3 stars: 0
+[2025-08-27T18:53:40.817Z] [INFO ]   - 4 stars: 0
+[2025-08-27T18:53:40.817Z] [INFO ]   - 5 stars: 1
+[2025-08-27T18:53:40.817Z] [INFO ] Skipped review reasons:
+[2025-08-27T18:53:40.817Z] [INFO ]   - Booking was not migrated to PostgreSQL: 4
+[2025-08-27T18:53:40.817Z] [INFO ] ✅ Review extraction completed successfully
+[2025-08-27T18:53:40.817Z] [INFO ]    📊 MySQL ratings: 6
+[2025-08-27T18:53:40.817Z] [INFO ]    ✨ Processed reviews: 2
+[2025-08-27T18:53:40.817Z] [INFO ]    💬 With comments: 2
+[2025-08-27T18:53:40.817Z] [INFO ]    📝 Without comments: 0
+[2025-08-27T18:53:40.817Z] [WARN ]    ⚠️  Skipped reviews: 4
+[2025-08-27T18:53:40.817Z] [INFO ]    ⭐ Rating distribution:
+[2025-08-27T18:53:40.817Z] [INFO ]       1 star: 1
+[2025-08-27T18:53:40.817Z] [INFO ]       2 stars: 0
+[2025-08-27T18:53:40.817Z] [INFO ]       3 stars: 0
+[2025-08-27T18:53:40.817Z] [INFO ]       4 stars: 0
+[2025-08-27T18:53:40.817Z] [INFO ]       5 stars: 1
+[2025-08-27T18:53:40.817Z] [INFO ] 
+📥 Step 2: Creating reviews in Supabase...
+[2025-08-27T18:53:40.817Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:53:40.818Z ===
+[2025-08-27T18:53:40.818Z] [INFO ] Starting review creation in Supabase...
+[2025-08-27T18:53:40.818Z] [INFO ] Loaded 2 reviews to create
+[2025-08-27T18:53:40.819Z] [INFO ] Connected to Supabase
+[2025-08-27T18:53:40.819Z] [INFO ] Processing batch 1/1 (2 reviews)
+[2025-08-27T18:53:40.833Z] [ERROR] Failed to create review 29a67382-226d-45a8-b8f4-8cdf99d7ed10:
+Data: {
+  "code": "23503",
+  "details": "Key (booking_id)=(4bbd6832-c31f-4456-a5c8-298fb2ed88ab) is not present in table \"bookings\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_booking_id_fkey\""
+}
+[2025-08-27T18:53:40.833Z] [ERROR] Failed to create review 4597cd19-25ee-4980-bd64-54cfd293bd7b:
+Data: {
+  "code": "23503",
+  "details": "Key (booking_id)=(4fbb10f5-35c9-40d4-a9ab-31af521c7799) is not present in table \"bookings\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_booking_id_fkey\""
+}
+[2025-08-27T18:53:40.833Z] [INFO ] Batch 1 completed: 0 created, 2 failed
+[2025-08-27T18:53:40.834Z] [INFO ] Review creation completed:
+[2025-08-27T18:53:40.834Z] [INFO ]   - Total to create: 2
+[2025-08-27T18:53:40.834Z] [INFO ]   - Successfully created: 0
+[2025-08-27T18:53:40.834Z] [INFO ]   - Failed creations: 2
+[2025-08-27T18:53:40.834Z] [INFO ]   - Duration: 0.01s
+[2025-08-27T18:53:40.834Z] [INFO ]   - Success rate: 0.00%
+[2025-08-27T18:53:40.834Z] [INFO ] Created reviews rating distribution:
+[2025-08-27T18:53:40.834Z] [INFO ]   - 1 star: 0
+[2025-08-27T18:53:40.834Z] [INFO ]   - 2 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]   - 3 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]   - 4 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]   - 5 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]   - Reviews with comments: 0
+[2025-08-27T18:53:40.834Z] [INFO ]   - Reviews without comments: 0
+[2025-08-27T18:53:40.834Z] [INFO ] ✅ Review creation completed successfully
+[2025-08-27T18:53:40.834Z] [INFO ]    📊 Reviews created: 0/2
+[2025-08-27T18:53:40.834Z] [INFO ]    ⏱️  Duration: 0.01s
+[2025-08-27T18:53:40.834Z] [WARN ]    ⚠️  Failed creations: 2
+[2025-08-27T18:53:40.834Z] [INFO ]    ⭐ Created reviews rating distribution:
+[2025-08-27T18:53:40.834Z] [INFO ]       1 star: 0
+[2025-08-27T18:53:40.834Z] [INFO ]       2 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]       3 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]       4 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]       5 stars: 0
+[2025-08-27T18:53:40.834Z] [INFO ]    💬 With comments: 0
+[2025-08-27T18:53:40.834Z] [INFO ]    📝 Without comments: 0
+[2025-08-27T18:53:40.834Z] [INFO ] 
+🔍 Step 3: Validating migration integrity...
+[2025-08-27T18:53:40.834Z] [INFO ] --------------------------------------------------
+
+
+=== Migration Session Started: 2025-08-27T18:53:40.835Z ===
+[2025-08-27T18:53:40.835Z] [INFO ] Starting review migration validation...
+[2025-08-27T18:53:40.835Z] [INFO ] Connected to both data sources
+[2025-08-27T18:53:40.835Z] [INFO ] Parsing rating table from MySQL dump
+[2025-08-27T18:53:40.844Z] [SUCCESS] Parsed 6 records from rating
+[2025-08-27T18:53:40.844Z] [INFO ] MySQL: 6 ratings
+[2025-08-27T18:53:40.846Z] [INFO ] PostgreSQL: 0 reviews
+[2025-08-27T18:53:40.847Z] [WARN ] Found 6 missing reviews
+[2025-08-27T18:53:40.850Z] [ERROR] ❌ Review migration validation FAILED
+[2025-08-27T18:53:40.850Z] [ERROR] Validation errors:
+[2025-08-27T18:53:40.850Z] [ERROR]   - 6 reviews missing in PostgreSQL
+[2025-08-27T18:53:40.850Z] [INFO ] Validation summary:
+[2025-08-27T18:53:40.850Z] [INFO ]   - Total MySQL ratings: 6
+[2025-08-27T18:53:40.850Z] [INFO ]   - Total PostgreSQL reviews: 0
+[2025-08-27T18:53:40.850Z] [INFO ]   - Missing reviews: 6
+[2025-08-27T18:53:40.850Z] [INFO ]   - Orphaned reviews: 0
+[2025-08-27T18:53:40.850Z] [INFO ]   - Booking-review mismatches: 0
+[2025-08-27T18:53:40.850Z] [INFO ]   - Rating discrepancies: 0
+[2025-08-27T18:53:40.850Z] [INFO ]   - Customer mismatches: 0
+[2025-08-27T18:53:40.850Z] [INFO ]   - Stylist mismatches: 0
+[2025-08-27T18:53:40.850Z] [WARN ] ⚠️  Migration validation found issues
+[2025-08-27T18:53:40.850Z] [WARN ]    Validation errors:
+[2025-08-27T18:53:40.850Z] [WARN ]    - 6 reviews missing in PostgreSQL
+[2025-08-27T18:53:40.850Z] [INFO ]    📊 MySQL ratings → PostgreSQL reviews: 6 → 0
+[2025-08-27T18:53:40.850Z] [INFO ]    ⭐ Average rating: 0.00
+[2025-08-27T18:53:40.850Z] [INFO ]    💬 Reviews with comments: 0
+[2025-08-27T18:53:40.850Z] [WARN ]    ⚠️  Missing reviews: 6
+[2025-08-27T18:53:40.850Z] [INFO ] 
+============================================================
+[2025-08-27T18:53:40.850Z] [INFO ] 🎉 Phase 7 Migration Completed Successfully!
+[2025-08-27T18:53:40.850Z] [INFO ] ============================================================
+[2025-08-27T18:53:40.850Z] [INFO ] 📊 MIGRATION SUMMARY:
+[2025-08-27T18:53:40.850Z] [INFO ]    • Total duration: 0s
+[2025-08-27T18:53:40.851Z] [INFO ]    • MySQL ratings processed: 2 (from 6 total)
+[2025-08-27T18:53:40.851Z] [INFO ]    • PostgreSQL reviews created: 0/2 (0.00%)
+[2025-08-27T18:53:40.851Z] [INFO ]    • Average rating: 0.00 stars
+[2025-08-27T18:53:40.851Z] [INFO ]    • Reviews with comments: 0
+[2025-08-27T18:53:40.851Z] [INFO ]    • Migration validation: ⚠️ ISSUES FOUND
+[2025-08-27T18:53:40.851Z] [INFO ] 📋 SKIPPED DATA:
+[2025-08-27T18:53:40.851Z] [INFO ]    • Skipped reviews: 4
+[2025-08-27T18:53:40.851Z] [WARN ] ⚠️  CREATION FAILURES:
+[2025-08-27T18:53:40.851Z] [WARN ]    • Failed review creations: 2
+[2025-08-27T18:53:40.851Z] [INFO ] ⭐ FINAL RATING DISTRIBUTION:
+[2025-08-27T18:53:40.851Z] [INFO ]    • 1 star: 1 (50.0%)
+[2025-08-27T18:53:40.851Z] [INFO ]    • 2 stars: 0 (0.0%)
+[2025-08-27T18:53:40.851Z] [INFO ]    • 3 stars: 0 (0.0%)
+[2025-08-27T18:53:40.851Z] [INFO ]    • 4 stars: 0 (0.0%)
+[2025-08-27T18:53:40.851Z] [INFO ]    • 5 stars: 1 (50.0%)
+[2025-08-27T18:53:40.851Z] [INFO ] 📄 Detailed statistics saved to: /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-7-migration-stats.json

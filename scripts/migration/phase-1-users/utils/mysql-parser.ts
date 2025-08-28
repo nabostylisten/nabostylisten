@@ -396,8 +396,8 @@ export class MySQLParser {
   }> {
     try {
       const dumpContent = readFileSync(this.dumpFilePath, 'utf-8');
-      const buyers = await this.extractBuyers();
-      const stylists = await this.extractStylists();
+      const buyers = await this.parseTable('buyer');
+      const stylists = await this.parseTable('stylist');
 
       const stats = {
         fileSize: Buffer.byteLength(dumpContent, 'utf-8'),

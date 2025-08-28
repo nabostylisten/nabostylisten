@@ -28,7 +28,7 @@ async function main() {
 
   try {
     // Initialize utilities
-    const parser = new MySQLParser(logger, database.getDumpFilePath());
+    const parser = new MySQLParser(database.getDumpFilePath(), logger);
     const validator = new UserValidator(logger);
     const deduplicator = new UserDeduplicator(logger);
 

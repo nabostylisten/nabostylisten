@@ -61,7 +61,7 @@ async function main() {
     logger.info(`Loaded mapping for ${Object.keys(userMapping).length} users`);
 
     // Initialize MySQL parser
-    const parser = new MySQLParser(logger, database.getDumpFilePath());
+    const parser = new MySQLParser(database.getDumpFilePath(), logger);
     
     // Extract address records
     logger.info('Extracting address records from MySQL dump...');

@@ -37,3 +37,26 @@ Data: {
 [2025-08-27T14:24:45.069Z] [INFO ]    - Top-level categories: 0
 [2025-08-27T14:24:45.069Z] [INFO ]    - Subcategories: 39
 [2025-08-27T14:24:45.069Z] [INFO ]    - Total service categories to create: 39
+
+
+=== Migration Session Started: 2025-08-27T18:48:58.473Z ===
+[2025-08-27T18:48:58.473Z] [INFO ] Starting Phase 3 Step 1: Extract Categories
+[2025-08-27T18:48:58.474Z] [INFO ] Parsing categories from MySQL dump...
+[2025-08-27T18:48:58.474Z] [INFO ] Parsing category table from MySQL dump
+[2025-08-27T18:48:58.479Z] [WARN ] Column count mismatch for category. Expected 3, got 2
+[2025-08-27T18:48:58.479Z] [WARN ] Column count mismatch for category. Expected 3, got 2
+[2025-08-27T18:48:58.479Z] [WARN ] Column count mismatch for category. Expected 3, got 2
+[2025-08-27T18:48:58.479Z] [WARN ] Column count mismatch for category. Expected 3, got 2
+[2025-08-27T18:48:58.479Z] [WARN ] Column count mismatch for category. Expected 3, got 2
+[2025-08-27T18:48:58.479Z] [SUCCESS] Parsed 0 records from category
+[2025-08-27T18:48:58.479Z] [INFO ] Found 0 categories
+[2025-08-27T18:48:58.479Z] [INFO ] Parsing subcategories from MySQL dump...
+[2025-08-27T18:48:58.479Z] [INFO ] Parsing subcategory table from MySQL dump
+[2025-08-27T18:48:58.494Z] [SUCCESS] Parsed 39 records from subcategory
+[2025-08-27T18:48:58.494Z] [INFO ] Found 39 subcategories
+[2025-08-27T18:48:58.494Z] [INFO ] Transforming categories to unified structure...
+[2025-08-27T18:48:58.496Z] [SUCCESS] ✅ Categories extracted successfully!
+[2025-08-27T18:48:58.496Z] [INFO ] 📊 Statistics:
+[2025-08-27T18:48:58.496Z] [INFO ]    - Top-level categories: 0
+[2025-08-27T18:48:58.496Z] [INFO ]    - Subcategories: 39
+[2025-08-27T18:48:58.496Z] [INFO ]    - Total service categories to create: 39

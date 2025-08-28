@@ -15064,3 +15064,111 @@ Data: {
 [2025-08-27T18:19:34.848Z] [ERROR] ❌ Payment migration validation FAILED
 [2025-08-27T18:19:34.849Z] [ERROR] Validation errors:
 [2025-08-27T18:19:34.849Z] [ERROR]   - 1886 payments missing in PostgreSQL
+[2025-08-27T18:38:21.949Z] [ERROR] Failed to create review 4597cd19-25ee-4980-bd64-54cfd293bd7b:
+Data: {
+  "code": "23503",
+  "details": "Key (customer_id)=(95d98ca8-93c5-4c93-9077-f49f2e34b7db) is not present in table \"profiles\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_customer_id_fkey\""
+}
+[2025-08-27T18:38:21.949Z] [ERROR] Failed to create review 29a67382-226d-45a8-b8f4-8cdf99d7ed10:
+Data: {
+  "code": "23503",
+  "details": "Key (customer_id)=(95d98ca8-93c5-4c93-9077-f49f2e34b7db) is not present in table \"profiles\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_customer_id_fkey\""
+}
+[2025-08-27T18:38:21.990Z] [ERROR] ❌ Review migration validation FAILED
+[2025-08-27T18:38:21.990Z] [ERROR] Validation errors:
+[2025-08-27T18:38:21.991Z] [ERROR]   - 6 reviews missing in PostgreSQL
+[2025-08-27T18:41:54.648Z] [ERROR] Phase 1 Step 1 failed
+Data: {
+  "message": "this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)",
+  "stack": "TypeError: this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:420:19)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:396:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T18:41:54.650Z] [ERROR] ❌ Step 1: Extract Users failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:41:54.650Z] [ERROR] ❌ Phase 1 migration failed after 0s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:42:21.934Z] [ERROR] Phase 1 Step 1 failed
+Data: {
+  "message": "this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)",
+  "stack": "TypeError: this.logger.error is not a function. (In 'this.logger.error(\"Failed to get dump statistics\", error)', 'this.logger.error' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:420:19)\n    at getDumpStats (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:396:6)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts:42:36)"
+}
+[2025-08-27T18:42:21.935Z] [ERROR] ❌ Step 1: Extract Users failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:42:21.936Z] [ERROR] ❌ Phase 1 migration failed after 0s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-08-27T18:42:48.182Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:44:14.585Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:45:54.911Z] [ERROR] Phase 2 Step 1 failed
+Data: {
+  "message": "this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)",
+  "stack": "TypeError: this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:78:17)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:77:53)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:180:23)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:179:33)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:68:29)"
+}
+[2025-08-27T18:45:54.915Z] [ERROR] ❌ Step 1: Extract Addresses failed
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:45:54.915Z] [ERROR] Phase 2 migration failed after 0s
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:45:54.915Z] [ERROR] 🚨 Phase 2 Address Migration failed - check logs for details
+[2025-08-27T18:46:03.728Z] [ERROR] Phase 2 Step 1 failed
+Data: {
+  "message": "this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)",
+  "stack": "TypeError: this.logger.info is not a function. (In 'this.logger.info(\"Extracting address records from MySQL dump\")', 'this.logger.info' is undefined)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:78:17)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts:77:53)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:180:23)\n    at extractAddresses (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:179:33)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-2-addresses/01-extract-addresses.ts:68:29)"
+}
+[2025-08-27T18:46:03.731Z] [ERROR] ❌ Step 1: Extract Addresses failed
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:46:03.732Z] [ERROR] Phase 2 migration failed after 0s
+Data: {
+  "message": "Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1",
+  "stack": "Error: Script scripts/migration/phase-2-addresses/01-extract-addresses.ts exited with code 1\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-2.ts:174:20)\n    at emit (node:events:181:48)\n    at #maybeClose (node:child_process:813:14)\n    at #handleOnExit (node:child_process:583:16)\n    at processTicksAndRejections (:12:39)"
+}
+[2025-08-27T18:46:03.732Z] [ERROR] 🚨 Phase 2 Address Migration failed - check logs for details
+[2025-08-27T18:47:16.429Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:48:59.180Z] [ERROR] Failed to check if payment already exists: [object Object]
+[2025-08-27T18:48:59.189Z] [ERROR] Failed to check if payment already exists: [object Object]
+[2025-08-27T18:48:59.267Z] [ERROR] ❌ Payment migration validation FAILED
+[2025-08-27T18:48:59.267Z] [ERROR] Validation errors:
+[2025-08-27T18:48:59.267Z] [ERROR]   - 1886 payments missing in PostgreSQL
+[2025-08-27T18:50:04.619Z] [ERROR] ❌ Payment migration validation FAILED
+[2025-08-27T18:50:04.619Z] [ERROR] Validation errors:
+[2025-08-27T18:50:04.620Z] [ERROR]   - 1886 payments missing in PostgreSQL
+[2025-08-27T18:51:54.062Z] [ERROR] Validation found 2 errors
+[2025-08-27T18:53:40.833Z] [ERROR] Failed to create review 29a67382-226d-45a8-b8f4-8cdf99d7ed10:
+Data: {
+  "code": "23503",
+  "details": "Key (booking_id)=(4bbd6832-c31f-4456-a5c8-298fb2ed88ab) is not present in table \"bookings\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_booking_id_fkey\""
+}
+[2025-08-27T18:53:40.833Z] [ERROR] Failed to create review 4597cd19-25ee-4980-bd64-54cfd293bd7b:
+Data: {
+  "code": "23503",
+  "details": "Key (booking_id)=(4fbb10f5-35c9-40d4-a9ab-31af521c7799) is not present in table \"bookings\".",
+  "hint": null,
+  "message": "insert or update on table \"reviews\" violates foreign key constraint \"reviews_booking_id_fkey\""
+}
+[2025-08-27T18:53:40.850Z] [ERROR] ❌ Review migration validation FAILED
+[2025-08-27T18:53:40.850Z] [ERROR] Validation errors:
+[2025-08-27T18:53:40.850Z] [ERROR]   - 6 reviews missing in PostgreSQL

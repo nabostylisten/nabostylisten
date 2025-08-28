@@ -1,13 +1,13 @@
 {
   "metadata": {
-    "extracted_at": "2025-08-27T14:31:51.047Z",
+    "extracted_at": "2025-08-27T18:48:58.650Z",
     "total_services": 8,
     "total_category_relationships": 8
   },
   "services": [
     {
       "id": "15134499-5bf3-424d-993e-8d275e26a8a4",
-      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "stylist_id": "f3212734-e08c-41f4-b77a-0dc6a7bd4f94",
       "title": "this is the service for bridal hair bhbnbn n n nbbn",
       "description": null,
       "price": 118,
@@ -21,7 +21,7 @@
     },
     {
       "id": "5b829c6e-61d0-467a-84d6-926c8e762bab",
-      "stylist_id": "ef651125-f7f1-41fa-bdb8-fd746b026b04",
+      "stylist_id": "6ff0493d-1ba5-4453-930a-acd6b8c0904b",
       "title": "Test Query.",
       "description": null,
       "price": 33,
@@ -35,7 +35,7 @@
     },
     {
       "id": "623bcf63-b00d-4bf6-9c0c-ea6f147e752d",
-      "stylist_id": "8644170e-11b5-45d1-8ba7-c0770d5106a5",
+      "stylist_id": "b9a53d25-74f6-4e9c-b077-c298f4f4b113",
       "title": "Test Query",
       "description": null,
       "price": 12,
@@ -49,7 +49,7 @@
     },
     {
       "id": "b417e646-9f26-46fa-ba06-22c64adbd7af",
-      "stylist_id": "674e1467-70b3-4e00-975f-27f803c8ac07",
+      "stylist_id": "fedc28d5-d5ea-426a-b936-6a5afbda355c",
       "title": "new stylist ombre service",
       "description": null,
       "price": 1000,
@@ -63,7 +63,7 @@
     },
     {
       "id": "bec866f8-2ecc-408b-b975-5dd1019bfdf3",
-      "stylist_id": "70af22aa-70ed-4997-8513-51e77c53f77a",
+      "stylist_id": "464b5cf0-a590-4fbc-b235-99ceea1cb05e",
       "title": "hey",
       "description": null,
       "price": 0,
@@ -77,7 +77,7 @@
     },
     {
       "id": "cdfb4756-abc7-4737-b842-9d0f30b6ee24",
-      "stylist_id": "2f4ff0da-1eec-47f9-a9d0-ac2e96c2970c",
+      "stylist_id": "bf94d3c5-094b-44d2-b0ce-3b736c254b5d",
       "title": "highlights testy",
       "description": null,
       "price": 100,
@@ -91,7 +91,7 @@
     },
     {
       "id": "dcf0c3c0-7cfd-4b38-9769-c3b031140d48",
-      "stylist_id": "732c52cc-be2c-4c2c-bb40-923b4bdd869a",
+      "stylist_id": "c6601abb-a116-4a37-953b-9a7225a088b6",
       "title": "qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf...",
       "description": "qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf gdfgdf ggfdg fg fg fg f gf gf g fg f gd f g df gg fg f gf gf gf g fg fg f gf g fg f gd d fd fs f sf sf sdffdfdfdfdfdfdffddffdfd fd d fd fd sf. fdf ds fss sffff fffffff ffffffffffffffsdfd nfkdnf nsdfkj nsjfnjkdsnfjdsnfjnsdjfnjsdnfdf fdsfsdfsd dsf ds fsdfsdf sfd sfdfsdfdsfsdfsdf dsfdsfdsfdsfs fds sdfd fsd ds ddfdfsdfdgsgfddbgbgdbsgfdnfgdsngfbsfgvsfgbdhn ghhdfghdfjgfnhjgfnhjfgnhjnfgjhnjfnhjfnjhnjhnfgjnhfjnhjnfhjnfgjnhjfnhjfnghjnfg",
       "price": 1000,
@@ -105,7 +105,7 @@
     },
     {
       "id": "dde86f5c-f29f-4bfb-a659-93e9186f4c5f",
-      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "stylist_id": "f3212734-e08c-41f4-b77a-0dc6a7bd4f94",
       "title": "this is the description for",
       "description": null,
       "price": 10,

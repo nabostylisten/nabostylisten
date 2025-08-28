@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "created_at": "2025-08-27T14:32:01.098Z",
+    "created_at": "2025-08-27T18:48:58.710Z",
     "total_processed": 8,
     "successful_creations": 8,
     "failed_creations": 0
@@ -10,56 +10,56 @@
       "original_id": "15134499-5bf3-424d-993e-8d275e26a8a4",
       "supabase_id": "15134499-5bf3-424d-993e-8d275e26a8a4",
       "title": "this is the service for bridal hair bhbnbn n n nbbn",
-      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "stylist_id": "f3212734-e08c-41f4-b77a-0dc6a7bd4f94",
       "success": true
     },
     {
       "original_id": "5b829c6e-61d0-467a-84d6-926c8e762bab",
       "supabase_id": "5b829c6e-61d0-467a-84d6-926c8e762bab",
       "title": "Test Query.",
-      "stylist_id": "ef651125-f7f1-41fa-bdb8-fd746b026b04",
+      "stylist_id": "6ff0493d-1ba5-4453-930a-acd6b8c0904b",
       "success": true
     },
     {
       "original_id": "623bcf63-b00d-4bf6-9c0c-ea6f147e752d",
       "supabase_id": "623bcf63-b00d-4bf6-9c0c-ea6f147e752d",
       "title": "Test Query",
-      "stylist_id": "8644170e-11b5-45d1-8ba7-c0770d5106a5",
+      "stylist_id": "b9a53d25-74f6-4e9c-b077-c298f4f4b113",
       "success": true
     },
     {
       "original_id": "b417e646-9f26-46fa-ba06-22c64adbd7af",
       "supabase_id": "b417e646-9f26-46fa-ba06-22c64adbd7af",
       "title": "new stylist ombre service",
-      "stylist_id": "674e1467-70b3-4e00-975f-27f803c8ac07",
+      "stylist_id": "fedc28d5-d5ea-426a-b936-6a5afbda355c",
       "success": true
     },
     {
       "original_id": "bec866f8-2ecc-408b-b975-5dd1019bfdf3",
       "supabase_id": "bec866f8-2ecc-408b-b975-5dd1019bfdf3",
       "title": "hey",
-      "stylist_id": "70af22aa-70ed-4997-8513-51e77c53f77a",
+      "stylist_id": "464b5cf0-a590-4fbc-b235-99ceea1cb05e",
       "success": true
     },
     {
       "original_id": "cdfb4756-abc7-4737-b842-9d0f30b6ee24",
       "supabase_id": "cdfb4756-abc7-4737-b842-9d0f30b6ee24",
       "title": "highlights testy",
-      "stylist_id": "2f4ff0da-1eec-47f9-a9d0-ac2e96c2970c",
+      "stylist_id": "bf94d3c5-094b-44d2-b0ce-3b736c254b5d",
       "success": true
     },
     {
       "original_id": "dcf0c3c0-7cfd-4b38-9769-c3b031140d48",
       "supabase_id": "dcf0c3c0-7cfd-4b38-9769-c3b031140d48",
       "title": "qqq aaa cccfgfgdfgdfgfd dfggf gdfg dfgfdg dgf fdg gsdasds dsf sdgdgfd gfcvc bcvbht dgd gfdg. dfgf...",
-      "stylist_id": "732c52cc-be2c-4c2c-bb40-923b4bdd869a",
+      "stylist_id": "c6601abb-a116-4a37-953b-9a7225a088b6",
       "success": true
     },
     {
       "original_id": "dde86f5c-f29f-4bfb-a659-93e9186f4c5f",
       "supabase_id": "dde86f5c-f29f-4bfb-a659-93e9186f4c5f",
       "title": "this is the description for",
-      "stylist_id": "9c3ad7da-db54-47ba-881f-b122ec7b018c",
+      "stylist_id": "f3212734-e08c-41f4-b77a-0dc6a7bd4f94",
       "success": true
     }
   ]

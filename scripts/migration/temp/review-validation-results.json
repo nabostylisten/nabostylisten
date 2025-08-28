@@ -1,0 +1,26 @@
+{
+  "validated_at": "2025-08-27T18:53:40.850Z",
+  "is_valid": false,
+  "total_mysql_ratings": 6,
+  "total_pg_reviews": 0,
+  "missing_reviews": [
+    "2526a703-21d2-4cbf-8af2-ecbac834a0c1",
+    "29a67382-226d-45a8-b8f4-8cdf99d7ed10",
+    "4597cd19-25ee-4980-bd64-54cfd293bd7b",
+    "7b3f6138-2d34-46f3-bf21-17ab6c27040d",
+    "8b9675d9-fd3d-4347-9895-8ef80b77737e",
+    "95e825df-4cab-4ce7-8adc-acb2624af321"
+  ],
+  "orphaned_reviews": [],
+  "booking_review_mismatches": 0,
+  "rating_discrepancies": [],
+  "customer_mismatches": [],
+  "stylist_mismatches": [],
+  "validation_errors": [
+    "6 reviews missing in PostgreSQL"
+  ],
+  "rating_distribution": {},
+  "average_rating": 0,
+  "reviews_with_comments": 0,
+  "reviews_without_comments": 0
+}

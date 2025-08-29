@@ -45,6 +45,8 @@ export type PaymentWithDetails = {
  */
 export async function getAllPayments() {
   await requireAdmin();
+  
+  console.log("🔍 getAllPayments: Starting to fetch payments...");
 
   const supabase = await createClient();
 
@@ -53,7 +55,7 @@ export async function getAllPayments() {
       .from("payments")
       .select(`
         *,
-        booking:bookings!inner(
+        booking:bookings(
           id,
           start_time,
           customer:profiles!bookings_customer_id_fkey(
@@ -70,8 +72,14 @@ export async function getAllPayments() {
       `)
       .order("created_at", { ascending: false });
 
+    console.log("📊 getAllPayments: Raw Supabase response:", { 
+      dataLength: payments?.length || 0,
+      error: error?.message || null,
+      firstPayment: payments?.[0] || null
+    });
+
     if (error) {
-      console.error("Error fetching payments:", error);
+      console.error("❌ getAllPayments: Error fetching payments:", error);
       throw error;
     }
 
@@ -96,15 +104,21 @@ export async function getAllPayments() {
         succeeded_at: payment.succeeded_at,
         refunded_amount: Number(payment.refunded_amount),
         refund_reason: payment.refund_reason,
-        customer_id: payment.booking.customer.id,
-        customer_name: payment.booking.customer.full_name || "Ukjent kunde",
-        customer_email: payment.booking.customer.email || "",
-        stylist_id: payment.booking.stylist.id,
-        stylist_name: payment.booking.stylist.full_name || "Ukjent stylist",
-        stylist_email: payment.booking.stylist.email || "",
-        booking_date: payment.booking.start_time,
+        customer_id: payment.booking?.customer?.id || "",
+        customer_name: payment.booking?.customer?.full_name || "Ukjent kunde",
+        customer_email: payment.booking?.customer?.email || "",
+        stylist_id: payment.booking?.stylist?.id || "",
+        stylist_name: payment.booking?.stylist?.full_name || "Ukjent stylist",
+        stylist_email: payment.booking?.stylist?.email || "",
+        booking_date: payment.booking?.start_time || new Date().toISOString(),
       }),
     );
+
+    console.log("✅ getAllPayments: Transformed payments:", {
+      originalCount: payments?.length || 0,
+      transformedCount: transformedPayments.length,
+      sampleTransformed: transformedPayments.slice(0, 2)
+    });
 
     return { data: transformedPayments, error: null };
   } catch (error) {

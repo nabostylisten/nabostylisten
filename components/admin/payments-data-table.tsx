@@ -71,29 +71,67 @@ export function PaymentsDataTable() {
     isRefetching,
   } = useQuery({
     queryKey: ["payments"],
-    queryFn: () => getAllPayments(),
-    select: (data) => data.data,
+    queryFn: async () => {
+      console.log("🚀 Client: Calling getAllPayments...");
+      const result = await getAllPayments();
+      console.log("📦 Client: getAllPayments result:", {
+        hasData: !!result.data,
+        dataLength: result.data?.length || 0,
+        hasError: !!result.error,
+        errorMessage: result.error || null,
+        rawResult: result
+      });
+      return result;
+    },
+    select: (data) => {
+      console.log("🔄 Client: TanStack Query select function:", {
+        inputData: data,
+        selectedData: data.data,
+        selectedLength: data.data?.length || 0
+      });
+      return data.data;
+    },
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const data = paymentsData || [];
 
+  console.log("🎯 Client: Final data state:", {
+    paymentsData: paymentsData,
+    dataLength: data.length,
+    isLoading,
+    error: error?.message || null,
+    hasError: !!error
+  });
+
   // Filter data based on status tab
   const filteredData = React.useMemo(() => {
+    console.log("🔍 Client: Starting data filtering:", {
+      originalDataLength: data.length,
+      activeTab,
+      globalFilter
+    });
+
     let filtered = data;
 
     // Apply status filter
     if (activeTab !== "all") {
+      const beforeFilter = filtered.length;
       filtered = filtered.filter((item) => {
         if (activeTab === "refunded") {
           return item.refunded_amount > 0;
         }
         return item.status === activeTab;
       });
+      console.log(`📊 Client: Status filter (${activeTab}):`, {
+        before: beforeFilter,
+        after: filtered.length
+      });
     }
 
     // Apply global search filter
     if (globalFilter) {
+      const beforeSearch = filtered.length;
       const searchTerm = globalFilter.toLowerCase();
       filtered = filtered.filter((item) => {
         return (
@@ -105,7 +143,16 @@ export function PaymentsDataTable() {
           item.discount_code?.toLowerCase().includes(searchTerm)
         );
       });
+      console.log(`🔎 Client: Search filter (${globalFilter}):`, {
+        before: beforeSearch,
+        after: filtered.length
+      });
     }
+
+    console.log("✅ Client: Final filtered data:", {
+      finalLength: filtered.length,
+      sampleItems: filtered.slice(0, 2)
+    });
 
     return filtered;
   }, [activeTab, data, globalFilter]);
@@ -350,32 +397,41 @@ export function PaymentsDataTable() {
                     ))}
                   </TableHeader>
                   <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
-                            </TableCell>
-                          ))}
+                    {(() => {
+                      const rows = table.getRowModel().rows;
+                      console.log("🏁 Client: Table rendering:", {
+                        rowsLength: rows?.length || 0,
+                        hasRows: !!rows?.length,
+                        columnsLength: columns.length
+                      });
+                      
+                      return rows?.length ? (
+                        rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            data-state={row.getIsSelected() && "selected"}
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={columns.length}
+                            className="h-24 text-center"
+                          >
+                            Ingen betalinger funnet.
+                          </TableCell>
                         </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-24 text-center"
-                        >
-                          Ingen betalinger funnet.
-                        </TableCell>
-                      </TableRow>
-                    )}
+                      );
+                    })()}
                   </TableBody>
                 </Table>
               </div>

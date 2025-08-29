@@ -1,55 +1,44 @@
 import { createSeedClient } from "@snaplet/seed";
 import {
+  addImagesToServices,
+  createAdditionalCustomerAddresses,
+  // Affiliate system
+  createAffiliateApplications,
+  createAffiliateClickTracking,
+  createAffiliateLinksAndTracking,
+  // Chat system
+  createBookingChats,
+  // Booking system
+  createComprehensiveBookings,
+  // Review system
+  createComprehensiveReviewsSystem,
+  createCurrentChatMessages,
+  createCustomerPrimaryAddresses,
+  // Discounts
+  createDiscountCodes,
+  // Service categories
+  createMainServiceCategories,
+  createOldChatMessagesForCronTesting,
+  // Payment system
+  createPaymentRecords,
+  // Service management
+  createRandomizedServices,
+  createServiceSubcategories,
+  // Address management
+  createStylistAddresses,
+  // Applications
+  createStylistApplications,
+  createStylistAvailabilityRules,
+  // Stylist management
+  createStylistDetailedProfiles,
+  createStylistRecurringUnavailability,
+  createStylistUnavailabilityPeriods,
   // User management
   createTestUsersWithAuth,
   createUserEmailIdentities,
-  separateUsersByRole,
-  
-  // Service categories
-  createMainServiceCategories,
-  createServiceSubcategories,
-  
-  // Stylist management
-  createStylistDetailedProfiles,
-  createStylistAvailabilityRules,
-  createStylistUnavailabilityPeriods,
-  createStylistRecurringUnavailability,
-  
-  // Address management
-  createStylistAddresses,
-  createCustomerPrimaryAddresses,
-  createAdditionalCustomerAddresses,
-  
-  // Service management
-  createRandomizedServices,
-  addImagesToServices,
-  
-  // Applications
-  createStylistApplications,
   linkApplicationsToCategories,
-  
-  // Discounts
-  createDiscountCodes,
-  
-  // Booking system
-  createComprehensiveBookings,
   linkServicesToBookings,
-  
-  // Chat system
-  createBookingChats,
-  createOldChatMessagesForCronTesting,
-  createCurrentChatMessages,
-  
-  // Affiliate system
-  createAffiliateApplications,
-  createAffiliateLinksAndTracking,
-  createAffiliateClickTracking,
-  
-  // Payment system
-  createPaymentRecords,
-  
-  // Review system
-  createComprehensiveReviewsSystem,
+  separateUsersByRole,
 } from "./utils";
 
 /**
@@ -85,11 +74,18 @@ async function main() {
   console.log("-- Phase 4: Address Management");
   await createStylistAddresses(seed, stylistUsers);
   await createCustomerPrimaryAddresses(seed, customerUsers);
-  const customerAddresses = await createAdditionalCustomerAddresses(seed, customerUsers);
+  const customerAddresses = await createAdditionalCustomerAddresses(
+    seed,
+    customerUsers,
+  );
 
   // 5. Create services and media
   console.log("-- Phase 5: Service Management");
-  const { services } = await createRandomizedServices(seed, stylistUsers, mainCategories);
+  const { services } = await createRandomizedServices(
+    seed,
+    stylistUsers,
+    mainCategories,
+  );
   await addImagesToServices(seed, services);
 
   // 6. Create applications
@@ -103,20 +99,49 @@ async function main() {
 
   // 8. Create comprehensive booking system
   console.log("-- Phase 8: Booking System");
-  const bookings = await createComprehensiveBookings(seed, customerUsers, stylistUsers, discounts, customerAddresses);
-  const bookingServiceLinks = await linkServicesToBookings(seed, bookings, services);
+  const bookings = await createComprehensiveBookings(
+    seed,
+    customerUsers,
+    stylistUsers,
+    discounts,
+    customerAddresses,
+  );
+  const bookingServiceLinks = await linkServicesToBookings(
+    seed,
+    bookings,
+    services,
+  );
 
   // 9. Create chat system
   console.log("-- Phase 9: Chat System");
   const chats = await createBookingChats(seed, bookings);
-  await createOldChatMessagesForCronTesting(seed, chats, customerUsers, stylistUsers);
+  await createOldChatMessagesForCronTesting(
+    seed,
+    chats,
+    customerUsers,
+    stylistUsers,
+  );
   await createCurrentChatMessages(seed, chats, customerUsers, stylistUsers);
 
   // 10. Create affiliate system
   console.log("-- Phase 10: Affiliate System");
-  const affiliate_applications = await createAffiliateApplications(seed, stylistUsers, allUsers);
-  const affiliate_links = await createAffiliateLinksAndTracking(seed, stylistUsers, affiliate_applications);
-  await createAffiliateClickTracking(seed, affiliate_links, stylistUsers, customerUsers, bookings);
+  const affiliate_applications = await createAffiliateApplications(
+    seed,
+    stylistUsers,
+    allUsers,
+  );
+  const affiliate_links = await createAffiliateLinksAndTracking(
+    seed,
+    stylistUsers,
+    affiliate_applications,
+  );
+  await createAffiliateClickTracking(
+    seed,
+    affiliate_links,
+    stylistUsers,
+    customerUsers,
+    bookings,
+  );
 
   // 11. Create payment records
   console.log("-- Phase 11: Payment System");
@@ -130,24 +155,38 @@ async function main() {
     services,
     customerUsers,
     stylistUsers,
-    bookingServiceLinks
+    bookingServiceLinks,
   );
 
   console.log("--  Database seeding completed successfully!");
   console.log("-- ");
   console.log("-- =� Seeding Summary:");
-  console.log(`--   =e Users: ${allUsers.length} (${stylistUsers.length} stylists, ${customerUsers.length} customers)`);
-  console.log(`--   <�  Service categories: ${mainCategories.length} main categories with subcategories`);
-  console.log(`--   =� Services: ${services.length} services with images and category links`);
-  console.log(`--   =� Bookings: ${bookings.length} bookings across various statuses`);
+  console.log(
+    `--   =e Users: ${allUsers.length} (${stylistUsers.length} stylists, ${customerUsers.length} customers)`,
+  );
+  console.log(
+    `--   <�  Service categories: ${mainCategories.length} main categories with subcategories`,
+  );
+  console.log(
+    `--   =� Services: ${services.length} services with images and category links`,
+  );
+  console.log(
+    `--   =� Bookings: ${bookings.length} bookings across various statuses`,
+  );
   console.log(`--   =� Chats: ${chats.length} active chat conversations`);
-  console.log(`--   =� Discounts: ${discounts.length} discount codes for testing`);
-  console.log(`--   > Applications: ${applications.length} stylist applications`);
+  console.log(
+    `--   =� Discounts: ${discounts.length} discount codes for testing`,
+  );
+  console.log(
+    `--   > Applications: ${applications.length} stylist applications`,
+  );
   console.log("-- ");
   console.log("-- >� Test Accounts:");
   console.log("--   =d Admin: admin@nabostylisten.no");
   console.log("--   <� Stylist: maria.hansen@example.com (Oslo)");
-  console.log("--   =�  Customer: kari.nordmann@example.com (multiple bookings)");
+  console.log(
+    "--   =�  Customer: kari.nordmann@example.com (multiple bookings)",
+  );
   console.log("--   = Password for all: demo-password");
   console.log("-- ");
   console.log("-- = Cron Job Testing:");

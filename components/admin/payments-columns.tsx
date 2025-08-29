@@ -30,7 +30,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import Link from "next/link";
-import { PaymentWithDetails, type PaymentStatus } from "@/server/admin/payments.actions";
+import {
+  PaymentWithDetails,
+  type PaymentStatus,
+} from "@/server/admin/payments.actions";
 import { toast } from "sonner";
 
 // Utility function to map column IDs to Norwegian display names
@@ -55,7 +58,10 @@ export const getColumnDisplayName = (columnId: string): string => {
 };
 
 const getStatusBadge = (status: PaymentStatus) => {
-  const variants: Record<PaymentStatus, "outline" | "secondary" | "destructive" | "default"> = {
+  const variants: Record<
+    PaymentStatus,
+    "outline" | "secondary" | "destructive" | "default"
+  > = {
     pending: "outline",
     requires_payment_method: "secondary",
     requires_confirmation: "secondary",
@@ -109,7 +115,7 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
     cell: ({ row }) => {
       const paymentId = row.getValue("payment_intent_id") as string;
       const shortId = paymentId.slice(-8);
-      
+
       return (
         <div className="flex items-center gap-2">
           <TooltipProvider>
@@ -153,7 +159,7 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
     cell: ({ row }) => {
       const name = row.getValue("customer_name") as string;
       const email = row.original.customer_email;
-      
+
       return (
         <div className="flex flex-col">
           <span className="font-medium">{name}</span>
@@ -178,7 +184,7 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
     cell: ({ row }) => {
       const name = row.getValue("stylist_name") as string;
       const email = row.original.stylist_email;
-      
+
       return (
         <div className="flex flex-col">
           <span className="font-medium">{name}</span>
@@ -205,14 +211,16 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
       const original = row.original.original_amount;
       const discount = row.original.discount_amount;
       const currency = row.original.currency;
-      
+
       return (
         <div className="flex flex-col">
           <span className="font-medium">{formatCurrency(final, currency)}</span>
           {discount > 0 && (
             <span className="text-xs text-muted-foreground">
-              <span className="line-through">{formatCurrency(original, currency)}</span>
-              {" "}-{formatCurrency(discount, currency)}
+              <span className="line-through">
+                {formatCurrency(original, currency)}
+              </span>{" "}
+              -{formatCurrency(discount, currency)}
             </span>
           )}
         </div>
@@ -235,7 +243,7 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
     cell: ({ row }) => {
       const status = row.getValue("status") as PaymentStatus;
       const refunded = row.original.refunded_amount;
-      
+
       return (
         <div className="flex items-center gap-2">
           {getStatusBadge(status)}
@@ -246,7 +254,9 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
                   <AlertCircle className="h-4 w-4 text-orange-500" />
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Refundert: {formatCurrency(refunded, row.original.currency)}</p>
+                  <p>
+                    Refundert: {formatCurrency(refunded, row.original.currency)}
+                  </p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -337,7 +347,7 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
               </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-              <Link href={`/protected/bookings/${payment.booking_id}`}>
+              <Link href={`/bookinger/${payment.booking_id}`} target="_blank">
                 <ExternalLink className="mr-2 h-4 w-4" />
                 Se booking
               </Link>
@@ -352,17 +362,11 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
               Åpne i Stripe
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              disabled
-              className="text-muted-foreground"
-            >
+            <DropdownMenuItem disabled className="text-muted-foreground">
               <Receipt className="mr-2 h-4 w-4" />
               Send kvittering (kommer)
             </DropdownMenuItem>
-            <DropdownMenuItem
-              disabled
-              className="text-muted-foreground"
-            >
+            <DropdownMenuItem disabled className="text-muted-foreground">
               <AlertCircle className="mr-2 h-4 w-4" />
               Refunder (kommer)
             </DropdownMenuItem>

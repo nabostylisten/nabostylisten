@@ -43,39 +43,23 @@ export type PaymentWithDetails = {
 /**
  * Get all payments with customer and stylist details
  */
-export async function getAllPayments() {
+export async function getAllPayments(options: {
+  searchTerm?: string;
+  statusFilter?: string;
+  limit?: number;
+  offset?: number;
+} = {}) {
   await requireAdmin();
-  
-  console.log("🔍 getAllPayments: Starting to fetch payments...");
 
   const supabase = await createClient();
 
   try {
-    const { data: payments, error } = await supabase
-      .from("payments")
-      .select(`
-        *,
-        booking:bookings(
-          id,
-          start_time,
-          customer:profiles!bookings_customer_id_fkey(
-            id,
-            full_name,
-            email
-          ),
-          stylist:profiles!bookings_stylist_id_fkey(
-            id,
-            full_name,
-            email
-          )
-        )
-      `)
-      .order("created_at", { ascending: false });
-
-    console.log("📊 getAllPayments: Raw Supabase response:", { 
-      dataLength: payments?.length || 0,
-      error: error?.message || null,
-      firstPayment: payments?.[0] || null
+    // See get_admin_payments in supabase/schemas/00-schema.sql for definition
+    const { data: payments, error } = await supabase.rpc("get_admin_payments", {
+      search_term: options.searchTerm || undefined,
+      status_filter: options.statusFilter || undefined,
+      limit_count: options.limit || 20,
+      offset_count: options.offset || 0,
     });
 
     if (error) {
@@ -83,8 +67,12 @@ export async function getAllPayments() {
       throw error;
     }
 
-    // Transform the data to flatten the structure
-    const transformedPayments: PaymentWithDetails[] = (payments || []).map(
+    if (!payments) {
+      return { data: [], error: null };
+    }
+
+    // Transform the data to match our expected interface
+    const transformedPayments: PaymentWithDetails[] = payments.map(
       (payment) => ({
         id: payment.id,
         created_at: payment.created_at,
@@ -104,25 +92,18 @@ export async function getAllPayments() {
         succeeded_at: payment.succeeded_at,
         refunded_amount: Number(payment.refunded_amount),
         refund_reason: payment.refund_reason,
-        customer_id: payment.booking?.customer?.id || "",
-        customer_name: payment.booking?.customer?.full_name || "Ukjent kunde",
-        customer_email: payment.booking?.customer?.email || "",
-        stylist_id: payment.booking?.stylist?.id || "",
-        stylist_name: payment.booking?.stylist?.full_name || "Ukjent stylist",
-        stylist_email: payment.booking?.stylist?.email || "",
-        booking_date: payment.booking?.start_time || new Date().toISOString(),
+        customer_id: payment.customer_id,
+        customer_name: payment.customer_name || "Ukjent kunde",
+        customer_email: payment.customer_email || "",
+        stylist_id: payment.stylist_id,
+        stylist_name: payment.stylist_name || "Ukjent stylist",
+        stylist_email: payment.stylist_email || "",
+        booking_date: payment.booking_date,
       }),
     );
 
-    console.log("✅ getAllPayments: Transformed payments:", {
-      originalCount: payments?.length || 0,
-      transformedCount: transformedPayments.length,
-      sampleTransformed: transformedPayments.slice(0, 2)
-    });
-
     return { data: transformedPayments, error: null };
   } catch (error) {
-    console.error("Error in getAllPayments:", error);
     return {
       data: null,
       error: error instanceof Error
@@ -158,7 +139,6 @@ export async function getPaymentDetails(paymentId: string) {
       .single();
 
     if (error) {
-      console.error("Error fetching payment details:", error);
       throw error;
     }
 
@@ -223,7 +203,6 @@ export async function getStripePaymentIntent(paymentIntentId: string) {
 
     return { data: paymentIntent, error: null };
   } catch (error) {
-    console.error("Error fetching Stripe payment intent:", error);
     return {
       data: null,
       error: error instanceof Error
@@ -236,14 +215,8 @@ export async function getStripePaymentIntent(paymentIntentId: string) {
 /**
  * Initiate a refund for a payment (stub for future implementation)
  */
-export async function initiateRefund({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  paymentIntentId,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  amount,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  reason,
-}: {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function initiateRefund(_params: {
   paymentIntentId: string;
   amount?: number;
   reason?: string;

@@ -3,14 +3,10 @@
 import * as React from "react";
 import {
   ColumnDef,
-  ColumnFiltersState,
-  SortingState,
   VisibilityState,
   flexRender,
   getCoreRowModel,
-  getFilteredRowModel,
   getPaginationRowModel,
-  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
 import { useQuery } from "@tanstack/react-query";
@@ -46,12 +42,6 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 export function PaymentsDataTable() {
-  const [sorting, setSorting] = React.useState<SortingState>([
-    { id: "created_at", desc: true },
-  ]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    []
-  );
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({
       platform_fee: false,
@@ -61,8 +51,18 @@ export function PaymentsDataTable() {
     });
   const [activeTab, setActiveTab] = React.useState("all");
   const [globalFilter, setGlobalFilter] = React.useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = React.useState("");
 
-  // Fetch payments data
+  // Debounce search input to avoid excessive API calls
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(globalFilter);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [globalFilter]);
+
+  // Fetch payments data with server-side filtering
   const {
     data: paymentsData,
     isLoading,
@@ -70,106 +70,29 @@ export function PaymentsDataTable() {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ["payments"],
-    queryFn: async () => {
-      console.log("🚀 Client: Calling getAllPayments...");
-      const result = await getAllPayments();
-      console.log("📦 Client: getAllPayments result:", {
-        hasData: !!result.data,
-        dataLength: result.data?.length || 0,
-        hasError: !!result.error,
-        errorMessage: result.error || null,
-        rawResult: result
-      });
-      return result;
-    },
-    select: (data) => {
-      console.log("🔄 Client: TanStack Query select function:", {
-        inputData: data,
-        selectedData: data.data,
-        selectedLength: data.data?.length || 0
-      });
-      return data.data;
-    },
+    queryKey: ["payments", activeTab, debouncedSearchTerm],
+    queryFn: () => getAllPayments({
+      searchTerm: debouncedSearchTerm || undefined,
+      statusFilter: activeTab === "all" ? undefined : activeTab,
+      limit: 1000, // Get all for now, can implement pagination later
+    }),
+    select: (data) => data.data,
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
   const data = paymentsData || [];
 
-  console.log("🎯 Client: Final data state:", {
-    paymentsData: paymentsData,
-    dataLength: data.length,
-    isLoading,
-    error: error?.message || null,
-    hasError: !!error
-  });
-
-  // Filter data based on status tab
-  const filteredData = React.useMemo(() => {
-    console.log("🔍 Client: Starting data filtering:", {
-      originalDataLength: data.length,
-      activeTab,
-      globalFilter
-    });
-
-    let filtered = data;
-
-    // Apply status filter
-    if (activeTab !== "all") {
-      const beforeFilter = filtered.length;
-      filtered = filtered.filter((item) => {
-        if (activeTab === "refunded") {
-          return item.refunded_amount > 0;
-        }
-        return item.status === activeTab;
-      });
-      console.log(`📊 Client: Status filter (${activeTab}):`, {
-        before: beforeFilter,
-        after: filtered.length
-      });
-    }
-
-    // Apply global search filter
-    if (globalFilter) {
-      const beforeSearch = filtered.length;
-      const searchTerm = globalFilter.toLowerCase();
-      filtered = filtered.filter((item) => {
-        return (
-          item.customer_name?.toLowerCase().includes(searchTerm) ||
-          item.customer_email?.toLowerCase().includes(searchTerm) ||
-          item.stylist_name?.toLowerCase().includes(searchTerm) ||
-          item.stylist_email?.toLowerCase().includes(searchTerm) ||
-          item.payment_intent_id?.toLowerCase().includes(searchTerm) ||
-          item.discount_code?.toLowerCase().includes(searchTerm)
-        );
-      });
-      console.log(`🔎 Client: Search filter (${globalFilter}):`, {
-        before: beforeSearch,
-        after: filtered.length
-      });
-    }
-
-    console.log("✅ Client: Final filtered data:", {
-      finalLength: filtered.length,
-      sampleItems: filtered.slice(0, 2)
-    });
-
-    return filtered;
-  }, [activeTab, data, globalFilter]);
+  // Since filtering is now done server-side, filteredData is just the data
+  const filteredData = data;
 
   const table = useReactTable({
     data: filteredData,
     columns,
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
+    // Remove sorting and filtering since it's handled server-side
     onColumnVisibilityChange: setColumnVisibility,
     state: {
-      sorting,
-      columnFilters,
       columnVisibility,
     },
     initialState: {
@@ -399,12 +322,7 @@ export function PaymentsDataTable() {
                   <TableBody>
                     {(() => {
                       const rows = table.getRowModel().rows;
-                      console.log("🏁 Client: Table rendering:", {
-                        rowsLength: rows?.length || 0,
-                        hasRows: !!rows?.length,
-                        columnsLength: columns.length
-                      });
-                      
+
                       return rows?.length ? (
                         rows.map((row) => (
                           <TableRow

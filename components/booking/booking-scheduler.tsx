@@ -253,6 +253,15 @@ export function BookingScheduler({
   // Check if a time slot can be selected (has enough consecutive availability)
   const canSelectTimeSlot = useCallback(
     (date: Date, hour: number) => {
+      // Check if the time slot is in the past
+      const now = new Date();
+      const slotStart = new Date(date);
+      slotStart.setHours(hour, 0, 0, 0);
+      
+      if (slotStart <= now) {
+        return false;
+      }
+
       // Check if we have enough consecutive hours available
       for (let i = 0; i < requiredHours; i++) {
         const checkHour = hour + i;
@@ -321,7 +330,28 @@ export function BookingScheduler({
     return Array.from({ length: endHour - startHour }, (_, i) => startHour + i);
   }, [workSchedule.startTime, workSchedule.endTime]);
 
-  const handlePreviousWeek = () => setCurrentWeek((prev) => subWeeks(prev, 1));
+  // Check if we can navigate to the previous week
+  const canNavigateToPreviousWeek = useCallback(() => {
+    const newWeek = subWeeks(currentWeek, 1);
+    const endOfNewWeek = endOfWeek(newWeek, { weekStartsOn: 1 });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    return endOfNewWeek >= today;
+  }, [currentWeek]);
+
+  const handlePreviousWeek = () => {
+    const newWeek = subWeeks(currentWeek, 1);
+    const endOfNewWeek = endOfWeek(newWeek, { weekStartsOn: 1 });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Only allow going back if the end of the new week is not before today
+    if (endOfNewWeek >= today) {
+      setCurrentWeek(newWeek);
+    }
+  };
+  
   const handleNextWeek = () => setCurrentWeek((prev) => addWeeks(prev, 1));
   const handleToday = () => setCurrentWeek(new Date());
 
@@ -384,6 +414,7 @@ export function BookingScheduler({
                 variant="outline"
                 size="icon"
                 onClick={handlePreviousWeek}
+                disabled={!canNavigateToPreviousWeek()}
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
@@ -421,6 +452,11 @@ export function BookingScheduler({
                       }
                     }}
                     weekStartsOn={1}
+                    disabled={(date) => {
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      return date < today;
+                    }}
                   />
                 </PopoverContent>
               </Popover>
@@ -461,29 +497,38 @@ export function BookingScheduler({
                     const isWorkHour = isHourInWorkTime(hour);
                     const isAvailable = isWorkDay && isWorkHour;
                     const isUnavailable = isTimeSlotUnavailable(day, hour);
+                    
+                    // Check if the time slot is in the past
+                    const now = new Date();
+                    const slotStart = new Date(day);
+                    slotStart.setHours(hour, 0, 0, 0);
+                    const isPast = slotStart <= now;
+                    
                     const canSelect = canSelectTimeSlot(day, hour);
                     const isSelected = isSlotSelected(day, hour);
                     const isCurrentBooking = isSlotCurrentBooking(day, hour);
+
+                    // Determine if slot is effectively unavailable (past, explicitly unavailable, or not work time)
+                    const isEffectivelyUnavailable = !isAvailable || isUnavailable || isPast;
+                    
+                    // Check if it's available but can't be selected due to insufficient consecutive hours
+                    const hasInsufficientTime = isAvailable && !isUnavailable && !isPast && !canSelect;
 
                     return (
                       <div
                         key={dayIndex}
                         className={cn(
                           "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors",
-                          !isAvailable && "bg-gray-100 cursor-not-allowed",
+                          isEffectivelyUnavailable && !isCurrentBooking && "bg-gray-100 cursor-not-allowed",
                           isAvailable &&
                             !isUnavailable &&
+                            !isPast &&
                             canSelect &&
                             !isCurrentBooking &&
                             "bg-green-100 hover:bg-green-200",
-                          isAvailable &&
-                            !isUnavailable &&
-                            !canSelect &&
+                          hasInsufficientTime &&
                             !isCurrentBooking &&
                             "bg-yellow-100 cursor-not-allowed",
-                          isUnavailable &&
-                            !isCurrentBooking &&
-                            "bg-gray-200 cursor-not-allowed",
                           isCurrentBooking &&
                             "bg-purple-200 border-purple-500 cursor-not-allowed",
                           isSelected &&
@@ -493,6 +538,7 @@ export function BookingScheduler({
                           if (
                             isAvailable &&
                             !isUnavailable &&
+                            !isPast &&
                             canSelect &&
                             !isCurrentBooking
                           ) {
@@ -510,9 +556,7 @@ export function BookingScheduler({
                             Nåværende
                           </div>
                         )}
-                        {isAvailable &&
-                          !isUnavailable &&
-                          !canSelect &&
+                        {hasInsufficientTime &&
                           !isCurrentBooking && (
                             <div className="text-xs text-yellow-700">
                               For kort tid

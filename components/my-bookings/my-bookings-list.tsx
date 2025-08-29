@@ -311,7 +311,12 @@ export function MyBookingsList({ userId, status, userRole = 'customer' }: MyBook
       {/* Bookings List */}
       <div className="space-y-4">
         {bookings.map((booking) => (
-          <BookingCard key={booking.id} booking={booking} userRole={userRole} />
+          <BookingCard 
+            key={booking.id} 
+            booking={booking} 
+            userRole={userRole} 
+            currentUserId={userId}
+          />
         ))}
       </div>
 

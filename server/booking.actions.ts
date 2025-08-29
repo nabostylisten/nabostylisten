@@ -20,8 +20,12 @@ import { StripeOnboardingRequired } from "@/transactional/emails/stripe-onboardi
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
-import { shouldReceiveNotification, shouldReceiveNotificationServerSide } from "@/server/preferences.actions";
+import {
+    shouldReceiveNotification,
+    shouldReceiveNotificationServerSide,
+} from "@/server/preferences.actions";
 import BookingRescheduledEmail from "@/transactional/emails/booking-rescheduled";
+import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -778,33 +782,6 @@ export async function createBookingWithServices(
     }
 }
 
-export async function confirmBookingPayment(
-    bookingId: string,
-    _paymentIntentId: string,
-) {
-    // TODO: Implement Stripe payment confirmation
-    // 1. Confirm payment with Stripe
-    // 2. Update booking status to 'confirmed'
-    // 3. Update payment record status
-    // 4. Send confirmation emails
-
-    const supabase = await createClient();
-
-    // For now, just update booking status
-    const { data, error } = await supabase
-        .from("bookings")
-        .update({ status: "confirmed" })
-        .eq("id", bookingId)
-        .select()
-        .single();
-
-    if (error) {
-        return { error: "Failed to confirm booking", data: null };
-    }
-
-    return { data, error: null };
-}
-
 export async function cancelBooking(bookingId: string, reason?: string) {
     const supabase = await createClient();
 
@@ -814,10 +791,22 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         return { error: "User not authenticated", data: null };
     }
 
-    // Get booking details
+    // Get booking details with payment information
     const { data: booking, error: bookingError } = await supabase
         .from("bookings")
-        .select("*")
+        .select(`
+            *,
+            payments(
+                id,
+                payment_intent_id,
+                final_amount,
+                platform_fee,
+                stylist_payout,
+                status,
+                captured_at,
+                refunded_amount
+            )
+        `)
         .eq("id", bookingId)
         .single();
 
@@ -830,19 +819,83 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         return { error: "Not authorized to cancel this booking", data: null };
     }
 
-    // Check if booking can be cancelled (24+ hours before appointment for refund)
+    // Don't allow cancelling already cancelled or completed bookings
+    if (booking.status === "cancelled" || booking.status === "completed") {
+        return {
+            error: `Cannot cancel a ${booking.status} booking`,
+            data: null,
+        };
+    }
+
+    // Determine who is cancelling
+    const cancelledBy: "customer" | "stylist" = booking.customer_id === user.id
+        ? "customer"
+        : "stylist";
+
+    // Calculate refund based on platform config and who cancelled
     const startTime = new Date(booking.start_time);
     const now = new Date();
     const hoursUntilAppointment = (startTime.getTime() - now.getTime()) /
         (1000 * 60 * 60);
-    const eligibleForRefund = hoursUntilAppointment >= 24;
 
-    // TODO: Handle Stripe refund if eligible
-    // if (eligibleForRefund && booking.stripe_payment_intent_id) {
-    //     const refund = await stripe.refunds.create({
-    //         payment_intent: booking.stripe_payment_intent_id,
-    //     });
-    // }
+    // Get platform config for refund rules
+    const config = DEFAULT_PLATFORM_CONFIG.payment.refunds;
+
+    let refundPercentage = 0;
+    let stylistCompensationPercentage = 0;
+    let refundAmountNOK = 0;
+    let stylistCompensationNOK = 0;
+    let refundReason = "";
+
+    if (cancelledBy === "stylist") {
+        // Stylist cancellation = always 100% refund to customer
+        refundPercentage = 1.0;
+        refundAmountNOK = booking.total_price;
+        refundReason = "Stylist cancelled the booking";
+    } else {
+        // Customer cancellation - check timing
+        if (hoursUntilAppointment >= config.fullRefundHours) {
+            // More than 48 hours before = 100% refund
+            refundPercentage = 1.0;
+            refundAmountNOK = booking.total_price;
+            refundReason =
+                `Customer cancelled more than ${config.fullRefundHours} hours before appointment`;
+        } else if (hoursUntilAppointment >= config.partialRefundHours) {
+            // Between 24-48 hours = 50% refund to customer, 50% compensation to stylist
+            refundPercentage = config.partialRefundPercentage;
+            stylistCompensationPercentage = config.partialRefundPercentage;
+            refundAmountNOK = booking.total_price * refundPercentage;
+            stylistCompensationNOK = booking.total_price *
+                stylistCompensationPercentage;
+            refundReason =
+                `Customer cancelled between ${config.partialRefundHours}-${config.fullRefundHours} hours before appointment`;
+        } else {
+            // Less than 24 hours = no refund
+            refundPercentage = 0;
+            refundAmountNOK = 0;
+            refundReason =
+                `Customer cancelled less than ${config.partialRefundHours} hours before appointment`;
+        }
+    }
+
+    // Process refund if applicable
+    let refundResult = null;
+    if (refundAmountNOK > 0 && booking.stripe_payment_intent_id) {
+        const { processRefund } = await import("./stripe.actions");
+        refundResult = await processRefund({
+            bookingId,
+            paymentIntentId: booking.stripe_payment_intent_id,
+            refundAmountNOK,
+            refundReason,
+            stylistCompensationNOK,
+        });
+
+        if (refundResult.error) {
+            console.error("Refund processing error:", refundResult.error);
+            // Don't fail the cancellation if refund fails - log and continue
+            // The booking should still be cancelled even if refund processing fails
+        }
+    }
 
     // Update booking status
     const { data, error } = await supabase
@@ -850,7 +903,7 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         .update({
             status: "cancelled",
             cancelled_at: new Date().toISOString(),
-            cancellation_reason: reason,
+            cancellation_reason: reason || refundReason,
         })
         .eq("id", bookingId)
         .select()
@@ -897,11 +950,11 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         if (fullBooking?.customer?.email && fullBooking?.stylist?.email) {
             // Check user preferences for cancellation notifications
             const [canSendToCustomer, canSendToStylist] = await Promise.all([
-                shouldReceiveNotification(
+                shouldReceiveNotificationServerSide(
                     fullBooking.customer_id,
                     "booking_cancellations",
                 ),
-                shouldReceiveNotification(
+                shouldReceiveNotificationServerSide(
                     fullBooking.stylist_id,
                     "booking_cancellations",
                 ),
@@ -945,6 +998,12 @@ export async function cancelBooking(bookingId: string, reason?: string) {
                     status: "cancelled" as const,
                     message: reason || "Booking cancelled",
                     location,
+                    cancelledBy,
+                    refundInfo: refundAmountNOK > 0 || stylistCompensationNOK > 0 ? {
+                        refundAmount: refundAmountNOK,
+                        stylistCompensation: stylistCompensationNOK,
+                        refundPercentage: refundPercentage,
+                    } : undefined,
                 };
 
                 const customerEmailSubject = `Booking avlyst: ${serviceName}`;
@@ -999,7 +1058,13 @@ export async function cancelBooking(bookingId: string, reason?: string) {
     return {
         data: {
             booking: data,
-            eligibleForRefund,
+            cancelledBy,
+            refundAmount: refundAmountNOK,
+            refundPercentage,
+            stylistCompensation: stylistCompensationNOK,
+            hoursUntilAppointment,
+            refundProcessed: refundResult?.data ? true : false,
+            refundError: refundResult?.error,
         },
         error: null,
     };
@@ -1783,8 +1848,6 @@ export async function rescheduleBooking({
             .eq("id", bookingId)
             .single();
 
-        console.log("📧 Email addresses - Customer:", fullBooking?.customer?.email, "Stylist:", fullBooking?.stylist?.email);
-
         if (fullBooking?.customer?.email && fullBooking?.stylist?.email) {
             // Check user preferences for reschedule notifications
             const [canSendToCustomer, canSendToStylist] = await Promise.all([
@@ -1797,8 +1860,6 @@ export async function rescheduleBooking({
                     "booking_status_updates",
                 ),
             ]);
-
-            console.log("🔔 Notification preferences - Customer:", canSendToCustomer, "Stylist:", canSendToStylist);
 
             if (canSendToCustomer || canSendToStylist) {
                 // Prepare common email data
@@ -1859,11 +1920,8 @@ export async function rescheduleBooking({
                 const stylistEmailSubject =
                     `Du flyttet booking: ${serviceName}`;
 
-                console.log("📨 About to send emails - Customer subject:", customerEmailSubject, "Stylist subject:", stylistEmailSubject);
-
                 // Send email to customer (only if they want notifications)
                 if (canSendToCustomer) {
-                    console.log("📤 Sending customer reschedule email to:", fullBooking.customer.email);
                     const { error: customerEmailError } = await sendEmail({
                         to: [fullBooking.customer.email],
                         subject: customerEmailSubject,
@@ -1880,15 +1938,22 @@ export async function rescheduleBooking({
                             customerEmailError,
                         );
                     } else {
-                        console.log("✅ Customer reschedule email sent successfully!");
+                        console.log(
+                            "✅ Customer reschedule email sent successfully!",
+                        );
                     }
                 } else {
-                    console.log("❌ Skipping customer email - notifications disabled");
+                    console.log(
+                        "❌ Skipping customer email - notifications disabled",
+                    );
                 }
 
                 // Send email to stylist (only if they want notifications)
                 if (canSendToStylist) {
-                    console.log("📤 Sending stylist reschedule email to:", fullBooking.stylist.email);
+                    console.log(
+                        "📤 Sending stylist reschedule email to:",
+                        fullBooking.stylist.email,
+                    );
                     const { error: stylistEmailError } = await sendEmail({
                         to: [fullBooking.stylist.email],
                         subject: stylistEmailSubject,
@@ -1905,23 +1970,37 @@ export async function rescheduleBooking({
                             stylistEmailError,
                         );
                     } else {
-                        console.log("✅ Stylist reschedule email sent successfully!");
+                        console.log(
+                            "✅ Stylist reschedule email sent successfully!",
+                        );
                     }
                 } else {
-                    console.log("❌ Skipping stylist email - notifications disabled");
+                    console.log(
+                        "❌ Skipping stylist email - notifications disabled",
+                    );
                 }
             } else {
-                console.log("❌ Skipping all emails - both notifications disabled");
+                console.log(
+                    "❌ Skipping all emails - both notifications disabled",
+                );
             }
         } else {
-            console.log("❌ Missing email addresses - Customer:", !!fullBooking?.customer?.email, "Stylist:", !!fullBooking?.stylist?.email);
+            console.log(
+                "❌ Missing email addresses - Customer:",
+                !!fullBooking?.customer?.email,
+                "Stylist:",
+                !!fullBooking?.stylist?.email,
+            );
         }
     } catch (emailError) {
         console.error("💥 FATAL: Error sending reschedule emails:", emailError);
         // Don't fail the entire operation if email fails
     }
 
-    console.log("🏁 Reschedule email process completed for booking:", bookingId);
+    console.log(
+        "🏁 Reschedule email process completed for booking:",
+        bookingId,
+    );
 
     return { data: updatedBooking, error: null };
 }

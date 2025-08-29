@@ -19,6 +19,7 @@ import {
 } from "@/lib/stripe/connect";
 import { getPublicUrl } from "@/lib/utils";
 import { canCreateServices } from "@/lib/stylist-onboarding-status";
+import { stripe } from "@/lib/stripe/config";
 
 // TODO: Implement Stripe-related server actions
 
@@ -245,23 +246,192 @@ export async function capturePaymentBeforeAppointment(bookingId: string) {
 
 /**
  * Process refund for cancelled booking
- * Server action wrapper around service function
+ * Handles both uncaptured (cancel) and captured (refund) payments
  */
-export async function processRefund(bookingId: string, reason?: string) {
+export async function processRefund({
+  bookingId,
+  paymentIntentId,
+  refundAmountNOK,
+  refundReason,
+  stylistCompensationNOK = 0,
+}: {
+  bookingId: string;
+  paymentIntentId: string;
+  refundAmountNOK: number;
+  refundReason: string;
+  stylistCompensationNOK?: number;
+}) {
   const supabase = await createClient();
 
   try {
-    // TODO: Get booking and payment details
-    // TODO: Check refund eligibility (N+ hours before appointment)
-    // TODO: Calculate refund amount based on cancellation timing
-    // TODO: Use createStripeRefund or cancelStripePaymentIntent service functions
-    // TODO: Update booking and payment records
-    // TODO: Send refund confirmation email
+    // Get payment record from database
+    const { data: payment, error: paymentError } = await supabase
+      .from("payments")
+      .select("*")
+      .eq("booking_id", bookingId)
+      .single();
 
-    return { data: null, error: "Refund flow not yet implemented" };
+    if (paymentError || !payment) {
+      console.error("Payment record not found for booking:", bookingId);
+      // Try to proceed without payment record (might be legacy booking)
+    }
+
+    // Get PaymentIntent status from Stripe
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    let refundResult;
+    const refundAmountOre = Math.round(refundAmountNOK * 100);
+
+    // Check if payment has been captured
+    if (
+      paymentIntent.status === "requires_capture" ||
+      paymentIntent.status === "requires_payment_method"
+    ) {
+      // Payment not yet captured - cancel the PaymentIntent
+      refundResult = await cancelStripePaymentIntent({
+        paymentIntentId,
+        cancellationReason: "requested_by_customer",
+      });
+
+      if (refundResult.error) {
+        return {
+          data: null,
+          error: `Failed to cancel payment: ${refundResult.error}`,
+        };
+      }
+
+      // Update payment record if exists
+      if (payment) {
+        await supabase
+          .from("payments")
+          .update({
+            status: "cancelled",
+            refunded_amount: refundAmountNOK,
+            refund_reason: refundReason,
+          })
+          .eq("id", payment.id);
+      }
+
+      return {
+        data: {
+          refundId: null,
+          refundAmountNOK,
+          method: "cancelled",
+          status: "cancelled",
+        },
+        error: null,
+      };
+    } else if (paymentIntent.status === "succeeded") {
+      // Payment has been captured - create a refund
+      if (refundAmountOre > 0) {
+        refundResult = await createStripeRefund({
+          paymentIntentId,
+          amountOre: refundAmountOre,
+          reason: "requested_by_customer",
+        });
+
+        if (refundResult.error) {
+          return {
+            data: null,
+            error: `Failed to create refund: ${refundResult.error}`,
+          };
+        }
+
+        // Update payment record if exists
+        if (payment) {
+          const newRefundedAmount = (payment.refunded_amount || 0) +
+            refundAmountNOK;
+          await supabase
+            .from("payments")
+            .update({
+              refunded_amount: newRefundedAmount,
+              refund_reason: refundReason,
+            })
+            .eq("id", payment.id);
+        }
+
+        // Handle stylist compensation for partial refunds
+        if (stylistCompensationNOK > 0 && payment) {
+          // Get stylist stripe account from booking
+          const { data: booking } = await supabase
+            .from("bookings")
+            .select(`
+              stylist:profiles!bookings_stylist_id_fkey(
+                stylist_details(stripe_account_id)
+              )
+            `)
+            .eq("id", bookingId)
+            .single();
+
+          if (booking?.stylist?.stylist_details?.stripe_account_id) {
+            // Create a transfer to stylist for their compensation
+            // This is the 50% they keep when customer cancels 24-48h before
+            try {
+              const compensationOre = Math.round(stylistCompensationNOK * 100);
+              const transfer = await stripe.transfers.create({
+                amount: compensationOre,
+                currency: "nok",
+                destination: booking.stylist.stylist_details.stripe_account_id,
+                description: `Compensation for cancelled booking ${bookingId}`,
+                metadata: {
+                  booking_id: bookingId,
+                  type: "cancellation_compensation",
+                  original_payment_intent: paymentIntentId,
+                },
+              });
+
+              console.log(
+                "Stylist compensation transfer created:",
+                transfer.id,
+              );
+            } catch (transferError) {
+              console.error(
+                "Failed to create stylist compensation transfer:",
+                transferError,
+              );
+              // Don't fail the refund if compensation transfer fails
+            }
+          }
+        }
+
+        return {
+          data: {
+            refundId: refundResult.data?.refundId,
+            refundAmountNOK,
+            stylistCompensationNOK,
+            method: "refunded",
+            status: refundResult.data?.status,
+          },
+          error: null,
+        };
+      } else {
+        // No refund amount but payment was captured (customer gets nothing)
+        return {
+          data: {
+            refundId: null,
+            refundAmountNOK: 0,
+            stylistCompensationNOK: 0,
+            method: "no_refund",
+            status: "no_refund_due",
+          },
+          error: null,
+        };
+      }
+    } else {
+      // Payment in unexpected state
+      return {
+        data: null,
+        error: `Payment in unexpected state: ${paymentIntent.status}`,
+      };
+    }
   } catch (error) {
     console.error("Error processing refund:", error);
-    return { data: null, error: "Failed to process refund" };
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to process refund",
+    };
   }
 }
 
@@ -361,7 +531,9 @@ export async function getCurrentUserStripeStatus() {
     // Get stylist details to check for Stripe account and identity verification
     const { data: stylistDetails, error: stylistError } = await supabase
       .from("stylist_details")
-      .select("*, stripe_verification_session_id, identity_verification_completed_at")
+      .select(
+        "*, stripe_verification_session_id, identity_verification_completed_at",
+      )
       .eq("profile_id", user.id)
       .single();
 
@@ -391,7 +563,7 @@ export async function getCurrentUserStripeStatus() {
       // Use the new canCreateServices function to determine if fully onboarded
       const isFullyOnboarded = canCreateServices(
         statusResult.data,
-        stylistDetails.identity_verification_completed_at
+        stylistDetails.identity_verification_completed_at,
       );
 
       return {
@@ -453,32 +625,6 @@ export async function createStripeCustomer({
     fullName,
     phoneNumber,
   });
-}
-
-/**
- * Transfer funds to stylist after successful payment
- * TODO: Implement when Stripe Connect is configured
- */
-export async function transferToStylist(
-  paymentIntentId: string,
-  bookingId: string,
-) {
-  // TODO: Get payment and booking details
-  // TODO: Calculate platform fee and stylist payout
-  // TODO: Create transfer to stylist's Stripe account
-  // TODO: Update payment record with transfer details
-  // TODO: Send payout notification to stylist
-}
-
-/**
- * Get Stripe dashboard link for stylist
- * TODO: Implement when Stripe Connect is configured
- */
-export async function getStylistDashboardLink(stylistId: string) {
-  // TODO: Get stylist's Stripe account ID
-  // TODO: Create login link
-  // const loginLink = await stripe.accounts.createLoginLink(stripeAccountId);
-  // return { url: loginLink.url };
 }
 
 /**
@@ -627,7 +773,9 @@ export async function createIdentityVerificationForCurrentUser() {
     // Get stylist details
     const { data: stylistDetails, error: stylistError } = await supabase
       .from("stylist_details")
-      .select("stripe_verification_session_id, identity_verification_completed_at")
+      .select(
+        "stripe_verification_session_id, identity_verification_completed_at",
+      )
       .eq("profile_id", user.id)
       .single();
 
@@ -645,17 +793,20 @@ export async function createIdentityVerificationForCurrentUser() {
 
     // If there's an existing session, check its status
     if (stylistDetails.stripe_verification_session_id) {
-      const statusResult = await getIdentityVerificationSessionStatus(
-        stylistDetails.stripe_verification_session_id
-      );
-      
-      if (statusResult.data?.status === "processing" || statusResult.data?.status === "verified") {
+      const statusResult = await getIdentityVerificationSessionStatus({
+        sessionId: stylistDetails.stripe_verification_session_id,
+      });
+
+      if (
+        statusResult.data?.status === "processing" ||
+        statusResult.data?.status === "verified"
+      ) {
         return {
           data: null,
           error: "Identitetsverifisering pågår allerede.",
         };
       }
-      
+
       // If status is requires_input or failed, we'll create a new session
     }
 

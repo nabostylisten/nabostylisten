@@ -231,6 +231,7 @@ export default async function BookingChatPage({
             serviceTitles={serviceTitles}
             bookingDate={booking.start_time}
             bookingStatus={booking.status}
+            bookingTotalPrice={booking.total_price}
             initialMessages={messages || []}
             messagesError={messagesError}
             stylistId={booking.stylist_id}

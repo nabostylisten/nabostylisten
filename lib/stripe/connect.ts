@@ -653,13 +653,13 @@ export async function createStripeRefund({
 }: {
   paymentIntentId: string;
   amountOre?: number; // If not provided, refunds full amount
-  reason?: string;
+  reason?: Stripe.RefundCreateParams.Reason;
 }) {
   try {
     const refund = await stripe.refunds.create({
       payment_intent: paymentIntentId,
       amount: amountOre,
-      reason: reason as Stripe.RefundCreateParams.Reason,
+      reason,
     });
 
     return {
@@ -762,8 +762,8 @@ export async function createIdentityVerificationSession({
   returnUrl: string;
 }) {
   try {
-    const verificationSession =
-      await stripe.identity.verificationSessions.create({
+    const verificationSession = await stripe.identity.verificationSessions
+      .create({
         type: "document",
         provided_details: {
           email,
@@ -785,10 +785,9 @@ export async function createIdentityVerificationSession({
     console.error("Error creating identity verification session:", error);
     return {
       data: null,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to create verification session",
+      error: error instanceof Error
+        ? error.message
+        : "Failed to create verification session",
     };
   }
 }
@@ -803,8 +802,9 @@ export async function getIdentityVerificationSessionStatus({
   sessionId: string;
 }) {
   try {
-    const session =
-      await stripe.identity.verificationSessions.retrieve(sessionId);
+    const session = await stripe.identity.verificationSessions.retrieve(
+      sessionId,
+    );
 
     return {
       data: {
@@ -819,10 +819,9 @@ export async function getIdentityVerificationSessionStatus({
     console.error("Error retrieving identity verification session:", error);
     return {
       data: null,
-      error:
-        error instanceof Error
-          ? error.message
-          : "Failed to get verification status",
+      error: error instanceof Error
+        ? error.message
+        : "Failed to get verification status",
     };
   }
 }

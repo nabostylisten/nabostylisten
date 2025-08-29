@@ -64,11 +64,13 @@ type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
 interface BookingCardProps {
   booking: BookingWithDetails;
   userRole?: "customer" | "stylist";
+  currentUserId: string;
 }
 
 export function BookingCard({
   booking,
   userRole = "customer",
+  currentUserId,
 }: BookingCardProps) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
@@ -242,13 +244,20 @@ export function BookingCard({
               )}
             </div>
             <div className="flex gap-2">
-              {/* Stylist-specific actions dropdown */}
-              {userRole === "stylist" && (
-                <BookingActionsDropdown
-                  bookingId={booking.id}
-                  bookingStatus={booking.status}
-                />
-              )}
+              {/* Actions dropdown for both customers and stylists */}
+              <BookingActionsDropdown
+                booking={{
+                  id: booking.id,
+                  customer_id: booking.customer_id,
+                  stylist_id: booking.stylist_id,
+                  start_time: booking.start_time,
+                  total_price: booking.total_price,
+                  status: booking.status,
+                }}
+                currentUserId={currentUserId}
+                userRole={userRole}
+                serviceName={services[0]?.title || "Booking"}
+              />
               {/* Stylist-specific actions for pending bookings */}
               {userRole === "stylist" && booking.status === "pending" && (
                 <Button

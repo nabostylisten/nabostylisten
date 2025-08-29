@@ -228,13 +228,20 @@ export function BookingDetailsContent({
                 <div className="flex items-center gap-2">
                   {statusInfo.icon}
                   {statusInfo.badge}
-                  {/* Stylist actions dropdown */}
-                  {userRole === "stylist" && (
-                    <BookingActionsDropdown
-                      bookingId={booking.id}
-                      bookingStatus={booking.status}
-                    />
-                  )}
+                  {/* Actions dropdown for both customers and stylists */}
+                  <BookingActionsDropdown
+                    booking={{
+                      id: booking.id,
+                      customer_id: booking.customer_id,
+                      stylist_id: booking.stylist_id,
+                      start_time: booking.start_time,
+                      total_price: booking.total_price,
+                      status: booking.status,
+                    }}
+                    currentUserId={userId}
+                    userRole={userRole}
+                    serviceName={services[0]?.title || "Booking"}
+                  />
                   {/* Stylist actions for pending bookings */}
                   {userRole === "stylist" && booking.status === "pending" && (
                     <Button

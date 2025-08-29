@@ -1,8 +1,11 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { subscribeToNewsletter, initializeBrevoClient, addContactToBrevo } from "@/lib/newsletter";
+import {
+  addContactToBrevo,
+  initializeBrevoClient,
+  subscribeToNewsletter,
+} from "@/lib/newsletter";
 import type { Database } from "@/types/database.types";
 
 type UserPreferences = Database["public"]["Tables"]["user_preferences"]["Row"];
@@ -21,7 +24,7 @@ export async function getUserPreferences(
   userId: string,
 ): Promise<ActionResult<UserPreferences>> {
   try {
-    const supabase = await createClient();
+    const supabase = createServiceClient();
 
     // First try to get existing preferences
     const { data: preferences, error } = await supabase
@@ -70,7 +73,7 @@ export async function updateUserPreferences(
   updates: Partial<UserPreferencesUpdate>,
 ): Promise<ActionResult<UserPreferences>> {
   try {
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
 
     // Get current user to check permissions
     const { data: { user } } = await supabase.auth.getUser();
@@ -148,9 +151,12 @@ export async function updateUserPreferences(
         if (profile?.email) {
           if (updates.marketing_emails) {
             // Subscribe to marketing emails
-            await subscribeToMarketingEmails(profile.email, profile.full_name || undefined);
+            await subscribeToMarketingEmails(
+              profile.email,
+              profile.full_name || undefined,
+            );
           } else {
-            // Unsubscribe from marketing emails  
+            // Unsubscribe from marketing emails
             await unsubscribeFromMarketingEmails(profile.email);
           }
         }
@@ -212,7 +218,7 @@ export async function shouldReceiveNotification(
 
 /**
  * Server-side function to check notification preferences using service client
- * This bypasses RLS policies and should only be used in server actions for 
+ * This bypasses RLS policies and should only be used in server actions for
  * cross-user notification checks (e.g., checking stylist preferences when customer creates review)
  */
 export async function shouldReceiveNotificationServerSide(
@@ -221,7 +227,7 @@ export async function shouldReceiveNotificationServerSide(
 ): Promise<boolean> {
   try {
     const serviceClient = createServiceClient();
-    
+
     const { data: preferences, error } = await serviceClient
       .from("user_preferences")
       .select("*")
@@ -235,7 +241,10 @@ export async function shouldReceiveNotificationServerSide(
 
     return Boolean(preferences[notificationType]);
   } catch (error) {
-    console.error("Error checking notification preference (server-side):", error);
+    console.error(
+      "Error checking notification preference (server-side):",
+      error,
+    );
     return false; // Default to not sending notification on error
   }
 }
@@ -250,7 +259,7 @@ export async function subscribeUserToNewsletterAfterSignup(
   userId: string,
 ): Promise<ActionResult<void>> {
   try {
-    const supabase = await createClient();
+    const supabase = await createServiceClient();
 
     // Get user preferences first to check if newsletter_subscribed is true
     const { data: preferences } = await getUserPreferences(userId);
@@ -338,7 +347,7 @@ export async function unsubscribeFromMarketingEmails(
 ): Promise<void> {
   try {
     const contactsApi = initializeBrevoClient();
-    
+
     // Update contact attributes to mark as unsubscribed from marketing
     await contactsApi.updateContact(email, {
       attributes: {
@@ -346,7 +355,7 @@ export async function unsubscribeFromMarketingEmails(
         MARKETING_UNSUBSCRIBED_AT: new Date().toISOString(),
       },
     });
-    
+
     console.log(`Successfully unsubscribed ${email} from marketing emails`);
   } catch (error) {
     console.error(`Error unsubscribing ${email} from marketing emails:`, error);
@@ -365,9 +374,12 @@ export async function subscribeToPromotionalSMS(
   userId: string,
 ): Promise<ActionResult<void>> {
   // TODO: Implement SMS service integration
-  console.log(`TODO: Subscribe ${phoneNumber} (user: ${userId}) to promotional SMS`);
-  return { 
-    error: "SMS notifications not yet implemented. Will integrate with Twilio or similar service." 
+  console.log(
+    `TODO: Subscribe ${phoneNumber} (user: ${userId}) to promotional SMS`,
+  );
+  return {
+    error:
+      "SMS notifications not yet implemented. Will integrate with Twilio or similar service.",
   };
 }
 
@@ -380,9 +392,12 @@ export async function unsubscribeFromPromotionalSMS(
   userId: string,
 ): Promise<ActionResult<void>> {
   // TODO: Implement SMS service integration
-  console.log(`TODO: Unsubscribe ${phoneNumber} (user: ${userId}) from promotional SMS`);
-  return { 
-    error: "SMS notifications not yet implemented. Will integrate with Twilio or similar service." 
+  console.log(
+    `TODO: Unsubscribe ${phoneNumber} (user: ${userId}) from promotional SMS`,
+  );
+  return {
+    error:
+      "SMS notifications not yet implemented. Will integrate with Twilio or similar service.",
   };
 }
 
@@ -396,8 +411,11 @@ export async function sendPromotionalSMS(
   userId?: string,
 ): Promise<ActionResult<void>> {
   // TODO: Implement SMS service integration
-  console.log(`TODO: Send SMS to ${phoneNumber}: "${message}" (user: ${userId})`);
-  return { 
-    error: "SMS notifications not yet implemented. Will integrate with Twilio or similar service." 
+  console.log(
+    `TODO: Send SMS to ${phoneNumber}: "${message}" (user: ${userId})`,
+  );
+  return {
+    error:
+      "SMS notifications not yet implemented. Will integrate with Twilio or similar service.",
   };
 }

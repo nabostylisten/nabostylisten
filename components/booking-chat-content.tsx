@@ -28,6 +28,7 @@ interface BookingChatContentProps {
   serviceTitles: string[];
   bookingDate: string;
   bookingStatus: string;
+  bookingTotalPrice?: number;
   initialMessages: Array<{
     id: string;
     content: string;
@@ -53,6 +54,7 @@ export function BookingChatContent({
   serviceTitles,
   bookingDate,
   bookingStatus,
+  bookingTotalPrice = 0,
   initialMessages,
   messagesError,
   stylistId,
@@ -285,13 +287,20 @@ export function BookingChatContent({
               {getStatusLabel(bookingStatus)}
             </Badge>
             
-            {/* Stylist actions dropdown */}
-            {isCurrentUserStylist && (
-              <BookingActionsDropdown
-                bookingId={bookingId}
-                bookingStatus={bookingStatus}
-              />
-            )}
+            {/* Actions dropdown for both customers and stylists */}
+            <BookingActionsDropdown
+              booking={{
+                id: bookingId,
+                customer_id: customerId || '',
+                stylist_id: stylistId || '',
+                start_time: bookingDate,
+                total_price: bookingTotalPrice,
+                status: bookingStatus as any,
+              }}
+              currentUserId={currentUserId}
+              userRole={isCurrentUserStylist ? 'stylist' : 'customer'}
+              serviceName={serviceTitles[0] || 'Booking'}
+            />
           </div>
         </CardContent>
       </Card>

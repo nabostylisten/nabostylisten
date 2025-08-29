@@ -36,6 +36,12 @@ interface BookingStatusUpdateEmailProps {
   message?: string;
   location: string;
   recipientType: "customer" | "stylist";
+  cancelledBy?: "customer" | "stylist";
+  refundInfo?: {
+    refundAmount: number;
+    stylistCompensation?: number;
+    refundPercentage: number;
+  };
 }
 
 export const BookingStatusUpdateEmail = ({
@@ -51,6 +57,8 @@ export const BookingStatusUpdateEmail = ({
   message,
   location = "Hjemme hos deg",
   recipientType = "customer",
+  cancelledBy,
+  refundInfo,
 }: BookingStatusUpdateEmailProps) => {
   const statusLabels = {
     confirmed: "Bekreftet",
@@ -62,13 +70,19 @@ export const BookingStatusUpdateEmail = ({
       recipientType === "customer"
         ? `Din booking er bekreftet av ${stylistName}. Se frem til en fantastisk opplevelse!`
         : `Du har bekreftet bookingen med ${customerName}. Forbered deg på å levere en fantastisk opplevelse!`,
-    cancelled:
-      recipientType === "customer"
-        ? `Din booking har blitt avlyst av ${stylistName}. Vi beklager ulempen dette måtte medføre.`
-        : `Du har avlyst bookingen med ${customerName}. Kunden vil bli informert om avlysningen.`,
+    cancelled: (() => {
+      if (recipientType === "customer") {
+        return cancelledBy === "customer"
+          ? `Du har avlyst din booking med ${stylistName}. Vi beklager at det ikke passet for deg denne gangen.`
+          : `Din booking har blitt avlyst av ${stylistName}. Vi beklager ulempen dette måtte medføre.`;
+      } else {
+        return cancelledBy === "stylist"
+          ? `Du har avlyst bookingen med ${customerName}. Kunden er informert om avlysningen.`
+          : `${customerName} har avlyst bookingen. Du vil motta kompensasjon hvis det gjelder.`;
+      }
+    })(),
   };
 
-  const emailStatusColors = statusColors;
 
   const previewText = `Booking ${statusLabels[status].toLowerCase()}: ${serviceName}`;
 
@@ -142,6 +156,59 @@ export const BookingStatusUpdateEmail = ({
               </Text>
             </div>
           </Section>
+
+          {/* Refund Information */}
+          {status === "cancelled" && refundInfo && (
+            <Section style={refundSection}>
+              <Text style={sectionHeader}>Refusjon og kompensasjon:</Text>
+
+              {recipientType === "customer" && refundInfo.refundAmount > 0 && (
+                <div style={detailRow}>
+                  <Text style={detailLabel}>Du får refundert:</Text>
+                  <Text style={detailValue}>
+                    {refundInfo.refundAmount.toLocaleString("nb-NO")} kr (
+                    {Math.round(refundInfo.refundPercentage * 100)}%)
+                  </Text>
+                </div>
+              )}
+
+              {recipientType === "customer" && refundInfo.refundAmount === 0 && (
+                <div style={detailRow}>
+                  <Text style={detailLabel}>Refusjon:</Text>
+                  <Text style={detailValue}>
+                    Ingen refusjon (avlyst mindre enn 24 timer før avtalt tid)
+                  </Text>
+                </div>
+              )}
+
+              {recipientType === "stylist" && refundInfo.stylistCompensation && refundInfo.stylistCompensation > 0 && (
+                <div style={detailRow}>
+                  <Text style={detailLabel}>Din kompensasjon:</Text>
+                  <Text style={detailValue}>
+                    {refundInfo.stylistCompensation.toLocaleString("nb-NO")} kr
+                  </Text>
+                </div>
+              )}
+
+              {recipientType === "stylist" && cancelledBy === "stylist" && (
+                <div style={detailRow}>
+                  <Text style={detailLabel}>Kundens refusjon:</Text>
+                  <Text style={detailValue}>
+                    {refundInfo.refundAmount.toLocaleString("nb-NO")} kr (100%)
+                  </Text>
+                </div>
+              )}
+
+              {refundInfo.refundAmount > 0 && (
+                <Text style={refundNote}>
+                  {recipientType === "customer" 
+                    ? "Refusjonen vil bli behandlet innen 3-5 virkedager og vises på din konto."
+                    : "Eventuelle utbetalinger vil bli behandlet i henhold til våre betalingsvilkår."
+                  }
+                </Text>
+              )}
+            </Section>
+          )}
 
           {/* Message */}
           {message && (
@@ -227,10 +294,15 @@ BookingStatusUpdateEmail.PreviewProps = {
   serviceName: "Hårklipp og styling",
   bookingDate: "15. januar 2024",
   bookingTime: "14:00 - 15:30",
-  status: "confirmed" as const,
-  message: "Ser frem til å møte deg! Ring hvis du har spørsmål.",
+  status: "cancelled" as const,
+  message: "Beklager, men jeg må avlyse på grunn av sykdom.",
   location: "Hjemme hos deg",
   recipientType: "customer" as const,
+  cancelledBy: "stylist" as const,
+  refundInfo: {
+    refundAmount: 800,
+    refundPercentage: 1.0,
+  },
 } as BookingStatusUpdateEmailProps;
 
 export default BookingStatusUpdateEmail;
@@ -277,4 +349,20 @@ const statusValue = {
   fontWeight: "600",
   color: colors.accentForeground, // Will be overridden by status color
   margin: "0",
+};
+
+const refundSection = {
+  ...sectionStyles.infoSection,
+  backgroundColor: colors.accent,
+  border: `1px solid ${colors.accentForeground}`,
+  borderRadius: "8px",
+};
+
+const refundNote = {
+  ...textStyles.detailValue,
+  fontSize: "12px",
+  fontStyle: "italic",
+  color: colors.mutedForeground,
+  marginTop: "12px",
+  textAlign: "center" as const,
 };

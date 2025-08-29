@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { requireAdmin } from "@/server/admin/middleware";
 import { stripe } from "@/lib/stripe/config";
 import type Stripe from "stripe";
@@ -51,7 +52,10 @@ export async function getAllPayments(options: {
 } = {}) {
   await requireAdmin();
 
-  const supabase = await createClient();
+  // Use service client to bypass RLS for admin operations
+  const supabase = createServiceClient();
+  
+  console.log("🔑 Using service client to bypass RLS for admin payments query");
 
   try {
     // See get_admin_payments in supabase/schemas/00-schema.sql for definition
@@ -67,7 +71,14 @@ export async function getAllPayments(options: {
       throw error;
     }
 
+    console.log("✅ getAllPayments: Raw RPC response:", {
+      paymentsCount: payments?.length || 0,
+      firstPayment: payments?.[0] || null,
+      options,
+    });
+
     if (!payments) {
+      console.log("⚠️ getAllPayments: No payments returned from RPC");
       return { data: [], error: null };
     }
 
@@ -101,6 +112,11 @@ export async function getAllPayments(options: {
         booking_date: payment.booking_date,
       }),
     );
+
+    console.log("🔄 getAllPayments: Transformed payments:", {
+      transformedCount: transformedPayments.length,
+      firstTransformed: transformedPayments[0] || null,
+    });
 
     return { data: transformedPayments, error: null };
   } catch (error) {

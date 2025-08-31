@@ -16,6 +16,8 @@ import {
   createCustomerPrimaryAddresses,
   // Discounts
   createDiscountCodes,
+  createDiscountRestrictions,
+  createDiscountUsage,
   // Service categories
   createMainServiceCategories,
   createOldChatMessagesForCronTesting,
@@ -93,9 +95,10 @@ async function main() {
   const applications = await createStylistApplications(seed);
   await linkApplicationsToCategories(seed, applications, mainCategories);
 
-  // 7. Create discount codes
+  // 7. Create discount codes and user restrictions
   console.log("-- Phase 7: Discount Management");
   const discounts = await createDiscountCodes(seed);
+  await createDiscountRestrictions(seed, discounts, allUsers);
 
   // 8. Create comprehensive booking system
   console.log("-- Phase 8: Booking System");
@@ -111,6 +114,10 @@ async function main() {
     bookings,
     services,
   );
+
+  // Create discount usage records after bookings are available
+  console.log("-- Creating discount usage records...");
+  await createDiscountUsage(seed, discounts, allUsers, bookings);
 
   // 9. Create chat system
   console.log("-- Phase 9: Chat System");

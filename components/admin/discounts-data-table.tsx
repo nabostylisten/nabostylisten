@@ -212,38 +212,45 @@ export function DiscountsDataTable({
     },
   });
 
-  const exportToCSV = () => {
-    const csvConfig = mkConfig({
-      fieldSeparator: ";",
-      filename: `rabattkoder-${new Date().toISOString().split("T")[0]}`,
-      decimalSeparator: ",",
-      useKeysAsHeaders: false,
-      columnHeaders: columns
-        .filter((col) => col.id !== "actions" && "accessorKey" in col)
-        .map((col) => getColumnDisplayName(col.header as string)),
+  const exportToCSV = async () => {
+    // Fetch all data that matches current filters (not paginated)
+    const allFilteredData = await getAllDiscounts({
+      searchTerm: debouncedSearchTerm || undefined,
+      statusFilter: activeTab === "all" ? "all" : activeTab,
+      limit: 10000, // Large limit to get all records
     });
 
-    const csvData = filteredData.map((discount) => {
+    if (!allFilteredData.data) {
+      toast.error("Kunne ikke hente data for eksport");
+      return;
+    }
+
+    const csvConfig = mkConfig({
+      fieldSeparator: ";",
+      filename: `rabattkoder-${activeTab}-${new Date().toISOString().split("T")[0]}`,
+      decimalSeparator: ",",
+      useKeysAsHeaders: true,
+    });
+
+    const csvData = allFilteredData.data.map((discount) => {
       const restrictionCount = discount.discount_restrictions?.[0]?.count || 0;
       
       return {
-        code: discount.code,
-        description: discount.description || "",
-        discount_type:
-          discount.discount_percentage !== null
-            ? `${discount.discount_percentage}%`
-            : `${(discount.discount_amount! / 100).toLocaleString("no-NO")} kr`,
-        usage: `${discount.current_uses || 0}${discount.max_uses ? ` / ${discount.max_uses}` : " / ∞"}`,
-        user_restrictions: restrictionCount === 0 
+        "Kode": discount.code,
+        "Beskrivelse": discount.description || "",
+        "Type": discount.discount_percentage !== null
+          ? `${discount.discount_percentage}%`
+          : `${(discount.discount_amount! / 100).toLocaleString("no-NO")} kr`,
+        "Bruk": `${discount.current_uses || 0}${discount.max_uses ? ` / ${discount.max_uses}` : " / ∞"}`,
+        "Kan brukes av": restrictionCount === 0 
           ? "Alle" 
           : `${restrictionCount} bruker${restrictionCount !== 1 ? "e" : ""}`,
-        valid_period: `Fra: ${new Date(discount.valid_from).toLocaleDateString("no-NO")}${
+        "Gyldig periode": `Fra: ${new Date(discount.valid_from).toLocaleDateString("no-NO")}${
           discount.expires_at
             ? ` - Til: ${new Date(discount.expires_at).toLocaleDateString("no-NO")}`
             : ""
         }`,
-        order_limits:
-          [
+        "Ordrebegrensninger": [
             discount.minimum_order_amount
               ? `Min: ${(discount.minimum_order_amount / 100).toLocaleString("no-NO")} kr`
               : null,
@@ -253,14 +260,14 @@ export function DiscountsDataTable({
           ]
             .filter(Boolean)
             .join(", ") || "Ingen",
-        is_active: discount.is_active ? "Aktiv" : "Inaktiv",
-        created_at: new Date(discount.created_at).toLocaleString("no-NO"),
+        "Status": discount.is_active ? "Aktiv" : "Inaktiv",
+        "Opprettet": new Date(discount.created_at).toLocaleString("no-NO"),
       };
     });
 
     const csv = generateCsv(csvConfig)(csvData);
     download(csvConfig)(csv);
-    toast.success("CSV-fil lastet ned");
+    toast.success(`CSV-fil lastet ned med ${csvData.length} rabattkoder`);
   };
 
   // Use server-fetched counts or fallback to 0

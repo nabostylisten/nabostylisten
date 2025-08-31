@@ -2561,6 +2561,118 @@
           "maxLength": null
         },
         {
+          "id": "public.bookings.customer_receipt_email_sent_at",
+          "name": "customer_receipt_email_sent_at",
+          "columnName": "customer_receipt_email_sent_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.stylist_notification_email_sent_at",
+          "name": "stylist_notification_email_sent_at",
+          "columnName": "stylist_notification_email_sent_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.payment_captured_at",
+          "name": "payment_captured_at",
+          "columnName": "payment_captured_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.payout_email_sent_at",
+          "name": "payout_email_sent_at",
+          "columnName": "payout_email_sent_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.payout_processed_at",
+          "name": "payout_processed_at",
+          "columnName": "payout_processed_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.reschedule_reason",
+          "name": "reschedule_reason",
+          "columnName": "reschedule_reason",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.rescheduled_at",
+          "name": "rescheduled_at",
+          "columnName": "rescheduled_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.rescheduled_from",
+          "name": "rescheduled_from",
+          "columnName": "rescheduled_from",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "addresses",
           "type": "addresses",
           "isRequired": false,
@@ -2680,6 +2792,20 @@
           "isRequired": false,
           "kind": "object",
           "relationName": "chatsTobookings",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "discount_usage",
+          "type": "discount_usage",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "discount_usageTobookings",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -4804,6 +4930,264 @@
         }
       ]
     },
+    "discount_restrictions": {
+      "id": "public.discount_restrictions",
+      "schemaName": "public",
+      "tableName": "discount_restrictions",
+      "fields": [
+        {
+          "id": "public.discount_restrictions.discount_id",
+          "name": "discount_id",
+          "columnName": "discount_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "public.discount_restrictions.profile_id",
+          "name": "profile_id",
+          "columnName": "profile_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "name": "discounts",
+          "type": "discounts",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "discount_restrictionsTodiscounts",
+          "relationFromFields": [
+            "discount_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "profiles",
+          "type": "profiles",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "discount_restrictionsToprofiles",
+          "relationFromFields": [
+            "profile_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "discount_restrictions_pkey",
+          "fields": [
+            "discount_id",
+            "profile_id"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
+    "discount_usage": {
+      "id": "public.discount_usage",
+      "schemaName": "public",
+      "tableName": "discount_usage",
+      "fields": [
+        {
+          "id": "public.discount_usage.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "public.discount_usage.created_at",
+          "name": "created_at",
+          "columnName": "created_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.discount_usage.updated_at",
+          "name": "updated_at",
+          "columnName": "updated_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.discount_usage.discount_id",
+          "name": "discount_id",
+          "columnName": "discount_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.discount_usage.profile_id",
+          "name": "profile_id",
+          "columnName": "profile_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.discount_usage.booking_id",
+          "name": "booking_id",
+          "columnName": "booking_id",
+          "type": "uuid",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.discount_usage.used_at",
+          "name": "used_at",
+          "columnName": "used_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "bookings",
+          "type": "bookings",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "discount_usageTobookings",
+          "relationFromFields": [
+            "booking_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "discounts",
+          "type": "discounts",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "discount_usageTodiscounts",
+          "relationFromFields": [
+            "discount_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "profiles",
+          "type": "profiles",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "discount_usageToprofiles",
+          "relationFromFields": [
+            "profile_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "discount_usage_discount_id_profile_id_booking_id_key",
+          "fields": [
+            "booking_id",
+            "discount_id",
+            "profile_id"
+          ],
+          "nullNotDistinct": false
+        },
+        {
+          "name": "discount_usage_pkey",
+          "fields": [
+            "id"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
     "discounts": {
       "id": "public.discounts",
       "schemaName": "public",
@@ -5020,11 +5404,53 @@
           "maxLength": null
         },
         {
+          "id": "public.discounts.maximum_order_amount",
+          "name": "maximum_order_amount",
+          "columnName": "maximum_order_amount",
+          "type": "int4",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "bookings",
           "type": "bookings",
           "isRequired": false,
           "kind": "object",
           "relationName": "bookingsTodiscounts",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "discount_restrictions",
+          "type": "discount_restrictions",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "discount_restrictionsTodiscounts",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "discount_usage",
+          "type": "discount_usage",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "discount_usageTodiscounts",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -11612,6 +12038,34 @@
           "hasDefaultValue": false
         },
         {
+          "name": "discount_restrictions",
+          "type": "discount_restrictions",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "discount_restrictionsToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "discount_usage",
+          "type": "discount_usage",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "discount_usageToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
           "name": "media",
           "type": "media",
           "isRequired": false,
@@ -14830,6 +15284,20 @@
           "maxLength": null
         },
         {
+          "id": "auth.sso_providers.disabled",
+          "name": "disabled",
+          "columnName": "disabled",
+          "type": "bool",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "saml_providers",
           "type": "saml_providers",
           "isRequired": false,
@@ -15177,6 +15645,34 @@
           "id": "public.stylist_details.stripe_account_id",
           "name": "stripe_account_id",
           "columnName": "stripe_account_id",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.stylist_details.identity_verification_completed_at",
+          "name": "identity_verification_completed_at",
+          "columnName": "identity_verification_completed_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.stylist_details.stripe_verification_session_id",
+          "name": "stripe_verification_session_id",
+          "columnName": "stripe_verification_session_id",
           "type": "text",
           "isRequired": false,
           "kind": "scalar",

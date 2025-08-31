@@ -215,14 +215,16 @@ CREATE TABLE IF NOT EXISTS public.discounts (
     valid_from timestamp with time zone DEFAULT now() NOT NULL,
     expires_at timestamp with time zone,
 
-    -- Minimum order requirements
+    -- Order amount requirements
     minimum_order_amount integer, -- In øre/cents
+    maximum_order_amount integer, -- In øre/cents
 
     CONSTRAINT discount_check CHECK (
         (discount_percentage IS NOT NULL AND discount_amount IS NULL) OR
         (discount_percentage IS NULL AND discount_amount IS NOT NULL)
     )
 );
+
 
 -- Table for booking requests
 CREATE TABLE IF NOT EXISTS public.bookings (
@@ -279,6 +281,21 @@ CREATE TABLE IF NOT EXISTS public.booking_services (
     booking_id uuid NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
     service_id uuid NOT NULL REFERENCES public.services(id) ON DELETE CASCADE,
     PRIMARY KEY (booking_id, service_id)
+);
+
+-- Table for tracking discount usage per profile
+CREATE TABLE IF NOT EXISTS public.discount_usage (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    discount_id uuid NOT NULL REFERENCES public.discounts(id) ON DELETE CASCADE,
+    profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    booking_id uuid REFERENCES public.bookings(id) ON DELETE SET NULL,
+    used_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Ensure unique usage per discount per profile per booking (prevents duplicate tracking)
+    UNIQUE(discount_id, profile_id, booking_id)
 );
 
 -- Table for customer reviews

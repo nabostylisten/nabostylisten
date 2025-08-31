@@ -7,7 +7,6 @@ import {
   MapPin,
   CreditCard,
   MessageSquare,
-  Percent,
 } from "lucide-react";
 import { defineStepper } from "@/components/stepper";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -15,13 +14,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BookingScheduler } from "@/components/booking/booking-scheduler";
 import { BookingAddressSelector } from "@/components/addresses";
+import { ApplyDiscountForm } from "@/components/booking/apply-discount-form";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import type { Database } from "@/types/database.types";
+import type { DatabaseTables } from "@/types";
 
 const { Stepper } = defineStepper(
   {
@@ -52,6 +52,12 @@ const { Stepper } = defineStepper(
 
 type Address = Database["public"]["Tables"]["addresses"]["Row"];
 
+interface AppliedDiscount {
+  discount: DatabaseTables["discounts"]["Row"];
+  discountAmount: number;
+  code: string;
+}
+
 interface BookingData {
   startTime?: Date;
   endTime?: Date;
@@ -60,12 +66,13 @@ interface BookingData {
   customerAddressId?: string;
   customerAddressDetails?: Address;
   messageToStylist?: string;
-  discountCode?: string;
+  appliedDiscount?: AppliedDiscount;
 }
 
 interface BookingStepperProps {
   stylistId: string;
   serviceDurationMinutes: number;
+  serviceAmountCents: number;
   stylistCanTravel: boolean;
   stylistHasOwnPlace: boolean;
   onComplete: (bookingData: BookingData) => void;
@@ -75,6 +82,7 @@ interface BookingStepperProps {
 export function BookingStepper({
   stylistId,
   serviceDurationMinutes,
+  serviceAmountCents,
   stylistCanTravel,
   stylistHasOwnPlace,
   onComplete,
@@ -212,9 +220,15 @@ export function BookingStepper({
                     methods.next();
                   }
                 }}
-                disabled={!canProceedFromStep(methods.current.id) || isProcessing}
+                disabled={
+                  !canProceedFromStep(methods.current.id) || isProcessing
+                }
               >
-                {isProcessing ? "Behandler..." : methods.isLast ? "Fullfør booking" : "Neste"}
+                {isProcessing
+                  ? "Behandler..."
+                  : methods.isLast
+                    ? "Fullfør booking"
+                    : "Neste"}
               </Button>
             </Stepper.Controls>
           </>
@@ -246,17 +260,17 @@ export function BookingStepper({
               location={bookingData.location}
               onLocationChange={(location) => updateBookingData({ location })}
               selectedAddressId={bookingData.customerAddressId}
-              onAddressSelect={(addressId, address) => 
-                updateBookingData({ 
+              onAddressSelect={(addressId, address) =>
+                updateBookingData({
                   customerAddressId: addressId,
                   customerAddressDetails: address,
-                  customerAddress: address ? 
-                    `${address.street_address}, ${address.postal_code} ${address.city}` : 
-                    undefined
+                  customerAddress: address
+                    ? `${address.street_address}, ${address.postal_code} ${address.city}`
+                    : undefined,
                 })
               }
               customerInstructions={bookingData.messageToStylist}
-              onInstructionsChange={(instructions) => 
+              onInstructionsChange={(instructions) =>
                 updateBookingData({ messageToStylist: instructions })
               }
             />
@@ -291,29 +305,13 @@ export function BookingStepper({
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Percent className="w-5 h-5" />
-                    Rabattkode
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label htmlFor="discount">
-                      Har du en rabattkode? (valgfritt)
-                    </Label>
-                    <Input
-                      id="discount"
-                      placeholder="Skriv inn rabattkode..."
-                      value={bookingData.discountCode || ""}
-                      onChange={(e) =>
-                        updateBookingData({ discountCode: e.target.value })
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+              <ApplyDiscountForm
+                orderAmountCents={serviceAmountCents}
+                onDiscountApplied={(discount) => 
+                  updateBookingData({ appliedDiscount: discount || undefined })
+                }
+                initialDiscountCode={bookingData.appliedDiscount?.code}
+              />
             </div>
           </Stepper.Panel>
         );
@@ -352,9 +350,12 @@ export function BookingStepper({
                         <strong>Melding:</strong> {bookingData.messageToStylist}
                       </p>
                     )}
-                    {bookingData.discountCode && (
+                    {bookingData.appliedDiscount && (
                       <p className="text-sm">
-                        <strong>Rabattkode:</strong> {bookingData.discountCode}
+                        <strong>Rabattkode:</strong> {bookingData.appliedDiscount.code}
+                        <span className="ml-2 text-green-600">
+                          (-{(bookingData.appliedDiscount.discountAmount / 100).toLocaleString('no-NO')} kr)
+                        </span>
                       </p>
                     )}
                   </div>

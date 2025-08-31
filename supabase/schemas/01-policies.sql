@@ -12,6 +12,7 @@ ALTER TABLE public.booking_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.discounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.discount_usage ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stylist_availability_rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stylist_unavailability ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.stylist_recurring_unavailability ENABLE ROW LEVEL SECURITY;
@@ -394,6 +395,27 @@ FOR UPDATE TO authenticated
 USING ( public.get_my_role() = 'admin' );
 
 CREATE POLICY "Only admins can delete discounts." ON public.discounts
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Discount usage policies for tracking per-profile usage.
+CREATE POLICY "Users can view their own discount usage." ON public.discount_usage
+FOR SELECT TO authenticated
+USING ( profile_id = auth.uid() );
+
+CREATE POLICY "Admins can view all discount usage." ON public.discount_usage
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "System can insert discount usage records." ON public.discount_usage
+FOR INSERT TO authenticated
+WITH CHECK ( profile_id = auth.uid() );
+
+CREATE POLICY "Only admins can update discount usage." ON public.discount_usage
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Only admins can delete discount usage." ON public.discount_usage
 FOR DELETE TO authenticated
 USING ( public.get_my_role() = 'admin' );
 

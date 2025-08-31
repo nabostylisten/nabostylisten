@@ -465,68 +465,44 @@ export async function createBookingWithServices(
     // Start a transaction-like operation
     try {
         // 1. Handle discount validation if provided
-        let discountId: string | null = null;
-        let discountAmount = 0;
+        let validatedDiscount: {
+            id: string;
+            discountPercentage?: number;
+            discountAmountNOK?: number;
+        } | null = null;
 
         if (input.discountCode) {
-            const { data: discount, error: discountError } = await supabase
-                .from("discounts")
-                .select("*")
-                .eq("code", input.discountCode)
-                .eq("is_active", true)
-                .single();
+            // Use discount validation server action
+            const { validateDiscountCode, trackDiscountUsage } = await import("./discounts.actions");
+            
+            const validationResult = await validateDiscountCode({
+                code: input.discountCode,
+                orderAmountCents: Math.round(input.totalPrice * 100),
+                profileId: user.id,
+            });
 
-            if (discountError || !discount) {
-                return { error: "Invalid discount code", data: null };
+            if (validationResult.error || !validationResult.data) {
+                return { error: validationResult.error || "Invalid discount code", data: null };
             }
 
-            // Check if discount is still valid
-            const now = new Date();
-            const validFrom = new Date(discount.valid_from);
-            const expiresAt = discount.expires_at
-                ? new Date(discount.expires_at)
-                : null;
+            const discount = validationResult.data;
+            
+            // Track usage (this will increment the usage counter)
+            const trackingResult = await trackDiscountUsage({
+                discountId: discount.id,
+                profileId: user.id,
+                orderAmountCents: Math.round(input.totalPrice * 100),
+            });
 
-            if (now < validFrom || (expiresAt && now > expiresAt)) {
-                return { error: "Discount code expired", data: null };
+            if (trackingResult.error) {
+                return { error: trackingResult.error, data: null };
             }
 
-            // Check usage limits
-            if (
-                discount.max_uses && discount.current_uses >= discount.max_uses
-            ) {
-                return {
-                    error: "Discount code usage limit reached",
-                    data: null,
-                };
-            }
-
-            // Check minimum order amount
-            if (
-                discount.minimum_order_amount &&
-                (input.totalPrice * 100) < discount.minimum_order_amount
-            ) {
-                return {
-                    error: "Order amount below minimum for discount",
-                    data: null,
-                };
-            }
-
-            // Calculate discount amount
-            if (discount.discount_percentage) {
-                discountAmount =
-                    (input.totalPrice * discount.discount_percentage) / 100;
-            } else if (discount.discount_amount) {
-                discountAmount = discount.discount_amount / 100; // Convert from øre to NOK
-            }
-
-            discountId = discount.id;
-
-            // Update discount usage count
-            await supabase
-                .from("discounts")
-                .update({ current_uses: discount.current_uses + 1 })
-                .eq("id", discount.id);
+            validatedDiscount = {
+                id: discount.id,
+                discountPercentage: discount.discount_percentage || undefined,
+                discountAmountNOK: discount.discount_amount ? (discount.discount_amount / 100) : undefined,
+            };
         }
 
         // 2. Handle address for customer location
@@ -577,8 +553,19 @@ export async function createBookingWithServices(
             }
         }
 
-        // 3. Calculate final price after discount
-        const finalPrice = Math.max(0, input.totalPrice - discountAmount);
+        // 3. Calculate enhanced payment breakdown with discount support
+        const { calculateBookingPaymentBreakdown } = await import("@/schemas/platform-config.schema");
+        
+        const paymentBreakdown = calculateBookingPaymentBreakdown({
+            serviceAmountNOK: input.totalPrice,
+            hasAffiliate: false, // TODO: Implement affiliate logic
+            appliedDiscount: validatedDiscount ? {
+                discountPercentage: validatedDiscount.discountPercentage,
+                discountAmountNOK: validatedDiscount.discountAmountNOK,
+            } : undefined,
+        });
+
+        const finalPrice = paymentBreakdown.totalAmountNOK;
 
         // Get stylist Stripe account ID for payment processing
         const { data: stylistDetails, error: stylistError } = await supabase
@@ -602,7 +589,7 @@ export async function createBookingWithServices(
             customerId: user.id,
             stylistId: input.stylistId,
             hasAffiliate: false, // TODO: Implement affiliate logic
-            discountAmountNOK: discountAmount,
+            discountAmountNOK: paymentBreakdown.discountAmountNOK || 0,
             discountCode: input.discountCode,
         });
 
@@ -654,8 +641,8 @@ export async function createBookingWithServices(
             message_to_stylist: input.messageToStylist,
             status: "pending",
             address_id: addressId,
-            discount_id: discountId,
-            discount_applied: discountAmount,
+            discount_id: validatedDiscount?.id || null,
+            discount_applied: paymentBreakdown.discountAmountNOK || 0,
             total_price: finalPrice,
             total_duration_minutes: input.totalDurationMinutes,
             stripe_payment_intent_id: stripePaymentIntentId,
@@ -728,12 +715,7 @@ export async function createBookingWithServices(
             console.error("Failed to create chat for booking:", chatError);
         }
 
-        // Create comprehensive payment record using new schema
-        const platformFeeCalculation = calculatePlatformFee({
-            totalAmountNOK: finalPrice,
-            hasAffiliate: false, // TODO: Implement affiliate logic
-        });
-
+        // Create comprehensive payment record using enhanced payment breakdown
         // Use service client for payment record creation to bypass RLS
         const serviceClient = createServiceClient();
         const { error: paymentError } = await serviceClient
@@ -741,18 +723,12 @@ export async function createBookingWithServices(
             .insert({
                 booking_id: booking.id,
                 payment_intent_id: stripePaymentIntentId,
-                original_amount: Math.round(input.totalPrice * 100), // Original amount in øre
-                discount_amount: Math.round(discountAmount * 100), // Discount amount in øre
-                final_amount: Math.round(finalPrice * 100), // Final amount in øre
-                platform_fee: Math.round(
-                    platformFeeCalculation.platformFeeNOK * 100,
-                ), // Platform fee in øre
-                stylist_payout: Math.round(
-                    platformFeeCalculation.stylistPayoutNOK * 100,
-                ), // Stylist payout in øre
-                affiliate_commission: Math.round(
-                    (platformFeeCalculation.affiliateCommissionNOK || 0) * 100,
-                ), // Affiliate commission in øre
+                original_amount: Math.round(paymentBreakdown.originalTotalAmountNOK * 100), // Original amount in øre
+                discount_amount: Math.round((paymentBreakdown.discountAmountNOK || 0) * 100), // Discount amount in øre
+                final_amount: Math.round(paymentBreakdown.totalAmountNOK * 100), // Final amount in øre
+                platform_fee: Math.round(paymentBreakdown.platformFeeNOK * 100), // Platform fee in øre
+                stylist_payout: Math.round(paymentBreakdown.stylistPayoutNOK * 100), // Stylist payout in øre
+                affiliate_commission: Math.round((paymentBreakdown.affiliateCommissionNOK || 0) * 100), // Affiliate commission in øre
                 stripe_application_fee_amount: Math.round(
                     paymentIntentResult.data.applicationFeeNOK * 100,
                 ), // Stripe application fee in øre
@@ -760,10 +736,10 @@ export async function createBookingWithServices(
                 status: "pending",
                 refunded_amount: 0, // Default to 0, will be updated when refunds occur
                 discount_code: input.discountCode,
-                discount_percentage: discountId ? null : undefined, // TODO: Get from discount record
-                discount_fixed_amount: discountId
-                    ? Math.round(discountAmount * 100)
-                    : undefined,
+                discount_percentage: validatedDiscount?.discountPercentage || null,
+                discount_fixed_amount: validatedDiscount?.discountAmountNOK
+                    ? Math.round(validatedDiscount.discountAmountNOK * 100)
+                    : null,
                 // TODO: Add affiliate fields when affiliate system is implemented
                 // affiliate_id: affiliateId,
                 // affiliate_commission_percentage: affiliateCommissionPercentage,
@@ -782,12 +758,15 @@ export async function createBookingWithServices(
                 booking,
                 stripePaymentIntentId,
                 paymentIntentClientSecret,
-                finalPrice,
-                discountAmount,
-                platformFeeNOK: platformFeeCalculation.platformFeeNOK,
-                stylistPayoutNOK: platformFeeCalculation.stylistPayoutNOK,
-                affiliateCommissionNOK:
-                    platformFeeCalculation.affiliateCommissionNOK,
+                finalPrice: paymentBreakdown.totalAmountNOK,
+                discountAmount: paymentBreakdown.discountAmountNOK || 0,
+                platformFeeNOK: paymentBreakdown.platformFeeNOK,
+                stylistPayoutNOK: paymentBreakdown.stylistPayoutNOK,
+                affiliateCommissionNOK: paymentBreakdown.affiliateCommissionNOK || 0,
+                // Additional breakdown for transparency
+                originalTotalAmountNOK: paymentBreakdown.originalTotalAmountNOK,
+                platformFeeReductionNOK: paymentBreakdown.platformFeeReductionNOK || 0,
+                stylistPayoutReductionNOK: paymentBreakdown.stylistPayoutReductionNOK || 0,
             },
             error: null,
         };

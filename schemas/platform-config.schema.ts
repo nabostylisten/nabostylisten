@@ -276,12 +276,27 @@ export const calculatePlatformFee = ({
     hasAffiliate = false,
     affiliateCommissionPercentage =
         DEFAULT_PLATFORM_CONFIG.fees.affiliate.defaultCommissionPercentage,
+    discountPercentage,
+    discountAmountNOK,
 }: {
     totalAmountNOK: number;
     hasAffiliate?: boolean;
     affiliateCommissionPercentage?: number;
+    discountPercentage?: number;
+    discountAmountNOK?: number;
 }) => {
-    const platformFeeNOK = totalAmountNOK *
+    // Calculate discount amount first
+    const discountNOK = calculateDiscountAmount({
+        totalAmountNOK,
+        discountPercentage,
+        discountAmountNOK,
+    });
+
+    // Calculate discounted amount (what customer actually pays)
+    const discountedAmountNOK = totalAmountNOK - discountNOK;
+
+    // Calculate platform fee on discounted amount (seller takes hit model)
+    const platformFeeNOK = discountedAmountNOK *
         DEFAULT_PLATFORM_CONFIG.fees.defaultPlatformFeePercentage;
 
     let affiliateCommissionNOK = 0;
@@ -295,15 +310,31 @@ export const calculatePlatformFee = ({
         finalPlatformFeeNOK = platformFeeNOK - affiliateCommissionNOK;
     }
 
-    const stylistPayoutNOK = totalAmountNOK - platformFeeNOK;
+    // Stylist payout is discounted amount minus platform fee
+    const stylistPayoutNOK = discountedAmountNOK - platformFeeNOK;
+
+    // Calculate what fees would have been without discount for comparison
+    const originalPlatformFeeNOK = totalAmountNOK *
+        DEFAULT_PLATFORM_CONFIG.fees.defaultPlatformFeePercentage;
+    const originalStylistPayoutNOK = totalAmountNOK - originalPlatformFeeNOK;
 
     return {
-        totalAmountNOK,
+        // Final amounts (what actually happens)
+        totalAmountNOK: discountedAmountNOK, // What customer pays
         platformFeeNOK: finalPlatformFeeNOK,
         stylistPayoutNOK,
         affiliateCommissionNOK,
-        // Breakdown for transparency
-        originalPlatformFeeNOK: platformFeeNOK,
+        
+        // Discount breakdown
+        originalTotalAmountNOK: totalAmountNOK,
+        discountAmountNOK: discountNOK,
+        discountPercentageApplied: totalAmountNOK > 0 ? (discountNOK / totalAmountNOK) : 0,
+        
+        // Fee comparison (for transparency)
+        originalPlatformFeeNOK,
+        originalStylistPayoutNOK,
+        platformFeeReductionNOK: originalPlatformFeeNOK - platformFeeNOK,
+        stylistPayoutReductionNOK: originalStylistPayoutNOK - stylistPayoutNOK,
     };
 };
 
@@ -346,3 +377,31 @@ export const calculateDiscountAmount = ({
  */
 export type PlatformConfig = typeof DEFAULT_PLATFORM_CONFIG;
 export type FeeCalculationResult = ReturnType<typeof calculatePlatformFee>;
+
+/**
+ * Enhanced fee calculation with discount support
+ * Implements "seller takes hit" model where both platform and stylist
+ * absorb discount cost proportionally by calculating fees on discounted amount
+ */
+export const calculateBookingPaymentBreakdown = ({
+    serviceAmountNOK,
+    hasAffiliate = false,
+    affiliateCommissionPercentage,
+    appliedDiscount,
+}: {
+    serviceAmountNOK: number;
+    hasAffiliate?: boolean;
+    affiliateCommissionPercentage?: number;
+    appliedDiscount?: {
+        discountPercentage?: number;
+        discountAmountNOK?: number;
+    };
+}) => {
+    return calculatePlatformFee({
+        totalAmountNOK: serviceAmountNOK,
+        hasAffiliate,
+        affiliateCommissionPercentage,
+        discountPercentage: appliedDiscount?.discountPercentage,
+        discountAmountNOK: appliedDiscount?.discountAmountNOK,
+    });
+};

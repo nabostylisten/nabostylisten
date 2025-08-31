@@ -23,6 +23,10 @@ import { MyBookingsFilter } from "./my-bookings-filter";
 import { useState, useEffect } from "react";
 import { BookingsWithoutReviewsAlerts } from "../reviews/bookings-without-reviews-alerts";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { useQuery } from "@tanstack/react-query";
+import { getBookingCounts } from "@/server/booking.actions";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type BookingStatus = "pending" | "confirmed" | "cancelled" | "completed";
 
@@ -43,6 +47,23 @@ export function MyBookingsPageContent({
 
   // State for active tab - needs to reset when switching modes
   const [activeTab, setActiveTab] = useState<BookingStatus>("pending");
+
+  // Determine effective role based on stylist mode
+  const effectiveRole = stylistMode === "personal" ? "customer" : userRole;
+
+  // Fetch booking counts
+  const { data: bookingCounts, isLoading: isLoadingCounts } = useQuery({
+    queryKey: ["booking-counts", userId, effectiveRole],
+    queryFn: async () => {
+      const result = await getBookingCounts(userId, effectiveRole);
+      if (result.error) {
+        console.error("Error fetching booking counts:", result.error);
+        return null;
+      }
+      return result.data;
+    },
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
 
   // Reset tab when switching stylist mode
   useEffect(() => {
@@ -77,7 +98,10 @@ export function MyBookingsPageContent({
         {/* Show review alerts for customers only */}
         {userRole === "customer" && (
           <BlurFade delay={0.15} duration={0.5} inView>
-            <BookingsWithoutReviewsAlerts customerId={userId} className="my-4" />
+            <BookingsWithoutReviewsAlerts
+              customerId={userId}
+              className="my-4"
+            />
           </BlurFade>
         )}
 
@@ -126,19 +150,68 @@ export function MyBookingsPageContent({
             <TabsList className="grid w-full grid-cols-4 max-w-2xl">
               <TabsTrigger value="pending" className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
-                Venter
+                <span>Venter</span>
+                {isLoadingCounts ? (
+                  <Skeleton className="ml-1 h-5 w-5 rounded-full" />
+                ) : bookingCounts ? (
+                  <Badge variant="outline" className="ml-1 h-5 px-1.5 text-xs">
+                    {effectiveRole === "stylist"
+                      ? "to_be_confirmed" in bookingCounts
+                        ? bookingCounts.to_be_confirmed
+                        : 0
+                      : "pending" in bookingCounts
+                        ? bookingCounts.pending
+                        : 0}
+                  </Badge>
+                ) : null}
               </TabsTrigger>
-              <TabsTrigger value="confirmed" className="flex items-center gap-2">
+              <TabsTrigger
+                value="confirmed"
+                className="flex items-center gap-2"
+              >
                 <CheckCircle className="w-4 h-4" />
-                Bekreftet
+                <span>Bekreftet</span>
+                {isLoadingCounts ? (
+                  <Skeleton className="ml-1 h-5 w-5 rounded-full" />
+                ) : bookingCounts ? (
+                  <Badge variant="outline" className="ml-1 h-5 px-1.5 text-xs">
+                    {effectiveRole === "stylist"
+                      ? "planned" in bookingCounts
+                        ? bookingCounts.planned
+                        : 0
+                      : "confirmed" in bookingCounts
+                        ? bookingCounts.confirmed
+                        : 0}
+                  </Badge>
+                ) : null}
               </TabsTrigger>
-              <TabsTrigger value="cancelled" className="flex items-center gap-2">
+              <TabsTrigger
+                value="cancelled"
+                className="flex items-center gap-2"
+              >
                 <XCircle className="w-4 h-4" />
-                Avlyst
+                <span>Avlyst</span>
+                {isLoadingCounts ? (
+                  <Skeleton className="ml-1 h-5 w-5 rounded-full" />
+                ) : bookingCounts && "cancelled" in bookingCounts ? (
+                  <Badge variant="outline" className="ml-1 h-5 px-1.5 text-xs">
+                    {bookingCounts.cancelled}
+                  </Badge>
+                ) : null}
               </TabsTrigger>
-              <TabsTrigger value="completed" className="flex items-center gap-2">
+              <TabsTrigger
+                value="completed"
+                className="flex items-center gap-2"
+              >
                 <Clock className="w-4 h-4" />
-                Fullført
+                <span>Fullført</span>
+                {isLoadingCounts ? (
+                  <Skeleton className="ml-1 h-5 w-5 rounded-full" />
+                ) : bookingCounts && "completed" in bookingCounts ? (
+                  <Badge variant="outline" className="ml-1 h-5 px-1.5 text-xs">
+                    {bookingCounts.completed}
+                  </Badge>
+                ) : null}
               </TabsTrigger>
             </TabsList>
 
@@ -155,7 +228,9 @@ export function MyBookingsPageContent({
                     <MyBookingsList
                       userId={userId}
                       status={activeTab}
-                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                      userRole={
+                        stylistMode === "personal" ? "customer" : userRole
+                      }
                     />
                   </CardContent>
                 </Card>
@@ -175,7 +250,9 @@ export function MyBookingsPageContent({
                     <MyBookingsList
                       userId={userId}
                       status={activeTab}
-                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                      userRole={
+                        stylistMode === "personal" ? "customer" : userRole
+                      }
                     />
                   </CardContent>
                 </Card>
@@ -195,7 +272,9 @@ export function MyBookingsPageContent({
                     <MyBookingsList
                       userId={userId}
                       status={activeTab}
-                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                      userRole={
+                        stylistMode === "personal" ? "customer" : userRole
+                      }
                     />
                   </CardContent>
                 </Card>
@@ -213,7 +292,9 @@ export function MyBookingsPageContent({
                     <MyBookingsList
                       userId={userId}
                       status={activeTab}
-                      userRole={stylistMode === "personal" ? "customer" : userRole}
+                      userRole={
+                        stylistMode === "personal" ? "customer" : userRole
+                      }
                     />
                   </CardContent>
                 </Card>

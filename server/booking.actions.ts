@@ -410,8 +410,7 @@ export async function getBookingDetails(bookingId: string) {
         .single();
 
     // Check if user has access - customer, stylist, or admin
-    const hasAccess = 
-        data.customer_id === user.id ||
+    const hasAccess = data.customer_id === user.id ||
         data.stylist_id === user.id ||
         userProfile?.role === "admin";
 
@@ -473,8 +472,10 @@ export async function createBookingWithServices(
 
         if (input.discountCode) {
             // Use discount validation server action
-            const { validateDiscountCode, trackDiscountUsage } = await import("./discounts.actions");
-            
+            const { validateDiscountCode, trackDiscountUsage } = await import(
+                "./discounts.actions"
+            );
+
             const validationResult = await validateDiscountCode({
                 code: input.discountCode,
                 orderAmountCents: Math.round(input.totalPrice * 100),
@@ -482,11 +483,14 @@ export async function createBookingWithServices(
             });
 
             if (!validationResult.isValid || validationResult.error) {
-                return { error: validationResult.error || "Invalid discount code", data: null };
+                return {
+                    error: validationResult.error || "Invalid discount code",
+                    data: null,
+                };
             }
 
             const discount = validationResult.discount!;
-            
+
             // Track usage (this will increment the usage counter)
             const trackingResult = await trackDiscountUsage({
                 discountId: discount.id,
@@ -501,7 +505,9 @@ export async function createBookingWithServices(
             validatedDiscount = {
                 id: discount.id,
                 discountPercentage: discount.discount_percentage || undefined,
-                discountAmountNOK: validationResult.discountAmount ? (validationResult.discountAmount / 100) : undefined,
+                discountAmountNOK: validationResult.discountAmount
+                    ? (validationResult.discountAmount / 100)
+                    : undefined,
             };
         }
 
@@ -527,7 +533,9 @@ export async function createBookingWithServices(
                 }
             } else if (input.customerAddress) {
                 // Get geometry coordinates from Mapbox
-                const { getGeometryFromAddressComponents } = await import("@/lib/mapbox");
+                const { getGeometryFromAddressComponents } = await import(
+                    "@/lib/mapbox"
+                );
                 const geometry = await getGeometryFromAddressComponents({
                     streetAddress: input.customerAddress.streetAddress,
                     city: input.customerAddress.city,
@@ -549,7 +557,9 @@ export async function createBookingWithServices(
                         nickname: "Booking Address",
                         is_primary: false,
                         // Add location coordinates from Mapbox
-                        location: geometry ? `POINT(${geometry[0]} ${geometry[1]})` : null,
+                        location: geometry
+                            ? `POINT(${geometry[0]} ${geometry[1]})`
+                            : null,
                     })
                     .select()
                     .single();
@@ -563,15 +573,19 @@ export async function createBookingWithServices(
         }
 
         // 3. Calculate enhanced payment breakdown with discount support
-        const { calculateBookingPaymentBreakdown } = await import("@/schemas/platform-config.schema");
-        
+        const { calculateBookingPaymentBreakdown } = await import(
+            "@/schemas/platform-config.schema"
+        );
+
         const paymentBreakdown = calculateBookingPaymentBreakdown({
             serviceAmountNOK: input.totalPrice,
             hasAffiliate: false, // TODO: Implement affiliate logic
-            appliedDiscount: validatedDiscount ? {
-                discountPercentage: validatedDiscount.discountPercentage,
-                discountAmountNOK: validatedDiscount.discountAmountNOK,
-            } : undefined,
+            appliedDiscount: validatedDiscount
+                ? {
+                    discountPercentage: validatedDiscount.discountPercentage,
+                    discountAmountNOK: validatedDiscount.discountAmountNOK,
+                }
+                : undefined,
         });
 
         const finalPrice = paymentBreakdown.totalAmountNOK;
@@ -732,12 +746,20 @@ export async function createBookingWithServices(
             .insert({
                 booking_id: booking.id,
                 payment_intent_id: stripePaymentIntentId,
-                original_amount: Math.round(paymentBreakdown.originalTotalAmountNOK * 100), // Original amount in øre
-                discount_amount: Math.round((paymentBreakdown.discountAmountNOK || 0) * 100), // Discount amount in øre
+                original_amount: Math.round(
+                    paymentBreakdown.originalTotalAmountNOK * 100,
+                ), // Original amount in øre
+                discount_amount: Math.round(
+                    (paymentBreakdown.discountAmountNOK || 0) * 100,
+                ), // Discount amount in øre
                 final_amount: Math.round(paymentBreakdown.totalAmountNOK * 100), // Final amount in øre
                 platform_fee: Math.round(paymentBreakdown.platformFeeNOK * 100), // Platform fee in øre
-                stylist_payout: Math.round(paymentBreakdown.stylistPayoutNOK * 100), // Stylist payout in øre
-                affiliate_commission: Math.round((paymentBreakdown.affiliateCommissionNOK || 0) * 100), // Affiliate commission in øre
+                stylist_payout: Math.round(
+                    paymentBreakdown.stylistPayoutNOK * 100,
+                ), // Stylist payout in øre
+                affiliate_commission: Math.round(
+                    (paymentBreakdown.affiliateCommissionNOK || 0) * 100,
+                ), // Affiliate commission in øre
                 stripe_application_fee_amount: Math.round(
                     paymentIntentResult.data.applicationFeeNOK * 100,
                 ), // Stripe application fee in øre
@@ -745,7 +767,8 @@ export async function createBookingWithServices(
                 status: "pending",
                 refunded_amount: 0, // Default to 0, will be updated when refunds occur
                 discount_code: input.discountCode,
-                discount_percentage: validatedDiscount?.discountPercentage || null,
+                discount_percentage: validatedDiscount?.discountPercentage ||
+                    null,
                 discount_fixed_amount: validatedDiscount?.discountAmountNOK
                     ? Math.round(validatedDiscount.discountAmountNOK * 100)
                     : null,
@@ -771,11 +794,14 @@ export async function createBookingWithServices(
                 discountAmount: paymentBreakdown.discountAmountNOK || 0,
                 platformFeeNOK: paymentBreakdown.platformFeeNOK,
                 stylistPayoutNOK: paymentBreakdown.stylistPayoutNOK,
-                affiliateCommissionNOK: paymentBreakdown.affiliateCommissionNOK || 0,
+                affiliateCommissionNOK:
+                    paymentBreakdown.affiliateCommissionNOK || 0,
                 // Additional breakdown for transparency
                 originalTotalAmountNOK: paymentBreakdown.originalTotalAmountNOK,
-                platformFeeReductionNOK: paymentBreakdown.platformFeeReductionNOK || 0,
-                stylistPayoutReductionNOK: paymentBreakdown.stylistPayoutReductionNOK || 0,
+                platformFeeReductionNOK:
+                    paymentBreakdown.platformFeeReductionNOK || 0,
+                stylistPayoutReductionNOK:
+                    paymentBreakdown.stylistPayoutReductionNOK || 0,
             },
             error: null,
         };
@@ -1002,11 +1028,14 @@ export async function cancelBooking(bookingId: string, reason?: string) {
                     message: reason || "Booking cancelled",
                     location,
                     cancelledBy,
-                    refundInfo: refundAmountNOK > 0 || stylistCompensationNOK > 0 ? {
-                        refundAmount: refundAmountNOK,
-                        stylistCompensation: stylistCompensationNOK,
-                        refundPercentage: refundPercentage,
-                    } : undefined,
+                    refundInfo:
+                        refundAmountNOK > 0 || stylistCompensationNOK > 0
+                            ? {
+                                refundAmount: refundAmountNOK,
+                                stylistCompensation: stylistCompensationNOK,
+                                refundPercentage: refundPercentage,
+                            }
+                            : undefined,
                 };
 
                 const customerEmailSubject = `Booking avlyst: ${serviceName}`;
@@ -1716,6 +1745,146 @@ export async function sendPostPaymentEmails(bookingId: string) {
         console.error("Error in sendPostPaymentEmails:", error);
         return {
             error: "Failed to send post-payment emails",
+            data: null,
+        };
+    }
+}
+
+/**
+ * Get booking counts for different filter categories
+ * Used to display counts in booking tabs
+ */
+export async function getBookingCounts(
+    userId: string,
+    userRole: "customer" | "stylist" = "customer",
+) {
+    const supabase = await createClient();
+
+    // Get current user to verify access
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError || user.id !== userId) {
+        return {
+            error: "Unauthorized access",
+            data: null,
+        };
+    }
+
+    try {
+        const now = new Date().toISOString();
+
+        // Build base query based on role
+        const baseQuery = supabase.from("bookings").select("*", {
+            count: "exact",
+            head: true,
+        });
+
+        if (userRole === "customer") {
+            baseQuery.eq("customer_id", userId);
+        } else {
+            baseQuery.eq("stylist_id", userId);
+        }
+
+        // Execute different count queries in parallel
+        const queries = [];
+
+        if (userRole === "customer") {
+            // Customer view counts
+            queries.push(
+                // All bookings
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("customer_id", userId),
+                // Pending bookings
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("customer_id", userId)
+                    .eq("status", "pending"),
+                // Confirmed bookings
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("customer_id", userId)
+                    .eq("status", "confirmed"),
+                // Completed bookings
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("customer_id", userId)
+                    .eq("status", "completed"),
+                // Cancelled bookings
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("customer_id", userId)
+                    .eq("status", "cancelled"),
+            );
+        } else {
+            // Stylist view counts
+            queries.push(
+                // All bookings
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("stylist_id", userId),
+                // To be confirmed (pending)
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("stylist_id", userId)
+                    .eq("status", "pending"),
+                // Planned (confirmed and upcoming)
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("stylist_id", userId)
+                    .eq("status", "confirmed")
+                    .gt("start_time", now),
+                // Completed
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("stylist_id", userId)
+                    .eq("status", "completed"),
+                // Cancelled
+                supabase
+                    .from("bookings")
+                    .select("*", { count: "exact", head: true })
+                    .eq("stylist_id", userId)
+                    .eq("status", "cancelled"),
+            );
+        }
+
+        const results = await Promise.all(queries);
+
+        if (userRole === "customer") {
+            return {
+                data: {
+                    all: results[0].count || 0,
+                    pending: results[1].count || 0,
+                    confirmed: results[2].count || 0,
+                    completed: results[3].count || 0,
+                    cancelled: results[4].count || 0,
+                },
+                error: null,
+            };
+        } else {
+            return {
+                data: {
+                    all: results[0].count || 0,
+                    to_be_confirmed: results[1].count || 0,
+                    planned: results[2].count || 0,
+                    completed: results[3].count || 0,
+                    cancelled: results[4].count || 0,
+                },
+                error: null,
+            };
+        }
+    } catch (error) {
+        console.error("Error fetching booking counts:", error);
+        return {
+            error: "Failed to fetch booking counts",
             data: null,
         };
     }

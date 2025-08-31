@@ -37,19 +37,39 @@ interface AppliedDiscount {
 }
 
 interface ApplyDiscountFormProps {
-  orderAmountCents: number;
+  orderAmountNOK: number;
   onDiscountApplied: (discount: AppliedDiscount | null) => void;
   initialDiscountCode?: string;
   className?: string;
 }
 
 export function ApplyDiscountForm({
-  orderAmountCents,
+  orderAmountNOK,
   onDiscountApplied,
   initialDiscountCode,
   className,
 }: ApplyDiscountFormProps) {
   const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
+
+  // Validate orderAmountNOK
+  if (!orderAmountNOK || isNaN(orderAmountNOK) || orderAmountNOK <= 0) {
+    console.error("Invalid orderAmountNOK passed to ApplyDiscountForm:", orderAmountNOK);
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Percent className="w-5 h-5" />
+            Rabattkode
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Rabattkoder er ikke tilgjengelige for øyeblikket.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   const form = useForm<ApplyDiscountFormData>({
     resolver: zodResolver(applyDiscountSchema),
@@ -60,6 +80,15 @@ export function ApplyDiscountForm({
 
   const validateMutation = useMutation({
     mutationFn: async (data: ApplyDiscountFormData) => {
+      console.log("Validating discount with orderAmountNOK:", orderAmountNOK);
+      
+      if (!orderAmountNOK || isNaN(orderAmountNOK)) {
+        throw new Error(`Invalid order amount: ${orderAmountNOK}`);
+      }
+      
+      // Convert NOK to cents for backend validation
+      const orderAmountCents = Math.round(orderAmountNOK * 100);
+      
       const result = await validateDiscountCode({
         code: data.code.trim(),
         orderAmountCents,
@@ -70,7 +99,7 @@ export function ApplyDiscountForm({
       if (result.isValid && result.discount && result.discountAmount !== undefined) {
         const discountData = {
           discount: result.discount,
-          discountAmount: result.discountAmount,
+          discountAmount: result.discountAmount / 100, // Convert cents back to NOK
           code: result.discount.code,
         };
         setAppliedDiscount(discountData);
@@ -97,8 +126,13 @@ export function ApplyDiscountForm({
     validateMutation.mutate(data);
   };
 
-  const formatCurrency = (amountCents: number) => {
-    return (amountCents / 100).toLocaleString('no-NO') + " kr";
+  const formatCurrency = (amountNOK: number) => {
+    // Handle NaN and invalid numbers
+    if (!amountNOK || isNaN(amountNOK)) {
+      console.warn("Invalid amount in formatCurrency:", amountNOK);
+      return "0 kr";
+    }
+    return amountNOK.toLocaleString('no-NO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kr";
   };
 
   const formatPercentage = (percentage: number) => {
@@ -150,7 +184,7 @@ export function ApplyDiscountForm({
                   </Badge>
                 ) : (
                   <Badge variant="secondary">
-                    {formatCurrency(appliedDiscount.discount.discount_amount || 0)}
+                    {formatCurrency((appliedDiscount.discount.discount_amount || 0) / 100)}
                   </Badge>
                 )}
                 <span className="font-medium text-green-600 dark:text-green-400">
@@ -202,7 +236,7 @@ export function ApplyDiscountForm({
         <div className="pt-2 border-t text-sm text-muted-foreground">
           <div className="flex justify-between">
             <span>Ordrebeløp:</span>
-            <span>{formatCurrency(orderAmountCents)}</span>
+            <span>{formatCurrency(orderAmountNOK)}</span>
           </div>
           {appliedDiscount && (
             <>
@@ -212,7 +246,7 @@ export function ApplyDiscountForm({
               </div>
               <div className="flex justify-between font-medium text-base text-foreground border-t pt-2 mt-2">
                 <span>Totalt:</span>
-                <span>{formatCurrency(orderAmountCents - appliedDiscount.discountAmount)}</span>
+                <span>{formatCurrency(orderAmountNOK - appliedDiscount.discountAmount)}</span>
               </div>
             </>
           )}

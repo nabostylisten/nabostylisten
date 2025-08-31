@@ -8,10 +8,20 @@ import { useCartStore } from "@/stores/cart.store";
 import { ArrowLeft, Clock, User, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { BookingStepper } from "@/components/booking";
+import { BookingStepper, OrderSummary } from "@/components/booking";
 import { createBookingWithServices } from "@/server/booking.actions";
+import { getStylistDetails } from "@/server/profile.actions";
+import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { Spinner } from "@/components/ui/kibo-ui/spinner";
+import type { DatabaseTables } from "@/types";
+
+interface AppliedDiscount {
+  discount: DatabaseTables["discounts"]["Row"];
+  discountAmount: number;
+  code: string;
+}
 
 export default function BookingPage() {
   const router = useRouter();
@@ -23,10 +33,22 @@ export default function BookingPage() {
     show: boolean;
     stylistName?: string;
   }>({ show: false });
+  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
 
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
   const currentStylist = getCurrentStylist();
+
+  // Fetch stylist details
+  const {
+    data: stylistDetails,
+    isLoading: isLoadingStylistDetails,
+    error: stylistDetailsError,
+  } = useQuery({
+    queryKey: ["stylistDetails", currentStylist?.id],
+    queryFn: () => getStylistDetails(currentStylist!.id),
+    enabled: !!currentStylist?.id,
+  });
 
   // Calculate total service duration
   const totalDurationMinutes = items.reduce((total, item) => {
@@ -87,7 +109,7 @@ export default function BookingPage() {
         customerAddress: customerAddressData,
         customerAddressId: addressId,
         messageToStylist: bookingData.messageToStylist,
-        discountCode: bookingData.discountCode,
+        discountCode: appliedDiscount?.code,
         totalPrice,
         totalDurationMinutes,
       });
@@ -145,6 +167,8 @@ export default function BookingPage() {
   if (totalItems === 0 && !isRedirectingToCheckout) {
     return null;
   }
+
+  console.log(stylistDetails?.data);
 
   return (
     <div className="min-h-screen pt-20 px-6 lg:px-12">
@@ -242,14 +266,41 @@ export default function BookingPage() {
             {/* Booking Stepper */}
             {currentStylist && (
               <BlurFade delay={0.15} duration={0.5} inView>
-                <BookingStepper
-                  stylistId={currentStylist.id}
-                  serviceDurationMinutes={totalDurationMinutes}
-                  stylistCanTravel={true} // TODO: Get from stylist details
-                  stylistHasOwnPlace={true} // TODO: Get from stylist details
-                  onComplete={handleBookingComplete}
-                  isProcessing={isProcessingBooking}
-                />
+                {isLoadingStylistDetails ? (
+                  <Card>
+                    <CardContent className="flex items-center justify-center py-8">
+                      <div className="flex items-center gap-2">
+                        <Spinner className="w-5 h-5" />
+                        <span>Laster stylistdetaljer...</span>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : stylistDetailsError || !stylistDetails?.data ? (
+                  <Card>
+                    <CardContent className="py-8">
+                      <Alert className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/50">
+                        <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                        <AlertDescription className="text-red-800 dark:text-red-200">
+                          Kunne ikke laste stylistdetaljer. Prøv å oppdatere
+                          siden.
+                        </AlertDescription>
+                      </Alert>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <BookingStepper
+                    stylistId={currentStylist.id}
+                    serviceDurationMinutes={totalDurationMinutes}
+                    serviceAmountNOK={totalPrice}
+                    stylistCanTravel={stylistDetails.data.can_travel ?? true}
+                    stylistHasOwnPlace={
+                      stylistDetails.data.has_own_place ?? true
+                    }
+                    onComplete={handleBookingComplete}
+                    onDiscountChange={setAppliedDiscount}
+                    isProcessing={isProcessingBooking}
+                  />
+                )}
               </BlurFade>
             )}
           </div>
@@ -257,37 +308,11 @@ export default function BookingPage() {
           {/* Order Summary */}
           <div>
             <BlurFade delay={0.2} duration={0.5} inView>
-              <Card className="sticky top-24">
-                <CardHeader>
-                  <CardTitle>Bestillingssammendrag</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    {items.map((item) => (
-                      <div
-                        key={item.service.id}
-                        className="flex justify-between text-sm"
-                      >
-                        <span>
-                          {item.service.title}
-                          {item.quantity > 1 && ` x${item.quantity}`}
-                        </span>
-                        <span>
-                          {(item.service.price * item.quantity).toFixed(2)}{" "}
-                          {item.service.currency}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Separator />
-
-                  <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span>{totalPrice.toFixed(2)} NOK</span>
-                  </div>
-                </CardContent>
-              </Card>
+              <OrderSummary
+                items={items}
+                appliedDiscount={appliedDiscount}
+                className="sticky top-24"
+              />
             </BlurFade>
           </div>
         </div>

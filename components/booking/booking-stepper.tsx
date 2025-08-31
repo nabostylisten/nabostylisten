@@ -72,20 +72,22 @@ interface BookingData {
 interface BookingStepperProps {
   stylistId: string;
   serviceDurationMinutes: number;
-  serviceAmountCents: number;
+  serviceAmountNOK: number;
   stylistCanTravel: boolean;
   stylistHasOwnPlace: boolean;
   onComplete: (bookingData: BookingData) => void;
+  onDiscountChange?: (discount: AppliedDiscount | null) => void;
   isProcessing?: boolean;
 }
 
 export function BookingStepper({
   stylistId,
   serviceDurationMinutes,
-  serviceAmountCents,
+  serviceAmountNOK,
   stylistCanTravel,
   stylistHasOwnPlace,
   onComplete,
+  onDiscountChange,
   isProcessing = false,
 }: BookingStepperProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -306,10 +308,11 @@ export function BookingStepper({
               </Card>
 
               <ApplyDiscountForm
-                orderAmountCents={serviceAmountCents}
-                onDiscountApplied={(discount) => 
-                  updateBookingData({ appliedDiscount: discount || undefined })
-                }
+                orderAmountNOK={serviceAmountNOK}
+                onDiscountApplied={(discount) => {
+                  updateBookingData({ appliedDiscount: discount || undefined });
+                  onDiscountChange?.(discount);
+                }}
                 initialDiscountCode={bookingData.appliedDiscount?.code}
               />
             </div>
@@ -354,7 +357,7 @@ export function BookingStepper({
                       <p className="text-sm">
                         <strong>Rabattkode:</strong> {bookingData.appliedDiscount.code}
                         <span className="ml-2 text-green-600">
-                          (-{(bookingData.appliedDiscount.discountAmount / 100).toLocaleString('no-NO')} kr)
+                          (-{bookingData.appliedDiscount.discountAmount.toLocaleString('no-NO')} kr)
                         </span>
                       </p>
                     )}

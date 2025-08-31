@@ -3,7 +3,13 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, Edit, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import {
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,7 +22,9 @@ import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import type { DatabaseTables } from "@/types";
 
-type Discount = DatabaseTables["discounts"]["Row"];
+type Discount = DatabaseTables["discounts"]["Row"] & {
+  discount_restrictions?: { count: number }[];
+};
 
 interface DiscountActionsProps {
   discount: Discount;
@@ -25,7 +33,12 @@ interface DiscountActionsProps {
   onDelete: (discount: Discount) => void;
 }
 
-function DiscountActions({ discount, onEdit, onToggleActive, onDelete }: DiscountActionsProps) {
+function DiscountActions({
+  discount,
+  onEdit,
+  onToggleActive,
+  onDelete,
+}: DiscountActionsProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -55,7 +68,7 @@ function DiscountActions({ discount, onEdit, onToggleActive, onDelete }: Discoun
           )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem 
+        <DropdownMenuItem
           onClick={() => onDelete(discount)}
           className="text-red-600 focus:text-red-600"
         >
@@ -70,7 +83,7 @@ function DiscountActions({ discount, onEdit, onToggleActive, onDelete }: Discoun
 export function createDiscountColumns(
   onEdit: (discount: Discount) => void,
   onToggleActive: (discount: Discount) => void,
-  onDelete: (discount: Discount) => void,
+  onDelete: (discount: Discount) => void
 ): ColumnDef<Discount>[] {
   return [
     {
@@ -97,13 +110,16 @@ export function createDiscountColumns(
         if (discount.discount_percentage !== null) {
           return (
             <Badge variant="secondary">
-              {discount.discount_percentage.toLocaleString('no-NO', { maximumFractionDigits: 1 })}%
+              {discount.discount_percentage.toLocaleString("no-NO", {
+                maximumFractionDigits: 1,
+              })}
+              %
             </Badge>
           );
         } else if (discount.discount_amount !== null) {
           return (
             <Badge variant="outline">
-              {(discount.discount_amount / 100).toLocaleString('no-NO')} kr
+              {(discount.discount_amount / 100).toLocaleString("no-NO")} kr
             </Badge>
           );
         }
@@ -117,25 +133,53 @@ export function createDiscountColumns(
         const discount = row.original;
         const current = discount.current_uses || 0;
         const max = discount.max_uses;
-        
+
         if (max === null) {
           return <span className="text-muted-foreground">{current} / ∞</span>;
         }
-        
+
         const percentage = (current / max) * 100;
         const isNearLimit = percentage >= 90;
-        
+
         return (
           <div className="flex items-center gap-2">
-            <span className={isNearLimit ? "text-orange-600 font-medium" : "text-muted-foreground"}>
+            <span
+              className={
+                isNearLimit
+                  ? "text-orange-600 font-medium"
+                  : "text-muted-foreground"
+              }
+            >
               {current} / {max}
             </span>
             {isNearLimit && (
-              <Badge variant="outline" className="text-xs border-orange-200 text-orange-700">
+              <Badge
+                variant="outline"
+                className="text-xs border-orange-200 text-orange-700"
+              >
                 Snart oppbrukt
               </Badge>
             )}
           </div>
+        );
+      },
+    },
+    {
+      accessorKey: "user_restrictions",
+      header: "Kan brukes av",
+      cell: ({ row }) => {
+        const discount = row.original;
+        const restrictionCount =
+          discount.discount_restrictions?.[0]?.count || 0;
+
+        if (restrictionCount === 0) {
+          return <Badge variant="outline">Alle</Badge>;
+        }
+
+        return (
+          <Badge variant="outline" className="text-xs">
+            {restrictionCount} bruker{restrictionCount !== 1 ? "e" : ""}
+          </Badge>
         );
       },
     },
@@ -146,25 +190,25 @@ export function createDiscountColumns(
         const discount = row.original;
         const now = new Date();
         const validFrom = new Date(discount.valid_from);
-        const expiresAt = discount.expires_at ? new Date(discount.expires_at) : null;
-        
+        const expiresAt = discount.expires_at
+          ? new Date(discount.expires_at)
+          : null;
+
         let status: "not_started" | "active" | "expired" = "active";
-        
+
         if (now < validFrom) {
           status = "not_started";
         } else if (expiresAt && now > expiresAt) {
           status = "expired";
         }
-        
+
         return (
           <div className="text-sm">
             <div className="flex items-center gap-2">
               {status === "not_started" && (
                 <Badge variant="secondary">Ikke startet</Badge>
               )}
-              {status === "active" && (
-                <Badge variant="default">Aktiv</Badge>
-              )}
+              {status === "active" && <Badge variant="default">Aktiv</Badge>}
               {status === "expired" && (
                 <Badge variant="destructive">Utløpt</Badge>
               )}
@@ -190,19 +234,15 @@ export function createDiscountColumns(
         const discount = row.original;
         const min = discount.minimum_order_amount;
         const max = discount.maximum_order_amount;
-        
+
         if (!min && !max) {
           return <span className="text-muted-foreground">Ingen</span>;
         }
-        
+
         return (
           <div className="text-sm">
-            {min && (
-              <div>Min: {(min / 100).toLocaleString('no-NO')} kr</div>
-            )}
-            {max && (
-              <div>Maks: {(max / 100).toLocaleString('no-NO')} kr</div>
-            )}
+            {min && <div>Min: {(min / 100).toLocaleString("no-NO")} kr</div>}
+            {max && <div>Maks: {(max / 100).toLocaleString("no-NO")} kr</div>}
           </div>
         );
       },
@@ -253,6 +293,7 @@ export function getColumnDisplayName(columnId: string): string {
     description: "Beskrivelse",
     discount_type: "Type",
     usage: "Bruk",
+    user_restrictions: "Kan brukes av",
     valid_period: "Gyldig periode",
     order_limits: "Ordrebegrensninger",
     is_active: "Status",

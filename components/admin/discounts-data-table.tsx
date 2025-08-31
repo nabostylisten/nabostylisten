@@ -63,7 +63,9 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import type { DatabaseTables } from "@/types";
 
-type Discount = DatabaseTables["discounts"]["Row"];
+type Discount = DatabaseTables["discounts"]["Row"] & {
+  discount_restrictions?: { count: number }[];
+};
 
 type ActiveTab = "all" | "active" | "inactive" | "expired";
 
@@ -221,33 +223,40 @@ export function DiscountsDataTable({
         .map((col) => getColumnDisplayName(col.header as string)),
     });
 
-    const csvData = filteredData.map((discount) => ({
-      code: discount.code,
-      description: discount.description || "",
-      discount_type:
-        discount.discount_percentage !== null
-          ? `${discount.discount_percentage}%`
-          : `${(discount.discount_amount! / 100).toLocaleString("no-NO")} kr`,
-      usage: `${discount.current_uses || 0}${discount.max_uses ? ` / ${discount.max_uses}` : " / ∞"}`,
-      valid_period: `Fra: ${new Date(discount.valid_from).toLocaleDateString("no-NO")}${
-        discount.expires_at
-          ? ` - Til: ${new Date(discount.expires_at).toLocaleDateString("no-NO")}`
-          : ""
-      }`,
-      order_limits:
-        [
-          discount.minimum_order_amount
-            ? `Min: ${(discount.minimum_order_amount / 100).toLocaleString("no-NO")} kr`
-            : null,
-          discount.maximum_order_amount
-            ? `Maks: ${(discount.maximum_order_amount / 100).toLocaleString("no-NO")} kr`
-            : null,
-        ]
-          .filter(Boolean)
-          .join(", ") || "Ingen",
-      is_active: discount.is_active ? "Aktiv" : "Inaktiv",
-      created_at: new Date(discount.created_at).toLocaleString("no-NO"),
-    }));
+    const csvData = filteredData.map((discount) => {
+      const restrictionCount = discount.discount_restrictions?.[0]?.count || 0;
+      
+      return {
+        code: discount.code,
+        description: discount.description || "",
+        discount_type:
+          discount.discount_percentage !== null
+            ? `${discount.discount_percentage}%`
+            : `${(discount.discount_amount! / 100).toLocaleString("no-NO")} kr`,
+        usage: `${discount.current_uses || 0}${discount.max_uses ? ` / ${discount.max_uses}` : " / ∞"}`,
+        user_restrictions: restrictionCount === 0 
+          ? "Alle" 
+          : `${restrictionCount} bruker${restrictionCount !== 1 ? "e" : ""}`,
+        valid_period: `Fra: ${new Date(discount.valid_from).toLocaleDateString("no-NO")}${
+          discount.expires_at
+            ? ` - Til: ${new Date(discount.expires_at).toLocaleDateString("no-NO")}`
+            : ""
+        }`,
+        order_limits:
+          [
+            discount.minimum_order_amount
+              ? `Min: ${(discount.minimum_order_amount / 100).toLocaleString("no-NO")} kr`
+              : null,
+            discount.maximum_order_amount
+              ? `Maks: ${(discount.maximum_order_amount / 100).toLocaleString("no-NO")} kr`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(", ") || "Ingen",
+        is_active: discount.is_active ? "Aktiv" : "Inaktiv",
+        created_at: new Date(discount.created_at).toLocaleString("no-NO"),
+      };
+    });
 
     const csv = generateCsv(csvConfig)(csvData);
     download(csvConfig)(csv);

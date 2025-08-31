@@ -557,7 +557,7 @@ export async function deleteDiscount(id: string) {
 export async function getAllDiscounts({
   searchTerm,
   statusFilter,
-  limit = 100,
+  limit = 20,
 }: {
   searchTerm?: string;
   statusFilter?: "all" | "active" | "inactive" | "expired";
@@ -583,7 +583,10 @@ export async function getAllDiscounts({
 
   let query = supabase
     .from("discounts")
-    .select("*")
+    .select(`
+      *,
+      discount_restrictions(count)
+    `)
     .order("created_at", { ascending: false })
     .limit(limit);
 

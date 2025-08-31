@@ -4,6 +4,36 @@ import { Database } from "./database.types";
 
 export type DatabaseTables = Database["public"]["Tables"];
 
+// User search filters for admin components
+export interface UserSearchFilters {
+  searchQuery?: string;
+  minQueryLength?: number;
+  limit?: number;
+}
+
+// Default user search parameters
+export const defaultUserSearchFilters: Required<UserSearchFilters> = {
+  searchQuery: "",
+  minQueryLength: 2,
+  limit: 20,
+};
+
+// Convert search params to UserSearchFilters
+export function searchParamsToUserFilters(searchParams: URLSearchParams): UserSearchFilters {
+  return {
+    searchQuery: searchParams.get("q") || undefined,
+  };
+}
+
+// Convert UserSearchFilters to search params
+export function userFiltersToSearchParams(filters: UserSearchFilters): URLSearchParams {
+  const params = new URLSearchParams();
+  if (filters.searchQuery) {
+    params.set("q", filters.searchQuery);
+  }
+  return params;
+}
+
 export type IconSvgProps = SVGProps<SVGSVGElement> & {
   size?: number;
 };
@@ -394,4 +424,32 @@ export function bookingFiltersToSearchParams(
     search: filters.search,
     sort: filters.sortBy === "date_desc" ? undefined : filters.sortBy,
   };
+}
+
+// Discount types for shared usage across components
+export interface RestrictedUser {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  role: string;
+}
+
+export interface DiscountWithRestrictedUsers extends DatabaseTables["discounts"]["Row"] {
+  restricted_users?: RestrictedUser[];
+}
+
+export interface DiscountFormData {
+  code: string;
+  description?: string;
+  discountType: "percentage" | "fixed";
+  discountPercentage?: number;
+  discountAmount?: number;
+  maxUses?: number;
+  maxUsesPerUser: number;
+  validFrom: Date;
+  expiresAt?: Date;
+  minimumOrderAmount?: number;
+  maximumOrderAmount?: number;
+  isActive: boolean;
+  restrictedUsers?: string[]; // Array of user IDs
 }

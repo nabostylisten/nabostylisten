@@ -887,6 +887,38 @@ export const chatsRelationshipsSchema = z.tuple([
   }),
 ]);
 
+export const discountRestrictionsRowSchema = z.object({
+  discount_id: z.string(),
+  profile_id: z.string(),
+});
+
+export const discountRestrictionsInsertSchema = z.object({
+  discount_id: z.string(),
+  profile_id: z.string(),
+});
+
+export const discountRestrictionsUpdateSchema = z.object({
+  discount_id: z.string().optional(),
+  profile_id: z.string().optional(),
+});
+
+export const discountRestrictionsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("discount_restrictions_discount_id_fkey"),
+    columns: z.tuple([z.literal("discount_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("discounts"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("discount_restrictions_profile_id_fkey"),
+    columns: z.tuple([z.literal("profile_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
 export const discountUsageRowSchema = z.object({
   booking_id: z.string().nullable(),
   created_at: z.string(),

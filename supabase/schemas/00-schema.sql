@@ -283,6 +283,13 @@ CREATE TABLE IF NOT EXISTS public.booking_services (
     PRIMARY KEY (booking_id, service_id)
 );
 
+-- Junction table for discount user restrictions
+CREATE TABLE IF NOT EXISTS public.discount_restrictions (
+    discount_id uuid NOT NULL REFERENCES public.discounts(id) ON DELETE CASCADE,
+    profile_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    PRIMARY KEY (discount_id, profile_id)
+);
+
 -- Table for tracking discount usage per profile
 CREATE TABLE IF NOT EXISTS public.discount_usage (
     id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),

@@ -3,12 +3,12 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-import { CalendarIcon, Dices } from "lucide-react";
+import { CalendarIcon, Dices, X, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,13 +33,27 @@ import {
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
-  createDiscount,
-  updateDiscount,
+  Combobox,
+  ComboboxTrigger,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxList,
+  ComboboxEmpty,
+  ComboboxGroup,
+  ComboboxItem,
+} from "@/components/ui/kibo-ui/combobox";
+import { cn } from "@/lib/utils";
+import type { DiscountFormData, RestrictedUser } from "@/types";
+import {
+  createDiscountWithRestrictions,
+  updateDiscountWithRestrictions,
   generateDiscountCode,
+  searchUsers,
+  getDiscountWithRestrictions,
 } from "@/server/discounts.actions";
-import type { DatabaseTables } from "@/types";
+import type { DatabaseTables, UserSearchFilters } from "@/types";
 
 type Discount = DatabaseTables["discounts"]["Row"];
 
@@ -74,8 +88,7 @@ const discountFormSchema = z
       .optional(),
     maxUsesPerUser: z
       .number()
-      .min(1, "Maksimalt antall bruk per bruker må være minst 1")
-      .default(1),
+      .min(1, "Maksimalt antall bruk per bruker må være minst 1"),
 
     // Validity period
     validFrom: z.date(),
@@ -91,8 +104,11 @@ const discountFormSchema = z
       .min(1, "Maksimum ordrebeløp må være større enn 0")
       .optional(),
 
+    // User restrictions
+    restrictedUsers: z.array(z.string()).optional(),
+
     // Status
-    isActive: z.boolean().default(true),
+    isActive: z.boolean(),
   })
   .refine(
     (data) => {
@@ -141,8 +157,6 @@ const discountFormSchema = z
     }
   );
 
-type DiscountFormData = z.infer<typeof discountFormSchema>;
-
 interface DiscountFormProps {
   existingDiscount?: Discount | null;
   onSuccess?: () => void;
@@ -181,6 +195,7 @@ export function DiscountForm({
       maximumOrderAmount: existingDiscount?.maximum_order_amount
         ? existingDiscount.maximum_order_amount / 100
         : undefined,
+      restrictedUsers: [],
       isActive: existingDiscount?.is_active ?? true,
     },
   });
@@ -188,6 +203,122 @@ export function DiscountForm({
   const discountType = form.watch("discountType");
   const validFrom = form.watch("validFrom");
   const expiresAt = form.watch("expiresAt");
+  const restrictedUsers = form.watch("restrictedUsers");
+
+  // State for user search
+  const [searchQuery, setSearchQuery] = React.useState("");
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = React.useState("");
+  const [selectedUsersData, setSelectedUsersData] = React.useState<
+    RestrictedUser[]
+  >([]);
+
+  console.log("🔍 selectedUsersData:", selectedUsersData);
+
+  // Load existing restricted users when editing a discount
+  React.useEffect(() => {
+    if (existingDiscount?.id) {
+      const loadRestrictedUsers = async () => {
+        const result = await getDiscountWithRestrictions(existingDiscount.id);
+        if (result.data && result.data.restricted_users.length > 0) {
+          const restrictedUsers = result.data.restricted_users;
+          setSelectedUsersData(restrictedUsers);
+
+          // Set the form field with user IDs
+          const userIds = restrictedUsers.map((user) => user.id);
+          form.setValue("restrictedUsers", userIds);
+        }
+      };
+      loadRestrictedUsers();
+    }
+  }, [existingDiscount?.id, form]);
+
+  // Debounce search query
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Search users with debounced query
+  const {
+    data: searchResults,
+    isLoading: searchLoading,
+    error: searchError,
+  } = useQuery({
+    queryKey: ["search-users", debouncedSearchQuery],
+    queryFn: () =>
+      searchUsers({
+        searchQuery: debouncedSearchQuery,
+        minQueryLength: 2,
+        limit: 20,
+      }),
+    select: (data) => data.data,
+    enabled: debouncedSearchQuery.length >= 2,
+    staleTime: 30000, // Cache results for 30 seconds
+  });
+
+  const users = searchResults || [];
+  const comboboxUsers = users.map((user) => ({
+    label: `${user.full_name || "Uten navn"} (${user.email || "Uten e-post"})`,
+    value: `${user.id} ${user.full_name?.toLowerCase() || ""} ${user.email?.toLowerCase() || ""}`,
+    userId: user.id, // Add separate userId field
+  }));
+
+  const handleUserSelect = (userId: string) => {
+    console.log("🔍 handleUserSelect called with userId:", userId);
+    console.log("📋 Current restrictedUsers:", restrictedUsers);
+    console.log(
+      "👥 Current selectedUsersData length:",
+      selectedUsersData.length
+    );
+
+    const currentUsers = restrictedUsers || [];
+    const isRemoving = currentUsers.includes(userId);
+    const newUsers = isRemoving
+      ? currentUsers.filter((id) => id !== userId)
+      : [...currentUsers, userId];
+
+    console.log("✏️ Setting new restrictedUsers:", newUsers);
+    form.setValue("restrictedUsers", newUsers);
+
+    // Update selected users data for display
+    if (!isRemoving) {
+      console.log("➕ Adding user to selectedUsersData");
+      const selectedUser = users.find((u) => u.id === userId);
+      console.log("👤 Found user to add:", selectedUser);
+      if (selectedUser) {
+        setSelectedUsersData((prev) => {
+          const updated = [...prev, selectedUser];
+          console.log(
+            "📝 Updated selectedUsersData after addition:",
+            updated.length
+          );
+          return updated;
+        });
+      } else {
+        console.log("⚠️ User not found in search results:", userId);
+      }
+    } else {
+      console.log("➖ Removing user from selectedUsersData");
+      setSelectedUsersData((prev) => {
+        const updated = prev.filter((u) => u.id !== userId);
+        console.log(
+          "📝 Updated selectedUsersData after removal:",
+          updated.length
+        );
+        return updated;
+      });
+    }
+  };
+
+  const handleRemoveUser = (userId: string) => {
+    const currentUsers = restrictedUsers || [];
+    const newUsers = currentUsers.filter((id) => id !== userId);
+    form.setValue("restrictedUsers", newUsers);
+    setSelectedUsersData((prev) => prev.filter((u) => u.id !== userId));
+  };
 
   const mutation = useMutation({
     mutationFn: async (data: DiscountFormData) => {
@@ -214,10 +345,19 @@ export function DiscountForm({
         currency: "NOK",
       };
 
+      const restrictedUserIds = data.restrictedUsers || [];
+
       if (existingDiscount) {
-        return await updateDiscount(existingDiscount.id, discountData);
+        return await updateDiscountWithRestrictions(
+          existingDiscount.id,
+          discountData,
+          restrictedUserIds
+        );
       } else {
-        return await createDiscount(discountData as any);
+        return await createDiscountWithRestrictions(
+          discountData as any,
+          restrictedUserIds
+        );
       }
     },
     onSuccess: (result) => {
@@ -276,69 +416,67 @@ export function DiscountForm({
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Grunnleggende informasjon</h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FormField
-              control={form.control}
-              name="code"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Rabattkode *</FormLabel>
-                  <FormControl>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder={`VELKOMMEN${new Date().getFullYear()}`}
-                        {...field}
-                        value={field.value.toUpperCase()}
-                        onChange={(e) =>
-                          field.onChange(e.target.value.toUpperCase())
-                        }
-                        className="flex-1"
-                      />
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="icon"
-                        onClick={handleGenerateCode}
-                        disabled={generateMutation.isPending}
-                        title="Generer rabattkode"
-                      >
-                        {generateMutation.isPending ? (
-                          <Spinner className="h-4 w-4" />
-                        ) : (
-                          <Dices className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </FormControl>
-                  <FormDescription>
-                    3-20 tegn, kun store bokstaver, tall og bindestreker
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="isActive"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Aktiv</FormLabel>
-                    <FormDescription>
-                      Om rabattkoden skal være tilgjengelig for bruk
-                    </FormDescription>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
+          <FormField
+            control={form.control}
+            name="code"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Rabattkode *</FormLabel>
+                <FormControl>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder={`VELKOMMEN${new Date().getFullYear()}`}
+                      {...field}
+                      value={field.value.toUpperCase()}
+                      onChange={(e) =>
+                        field.onChange(e.target.value.toUpperCase())
+                      }
+                      className="flex-1"
                     />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-          </div>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      onClick={handleGenerateCode}
+                      disabled={generateMutation.isPending}
+                      title="Generer rabattkode"
+                    >
+                      {generateMutation.isPending ? (
+                        <Spinner className="h-4 w-4" />
+                      ) : (
+                        <Dices className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  3-20 tegn, kun store bokstaver, tall og bindestreker
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="isActive"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
+                <div className="space-y-0.5">
+                  <FormLabel className="text-base">Aktiv</FormLabel>
+                  <FormDescription>
+                    Om rabattkoden skal være tilgjengelig for bruk
+                  </FormDescription>
+                </div>
+                <FormControl>
+                  <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -629,9 +767,153 @@ export function DiscountForm({
 
         <Separator />
 
-        {/* Order Requirements */}
+        {/* User and Order Requirements */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Ordrebegrensninger</h3>
+          <h3 className="text-lg font-semibold">Begrensninger</h3>
+
+          {/* User restrictions */}
+          <FormField
+            control={form.control}
+            name="restrictedUsers"
+            render={({ field }) => (
+              <FormItem>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Begrenset til spesifikke brukere</FormLabel>
+                  <Badge
+                    variant={
+                      selectedUsersData.length > 0 ? "default" : "secondary"
+                    }
+                  >
+                    {(() => {
+                      console.log(
+                        "🏷️ Badge render - selectedUsersData.length:",
+                        selectedUsersData.length
+                      );
+                      return selectedUsersData.length === 0
+                        ? "Ingen brukere valgt"
+                        : `${selectedUsersData.length} bruker${selectedUsersData.length !== 1 ? "e" : ""} valgt`;
+                    })()}
+                  </Badge>
+                </div>
+                <FormControl>
+                  <div className="space-y-2">
+                    <Combobox
+                      data={comboboxUsers}
+                      type="bruker"
+                      value=""
+                      onValueChange={handleUserSelect}
+                    >
+                      <ComboboxTrigger className="w-full">
+                        <div className="flex items-center gap-2 text-left">
+                          <Users className="h-4 w-4" />
+                          <span>
+                            {selectedUsersData.length > 0
+                              ? `${selectedUsersData.length} bruker${selectedUsersData.length !== 1 ? "e" : ""} valgt`
+                              : "Søk og velg brukere (valgfritt)"}
+                          </span>
+                        </div>
+                      </ComboboxTrigger>
+                      <ComboboxContent>
+                        <ComboboxInput
+                          placeholder="Søk etter brukere..."
+                          value={searchQuery}
+                          onValueChange={setSearchQuery}
+                        />
+                        <ComboboxList>
+                          <ComboboxEmpty>
+                            {searchLoading
+                              ? "Søker..."
+                              : debouncedSearchQuery.length < 2
+                                ? "Skriv minst 2 tegn for å søke"
+                                : "Ingen brukere funnet."}
+                          </ComboboxEmpty>
+                          <ComboboxGroup>
+                            {comboboxUsers.map((user) => (
+                              <ComboboxItem
+                                key={user.value}
+                                value={user.value}
+                                className="flex items-center gap-2"
+                                onSelect={() => {
+                                  // Handle user selection when clicking anywhere on the row
+                                  console.log(
+                                    "👆 ComboboxItem clicked for user:",
+                                    user.userId,
+                                    user.label
+                                  );
+                                  handleUserSelect(user.userId);
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={
+                                    restrictedUsers?.includes(user.userId) ||
+                                    false
+                                  }
+                                  onChange={() => {
+                                    console.log(
+                                      "🔘 Checkbox clicked for user:",
+                                      user.userId,
+                                      user.label
+                                    );
+                                    handleUserSelect(user.userId);
+                                  }}
+                                  className="rounded"
+                                />
+                                {user.label}
+                              </ComboboxItem>
+                            ))}
+                          </ComboboxGroup>
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+
+                    {/* Display selected users in a scrollable list */}
+                    {selectedUsersData.length > 0 && (
+                      <div className="mt-3 border rounded-md">
+                        <div className="px-3 py-2 border-b bg-muted/50">
+                          <span className="text-sm font-medium">
+                            Valgte brukere ({selectedUsersData.length})
+                          </span>
+                        </div>
+                        <ScrollArea className="h-48">
+                          <div className="p-2 space-y-1">
+                            {selectedUsersData.map((user) => (
+                              <div
+                                key={user.id}
+                                className="flex items-center justify-between p-2 rounded-sm hover:bg-muted/50"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium truncate">
+                                    {user.full_name || "Uten navn"}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {user.email || "Uten e-post"}
+                                  </p>
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveUser(user.id)}
+                                  className="ml-2 p-1 hover:bg-destructive/10 hover:text-destructive rounded-sm transition-colors"
+                                  aria-label={`Fjern ${user.full_name || "bruker"}`}
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
+                      </div>
+                    )}
+                  </div>
+                </FormControl>
+                <FormDescription>
+                  Hvis ingen brukere er valgt, kan alle bruke rabattkoden. Hvis
+                  brukere er valgt, kan kun disse brukerne bruke koden.
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <FormField

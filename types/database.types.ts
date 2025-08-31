@@ -2581,6 +2581,36 @@ export type Database = {
           },
         ]
       }
+      discount_restrictions: {
+        Row: {
+          discount_id: string
+          profile_id: string
+        }
+        Insert: {
+          discount_id: string
+          profile_id: string
+        }
+        Update: {
+          discount_id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discount_restrictions_discount_id_fkey"
+            columns: ["discount_id"]
+            isOneToOne: false
+            referencedRelation: "discounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "discount_restrictions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       discount_usage: {
         Row: {
           booking_id: string | null

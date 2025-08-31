@@ -5,7 +5,7 @@ import {
   discountsInsertSchema,
   discountsUpdateSchema,
 } from "@/schemas/database.schema";
-import type { DatabaseTables } from "@/types";
+import type { DatabaseTables, UserSearchFilters } from "@/types";
 
 // Types for discount operations
 type Discount = DatabaseTables["discounts"]["Row"];
@@ -25,7 +25,7 @@ interface DiscountValidationResult {
  */
 export async function getDiscountByCode(code: string) {
   const supabase = await createClient();
-  
+
   const result = await supabase
     .from("discounts")
     .select("*")
@@ -49,21 +49,26 @@ export async function validateDiscountCode({
   profileId?: string;
 }): Promise<DiscountValidationResult> {
   const supabase = await createClient();
-  
+
   try {
     // Get current user if not provided
     let userId = profileId;
     if (!userId) {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        return { isValid: false, error: "Du må være logget inn for å bruke rabattkoder" };
+        return {
+          isValid: false,
+          error: "Du må være logget inn for å bruke rabattkoder",
+        };
       }
       userId = user.id;
     }
 
     // 1. Check if discount exists and is active
-    const { data: discount, error: discountError } = await getDiscountByCode(code);
-    
+    const { data: discount, error: discountError } = await getDiscountByCode(
+      code,
+    );
+
     if (discountError || !discount) {
       return { isValid: false, error: "Rabattkoden finnes ikke" };
     }
@@ -75,7 +80,9 @@ export async function validateDiscountCode({
     // 2. Check validity period
     const now = new Date();
     const validFrom = new Date(discount.valid_from);
-    const expiresAt = discount.expires_at ? new Date(discount.expires_at) : null;
+    const expiresAt = discount.expires_at
+      ? new Date(discount.expires_at)
+      : null;
 
     if (now < validFrom) {
       return { isValid: false, error: "Rabattkoden er ikke gyldig ennå" };
@@ -86,8 +93,13 @@ export async function validateDiscountCode({
     }
 
     // 3. Check total usage limits
-    if (discount.max_uses !== null && discount.current_uses >= discount.max_uses) {
-      return { isValid: false, error: "Rabattkoden har nådd maksimalt antall bruk" };
+    if (
+      discount.max_uses !== null && discount.current_uses >= discount.max_uses
+    ) {
+      return {
+        isValid: false,
+        error: "Rabattkoden har nådd maksimalt antall bruk",
+      };
     }
 
     // 4. Check per-user usage limits
@@ -103,29 +115,43 @@ export async function validateDiscountCode({
 
     const userUsageCount = userUsage?.length || 0;
     if (userUsageCount >= discount.max_uses_per_user) {
-      return { isValid: false, error: "Du har allerede brukt denne rabattkoden maksimalt antall ganger" };
+      return {
+        isValid: false,
+        error:
+          "Du har allerede brukt denne rabattkoden maksimalt antall ganger",
+      };
     }
 
     // 5. Check minimum order amount
-    if (discount.minimum_order_amount && orderAmountCents < discount.minimum_order_amount) {
+    if (
+      discount.minimum_order_amount &&
+      orderAmountCents < discount.minimum_order_amount
+    ) {
       const minAmount = discount.minimum_order_amount / 100;
-      return { 
-        isValid: false, 
-        error: `Minimum ordrebeløp for denne rabattkoden er ${minAmount.toLocaleString('no-NO')} kr` 
+      return {
+        isValid: false,
+        error: `Minimum ordrebeløp for denne rabattkoden er ${
+          minAmount.toLocaleString("no-NO")
+        } kr`,
       };
     }
 
     // 6. Calculate discount amount with maximum order amount as cap
     let discountAmount = 0;
     let discountableAmount = orderAmountCents;
-    
+
     // If there's a maximum order amount, cap the discountable amount
     if (discount.maximum_order_amount) {
-      discountableAmount = Math.min(orderAmountCents, discount.maximum_order_amount);
+      discountableAmount = Math.min(
+        orderAmountCents,
+        discount.maximum_order_amount,
+      );
     }
-    
+
     if (discount.discount_percentage !== null) {
-      discountAmount = Math.round((discountableAmount * discount.discount_percentage) / 100);
+      discountAmount = Math.round(
+        (discountableAmount * discount.discount_percentage) / 100,
+      );
     } else if (discount.discount_amount !== null) {
       discountAmount = Math.min(discount.discount_amount, discountableAmount);
     }
@@ -139,7 +165,7 @@ export async function validateDiscountCode({
       discountAmount,
     };
   } catch (error) {
-    console.error('Error validating discount code:', error);
+    console.error("Error validating discount code:", error);
     return { isValid: false, error: "Kunne ikke validere rabattkode" };
   }
 }
@@ -183,20 +209,23 @@ export async function trackDiscountUsage({
     if (currentDiscount) {
       const { error: updateError } = await supabase
         .from("discounts")
-        .update({ 
+        .update({
           current_uses: (currentDiscount.current_uses || 0) + 1,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq("id", discountId);
 
       if (updateError) {
-        return { error: "Kunne ikke oppdatere rabattkode-statistikk", data: null };
+        return {
+          error: "Kunne ikke oppdatere rabattkode-statistikk",
+          data: null,
+        };
       }
     }
 
     return { error: null, data: "success" };
   } catch (error) {
-    console.error('Error tracking discount usage:', error);
+    console.error("Error tracking discount usage:", error);
     return { error: "Kunne ikke spore rabattkodebruk", data: null };
   }
 }
@@ -214,7 +243,7 @@ export async function createDiscount(discount: DiscountInsert) {
   }
 
   const supabase = await createClient();
-  
+
   // Check if user is admin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -228,7 +257,10 @@ export async function createDiscount(discount: DiscountInsert) {
     .single();
 
   if (!profile || profile.role !== "admin") {
-    return { error: "Du har ikke tilgang til å opprette rabattkoder", data: null };
+    return {
+      error: "Du har ikke tilgang til å opprette rabattkoder",
+      data: null,
+    };
   }
 
   // Convert code to uppercase for consistency
@@ -237,7 +269,70 @@ export async function createDiscount(discount: DiscountInsert) {
     code: data.code.toUpperCase(),
   };
 
-  return await supabase.from("discounts").insert(discountData).select().single();
+  return await supabase.from("discounts").insert(discountData).select()
+    .single();
+}
+
+/**
+ * Admin function - Create new discount with restricted users
+ */
+export async function createDiscountWithRestrictions(
+  discount: DiscountInsert,
+  restrictedUserIds: string[] = [],
+) {
+  const supabase = await createClient();
+
+  // Check if user is admin
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Du må være logget inn", data: null };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "admin") {
+    return {
+      error: "Du har ikke tilgang til å opprette rabattkoder",
+      data: null,
+    };
+  }
+
+  try {
+    // Create the discount first
+    const discountResult = await createDiscount(discount);
+    if (discountResult.error || !discountResult.data) {
+      return discountResult;
+    }
+
+    const discountId = discountResult.data.id;
+
+    // Add restricted users if any
+    if (restrictedUserIds.length > 0) {
+      const restrictions = restrictedUserIds.map((userId) => ({
+        discount_id: discountId,
+        profile_id: userId,
+      }));
+
+      const { error: restrictionsError } = await supabase
+        .from("discount_restrictions")
+        .insert(restrictions);
+
+      if (restrictionsError) {
+        // If restrictions fail, we should probably delete the discount to maintain consistency
+        await supabase.from("discounts").delete().eq("id", discountId);
+        return { error: "Kunne ikke opprette brukerbegrensninger", data: null };
+      }
+    }
+
+    return discountResult;
+  } catch (error) {
+    console.error("Error creating discount with restrictions:", error);
+    return { error: "Kunne ikke opprette rabattkode", data: null };
+  }
 }
 
 /**
@@ -253,7 +348,7 @@ export async function updateDiscount(id: string, discount: DiscountUpdate) {
   }
 
   const supabase = await createClient();
-  
+
   // Check if user is admin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -267,7 +362,10 @@ export async function updateDiscount(id: string, discount: DiscountUpdate) {
     .single();
 
   if (!profile || profile.role !== "admin") {
-    return { error: "Du har ikke tilgang til å oppdatere rabattkoder", data: null };
+    return {
+      error: "Du har ikke tilgang til å oppdatere rabattkoder",
+      data: null,
+    };
   }
 
   // Convert code to uppercase if provided
@@ -285,11 +383,15 @@ export async function updateDiscount(id: string, discount: DiscountUpdate) {
 }
 
 /**
- * Admin function - Delete discount
+ * Admin function - Update discount with restricted users
  */
-export async function deleteDiscount(id: string) {
+export async function updateDiscountWithRestrictions(
+  id: string,
+  discount: DiscountUpdate,
+  restrictedUserIds: string[] = [],
+) {
   const supabase = await createClient();
-  
+
   // Check if user is admin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -303,7 +405,147 @@ export async function deleteDiscount(id: string) {
     .single();
 
   if (!profile || profile.role !== "admin") {
-    return { error: "Du har ikke tilgang til å slette rabattkoder", data: null };
+    return {
+      error: "Du har ikke tilgang til å oppdatere rabattkoder",
+      data: null,
+    };
+  }
+
+  try {
+    // Update the discount first
+    const discountResult = await updateDiscount(id, discount);
+    if (discountResult.error || !discountResult.data) {
+      return discountResult;
+    }
+
+    // Clear existing restrictions
+    const { error: clearError } = await supabase
+      .from("discount_restrictions")
+      .delete()
+      .eq("discount_id", id);
+
+    if (clearError) {
+      return { error: "Kunne ikke oppdatere brukerbegrensninger", data: null };
+    }
+
+    // Add new restrictions if any
+    if (restrictedUserIds.length > 0) {
+      const restrictions = restrictedUserIds.map((userId) => ({
+        discount_id: id,
+        profile_id: userId,
+      }));
+
+      const { error: restrictionsError } = await supabase
+        .from("discount_restrictions")
+        .insert(restrictions);
+
+      if (restrictionsError) {
+        console.error("Error adding restrictions:", restrictionsError);
+        return {
+          error: "Kunne ikke legge til brukerbegrensninger",
+          data: null,
+        };
+      }
+    }
+
+    return discountResult;
+  } catch (error) {
+    console.error("Error updating discount with restrictions:", error);
+    return { error: "Kunne ikke oppdatere rabattkode", data: null };
+  }
+}
+
+/**
+ * Get discount with restricted users
+ */
+export async function getDiscountWithRestrictions(discountId: string) {
+  const supabase = await createClient();
+
+  // Check if user is admin
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Du må være logget inn", data: null };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "admin") {
+    return { error: "Du har ikke tilgang", data: null };
+  }
+
+  // Get the discount
+  const { data: discount, error: discountError } = await supabase
+    .from("discounts")
+    .select("*")
+    .eq("id", discountId)
+    .single();
+
+  if (discountError || !discount) {
+    return { error: "Rabattkode ikke funnet", data: null };
+  }
+
+  // Get restricted users with their profile information
+  const { data: restrictedUsers, error: restrictionsError } = await supabase
+    .from("discount_restrictions")
+    .select(`
+      profile_id,
+      profiles:profile_id (
+        id,
+        full_name,
+        email,
+        role
+      )
+    `)
+    .eq("discount_id", discountId);
+
+  if (restrictionsError) {
+    return { error: "Kunne ikke hente brukerbegrensninger", data: null };
+  }
+
+  // Format the restricted users data
+  const formattedRestrictedUsers = restrictedUsers?.map((restriction) => ({
+    id: restriction.profiles.id,
+    full_name: restriction.profiles.full_name,
+    email: restriction.profiles.email,
+    role: restriction.profiles.role,
+  })) || [];
+
+  return {
+    data: {
+      discount,
+      restricted_users: formattedRestrictedUsers,
+    },
+    error: null,
+  };
+}
+
+/**
+ * Admin function - Delete discount
+ */
+export async function deleteDiscount(id: string) {
+  const supabase = await createClient();
+
+  // Check if user is admin
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Du må være logget inn", data: null };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "admin") {
+    return {
+      error: "Du har ikke tilgang til å slette rabattkoder",
+      data: null,
+    };
   }
 
   return await supabase.from("discounts").delete().eq("id", id);
@@ -318,11 +560,11 @@ export async function getAllDiscounts({
   limit = 100,
 }: {
   searchTerm?: string;
-  statusFilter?: 'all' | 'active' | 'inactive' | 'expired';
+  statusFilter?: "all" | "active" | "inactive" | "expired";
   limit?: number;
 } = {}) {
   const supabase = await createClient();
-  
+
   // Check if user is admin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -347,24 +589,26 @@ export async function getAllDiscounts({
 
   // Apply search filter
   if (searchTerm) {
-    query = query.or(`code.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+    query = query.or(
+      `code.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`,
+    );
   }
 
   // Apply status filter
-  if (statusFilter && statusFilter !== 'all') {
+  if (statusFilter && statusFilter !== "all") {
     const now = new Date().toISOString();
-    
+
     switch (statusFilter) {
-      case 'active':
-        query = query.eq('is_active', true)
-          .lte('valid_from', now)
+      case "active":
+        query = query.eq("is_active", true)
+          .lte("valid_from", now)
           .or(`expires_at.is.null,expires_at.gte.${now}`);
         break;
-      case 'inactive':
-        query = query.eq('is_active', false);
+      case "inactive":
+        query = query.eq("is_active", false);
         break;
-      case 'expired':
-        query = query.lt('expires_at', now);
+      case "expired":
+        query = query.lt("expires_at", now);
         break;
     }
   }
@@ -377,7 +621,7 @@ export async function getAllDiscounts({
  */
 export async function getDiscountUsageStats(discountId: string) {
   const supabase = await createClient();
-  
+
   // Check if user is admin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -412,14 +656,15 @@ export async function getDiscountUsageStats(discountId: string) {
     .order("used_at", { ascending: false });
 }
 
-
 /**
  * Generate a unique discount code
  * Creates a 6-character uppercase alphanumeric code and ensures it's unique
  */
-export async function generateDiscountCode(): Promise<{ data: string | null; error: string | null }> {
+export async function generateDiscountCode(): Promise<
+  { data: string | null; error: string | null }
+> {
   const supabase = await createClient();
-  
+
   // Check if user is admin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -433,37 +678,87 @@ export async function generateDiscountCode(): Promise<{ data: string | null; err
     .single();
 
   if (!profile || profile.role !== "admin") {
-    return { error: "Du har ikke tilgang til å generere rabattkoder", data: null };
+    return {
+      error: "Du har ikke tilgang til å generere rabattkoder",
+      data: null,
+    };
   }
 
-  const characters = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+  const characters = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   const maxAttempts = 20;
-  
+
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     // Generate 6-character random code
-    let code = '';
+    let code = "";
     for (let i = 0; i < 6; i++) {
       code += characters.charAt(Math.floor(Math.random() * characters.length));
     }
-    
+
     // Check if code already exists
     const { data: existingDiscount } = await supabase
       .from("discounts")
       .select("id")
       .eq("code", code)
       .single();
-    
+
     if (!existingDiscount) {
       // Code is unique, return it
       return { data: code, error: null };
     }
   }
-  
+
   // If we've exhausted all attempts, return an error
-  return { 
-    error: "Kunne ikke generere en unik rabattkode. Prøv igjen.", 
-    data: null 
+  return {
+    error: "Kunne ikke generere en unik rabattkode. Prøv igjen.",
+    data: null,
   };
+}
+
+/**
+ * Search users for discount restriction combobox
+ */
+export async function searchUsers(filters: UserSearchFilters) {
+  const supabase = await createClient();
+
+  // Only search if there's a query with minimum length
+  if (
+    !filters.searchQuery ||
+    filters.searchQuery.trim().length < (filters.minQueryLength || 2)
+  ) {
+    return { data: [], error: null };
+  }
+
+  // Check if user is admin
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: "Du må være logget inn", data: null };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile || profile.role !== "admin") {
+    return { error: "Du har ikke tilgang", data: null };
+  }
+
+  const trimmedQuery = filters.searchQuery.trim().toLowerCase();
+
+  // Search users with debounced query
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, full_name, email, role")
+    .or(`full_name.ilike.%${trimmedQuery}%,email.ilike.%${trimmedQuery}%`)
+    .order("full_name", { ascending: true })
+    .limit(filters.limit || 20);
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  return { data: data || [], error: null };
 }
 
 /**
@@ -471,7 +766,7 @@ export async function generateDiscountCode(): Promise<{ data: string | null; err
  */
 export async function getDiscountCounts() {
   const supabase = await createClient();
-  
+
   // Check if user is admin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
@@ -498,18 +793,19 @@ export async function getDiscountCounts() {
   }
 
   const now = new Date().toISOString();
-  
+
   const counts = {
     all: discounts.length,
-    active: discounts.filter(d => 
-      d.is_active && 
-      new Date(d.valid_from) <= new Date(now) && 
+    active: discounts.filter((d) =>
+      d.is_active &&
+      new Date(d.valid_from) <= new Date(now) &&
       (!d.expires_at || new Date(d.expires_at) >= new Date(now))
     ).length,
-    inactive: discounts.filter(d => !d.is_active).length,
-    expired: discounts.filter(d => 
-      d.expires_at && new Date(d.expires_at) < new Date(now)
-    ).length,
+    inactive: discounts.filter((d) => !d.is_active).length,
+    expired:
+      discounts.filter((d) =>
+        d.expires_at && new Date(d.expires_at) < new Date(now)
+      ).length,
   };
 
   return { data: counts, error: null };

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect } from "react";
 import {
   Calendar,
   Clock,
@@ -14,14 +14,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { BookingScheduler } from "@/components/booking/booking-scheduler";
 import { BookingAddressSelector } from "@/components/addresses";
 import { ApplyDiscountForm } from "@/components/booking/apply-discount-form";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-import type { Database } from "@/types/database.types";
-import type { DatabaseTables } from "@/types";
+import { useBookingStore } from "@/stores/booking.store";
 
 const { Stepper } = defineStepper(
   {
@@ -50,24 +48,6 @@ const { Stepper } = defineStepper(
   }
 );
 
-type Address = Database["public"]["Tables"]["addresses"]["Row"];
-
-interface AppliedDiscount {
-  discount: DatabaseTables["discounts"]["Row"];
-  discountAmount: number;
-  code: string;
-}
-
-interface BookingData {
-  startTime?: Date;
-  endTime?: Date;
-  location: "stylist" | "customer";
-  customerAddress?: string;
-  customerAddressId?: string;
-  customerAddressDetails?: Address;
-  messageToStylist?: string;
-  appliedDiscount?: AppliedDiscount;
-}
 
 interface BookingStepperProps {
   stylistId: string;
@@ -75,9 +55,7 @@ interface BookingStepperProps {
   serviceAmountNOK: number;
   stylistCanTravel: boolean;
   stylistHasOwnPlace: boolean;
-  onComplete: (bookingData: BookingData) => void;
-  onDiscountChange?: (discount: AppliedDiscount | null) => void;
-  isProcessing?: boolean;
+  onComplete: () => void;
 }
 
 export function BookingStepper({
@@ -87,61 +65,38 @@ export function BookingStepper({
   stylistCanTravel,
   stylistHasOwnPlace,
   onComplete,
-  onDiscountChange,
-  isProcessing = false,
 }: BookingStepperProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
-  const [bookingData, setBookingData] = useState<BookingData>({
-    location: stylistHasOwnPlace ? "stylist" : "customer",
-  });
+  const {
+    currentStep,
+    bookingData,
+    isProcessingBooking,
+    setCurrentStep,
+    updateBookingData,
+    canProceedFromStep,
+    isStepAccessible,
+    setBookingContext
+  } = useBookingStore();
+
+  // Update booking context when props change
+  useEffect(() => {
+    setBookingContext({
+      stylistId,
+      serviceDurationMinutes,
+      serviceAmountNOK,
+      stylistCanTravel,
+      stylistHasOwnPlace,
+    });
+  }, [stylistId, serviceDurationMinutes, serviceAmountNOK, stylistCanTravel, stylistHasOwnPlace, setBookingContext]);
 
   const handleTimeSlotSelect = (startTime: Date, endTime: Date) => {
-    setBookingData((prev) => ({ ...prev, startTime, endTime }));
+    updateBookingData({ startTime, endTime });
   };
 
-  const updateBookingData = (updates: Partial<BookingData>) => {
-    setBookingData((prev) => ({ ...prev, ...updates }));
+  const handleUpdateBookingData = (updates: Partial<typeof bookingData>) => {
+    updateBookingData(updates);
   };
 
-  const canProceedFromStep = (stepId: string) => {
-    switch (stepId) {
-      case "time-selection":
-        return bookingData.startTime && bookingData.endTime;
-      case "location-details":
-        return (
-          bookingData.location &&
-          (bookingData.location === "stylist" ||
-            (bookingData.location === "customer" &&
-              (bookingData.customerAddressId || bookingData.customerAddress)))
-        );
-      case "message-discount":
-        return true; // Optional fields
-      default:
-        return true;
-    }
-  };
-
-  const isStepAccessible = (stepId: string) => {
-    switch (stepId) {
-      case "time-selection":
-        return true; // First step is always accessible
-      case "location-details":
-        return canProceedFromStep("time-selection");
-      case "message-discount":
-        return (
-          canProceedFromStep("time-selection") &&
-          canProceedFromStep("location-details")
-        );
-      case "payment":
-        return (
-          canProceedFromStep("time-selection") &&
-          canProceedFromStep("location-details") &&
-          canProceedFromStep("message-discount")
-        );
-      default:
-        return false;
-    }
-  };
 
   return (
     <div className="w-full">
@@ -209,24 +164,38 @@ export function BookingStepper({
             <Stepper.Controls>
               <Button
                 variant="outline"
-                onClick={methods.prev}
-                disabled={methods.isFirst || isProcessing}
+                onClick={() => {
+                  methods.prev();
+                  // Update our store state to match
+                  const steps = ["time-selection", "location-details", "message-discount", "payment"] as const;
+                  const currentIndex = steps.indexOf(currentStep);
+                  if (currentIndex > 0) {
+                    setCurrentStep(steps[currentIndex - 1]);
+                  }
+                }}
+                disabled={methods.isFirst || isProcessingBooking}
               >
                 Tilbake
               </Button>
               <Button
                 onClick={() => {
                   if (methods.isLast) {
-                    onComplete(bookingData);
+                    onComplete();
                   } else {
                     methods.next();
+                    // Update our store state to match
+                    const steps = ["time-selection", "location-details", "message-discount", "payment"] as const;
+                    const currentIndex = steps.indexOf(currentStep);
+                    if (currentIndex < steps.length - 1) {
+                      setCurrentStep(steps[currentIndex + 1]);
+                    }
                   }
                 }}
                 disabled={
-                  !canProceedFromStep(methods.current.id) || isProcessing
+                  !canProceedFromStep(methods.current.id) || isProcessingBooking
                 }
               >
-                {isProcessing
+                {isProcessingBooking
                   ? "Behandler..."
                   : methods.isLast
                     ? "Fullfør booking"
@@ -260,10 +229,10 @@ export function BookingStepper({
               stylistCanTravel={stylistCanTravel}
               stylistHasOwnPlace={stylistHasOwnPlace}
               location={bookingData.location}
-              onLocationChange={(location) => updateBookingData({ location })}
+              onLocationChange={(location) => handleUpdateBookingData({ location })}
               selectedAddressId={bookingData.customerAddressId}
               onAddressSelect={(addressId, address) =>
-                updateBookingData({
+                handleUpdateBookingData({
                   customerAddressId: addressId,
                   customerAddressDetails: address,
                   customerAddress: address
@@ -273,7 +242,7 @@ export function BookingStepper({
               }
               customerInstructions={bookingData.messageToStylist}
               onInstructionsChange={(instructions) =>
-                updateBookingData({ messageToStylist: instructions })
+                handleUpdateBookingData({ messageToStylist: instructions })
               }
             />
           </Stepper.Panel>
@@ -300,7 +269,7 @@ export function BookingStepper({
                       placeholder="F.eks. allergier, preferanser, eller andre viktige detaljer..."
                       value={bookingData.messageToStylist || ""}
                       onChange={(e) =>
-                        updateBookingData({ messageToStylist: e.target.value })
+                        handleUpdateBookingData({ messageToStylist: e.target.value })
                       }
                     />
                   </div>
@@ -310,8 +279,7 @@ export function BookingStepper({
               <ApplyDiscountForm
                 orderAmountNOK={serviceAmountNOK}
                 onDiscountApplied={(discount) => {
-                  updateBookingData({ appliedDiscount: discount || undefined });
-                  onDiscountChange?.(discount);
+                  handleUpdateBookingData({ appliedDiscount: discount || undefined });
                 }}
                 initialDiscountCode={bookingData.appliedDiscount?.code}
               />

@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCartStore } from "@/stores/cart.store";
+import { useBookingStore } from "@/stores/booking.store";
 import { ArrowLeft, Clock, User, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -15,29 +16,43 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
-import type { DatabaseTables } from "@/types";
 
-interface AppliedDiscount {
-  discount: DatabaseTables["discounts"]["Row"];
-  discountAmount: number;
-  code: string;
-}
 
 export default function BookingPage() {
   const router = useRouter();
   const { items, getTotalItems, getTotalPrice, getCurrentStylist, clearCart } =
     useCartStore();
-  const [isProcessingBooking, setIsProcessingBooking] = useState(false);
+  const {
+    bookingData,
+    setBookingContext,
+    setProcessingState,
+    clearBooking
+  } = useBookingStore();
   const [isRedirectingToCheckout, setIsRedirectingToCheckout] = useState(false);
   const [stripeOnboardingError, setStripeOnboardingError] = useState<{
     show: boolean;
     stylistName?: string;
   }>({ show: false });
-  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
 
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
   const currentStylist = getCurrentStylist();
+
+  // Calculate total service duration
+  const totalDurationMinutes = items.reduce((total, item) => {
+    return total + item.service.duration_minutes * item.quantity;
+  }, 0);
+
+  // Initialize booking context when component mounts or cart changes
+  useEffect(() => {
+    if (currentStylist && totalPrice && totalDurationMinutes) {
+      setBookingContext({
+        stylistId: currentStylist.id,
+        serviceDurationMinutes: totalDurationMinutes,
+        serviceAmountNOK: totalPrice,
+      });
+    }
+  }, [currentStylist, totalPrice, totalDurationMinutes, setBookingContext]);
 
   // Fetch stylist details
   const {
@@ -50,27 +65,14 @@ export default function BookingPage() {
     enabled: !!currentStylist?.id,
   });
 
-  // Calculate total service duration
-  const totalDurationMinutes = items.reduce((total, item) => {
-    return total + item.service.duration_minutes * item.quantity;
-  }, 0);
-
   // Handle booking completion
-  const handleBookingComplete = async (bookingData: {
-    startTime?: Date;
-    endTime?: Date;
-    location: "stylist" | "customer";
-    customerAddress?: string;
-    customerAddressId?: string;
-    messageToStylist?: string;
-    discountCode?: string;
-  }) => {
+  const handleBookingComplete = async () => {
     if (!bookingData.startTime || !bookingData.endTime || !currentStylist) {
       toast.error("Manglende booking informasjon");
       return;
     }
 
-    setIsProcessingBooking(true);
+    setProcessingState(true);
 
     try {
       // Extract service IDs from cart items
@@ -109,7 +111,7 @@ export default function BookingPage() {
         customerAddress: customerAddressData,
         customerAddressId: addressId,
         messageToStylist: bookingData.messageToStylist,
-        discountCode: appliedDiscount?.code,
+        discountCode: bookingData.appliedDiscount?.code,
         totalPrice,
         totalDurationMinutes,
       });
@@ -145,16 +147,17 @@ export default function BookingPage() {
           booking_id: result.data.booking.id,
         });
 
-        // Set flag to prevent useEffect redirect and clear cart
+        // Set flag to prevent useEffect redirect and clear cart/booking
         setIsRedirectingToCheckout(true);
         clearCart();
+        clearBooking();
         router.replace(`/checkout?${searchParams.toString()}`);
       }
     } catch (error) {
       console.error("Error creating booking:", error);
       toast.error("En feil oppstod ved opprettelse av booking");
     } finally {
-      setIsProcessingBooking(false);
+      setProcessingState(false);
     }
   };
 
@@ -297,8 +300,6 @@ export default function BookingPage() {
                       stylistDetails.data.has_own_place ?? true
                     }
                     onComplete={handleBookingComplete}
-                    onDiscountChange={setAppliedDiscount}
-                    isProcessing={isProcessingBooking}
                   />
                 )}
               </BlurFade>
@@ -310,7 +311,7 @@ export default function BookingPage() {
             <BlurFade delay={0.2} duration={0.5} inView>
               <OrderSummary
                 items={items}
-                appliedDiscount={appliedDiscount}
+                appliedDiscount={bookingData.appliedDiscount}
                 className="sticky top-24"
               />
             </BlurFade>

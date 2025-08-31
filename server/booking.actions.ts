@@ -481,17 +481,17 @@ export async function createBookingWithServices(
                 profileId: user.id,
             });
 
-            if (validationResult.error || !validationResult.data) {
+            if (!validationResult.isValid || validationResult.error) {
                 return { error: validationResult.error || "Invalid discount code", data: null };
             }
 
-            const discount = validationResult.data;
+            const discount = validationResult.discount!;
             
             // Track usage (this will increment the usage counter)
             const trackingResult = await trackDiscountUsage({
                 discountId: discount.id,
                 profileId: user.id,
-                orderAmountCents: Math.round(input.totalPrice * 100),
+                bookingId: undefined, // Will be set later after booking creation
             });
 
             if (trackingResult.error) {
@@ -501,7 +501,7 @@ export async function createBookingWithServices(
             validatedDiscount = {
                 id: discount.id,
                 discountPercentage: discount.discount_percentage || undefined,
-                discountAmountNOK: discount.discount_amount ? (discount.discount_amount / 100) : undefined,
+                discountAmountNOK: validationResult.discountAmount ? (validationResult.discountAmount / 100) : undefined,
             };
         }
 
@@ -526,7 +526,16 @@ export async function createBookingWithServices(
                     return { error: "Invalid address selected", data: null };
                 }
             } else if (input.customerAddress) {
-                // Create a new address
+                // Get geometry coordinates from Mapbox
+                const { getGeometryFromAddressComponents } = await import("@/lib/mapbox");
+                const geometry = await getGeometryFromAddressComponents({
+                    streetAddress: input.customerAddress.streetAddress,
+                    city: input.customerAddress.city,
+                    postalCode: input.customerAddress.postalCode,
+                    country: input.customerAddress.country,
+                });
+
+                // Create a new address with location coordinates
                 const { data: address, error: addressError } = await supabase
                     .from("addresses")
                     .insert({
@@ -539,8 +548,8 @@ export async function createBookingWithServices(
                             input.customerAddress.entryInstructions,
                         nickname: "Booking Address",
                         is_primary: false,
-                        // TODO: Add location coordinates when Mapbox integration is complete
-                        // location: ...
+                        // Add location coordinates from Mapbox
+                        location: geometry ? `POINT(${geometry[0]} ${geometry[1]})` : null,
                     })
                     .select()
                     .single();

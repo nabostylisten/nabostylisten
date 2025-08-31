@@ -150,12 +150,22 @@ export function StylistStripeOnboarding({
                 </p>
               </div>
 
-              <Button
-                onClick={() => router.push(`/profiler/${userId}`)}
-                className="w-full"
-              >
-                Gå til min profil nå
-              </Button>
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  onClick={() => router.push('/mine-tjenester')}
+                  className="flex-1"
+                  size="lg"
+                >
+                  Opprett min første tjeneste
+                </Button>
+                <Button
+                  onClick={() => router.push(`/profiler/${userId}`)}
+                  variant="outline"
+                  className="flex-1"
+                >
+                  Gå til min profil
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </BlurFade>

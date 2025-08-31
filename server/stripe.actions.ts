@@ -797,13 +797,35 @@ export async function createIdentityVerificationForCurrentUser() {
         sessionId: stylistDetails.stripe_verification_session_id,
       });
 
-      if (
-        statusResult.data?.status === "processing" ||
-        statusResult.data?.status === "verified"
-      ) {
+      console.log({ statusResult });
+
+      if (statusResult.data?.status === "verified") {
+        // If verification is verified but not marked as completed in DB, update it
+        if (!stylistDetails.identity_verification_completed_at) {
+          const { error: updateError } = await supabase
+            .from("stylist_details")
+            .update({
+              identity_verification_completed_at: new Date().toISOString(),
+            })
+            .eq("profile_id", user.id);
+
+          if (updateError) {
+            console.error("Failed to update verification completion:", updateError);
+          }
+        }
+
         return {
           data: null,
-          error: "Identitetsverifisering pågår allerede.",
+          error: "Identitetsverifisering er allerede fullført.",
+        };
+      }
+
+      if (statusResult.data?.status === "processing") {
+        // For processing status, we can't get the URL from status check
+        // User needs to wait or create a new session
+        return {
+          data: null,
+          error: "Identitetsverifisering behandles. Vennligst vent på at prosessen fullføres.",
         };
       }
 

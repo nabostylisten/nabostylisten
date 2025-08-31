@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/permissions";
-import { getStripeAccountStatus } from "@/server/stripe.actions";
+import { getStripeAccountStatus, checkIdentityVerificationStatus } from "@/server/stripe.actions";
 import { StylistStripeOnboarding } from "./stylist-stripe-onboarding";
 import { StylistIdentityVerification } from "@/components/stylist-identity-verification";
 
@@ -77,8 +77,33 @@ export default async function StylistStripePage() {
     }
   }
 
+  // Check identity verification status from Stripe (source of truth)
+  let identityVerificationComplete = false;
+  let identityVerificationStatus = null;
+  
+  if (stylistDetails.stripe_verification_session_id) {
+    const verificationResult = await checkIdentityVerificationStatus();
+    identityVerificationStatus = verificationResult.data?.status;
+    
+    // Update database if Stripe says verification is complete but DB doesn't reflect it
+    if (identityVerificationStatus === 'verified' && !stylistDetails.identity_verification_completed_at) {
+      const { error: updateError } = await supabase
+        .from("stylist_details")
+        .update({
+          identity_verification_completed_at: new Date().toISOString(),
+        })
+        .eq("profile_id", user.id);
+        
+      if (!updateError) {
+        identityVerificationComplete = true;
+      }
+    } else if (identityVerificationStatus === 'verified') {
+      identityVerificationComplete = true;
+    }
+  }
+
   // Check if basic Stripe onboarding is complete but identity verification is needed
-  if (!needsOnboarding && stripeAccountStatus?.payouts_enabled && !stylistDetails.identity_verification_completed_at) {
+  if (!needsOnboarding && stripeAccountStatus?.payouts_enabled && !identityVerificationComplete) {
     // Show identity verification step
     return (
       <StylistIdentityVerification
@@ -89,7 +114,7 @@ export default async function StylistStripePage() {
   }
 
   // Determine if completely done (both Stripe and identity verification)
-  const isCompletelyDone = !needsOnboarding && !!stylistDetails.identity_verification_completed_at;
+  const isCompletelyDone = !needsOnboarding && identityVerificationComplete;
   
   // Show regular Stripe onboarding if not complete, or success screen if everything is done
   return (

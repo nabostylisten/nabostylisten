@@ -2,8 +2,11 @@
 
 ## TODO when porting over
 
-- [ ] Create new Supabase project
-- [ ] In package.json and env local set the supabase keys and project id
+- [x] Create new Supabase project
+- [ ] Upgrade Supabase to Pro
+- [ ] Next up, setup Github integration for CI
+- [ ] Setup Vercel Pro (because we need it for more than 2 cron jobs)
+- [ ] Maybe setup Supabase integration
 - [ ] Setup sign in with Google
 - [ ] Create google project
 - [ ] Fully setup Stripe sync engine after moving projects
@@ -103,6 +106,7 @@ To test and preview OpenGraph images during development, use the **OGraph Previe
 1. **Install the extension**: [OGraph Previewer](https://chromewebstore.google.com/detail/ograph-previewer/ggcfeakcnodgcmmllfdbmngekljbhiim)
 
 2. **Test your local development server**:
+
    - Start your development server: `bun dev`
    - Navigate to any page on `localhost:3000`
    - Click the OGraph Previewer extension icon
@@ -116,6 +120,3 @@ To test and preview OpenGraph images during development, use the **OGraph Previe
    - Become stylist: `localhost:3000/bli-stylist`
 
 This method is much simpler than using external tools like ngrok and provides immediate feedback during development.
-
-
-

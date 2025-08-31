@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, CalendarCheck, X } from "lucide-react";
+import { MoreHorizontal, CalendarCheck, X, Settings } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,6 +30,7 @@ interface BookingActionsDropdownProps {
   userRole: Database["public"]["Enums"]["user_role"];
   serviceName?: string;
   disabled?: boolean;
+  onStatusDialogOpen?: () => void;
 }
 
 export function BookingActionsDropdown({
@@ -38,6 +39,7 @@ export function BookingActionsDropdown({
   userRole,
   serviceName = "Booking",
   disabled = false,
+  onStatusDialogOpen,
 }: BookingActionsDropdownProps) {
   const router = useRouter();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
@@ -55,8 +57,14 @@ export function BookingActionsDropdown({
   const canCancel =
     booking.status === "pending" || booking.status === "confirmed";
 
+  const canAdminister =
+    userRole === "stylist" && 
+    booking.status === "pending" &&
+    onStatusDialogOpen;
+
   // Count available actions
   const availableActions = [
+    canAdminister && "administer",
     canReschedule && "reschedule",
     canCancel && "cancel",
   ].filter(Boolean);
@@ -126,6 +134,16 @@ export function BookingActionsDropdown({
           <DropdownMenuLabel>Handlinger</DropdownMenuLabel>
           <DropdownMenuSeparator />
 
+          {canAdminister && (
+            <DropdownMenuItem
+              onClick={() => onStatusDialogOpen?.()}
+              className="cursor-pointer"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              Administrer
+            </DropdownMenuItem>
+          )}
+
           {canReschedule && (
             <DropdownMenuItem
               onClick={() => router.push(`/bookinger/${booking.id}/flytt`)}
@@ -139,7 +157,7 @@ export function BookingActionsDropdown({
           {canCancel && (
             <DropdownMenuItem
               onClick={() => setIsCancelDialogOpen(true)}
-              className="cursor-pointer text-destructive focus:text-destructive"
+              className="cursor-pointer"
             >
               <X className="mr-2 h-4 w-4" />
               Avlys booking

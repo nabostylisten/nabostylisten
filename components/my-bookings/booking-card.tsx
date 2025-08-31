@@ -12,7 +12,6 @@ import {
   CreditCard,
   Home,
   Building2,
-  Settings,
   ChevronRight,
   Star,
   Edit,
@@ -257,18 +256,8 @@ export function BookingCard({
                 currentUserId={currentUserId}
                 userRole={userRole}
                 serviceName={services[0]?.title || "Booking"}
+                onStatusDialogOpen={() => setIsStatusDialogOpen(true)}
               />
-              {/* Stylist-specific actions for pending bookings */}
-              {userRole === "stylist" && booking.status === "pending" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsStatusDialogOpen(true)}
-                >
-                  <Settings className="w-4 h-4 mr-2" />
-                  Administrer
-                </Button>
-              )}
               {/* Review button for completed bookings (customers only) */}
               {userRole === "customer" && booking.status === "completed" && (
                 <Button

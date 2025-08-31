@@ -26,6 +26,7 @@ Nabostylisten uses Vercel Cron Jobs to automate time-based repetitive tasks. Cro
 All cron job endpoints are secured using multiple layers:
 
 #### 1. Middleware Bypass
+
 Cron job routes (`/api/cron/*`) are excluded from authentication middleware to prevent redirects to login pages:
 
 ```typescript
@@ -36,16 +37,18 @@ const publicRoutePatterns = [
 ```
 
 #### 2. Secret Token Authentication
+
 Each cron job endpoint validates the secret token:
 
 ```typescript
-const authHeader = request.headers.get('authorization');
+const authHeader = request.headers.get("authorization");
 if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-  return new Response('Unauthorized', { status: 401 });
+  return new Response("Unauthorized", { status: 401 });
 }
 ```
 
 #### 3. Service Role Access
+
 Cron jobs use Supabase service role key to bypass RLS policies:
 
 ```typescript
@@ -65,6 +68,7 @@ export function createServiceClient() {
 ```
 
 #### 4. Security Features
+
 - **CRON_SECRET**: Minimum 16-character random string stored in environment variables
 - **Service Role Key**: Bypasses RLS for automated operations (keep secret!)
 - **User Agent**: Vercel adds `vercel-cron/1.0` to identify legitimate cron requests
@@ -75,20 +79,21 @@ export function createServiceClient() {
 
 Vercel supports standard cron expression format with UTC timezone:
 
-| Field | Range | Description |
-|-------|-------|-------------|
-| Minute | 0-59 | Minutes past the hour |
-| Hour | 0-23 | Hour of the day (UTC) |
-| Day of Month | 1-31 | Day of the month |
-| Month | 1-12 | Month of the year |
-| Day of Week | 0-6 | Day of week (0=Sunday) |
+| Field        | Range | Description            |
+| ------------ | ----- | ---------------------- |
+| Minute       | 0-59  | Minutes past the hour  |
+| Hour         | 0-23  | Hour of the day (UTC)  |
+| Day of Month | 1-31  | Day of the month       |
+| Month        | 1-12  | Month of the year      |
+| Day of Week  | 0-6   | Day of week (0=Sunday) |
 
 ### Important Limitations
 
 - All times are in UTC (no timezone configuration)
 - No support for MON, SUN, JAN, DEC aliases
 - Cannot specify both day of month and day of week
-- Hobby accounts limited to hourly accuracy
+- **Hobby accounts limited to daily cron jobs** - Each job can run at most once per day
+- Pro accounts support sub-daily frequencies (hourly, every few minutes, etc.)
 
 ## Configuration
 
@@ -112,32 +117,35 @@ All cron job endpoints follow this structure:
 
 ```typescript
 // app/api/cron/[job-name]/route.ts
-import type { NextRequest } from 'next/server';
+import type { NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
   // 1. Verify authentication
-  const authHeader = request.headers.get('authorization');
+  const authHeader = request.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new Response('Unauthorized', { status: 401 });
+    return new Response("Unauthorized", { status: 401 });
   }
 
   try {
     // 2. Perform scheduled task
     const result = await performTask();
-    
+
     // 3. Return success response
-    return Response.json({ 
-      success: true, 
+    return Response.json({
+      success: true,
       timestamp: new Date().toISOString(),
-      result 
+      result,
     });
   } catch (error) {
     // 4. Handle errors
     console.error(`Cron job failed: ${error}`);
-    return Response.json({ 
-      success: false, 
-      error: error.message 
-    }, { status: 500 });
+    return Response.json(
+      {
+        success: false,
+        error: error.message,
+      },
+      { status: 500 }
+    );
   }
 }
 ```
@@ -153,14 +161,26 @@ export async function GET(request: NextRequest) {
 ### 2. Payment Processing
 
 **Path**: `/api/cron/payment-processing`  
-**Schedule**: `0 */6 * * *` (Every 6 hours: 00:00, 06:00, 12:00, 18:00 UTC)  
-**Purpose**: Capture payments 24 hours before bookings and send confirmation emails
+**Schedule**: `0 6,18 * * *` (Daily at 6 AM & 6 PM UTC - 12h intervals)  
+**Purpose**: Capture payments 24-36 hours before bookings and send confirmation emails
 
 ### 3. Payout Processing
 
 **Path**: `/api/cron/payout-processing`  
-**Schedule**: `0 * * * *` (Every hour)  
-**Purpose**: Process payouts to stylists after service completion and send notifications
+**Schedule**: `0 9,15,21 * * *` (Daily at 9 AM, 3 PM & 9 PM UTC - 8h intervals)  
+**Purpose**: Process payouts to stylists 1-9 hours after service completion and send notifications
+
+### 4. Booking Reminders
+
+**Path**: `/api/cron/booking-reminders`  
+**Schedule**: `0 10 * * *` (Daily at 10 AM UTC)  
+**Purpose**: Send booking reminders to customers 20-28 hours before appointments
+
+### 5. Weekly Analytics Report
+
+**Path**: `/api/cron/weekly-analytics-report`  
+**Schedule**: `0 8 * * 1` (Every Monday at 8 AM UTC)  
+**Purpose**: Generate and send comprehensive analytics reports to admin users
 
 #### Business Logic
 
@@ -182,14 +202,16 @@ const fiveYearsAgo = new Date();
 fiveYearsAgo.setFullYear(fiveYearsAgo.getFullYear() - 5);
 
 const { data: oldMessages } = await supabase
-  .from('chat_messages')
-  .select(`
+  .from("chat_messages")
+  .select(
+    `
     id, 
     chat_id, 
     created_at,
     media!chat_message_id(id, file_path)
-  `)
-  .lt('created_at', fiveYearsAgo.toISOString());
+  `
+  )
+  .lt("created_at", fiveYearsAgo.toISOString());
 
 // Collect storage file paths before database deletion
 const mediaFilesToDelete = [];
@@ -202,17 +224,18 @@ for (const message of oldMessages) {
 
 // Delete storage files first
 if (mediaFilesToDelete.length > 0) {
-  await supabase.storage.from('chat-media').remove(mediaFilesToDelete);
+  await supabase.storage.from("chat-media").remove(mediaFilesToDelete);
 }
 
 // Delete messages (media records cascade deleted automatically)
 const { count } = await supabase
-  .from('chat_messages')
+  .from("chat_messages")
   .delete()
-  .lt('created_at', fiveYearsAgo.toISOString());
+  .lt("created_at", fiveYearsAgo.toISOString());
 ```
 
 **Key Optimizations:**
+
 - **Single Query**: Fetches messages and related media in one query using Supabase joins
 - **Database CASCADE**: Media records deleted automatically via `ON DELETE CASCADE`
 - **Storage Cleanup**: Only manual operation needed - database handles the rest
@@ -247,19 +270,19 @@ Prevent overlapping executions using distributed locks:
 ```typescript
 // Using database-based lock
 const { data: lock } = await supabase
-  .from('cron_locks')
-  .insert({ job_name: 'cleanup-messages', locked_at: new Date() })
+  .from("cron_locks")
+  .insert({ job_name: "cleanup-messages", locked_at: new Date() })
   .select()
   .single();
 
 if (!lock) {
-  return Response.json({ message: 'Job already running' }, { status: 409 });
+  return Response.json({ message: "Job already running" }, { status: 409 });
 }
 
 try {
   await performTask();
 } finally {
-  await supabase.from('cron_locks').delete().eq('id', lock.id);
+  await supabase.from("cron_locks").delete().eq("id", lock.id);
 }
 ```
 
@@ -275,12 +298,15 @@ try {
 } catch (error) {
   await logError(error);
   await notifyAdmins(error);
-  
+
   // Don't throw - return error response
-  return Response.json({ 
-    success: false, 
-    error: error.message 
-  }, { status: 500 });
+  return Response.json(
+    {
+      success: false,
+      error: error.message,
+    },
+    { status: 500 }
+  );
 }
 ```
 
@@ -291,14 +317,14 @@ Batch operations and use efficient queries:
 ```typescript
 // Good: Single batch delete
 const { count } = await supabase
-  .from('chat_messages')
+  .from("chat_messages")
   .delete()
-  .lt('created_at', cutoffDate)
+  .lt("created_at", cutoffDate)
   .limit(1000); // Process in chunks
 
 // Bad: Individual deletes
 for (const message of messages) {
-  await supabase.from('chat_messages').delete().eq('id', message.id);
+  await supabase.from("chat_messages").delete().eq("id", message.id);
 }
 ```
 
@@ -363,10 +389,12 @@ Set up alerts for:
 ### Common Issues
 
 1. **Authentication Failures**
+
    - Verify CRON_SECRET environment variable
    - Check for typos in authorization header
 
 2. **Timeout Errors**
+
    - Reduce batch size
    - Implement pagination
    - Consider splitting into multiple jobs
@@ -389,28 +417,34 @@ When automated recovery fails:
 
 ### Payment Processing Details
 
-#### Rolling Window Strategy
+#### Multiple Daily Runs Strategy
 
-The payment processing cron uses a 6-hour rolling window to ensure no bookings are missed:
+Due to Vercel hobby plan limitations, payment processing uses multiple daily runs with expanded windows:
 
-- **Window Size**: Checks bookings starting 24-30 hours from now
-- **Overlap**: Each run has a 6-hour overlap with the next
+- **Window Size**: Checks bookings starting 24-36 hours from now (12-hour window)
+- **Frequency**: 2x daily (6 AM & 6 PM) - 12-hour intervals
 - **Duplicate Prevention**: Uses `payment_captured_at` field to track processed payments
 
 **Example Timeline:**
+
 ```
-Monday 00:00 - Checks bookings Tuesday 00:00-06:00
-Monday 06:00 - Checks bookings Tuesday 06:00-12:00
-Monday 12:00 - Checks bookings Tuesday 12:00-18:00
-Monday 18:00 - Checks bookings Tuesday 18:00-00:00
+Monday 06:00 - Checks bookings Tuesday 06:00-18:00 (12-hour window)
+Monday 18:00 - Checks bookings Tuesday 18:00-06:00 (12-hour window)
+Tuesday 06:00 - Checks bookings Wednesday 06:00-18:00 (12-hour window)
 ```
+
+**Safety Measures:**
+
+- Overlapping windows ensure complete coverage
+- `payment_captured_at` timestamp prevents duplicate processing
+- Expanded 12-hour window accommodates reduced frequency
 
 #### Technical Implementation
 
 ```typescript
-// Calculate 6-hour window
+// Calculate 12-hour window for 12-hour intervals
 const windowStart = addHours(now, 24); // 24 hours from now
-const windowEnd = addHours(now, 30);   // 30 hours from now
+const windowEnd = addHours(now, 36); // 36 hours from now (12-hour window)
 
 // Query with duplicate prevention
 const { data: bookings } = await supabase
@@ -424,14 +458,17 @@ const { data: bookings } = await supabase
 
 ### Payout Processing Details
 
-#### Service Completion Window
+#### Multiple Daily Runs for Timely Payouts
 
-The payout processing cron processes completed bookings:
+The payout processing cron uses 3x daily runs for better stylist experience:
 
-- **Window**: Bookings that ended 1-2 hours ago
+- **Window**: Bookings that ended 1-9 hours ago (8-hour window)
+- **Frequency**: 3x daily (9 AM, 3 PM & 9 PM) - 8-hour intervals
 - **Status Check**: Only processes bookings with status "completed"
 - **Prerequisites**: Payment must have been captured (`payment_captured_at` not null)
 - **Tracking**: Uses `payout_processed_at` to prevent duplicate payouts
+
+**Rationale**: More frequent payouts improve stylist satisfaction while staying within Vercel's daily limits.
 
 #### Notification Flow
 
@@ -442,18 +479,22 @@ The payout processing cron processes completed bookings:
 ### Planned Cron Jobs
 
 1. **Booking Reminders** (Daily)
+
    - Send reminders 24 hours before appointments
    - Coordinate with payment capture process
 
 2. **Abandoned Cart Recovery** (Daily)
+
    - Identify incomplete bookings
    - Send recovery emails
 
 3. **Review Prompts** (Daily)
+
    - Request reviews after completed bookings
    - Follow up on unreviewed services
 
 4. **Analytics Aggregation** (Hourly)
+
    - Calculate stylist metrics
    - Update service popularity scores
 
@@ -492,6 +533,48 @@ All cron job executions should log:
 - Any errors encountered
 - User agent and IP (from headers)
 
+## Vercel Hobby Plan Adaptations
+
+### Challenge
+
+Vercel hobby accounts limit cron jobs to run at most once per day, which posed challenges for:
+
+- **Payment processing**: Originally required every 6 hours for complete coverage
+- **Payout processing**: Originally required hourly execution for timely payouts
+
+### Solution
+
+**Multiple Daily Runs Strategy**: Use multiple time slots within the daily limit:
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/payment-processing",
+      "schedule": "0 6,18 * * *" // 2x daily: 6 AM & 6 PM
+    },
+    {
+      "path": "/api/cron/payout-processing",
+      "schedule": "0 9,15,21 * * *" // 3x daily: 9 AM, 3 PM, 9 PM
+    }
+  ]
+}
+```
+
+### Safety Guarantees
+
+- **Expanded Windows**: Larger time windows ensure no gaps between runs
+- **Duplicate Prevention**: Existing timestamp checks prevent double-processing
+- **Complete Coverage**: Overlapping windows guarantee no missed transactions
+- **Business Continuity**: Critical payment flows remain uninterrupted
+
+### Alternative Solutions Considered
+
+1. **Single Daily Run**: Too risky for critical payment operations
+2. **Webhook-Based Processing**: Would require significant architecture changes
+3. **Queue-Based System**: Complex implementation for current needs
+4. **Pro Plan Upgrade**: Multiple daily runs provide sufficient coverage for current scale
+
 ## Summary
 
-Cron jobs are essential for maintaining data hygiene, system performance, and automated workflows in Nabostylisten. By following these patterns and best practices, we ensure reliable, secure, and efficient execution of scheduled tasks while maintaining system stability and data integrity.
+Cron jobs are essential for maintaining data hygiene, system performance, and automated workflows in Nabostylisten. By adapting to Vercel's hobby plan constraints through multiple daily runs and expanded time windows, we maintain reliable, secure, and efficient execution of scheduled tasks while ensuring system stability and data integrity. The solution preserves all existing safety mechanisms while working within platform limitations.

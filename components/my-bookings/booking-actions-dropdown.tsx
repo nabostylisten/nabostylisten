@@ -27,7 +27,7 @@ interface BookingActionsDropdownProps {
     status: BookingStatus;
   };
   currentUserId: string;
-  userRole: "customer" | "stylist";
+  userRole: Database["public"]["Enums"]["user_role"];
   serviceName?: string;
   disabled?: boolean;
 }
@@ -49,7 +49,7 @@ export function BookingActionsDropdown({
 
   // Determine available actions based on role and booking status
   const canReschedule =
-    userRole === "stylist" &&
+    (userRole === "stylist" || userRole === "admin") &&
     (booking.status === "pending" || booking.status === "confirmed");
 
   const canCancel =

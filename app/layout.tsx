@@ -8,6 +8,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { Toaster } from "@/components/ui/sonner";
 import { cn } from "@/lib/utils";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { companyConfig, createPageMetadata } from "@/lib/brand";
 
@@ -17,7 +18,7 @@ const defaultUrl = process.env.VERCEL_URL
 
 export const metadata: Metadata = {
   metadataBase: new URL(defaultUrl),
-  ...createPageMetadata('home'),
+  ...createPageMetadata("home"),
   appleWebApp: {
     title: companyConfig.name,
     statusBarStyle: "black-translucent",
@@ -80,6 +81,8 @@ export default function RootLayout({
           </ThemeProvider>
           <ReactQueryDevtools initialIsOpen={false} />
         </TanstackQueryProvider>
+
+        <SpeedInsights />
       </body>
     </html>
   );

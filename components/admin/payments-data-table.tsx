@@ -33,8 +33,8 @@ import { Settings2, Download, RefreshCcw } from "lucide-react";
 import {
   getAllPayments,
   getStripePaymentIntent,
+  getPaymentCountsByStatus,
   PaymentWithDetails,
-  type PaymentStatus,
 } from "@/server/admin/payments.actions";
 import { columns, getColumnDisplayName } from "./payments-columns";
 import { DataTableSkeleton } from "@/components/ui/data-table-skeleton";
@@ -80,6 +80,14 @@ export function PaymentsDataTable() {
     refetchInterval: 30000, // Refetch every 30 seconds
   });
 
+  // Fetch payment counts for tabs
+  const { data: countsData } = useQuery({
+    queryKey: ["payment-counts"],
+    queryFn: () => getPaymentCountsByStatus(),
+    select: (data) => data.data,
+    refetchInterval: 30000, // Refetch every 30 seconds
+  });
+
   const data = paymentsData || [];
 
   // Since filtering is now done server-side, filteredData is just the data
@@ -102,54 +110,40 @@ export function PaymentsDataTable() {
     },
   });
 
-  // Get counts for each status
-  const getStatusCounts = () => {
-    const counts = {
-      all: data.length,
-      pending: data.filter((item) => item.status === "pending").length,
-      processing: data.filter((item) => {
-        const processingStatuses: PaymentStatus[] = [
-          "requires_payment_method",
-          "requires_confirmation",
-          "requires_action",
-          "processing",
-          "requires_capture",
-        ];
-        return processingStatuses.includes(item.status);
-      }).length,
-      succeeded: data.filter((item) => item.status === "succeeded").length,
-      cancelled: data.filter((item) => item.status === "cancelled").length,
-      refunded: data.filter((item) => item.refunded_amount > 0).length,
-    };
-    return counts;
+  // Use counts from server or default values
+  const statusCounts = countsData || {
+    all: 0,
+    pending: 0,
+    processing: 0,
+    succeeded: 0,
+    canceled: 0,
+    refunded: 0,
   };
-
-  const statusCounts = getStatusCounts();
 
   const tabs: { value: string; label: React.ReactNode }[] = [
     {
       value: "all",
-      label: `Alle (${isLoading ? "..." : statusCounts.all})`,
+      label: `Alle (${statusCounts.all})`,
     },
     {
       value: "pending",
-      label: `Venter (${isLoading ? "..." : statusCounts.pending})`,
+      label: `Venter (${statusCounts.pending})`,
     },
     {
       value: "processing",
-      label: `Behandler (${isLoading ? "..." : statusCounts.processing})`,
+      label: `Behandler (${statusCounts.processing})`,
     },
     {
       value: "succeeded",
-      label: `Fullført (${isLoading ? "..." : statusCounts.succeeded})`,
+      label: `Fullført (${statusCounts.succeeded})`,
     },
     {
       value: "cancelled",
-      label: `Kansellert (${isLoading ? "..." : statusCounts.cancelled})`,
+      label: `Kansellert (${statusCounts.canceled})`,
     },
     {
       value: "refunded",
-      label: `Refundert (${isLoading ? "..." : statusCounts.refunded})`,
+      label: `Refundert (${statusCounts.refunded})`,
     },
   ];
 

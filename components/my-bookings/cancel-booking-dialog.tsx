@@ -34,7 +34,7 @@ interface CancelBookingDialogProps {
     status: BookingStatus;
   };
   currentUserId: string;
-  userRole: "customer" | "stylist";
+  userRole: Database["public"]["Enums"]["user_role"];
   serviceName?: string;
 }
 

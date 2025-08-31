@@ -8,6 +8,7 @@ ALTER TABLE public.services ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.service_service_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.bookings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.booking_services ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.booking_notes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reviews ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.discounts ENABLE ROW LEVEL SECURITY;
@@ -50,6 +51,12 @@ FOR UPDATE TO authenticated
 USING ( (select auth.uid()) = id )
 WITH CHECK ( (select auth.uid()) = id );
 
+-- Admins can update any profile (for managing users)
+CREATE POLICY "Admins can update any profile" ON public.profiles
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
 -- Stylist details are viewable by everyone (for displaying stylist profiles).
 CREATE POLICY "Stylist details are viewable by everyone." ON public.stylist_details
 FOR SELECT TO anon, authenticated
@@ -71,6 +78,20 @@ CREATE POLICY "Stylists can delete their own details." ON public.stylist_details
 FOR DELETE TO authenticated
 USING ( (select auth.uid()) = profile_id );
 
+-- Admins can manage stylist details
+CREATE POLICY "Admins can insert stylist details" ON public.stylist_details
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can update stylist details" ON public.stylist_details
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete stylist details" ON public.stylist_details
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 -- A user can view their own addresses.
 CREATE POLICY "Users can view their own addresses." ON public.addresses
 FOR SELECT TO authenticated
@@ -87,6 +108,11 @@ USING (
     WHERE is_published = true
   )
 );
+
+-- Admins can view all addresses
+CREATE POLICY "Admins can view all addresses" ON public.addresses
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 -- A user can create an address for themselves.
 CREATE POLICY "Users can insert their own addresses." ON public.addresses
@@ -125,6 +151,20 @@ CREATE POLICY "Stylists can delete their own services." ON public.services
 FOR DELETE TO authenticated
 USING ( (select auth.uid()) = stylist_id );
 
+-- Admins can manage all services
+CREATE POLICY "Admins can create services" ON public.services
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can update services" ON public.services
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete services" ON public.services
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 -- Service-category relationships are viewable by everyone (since services are public).
 CREATE POLICY "Service categories relationships are viewable by everyone." ON public.service_service_categories
 FOR SELECT TO anon, authenticated
@@ -148,10 +188,24 @@ USING (
   )
 );
 
+-- Admins can manage service category relationships
+CREATE POLICY "Admins can add service categories" ON public.service_service_categories
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can remove service categories" ON public.service_service_categories
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 -- Customers and stylists can view bookings they are involved in.
 CREATE POLICY "Users can view their own bookings." ON public.bookings
 FOR SELECT TO authenticated
 USING ( (select auth.uid()) = customer_id OR (select auth.uid()) = stylist_id );
+
+-- Admins can view all bookings
+CREATE POLICY "Admins can view all bookings" ON public.bookings
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 -- Customers can create bookings for themselves.
 CREATE POLICY "Customers can create bookings." ON public.bookings
@@ -162,6 +216,20 @@ WITH CHECK ( (select auth.uid()) = customer_id );
 CREATE POLICY "Users can update their own bookings." ON public.bookings
 FOR UPDATE TO authenticated
 USING ( (select auth.uid()) = customer_id OR (select auth.uid()) = stylist_id );
+
+-- Admins can manage all bookings
+CREATE POLICY "Admins can create bookings" ON public.bookings
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can update bookings" ON public.bookings
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete bookings" ON public.bookings
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 -- Users can view services for bookings they are part of.
 CREATE POLICY "Users can view services on their bookings." ON public.booking_services
@@ -177,6 +245,11 @@ CREATE POLICY "Anyone can view booking services for reviews." ON public.booking_
 FOR SELECT TO anon, authenticated
 USING ( true );
 
+-- Admins can view all booking services
+CREATE POLICY "Admins can view all booking services" ON public.booking_services
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 -- Customers can add services to their own new bookings.
 CREATE POLICY "Customers can add services to bookings." ON public.booking_services
 FOR INSERT TO authenticated
@@ -185,6 +258,71 @@ WITH CHECK (
     SELECT id FROM public.bookings WHERE customer_id = (select auth.uid())
   )
 );
+
+-- Admins can manage booking services
+CREATE POLICY "Admins can add booking services" ON public.booking_services
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete booking services" ON public.booking_services
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- ========== BOOKING NOTES POLICIES ==========
+-- Stylists can view their own booking notes
+CREATE POLICY "Stylists can view their own booking notes." ON public.booking_notes
+FOR SELECT TO authenticated
+USING ( stylist_id = (select auth.uid()) );
+
+-- Customers can view booking notes marked as customer visible for their bookings
+CREATE POLICY "Customers can view visible booking notes" ON public.booking_notes
+FOR SELECT TO authenticated
+USING (
+  customer_visible = true AND
+  booking_id IN (
+    SELECT id FROM public.bookings WHERE customer_id = (select auth.uid())
+  )
+);
+
+-- Stylists can create booking notes for their bookings
+CREATE POLICY "Stylists can create booking notes" ON public.booking_notes
+FOR INSERT TO authenticated
+WITH CHECK (
+  stylist_id = (select auth.uid()) AND
+  booking_id IN (
+    SELECT id FROM public.bookings WHERE stylist_id = (select auth.uid())
+  )
+);
+
+-- Stylists can update their own booking notes
+CREATE POLICY "Stylists can update their own booking notes" ON public.booking_notes
+FOR UPDATE TO authenticated
+USING ( stylist_id = (select auth.uid()) )
+WITH CHECK ( stylist_id = (select auth.uid()) );
+
+-- Stylists can delete their own booking notes
+CREATE POLICY "Stylists can delete their own booking notes" ON public.booking_notes
+FOR DELETE TO authenticated
+USING ( stylist_id = (select auth.uid()) );
+
+-- Admins can view all booking notes
+CREATE POLICY "Admins can view all booking notes" ON public.booking_notes
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Admins can manage booking notes
+CREATE POLICY "Admins can create booking notes" ON public.booking_notes
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can update booking notes" ON public.booking_notes
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete booking notes" ON public.booking_notes
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 -- All reviews are public and can be viewed by anyone.
 CREATE POLICY "Reviews are viewable by everyone." ON public.reviews
@@ -207,6 +345,16 @@ CREATE POLICY "Customers can delete their own reviews." ON public.reviews
 FOR DELETE TO authenticated
 USING ( (select auth.uid()) = customer_id );
 
+-- Admins can manage reviews (for moderation)
+CREATE POLICY "Admins can update reviews" ON public.reviews
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete reviews" ON public.reviews
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 -- Payment records can be viewed by involved parties (customer, stylist) and admins.
 CREATE POLICY "Users can view payments for their bookings." ON public.payments
 FOR SELECT TO authenticated
@@ -216,6 +364,20 @@ USING (
     WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
   ) OR public.get_my_role() = 'admin'
 );
+
+-- Admins can manage payments (for refunds, adjustments)
+CREATE POLICY "Admins can create payments" ON public.payments
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can update payments" ON public.payments
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete payments" ON public.payments
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 -- Discounts are viewable by everyone (to validate codes).
 CREATE POLICY "Discounts are viewable by everyone." ON public.discounts
@@ -246,9 +408,45 @@ CREATE POLICY "Stylists can insert their own availability rules." ON public.styl
 CREATE POLICY "Stylists can update their own availability rules." ON public.stylist_availability_rules FOR UPDATE USING (stylist_id = (select auth.uid()));
 CREATE POLICY "Stylists can delete their own availability rules." ON public.stylist_availability_rules FOR DELETE USING (stylist_id = (select auth.uid()));
 
+-- Admins can manage availability rules
+CREATE POLICY "Admins can view all availability rules" ON public.stylist_availability_rules
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can create availability rules" ON public.stylist_availability_rules
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can update availability rules" ON public.stylist_availability_rules
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete availability rules" ON public.stylist_availability_rules
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 CREATE POLICY "Stylists can insert their own unavailability." ON public.stylist_unavailability FOR INSERT WITH CHECK (stylist_id = (select auth.uid()));
 CREATE POLICY "Stylists can update their own unavailability." ON public.stylist_unavailability FOR UPDATE USING (stylist_id = (select auth.uid()));
 CREATE POLICY "Stylists can delete their own unavailability." ON public.stylist_unavailability FOR DELETE USING (stylist_id = (select auth.uid()));
+
+-- Admins can manage unavailability
+CREATE POLICY "Admins can view all unavailability" ON public.stylist_unavailability
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can create unavailability" ON public.stylist_unavailability
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can update unavailability" ON public.stylist_unavailability
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete unavailability" ON public.stylist_unavailability
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 CREATE POLICY "Stylists can insert recurring unavailability." ON public.stylist_recurring_unavailability FOR INSERT WITH CHECK (stylist_id = (select auth.uid()));
 CREATE POLICY "Stylists can update recurring unavailability." ON public.stylist_recurring_unavailability FOR UPDATE USING (stylist_id = (select auth.uid()));
@@ -275,6 +473,11 @@ USING (
   )
 );
 
+-- Admins can view all chats
+CREATE POLICY "Admins can view all chats" ON public.chats
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
 -- Users can create chats for bookings they are part of.
 CREATE POLICY "Users can create chats for their bookings." ON public.chats
 FOR INSERT TO authenticated
@@ -293,6 +496,11 @@ USING (
     SELECT id FROM public.chats
   )
 );
+
+-- Admins can view all chat messages
+CREATE POLICY "Admins can view all chat messages" ON public.chat_messages
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 -- Users can send messages in chats they are a part of.
 CREATE POLICY "Users can insert messages in their own chats." ON public.chat_messages
@@ -361,6 +569,15 @@ WITH CHECK ( (select auth.uid()) = owner_id );
 CREATE POLICY "Users can delete their own media." ON public.media
 FOR DELETE TO authenticated
 USING ( (select auth.uid()) = owner_id );
+
+-- Admins can manage all media
+CREATE POLICY "Admins can view all media" ON public.media
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+CREATE POLICY "Admins can delete any media" ON public.media
+FOR DELETE TO authenticated
+USING ( public.get_my_role() = 'admin' );
 
 -- Anyone can upload application images (for stylist applications).
 CREATE POLICY "Anyone can upload application images." ON public.media
@@ -634,6 +851,17 @@ WITH CHECK ( user_id = (select auth.uid()) );
 
 -- Users cannot delete preferences (they should always exist with defaults)
 -- No DELETE policy means no one can delete preferences
+
+-- Admins can view all user preferences
+CREATE POLICY "Admins can view all user preferences" ON public.user_preferences
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Admins can update user preferences (for support)
+CREATE POLICY "Admins can update user preferences" ON public.user_preferences
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
 
 -- ========== PLATFORM CONFIG POLICIES ==========
 -- Only admins can view platform configuration

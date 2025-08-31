@@ -398,9 +398,24 @@ export async function getBookingDetails(bookingId: string) {
 
     // Check if user has access to this booking
     const { data: { user } } = await supabase.auth.getUser();
-    if (
-        !user || (data.customer_id !== user.id && data.stylist_id !== user.id)
-    ) {
+    if (!user) {
+        return { error: "User not authenticated", data: null };
+    }
+
+    // Get user profile to check role
+    const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+    // Check if user has access - customer, stylist, or admin
+    const hasAccess = 
+        data.customer_id === user.id ||
+        data.stylist_id === user.id ||
+        userProfile?.role === "admin";
+
+    if (!hasAccess) {
         return { error: "Unauthorized access", data: null };
     }
 

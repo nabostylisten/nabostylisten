@@ -80,8 +80,10 @@ export default async function BookingDetailsPage({
   const { data: existingReview } = await getReviewByBookingId(bookingId);
 
   // Determine user role for this specific booking context
-  let userRoleForBooking: "customer" | "stylist" = "customer";
-  if (booking.stylist_id === user.id) {
+  let userRoleForBooking: "customer" | "stylist" | "admin" = "customer";
+  if (userProfile?.role === "admin") {
+    userRoleForBooking = "admin";
+  } else if (booking.stylist_id === user.id) {
     userRoleForBooking = "stylist";
   }
 

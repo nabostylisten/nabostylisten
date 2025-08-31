@@ -6,6 +6,17 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 
 ## 📊 Phase 1: Core Business Operations
 
+### ⚠️ Vercel Hobby Plan Limitations
+
+**Constraint**: Hobby accounts are limited to daily cron jobs (cannot run more than once per day).
+
+**Critical Jobs Affected**: Payment processing and payout processing originally required more frequent execution for complete coverage and timely payouts.
+
+**Solution Implemented**: Multiple daily runs within the daily limit:
+- **Payment Processing**: 2x daily (6 AM & 6 PM) with 12-hour window coverage
+- **Payout Processing**: 3x daily (9 AM, 3 PM, 9 PM) with 8-hour window coverage
+- **Safety Measures**: Expanded time windows with existing duplicate prevention checks ensure no missed transactions
+
 ### 1. Weekly Analytics Report
 
 - **Schedule**: `0 9 * * 1` (Every Monday at 9 AM UTC)
@@ -56,20 +67,35 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 - Final gentle reminder after 14 days
 - Stylist prompts to respond to customer reviews
 
-### 4. Payment & Payout Processing
+### 4. Payment Processing
 
-- **Schedule**: `0 6 * * *` (Daily at 6 AM UTC)
+- **Schedule**: `0 6,18 * * *` (Daily at 6 AM & 6 PM UTC - 12h intervals)
 - **Path**: `/api/cron/payment-processing`
 - **Target**: System-wide payment operations
 - **Priority**: Critical
 
 **Tasks**:
 
-- Process pending payments for completed bookings
-- Initiate stylist payouts via Stripe Connect
+- Capture payments 24-36 hours before appointments (expanded 12-hour window)
+- Send payment confirmation emails to customers and stylists
 - Handle failed payment retries with exponential backoff
-- Send payment confirmation emails to all parties
 - Generate payment failure alerts for admin team
+- Maintains existing duplicate prevention via `payment_captured_at` timestamps
+
+### 4b. Payout Processing
+
+- **Schedule**: `0 9,15,21 * * *` (Daily at 9 AM, 3 PM & 9 PM UTC - 8h intervals)
+- **Path**: `/api/cron/payout-processing`
+- **Target**: Stylist payout operations
+- **Priority**: Critical
+
+**Tasks**:
+
+- Process payouts for bookings completed 1-9 hours ago (expanded 8-hour window)
+- Initiate stylist payouts via Stripe Connect
+- Send payout confirmation emails to stylists
+- Send service completion notifications to customers
+- Maintains existing duplicate prevention via `payout_processed_at` timestamps
 
 ## 🚀 Phase 2: Growth & Engagement
 

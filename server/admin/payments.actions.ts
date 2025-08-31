@@ -68,7 +68,6 @@ export async function getAllPayments(options: {
       throw error;
     }
 
-
     if (!payments) {
       return { data: [], error: null };
     }
@@ -103,7 +102,6 @@ export async function getAllPayments(options: {
         booking_date: payment.booking_date,
       }),
     );
-
 
     return { data: transformedPayments, error: null };
   } catch (error) {
@@ -238,4 +236,65 @@ export async function initiateRefund(_params: {
     data: null,
     error: "Refund functionality not yet implemented",
   };
+}
+
+/**
+ * Get payment counts by status for the admin dashboard
+ */
+export async function getPaymentCountsByStatus() {
+  await requireAdmin();
+
+  const supabase = createServiceClient();
+
+  try {
+    const { data: payments, error } = await supabase
+      .from("payments")
+      .select("status, refunded_amount");
+
+    if (error) {
+      console.error("Error fetching payment counts:", error);
+      return {
+        data: {
+          all: 0,
+          pending: 0,
+          processing: 0,
+          succeeded: 0,
+          canceled: 0,
+          refunded: 0,
+        },
+        error: null,
+      };
+    }
+
+    const counts = {
+      all: payments?.length || 0,
+      pending: 0,
+      processing: 0,
+      succeeded: 0,
+      canceled: 0,
+      refunded: 0,
+    };
+
+    payments?.forEach((payment) => {
+      const status = payment.status;
+      if (status === "pending") counts.pending++;
+      else if (["requires_payment_method", "requires_confirmation", "requires_action", "processing", "requires_capture"].includes(status)) {
+        counts.processing++;
+      }
+      else if (status === "succeeded") counts.succeeded++;
+      else if (status === "cancelled") counts.canceled++;
+      
+      // Check for refunds separately based on refunded_amount
+      if (payment.refunded_amount > 0) counts.refunded++;
+    });
+
+    return { data: counts, error: null };
+  } catch (error) {
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to fetch payment counts",
+    };
+  }
 }

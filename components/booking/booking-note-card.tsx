@@ -42,7 +42,7 @@ type BookingNote = Database["public"]["Tables"]["booking_notes"]["Row"] & {
 
 const CATEGORY_LABELS: Record<string, string> = {
   service_notes: "Tjenestenotater",
-  customer_preferences: "Kundepreferanser", 
+  customer_preferences: "Kundepreferanser",
   issues: "Problemer/bekymringer",
   results: "Resultater",
   follow_up: "Oppfølging nødvendig",
@@ -60,7 +60,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 
 interface BookingNoteCardProps {
   note: BookingNote;
-  onEdit: () => void;
+  onEdit?: () => void;
 }
 
 export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
@@ -70,8 +70,8 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
   const deleteMutation = useMutation({
     mutationFn: () => deleteBookingNote(note.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ 
-        queryKey: ["booking-notes", note.booking_id] 
+      queryClient.invalidateQueries({
+        queryKey: ["booking-notes", note.booking_id],
       });
       toast.success("Bookingnotat slettet!");
       setDeleteDialogOpen(false);
@@ -111,14 +111,16 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={onEdit}
-                className="h-8 w-8 p-0"
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
+              {onEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onEdit}
+                  className="h-8 w-8 p-0"
+                >
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"
@@ -159,8 +161,8 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
               <Clock className="w-4 h-4" />
               <span>Varighet:</span>
               <span className="font-medium">
-                {note.duration_minutes >= 60 
-                  ? `${Math.floor(note.duration_minutes / 60)} timer ${note.duration_minutes % 60 === 0 ? '' : `${note.duration_minutes % 60} min`}`.trim()
+                {note.duration_minutes >= 60
+                  ? `${Math.floor(note.duration_minutes / 60)} timer ${note.duration_minutes % 60 === 0 ? "" : `${note.duration_minutes % 60} min`}`.trim()
                   : `${note.duration_minutes} minutter`}
               </span>
             </div>
@@ -171,7 +173,9 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
             <div className="p-3 bg-muted/50 rounded-lg">
               <div className="flex items-center gap-2 mb-2">
                 <ArrowRight className="w-4 h-4 text-primary" />
-                <span className="text-sm font-medium">Forslag til neste avtale:</span>
+                <span className="text-sm font-medium">
+                  Forslag til neste avtale:
+                </span>
               </div>
               <p className="text-sm text-muted-foreground">
                 {note.next_appointment_suggestion}
@@ -203,8 +207,8 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
           <AlertDialogHeader>
             <AlertDialogTitle>Slett bookingnotat</AlertDialogTitle>
             <AlertDialogDescription>
-              Er du sikker på at du vil slette dette bookingnotatet? 
-              Denne handlingen kan ikke angres.
+              Er du sikker på at du vil slette dette bookingnotatet? Denne
+              handlingen kan ikke angres.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

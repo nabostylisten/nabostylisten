@@ -52,7 +52,7 @@ import { BlurFade } from "@/components/magicui/blur-fade";
 interface BookingDetailsContentProps {
   bookingId: string;
   userId: string;
-  userRole?: "customer" | "stylist";
+  userRole?: "customer" | "stylist" | "admin";
 }
 
 type BookingNote = Database["public"]["Tables"]["booking_notes"]["Row"] & {
@@ -83,7 +83,7 @@ export function BookingDetailsContent({
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  // Fetch booking notes (only for stylists)
+  // Fetch booking notes (for stylists and admins)
   const {
     data: bookingNotesResponse,
     isLoading: notesLoading,
@@ -91,7 +91,7 @@ export function BookingDetailsContent({
   } = useQuery({
     queryKey: ["booking-notes", bookingId],
     queryFn: () => getBookingNotes(bookingId),
-    enabled: userRole === "stylist", // Only load for stylists
+    enabled: userRole === "stylist" || userRole === "admin", // Load for stylists and admins
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
@@ -242,15 +242,15 @@ export function BookingDetailsContent({
                     userRole={userRole}
                     serviceName={services[0]?.title || "Booking"}
                   />
-                  {/* Stylist actions for pending bookings */}
-                  {userRole === "stylist" && booking.status === "pending" && (
+                  {/* Stylist actions for pending bookings, or admin actions */}
+                  {((userRole === "stylist" && booking.status === "pending") || userRole === "admin") && (
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => setIsStatusDialogOpen(true)}
                     >
                       <Settings className="w-4 h-4 mr-2" />
-                      Administrer
+                      {userRole === "admin" ? "Admin" : "Administrer"}
                     </Button>
                   )}
                 </div>
@@ -514,8 +514,8 @@ export function BookingDetailsContent({
           </Card>
         </BlurFade>
 
-        {/* Booking Notes - Only for stylists */}
-        {userRole === "stylist" && (
+        {/* Booking Notes - For stylists and admins */}
+        {(userRole === "stylist" || userRole === "admin") && (
           <BlurFade delay={0.4} duration={0.5}>
             <Card>
               <CardHeader>
@@ -524,13 +524,16 @@ export function BookingDetailsContent({
                     <FileText className="w-5 h-5" />
                     Bookingnotater
                   </CardTitle>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsBookingNotesDialogOpen(true)}
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Opprett notat
-                  </Button>
+                  {/* Only stylists can create booking notes, admins can only view */}
+                  {userRole === "stylist" && (
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsBookingNotesDialogOpen(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Opprett notat
+                    </Button>
+                  )}
                 </div>
               </CardHeader>
               <CardContent>
@@ -552,10 +555,10 @@ export function BookingDetailsContent({
                         <BookingNoteCard
                           key={note.id}
                           note={note}
-                          onEdit={() => {
+                          onEdit={userRole === "stylist" ? () => {
                             setEditingNote(note);
                             setIsBookingNotesDialogOpen(true);
-                          }}
+                          } : undefined}
                         />
                       ))}
                     </div>
@@ -567,15 +570,19 @@ export function BookingDetailsContent({
                       Ingen notater ennå
                     </h3>
                     <p className="text-sm text-center mb-4">
-                      Opprett ditt første bookingnotat for å dokumentere
-                      tjenesten og dele informasjon med kunden.
+                      {userRole === "admin" 
+                        ? "Ingen notater er opprettet for denne bookingen ennå."
+                        : "Opprett ditt første bookingnotat for å dokumentere tjenesten og dele informasjon med kunden."
+                      }
                     </p>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsBookingNotesDialogOpen(true)}
-                    >
-                      Opprett notat
-                    </Button>
+                    {userRole === "stylist" && (
+                      <Button
+                        variant="outline"
+                        onClick={() => setIsBookingNotesDialogOpen(true)}
+                      >
+                        Opprett notat
+                      </Button>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -584,8 +591,8 @@ export function BookingDetailsContent({
         )}
       </div>
 
-      {/* Status Dialog for Stylists */}
-      {userRole === "stylist" && (
+      {/* Status Dialog for Stylists and Admins */}
+      {(userRole === "stylist" || userRole === "admin") && (
         <BookingStatusDialog
           bookingId={booking.id}
           currentStatus={booking.status}

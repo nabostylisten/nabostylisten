@@ -19,14 +19,18 @@ export const defaultUserSearchFilters: Required<UserSearchFilters> = {
 };
 
 // Convert search params to UserSearchFilters
-export function searchParamsToUserFilters(searchParams: URLSearchParams): UserSearchFilters {
+export function searchParamsToUserFilters(
+  searchParams: URLSearchParams,
+): UserSearchFilters {
   return {
     searchQuery: searchParams.get("q") || undefined,
   };
 }
 
 // Convert UserSearchFilters to search params
-export function userFiltersToSearchParams(filters: UserSearchFilters): URLSearchParams {
+export function userFiltersToSearchParams(
+  filters: UserSearchFilters,
+): URLSearchParams {
   const params = new URLSearchParams();
   if (filters.searchQuery) {
     params.set("q", filters.searchQuery);
@@ -211,7 +215,13 @@ export interface ServiceFilters {
   stylistIds?: string[];
   minPrice?: string; // Store as string for form handling, converted to øre in backend
   maxPrice?: string; // Store as string for form handling, converted to øre in backend
-  sortBy?: "newest" | "price_asc" | "price_desc" | "rating_desc" | "rating_asc" | "distance_asc";
+  sortBy?:
+    | "newest"
+    | "price_asc"
+    | "price_desc"
+    | "rating_desc"
+    | "rating_asc"
+    | "distance_asc";
   page?: number;
   limit?: number;
 }
@@ -222,7 +232,7 @@ export interface ServiceSearchParams {
   categories?: string; // Comma-separated category IDs
   location?: string; // Address string
   locationLat?: string; // Latitude coordinate
-  locationLng?: string; // Longitude coordinate 
+  locationLng?: string; // Longitude coordinate
   locationRadius?: string; // Search radius in kilometers
   atCustomerPlace?: string; // "true" | "false"
   atStylistPlace?: string; // "true" | "false"
@@ -237,32 +247,40 @@ export interface ServiceSearchParams {
 export function searchParamsToFilters(
   searchParams: ServiceSearchParams,
 ): ServiceFilters {
-  const location = searchParams.location && (searchParams.locationLat && searchParams.locationLng) 
+  const location = searchParams.location &&
+      (searchParams.locationLat && searchParams.locationLng)
     ? {
-        address: searchParams.location,
-        coordinates: {
-          lat: parseFloat(searchParams.locationLat),
-          lng: parseFloat(searchParams.locationLng),
-        },
-        radius: searchParams.locationRadius ? parseFloat(searchParams.locationRadius) : 10,
-      }
-    : searchParams.location 
+      address: searchParams.location,
+      coordinates: {
+        lat: parseFloat(searchParams.locationLat),
+        lng: parseFloat(searchParams.locationLng),
+      },
+      radius: searchParams.locationRadius
+        ? parseFloat(searchParams.locationRadius)
+        : 10,
+    }
+    : searchParams.location
     ? { address: searchParams.location, radius: 10 }
     : undefined;
 
-  const serviceDestination = (searchParams.atCustomerPlace || searchParams.atStylistPlace)
-    ? {
+  const serviceDestination =
+    (searchParams.atCustomerPlace || searchParams.atStylistPlace)
+      ? {
         atCustomerPlace: searchParams.atCustomerPlace === "true",
         atStylistPlace: searchParams.atStylistPlace === "true",
       }
-    : undefined;
+      : undefined;
 
   return {
     search: searchParams.search,
-    categories: searchParams.categories ? searchParams.categories.split(',') : undefined,
+    categories: searchParams.categories
+      ? searchParams.categories.split(",")
+      : undefined,
     location,
     serviceDestination,
-    stylistIds: searchParams.stylists ? searchParams.stylists.split(',') : undefined,
+    stylistIds: searchParams.stylists
+      ? searchParams.stylists.split(",")
+      : undefined,
     minPrice: searchParams.minPrice,
     maxPrice: searchParams.maxPrice,
     sortBy: searchParams.sort as ServiceFilters["sortBy"] || "newest",
@@ -308,7 +326,9 @@ export function reviewFiltersToSearchParams(
     search: filters.search,
     rating: filters.rating?.toString(),
     sort: filters.sortBy !== "newest" ? filters.sortBy : undefined,
-    page: filters.page && filters.page > 1 ? filters.page.toString() : undefined,
+    page: filters.page && filters.page > 1
+      ? filters.page.toString()
+      : undefined,
   };
 }
 
@@ -318,14 +338,18 @@ export function filtersToSearchParams(
 ): ServiceSearchParams {
   return {
     search: filters.search,
-    categories: filters.categories?.length ? filters.categories.join(',') : undefined,
+    categories: filters.categories?.length
+      ? filters.categories.join(",")
+      : undefined,
     location: filters.location?.address,
     locationLat: filters.location?.coordinates?.lat.toString(),
     locationLng: filters.location?.coordinates?.lng.toString(),
     locationRadius: filters.location?.radius?.toString(),
     atCustomerPlace: filters.serviceDestination?.atCustomerPlace?.toString(),
     atStylistPlace: filters.serviceDestination?.atStylistPlace?.toString(),
-    stylists: filters.stylistIds?.length ? filters.stylistIds.join(',') : undefined,
+    stylists: filters.stylistIds?.length
+      ? filters.stylistIds.join(",")
+      : undefined,
     minPrice: filters.minPrice,
     maxPrice: filters.maxPrice,
     sort: filters.sortBy === "newest" ? undefined : filters.sortBy,
@@ -387,9 +411,9 @@ export interface MapboxSuggestion {
 // Booking filters for user bookings page
 export interface BookingFilters {
   search?: string;
-  status?: 'pending' | 'confirmed' | 'cancelled' | 'completed';
-  dateRange?: 'upcoming' | 'completed' | 'all' | 'to_be_confirmed' | 'planned';
-  sortBy?: 'date_asc' | 'date_desc' | 'newest' | 'price_asc' | 'price_desc';
+  status?: "pending" | "confirmed" | "cancelled" | "completed";
+  dateRange?: "upcoming" | "completed" | "all" | "to_be_confirmed" | "planned";
+  sortBy?: "date_asc" | "date_desc" | "newest" | "price_asc" | "price_desc";
   page?: number;
   limit?: number;
 }
@@ -403,7 +427,7 @@ export interface BookingSearchParams {
 // Utility function to convert URL search params to BookingFilters (excluding dateRange and pagination)
 export function searchParamsToBookingFilters(
   searchParams: BookingSearchParams,
-  dateRange?: 'upcoming' | 'completed' | 'all' | 'to_be_confirmed' | 'planned',
+  dateRange?: "upcoming" | "completed" | "all" | "to_be_confirmed" | "planned",
   page?: number,
   limit?: number,
 ): BookingFilters {
@@ -434,7 +458,9 @@ export interface RestrictedUser {
   role: string;
 }
 
-export interface DiscountWithRestrictedUsers extends DatabaseTables["discounts"]["Row"] {
+type DiscountRow = DatabaseTables["discounts"]["Row"];
+
+export interface DiscountWithRestrictedUsers extends DiscountRow {
   restricted_users?: RestrictedUser[];
 }
 

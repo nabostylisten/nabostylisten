@@ -122,7 +122,31 @@ export async function validateDiscountCode({
       };
     }
 
-    // 5. Check minimum order amount
+    // 5. Check user restrictions (if any exist)
+    const { data: restrictionCheck, error: restrictionError } = await supabase
+      .from("discount_restrictions")
+      .select("profile_id")
+      .eq("discount_id", discount.id);
+
+    if (restrictionError) {
+      return { isValid: false, error: "Kunne ikke validere rabattkode" };
+    }
+
+    // If there are restrictions and the user is not in the list, deny access
+    if (restrictionCheck && restrictionCheck.length > 0) {
+      const userHasAccess = restrictionCheck.some(
+        (restriction) => restriction.profile_id === userId
+      );
+      
+      if (!userHasAccess) {
+        return {
+          isValid: false,
+          error: "Du har ikke tilgang til å bruke denne rabattkoden",
+        };
+      }
+    }
+
+    // 6. Check minimum order amount
     if (
       discount.minimum_order_amount &&
       orderAmountCents < discount.minimum_order_amount
@@ -136,7 +160,7 @@ export async function validateDiscountCode({
       };
     }
 
-    // 6. Calculate discount amount with maximum order amount as cap
+    // 7. Calculate discount amount with maximum order amount as cap
     let discountAmount = 0;
     let discountableAmount = orderAmountCents;
 

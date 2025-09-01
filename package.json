@@ -11,6 +11,7 @@
     "seed:sync": "bunx @snaplet/seed sync",
     "seed": "bunx tsx seed/seed.ts > supabase/seed.sql",
     "seed:stripe": "NODE_ENV=development bun run with-env bun scripts/seed-stripe.ts",
+    "seed:stripe:payments": "NODE_ENV=development bun run with-env bun scripts/seed-stripe-payments.ts",
     "supabase:start": "bun ensure:docker && supabase start",
     "supabase:db:diff": "bun ensure:docker && supabase db diff -f",
     "supabase:migrate:up": "bun ensure:docker && supabase migration up",

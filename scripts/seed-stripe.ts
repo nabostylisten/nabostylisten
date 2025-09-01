@@ -130,11 +130,19 @@ async function deleteExistingStripeAccounts() {
       );
 
       try {
+        // First, try to retrieve the account to check if it exists
+        const account = await stripe.accounts.retrieve(stripeAccountId);
+        console.log(`    ℹ️  Account found in Stripe: ${account.type}, charges_enabled: ${account.charges_enabled}`);
+        
         // Delete from Stripe
-        await stripe.accounts.del(stripeAccountId);
-        accountsDeleted++;
+        const deleted = await stripe.accounts.del(stripeAccountId);
+        console.log(`    ✅ Stripe deletion result:`, deleted);
+        
+        if (deleted.deleted) {
+          accountsDeleted++;
+        }
 
-        // Clear from database
+        // Clear from database regardless of Stripe deletion result
         const { error: updateError } = await supabase
           .from("stylist_details")
           .update({ stripe_account_id: null })
@@ -146,31 +154,41 @@ async function deleteExistingStripeAccounts() {
           );
         } else {
           accountsCleared++;
+          console.log(`    ✅ Cleared account ID from database`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (stripeError: any) {
+        console.log(`    ⚠️  Stripe error details:`, {
+          type: stripeError.type,
+          code: stripeError.code,
+          message: stripeError.message
+        });
+
         // Account might already be deleted or doesn't exist
         if (
           stripeError.type === "StripeInvalidRequestError" &&
-          stripeError.message?.includes("No such account")
+          (stripeError.message?.includes("No such account") || stripeError.code === "resource_missing")
         ) {
           console.log(
-            `    ℹ️  Account already deleted from Stripe, clearing database`,
+            `    ℹ️  Account doesn't exist in Stripe, clearing database`,
           );
-
-          // Clear from database anyway
-          const { error: updateError } = await supabase
-            .from("stylist_details")
-            .update({ stripe_account_id: null })
-            .eq("profile_id", stylist.id);
-
-          if (!updateError) {
-            accountsCleared++;
-          }
         } else {
           console.error(
             `    ❌ Failed to delete Stripe account: ${stripeError.message}`,
           );
+        }
+
+        // Clear from database anyway to clean up orphaned references
+        const { error: updateError } = await supabase
+          .from("stylist_details")
+          .update({ stripe_account_id: null })
+          .eq("profile_id", stylist.id);
+
+        if (!updateError) {
+          accountsCleared++;
+          console.log(`    ✅ Cleared orphaned account ID from database`);
+        } else {
+          console.error(`    ❌ Failed to clear database: ${updateError.message}`);
         }
       }
     }
@@ -223,11 +241,23 @@ async function deleteExistingStripeCustomers() {
       );
 
       try {
-        // Delete from Stripe
-        await stripe.customers.del(profile.stripe_customer_id);
-        customersDeleted++;
+        // First, try to retrieve the customer to check if it exists
+        const customer = await stripe.customers.retrieve(profile.stripe_customer_id);
+        if (customer.deleted) {
+          console.log(`    ℹ️  Customer already deleted in Stripe`);
+        } else {
+          console.log(`    ℹ️  Customer found in Stripe: ${customer.email}, created: ${new Date(customer.created * 1000).toISOString()}`);
+        }
+        
+        // Delete from Stripe (only if not already deleted)
+        const deleted = customer.deleted ? customer : await stripe.customers.del(profile.stripe_customer_id);
+        console.log(`    ✅ Stripe deletion result:`, deleted);
+        
+        if (deleted.deleted) {
+          customersDeleted++;
+        }
 
-        // Clear from database
+        // Clear from database regardless of Stripe deletion result
         const { error: updateError } = await supabase
           .from("profiles")
           .update({ stripe_customer_id: null })
@@ -239,31 +269,41 @@ async function deleteExistingStripeCustomers() {
           );
         } else {
           customersCleared++;
+          console.log(`    ✅ Cleared customer ID from database`);
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (stripeError: any) {
+        console.log(`    ⚠️  Stripe error details:`, {
+          type: stripeError.type,
+          code: stripeError.code,
+          message: stripeError.message
+        });
+
         // Customer might already be deleted or doesn't exist
         if (
           stripeError.type === "StripeInvalidRequestError" &&
-          stripeError.message?.includes("No such customer")
+          (stripeError.message?.includes("No such customer") || stripeError.code === "resource_missing")
         ) {
           console.log(
-            `    ℹ️  Customer already deleted from Stripe, clearing database`,
+            `    ℹ️  Customer doesn't exist in Stripe, clearing database`,
           );
-
-          // Clear from database anyway
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ stripe_customer_id: null })
-            .eq("id", profile.id);
-
-          if (!updateError) {
-            customersCleared++;
-          }
         } else {
           console.error(
             `    ❌ Failed to delete Stripe customer: ${stripeError.message}`,
           );
+        }
+
+        // Clear from database anyway to clean up orphaned references
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ stripe_customer_id: null })
+          .eq("id", profile.id);
+
+        if (!updateError) {
+          customersCleared++;
+          console.log(`    ✅ Cleared orphaned customer ID from database`);
+        } else {
+          console.error(`    ❌ Failed to clear database: ${updateError.message}`);
         }
       }
     }

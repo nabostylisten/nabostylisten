@@ -39,6 +39,7 @@
     "stripe:webhook:dev": "./scripts/stripe-webhook-dev.sh",
     "stripe:trigger": "stripe trigger",
     "stripe:test:connect": "bun run with-env bun scripts/test-stripe-connect.ts",
+    "test:dev:cron": "sh scripts/test-dev-cron.sh",
     "migration:full": "sh scripts/run-full-migration.sh"
   },
   "dependencies": {

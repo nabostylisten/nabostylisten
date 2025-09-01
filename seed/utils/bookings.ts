@@ -59,6 +59,7 @@ function createSpecificTestBookings(
 ): DatabaseTables["bookings"]["Insert"][] {
   return [
     // 1. Upcoming confirmed booking with discount - Kari Nordmann
+    // PAYMENT NEEDS CAPTURE - for dev tools testing
     {
       customer_id: customerUsers[0].id, // Kari Nordmann
       stylist_id: stylistUsers[0].id, // Maria Hansen
@@ -73,6 +74,7 @@ function createSpecificTestBookings(
       total_price: 1600, // After discount
       total_duration_minutes: 90,
       stripe_payment_intent_id: "pi_test_upcoming_confirmed_001",
+      payment_captured_at: null, // NULL - needs capture for dev tools testing
     },
 
     // 2. Upcoming pending booking at customer's place - Kari Nordmann
@@ -127,6 +129,7 @@ function createSpecificTestBookings(
     },
 
     // 5. Upcoming wedding booking - Ole Hansen
+    // PAYMENT NEEDS CAPTURE - for dev tools testing
     {
       customer_id: customerUsers[1].id, // Ole Hansen
       stylist_id: stylistUsers[1].id, // Emma Nilsen
@@ -141,9 +144,81 @@ function createSpecificTestBookings(
       total_price: 2900, // 3000 - 100 discount
       total_duration_minutes: 180,
       stripe_payment_intent_id: "pi_test_wedding_005",
+      payment_captured_at: null, // NULL - needs capture for dev tools testing
     },
 
-    // 6. Completed booking with multiple services - Ole Hansen
+    // 6. COMPLETED booking - needs payout processing
+    {
+      customer_id: customerUsers[2].id,
+      stylist_id: stylistUsers[0].id,
+      start_time: subDays(new Date(), 3).toISOString(), // 3 days ago
+      end_time: addMinutes(subDays(new Date(), 3), 70).toISOString(),
+      message_to_stylist: "Vanlig brynspluking og farging",
+      status: "completed", // COMPLETED - for payout testing
+      address_id: null,
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 1400,
+      total_duration_minutes: 70,
+      stripe_payment_intent_id: "pi_test_needs_payout_002",
+      payment_captured_at: subDays(new Date(), 4).toISOString(), // Captured before service
+      payout_processed_at: null, // NULL - needs payout for dev tools testing
+    },
+
+    // 7. COMPLETED booking - needs payout processing
+    {
+      customer_id: customerUsers[1].id,
+      stylist_id: stylistUsers[2].id,
+      start_time: subDays(new Date(), 1).toISOString(), // Yesterday
+      end_time: addMinutes(subDays(new Date(), 1), 90).toISOString(),
+      message_to_stylist: "Negler til fest",
+      status: "completed", // COMPLETED - for payout testing
+      address_id: null,
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 1800,
+      total_duration_minutes: 90,
+      stripe_payment_intent_id: "pi_test_needs_payout_003",
+      payment_captured_at: subDays(new Date(), 2).toISOString(), // Captured before service
+      payout_processed_at: null, // NULL - needs payout for dev tools testing
+    },
+
+    // 8. COMPLETED booking - already has payout (for comparison)
+    {
+      customer_id: customerUsers[0].id,
+      stylist_id: stylistUsers[1].id,
+      start_time: subDays(new Date(), 10).toISOString(), // 10 days ago
+      end_time: addMinutes(subDays(new Date(), 10), 60).toISOString(),
+      message_to_stylist: "Klipp og farge",
+      status: "completed",
+      address_id: null,
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 2200,
+      total_duration_minutes: 60,
+      stripe_payment_intent_id: "pi_test_fully_processed_001",
+      payment_captured_at: subDays(new Date(), 11).toISOString(),
+      payout_processed_at: subDays(new Date(), 9).toISOString(), // Already has payout
+    },
+
+    // 9. Another CONFIRMED booking - needs payment capture
+    {
+      customer_id: customerUsers[2].id,
+      stylist_id: stylistUsers[1].id,
+      start_time: addDays(new Date(), 5).toISOString(), // In 5 days
+      end_time: addMinutes(addDays(new Date(), 5), 60).toISOString(),
+      message_to_stylist: "Klassisk hårstyling til konferanse",
+      status: "confirmed", // CONFIRMED - for payment capture testing
+      address_id: null,
+      discount_id: null,
+      discount_applied: 0,
+      total_price: 1500,
+      total_duration_minutes: 60,
+      stripe_payment_intent_id: "pi_test_needs_capture_004",
+      payment_captured_at: null, // NULL - needs capture for dev tools testing
+    },
+
+    // 10. Completed booking with multiple services - Ole Hansen
     {
       customer_id: customerUsers[1].id, // Ole Hansen
       stylist_id: stylistUsers[2].id, // Sophia Larsen

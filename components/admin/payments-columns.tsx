@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { ColumnDef } from "@tanstack/react-table";
 import {
   MoreHorizontal,
@@ -9,6 +10,7 @@ import {
   CreditCard,
   Receipt,
   AlertCircle,
+  RotateCcw,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -34,6 +36,7 @@ import {
   PaymentWithDetails,
   type PaymentStatus,
 } from "@/server/admin/payments.actions";
+import { AdminRefundDialog } from "./admin-refund-dialog";
 import { toast } from "sonner";
 
 // Utility function to map column IDs to Norwegian display names
@@ -319,59 +322,80 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
     id: "actions",
     cell: ({ row }) => {
       const payment = row.original;
+      const [refundDialogOpen, setRefundDialogOpen] = React.useState(false);
+
+      // Calculate if refund is possible
+      const remainingRefundable = payment.final_amount - (payment.refunded_amount || 0);
+      const canRefund = remainingRefundable > 0;
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Åpne meny</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Handlinger</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => {
-                navigator.clipboard.writeText(payment.payment_intent_id);
-                toast.success("Betalings-ID kopiert");
-              }}
-            >
-              <Copy className="mr-2 h-4 w-4" />
-              Kopier betalings-ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href={`/admin/betalinger/${payment.id}`}>
-                <CreditCard className="mr-2 h-4 w-4" />
-                Se detaljer
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-              <Link href={`/bookinger/${payment.booking_id}`} target="_blank">
+        <>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 w-8 p-0">
+                <span className="sr-only">Åpne meny</span>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Handlinger</DropdownMenuLabel>
+              <DropdownMenuItem
+                onClick={() => {
+                  navigator.clipboard.writeText(payment.payment_intent_id);
+                  toast.success("Betalings-ID kopiert");
+                }}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Kopier betalings-ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href={`/admin/betalinger/${payment.id}`}>
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Se detaljer
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/bookinger/${payment.booking_id}`} target="_blank">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  Se booking
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  const stripeUrl = `https://dashboard.stripe.com/payments/${payment.payment_intent_id}`;
+                  window.open(stripeUrl, "_blank");
+                }}
+              >
                 <ExternalLink className="mr-2 h-4 w-4" />
-                Se booking
-              </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={() => {
-                const stripeUrl = `https://dashboard.stripe.com/payments/${payment.payment_intent_id}`;
-                window.open(stripeUrl, "_blank");
-              }}
-            >
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Åpne i Stripe
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem disabled className="text-muted-foreground">
-              <Receipt className="mr-2 h-4 w-4" />
-              Send kvittering (kommer)
-            </DropdownMenuItem>
-            <DropdownMenuItem disabled className="text-muted-foreground">
-              <AlertCircle className="mr-2 h-4 w-4" />
-              Refunder (kommer)
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+                Åpne i Stripe
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled className="text-muted-foreground">
+                <Receipt className="mr-2 h-4 w-4" />
+                Send kvittering (kommer)
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={!canRefund}
+                className={canRefund ? "" : "text-muted-foreground"}
+                onClick={() => canRefund && setRefundDialogOpen(true)}
+              >
+                <RotateCcw className="mr-2 h-4 w-4" />
+                {canRefund ? "Refunder" : "Fullstendig refundert"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <AdminRefundDialog
+            payment={payment}
+            open={refundDialogOpen}
+            onOpenChange={setRefundDialogOpen}
+            onRefundProcessed={() => {
+              // Trigger a refresh of the payments table
+              window.location.reload();
+            }}
+          />
+        </>
       );
     },
   },

@@ -41,7 +41,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { PaymentWithDetails } from "@/server/admin/payments.actions";
-import { processAdminRefund } from "@/server/admin-refund.actions";
+import { processAdminRefund } from "@/server/admin/admin-refund.actions";
 
 // Refund reason options
 const REFUND_REASONS = [

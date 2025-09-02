@@ -591,7 +591,7 @@ export async function createBookingWithServices(
 
             const validationResult = await validateDiscountCode({
                 code: input.discountCode,
-                orderAmountNOK: input.totalPrice,
+                orderAmountNOK: input.originalTotalPrice,
                 profileId: user.id,
             });
 

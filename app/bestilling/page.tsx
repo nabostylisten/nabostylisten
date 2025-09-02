@@ -135,6 +135,7 @@ export default function BookingPage() {
       });
 
       const totalPriceWithTrial = breakdown.finalTotal;
+      const originalTotalPrice = breakdown.subtotalBeforeDiscount;
 
       // Create the booking
       const result = await createBookingWithServices({
@@ -148,6 +149,7 @@ export default function BookingPage() {
         messageToStylist: bookingData.messageToStylist,
         discountCode: bookingData.appliedDiscount?.code,
         totalPrice: totalPriceWithTrial,
+        originalTotalPrice: originalTotalPrice,
         totalDurationMinutes,
         // Trial session parameters
         includeTrialSession: bookingData.wantsTrialSession || false,

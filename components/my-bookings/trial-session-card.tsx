@@ -15,7 +15,7 @@ import {
   ChevronRight,
   Star,
   Edit,
-  TestTube,
+  ArrowRight,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -29,8 +29,8 @@ import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
 
-// Type for the booking with all related data
-type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
+// Type for the trial session booking with main booking details
+type TrialSessionWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
   stylist: {
     id: string;
     full_name: string | null;
@@ -59,12 +59,6 @@ type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
     } | null;
   }>;
   chats: { id: string } | null;
-  trial_booking?: {
-    id: string;
-    start_time: string;
-    end_time: string;
-    status: string;
-  } | null;
   main_booking?: {
     id: string;
     start_time: string;
@@ -73,17 +67,17 @@ type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
   } | null;
 };
 
-interface BookingCardProps {
-  booking: BookingWithDetails;
+interface TrialSessionCardProps {
+  booking: TrialSessionWithDetails;
   userRole?: "customer" | "stylist";
   currentUserId: string;
 }
 
-export function BookingCard({
+export function TrialSessionCard({
   booking,
   userRole = "customer",
   currentUserId,
-}: BookingCardProps) {
+}: TrialSessionCardProps) {
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
@@ -92,14 +86,14 @@ export function BookingCard({
   const services =
     booking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
   const hasChat = booking.chats && booking.chats.id;
-
+  
   // Check if there's an existing review for this booking
   const { data: reviewResponse } = useQuery({
-    queryKey: ["review", booking.id],
+    queryKey: ['review', booking.id],
     queryFn: () => getReviewByBookingId(booking.id),
-    enabled: booking.status === "completed" && userRole === "customer",
+    enabled: booking.status === 'completed' && userRole === 'customer',
   });
-
+  
   const existingReview = reviewResponse?.data;
 
   // Status styling
@@ -138,15 +132,16 @@ export function BookingCard({
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow border-purple-200 bg-purple-50/30">
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header */}
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">
-                  {services.length > 0 ? services[0]?.title : "Booking"}
+                <Star className="w-5 h-5 text-purple-600" />
+                <h3 className="font-semibold text-lg text-purple-800">
+                  Prøveseksjon: {services.length > 0 ? services[0]?.title : "Booking"}
                   {services.length > 1 && ` +${services.length - 1} til`}
                 </h3>
                 {hasChat && (
@@ -161,29 +156,14 @@ export function BookingCard({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {booking.is_trial_session && (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1 text-purple-600 bg-purple-50/30 border-purple-200 dark:text-purple-400 dark:bg-purple-900/30 dark:border-purple-800"
-                >
-                  <TestTube className="w-4 h-4" />
-                  Prøvetime
-                </Badge>
-              )}
-              {!booking.is_trial_session && booking.trial_booking_id && (
-                <Badge
-                  variant="outline"
-                  className="flex items-center gap-1 text-blue-600 bg-blue-50/30 border-blue-200 dark:text-blue-400 dark:bg-blue-900/30 dark:border-blue-800"
-                >
-                  <TestTube className="w-4 h-4" />
-                  Har prøvetime
-                </Badge>
-              )}
+              <Badge variant="outline" className="text-purple-600 border-purple-200">
+                Prøveseksjon
+              </Badge>
               {getStatusBadge(booking.status)}
             </div>
           </div>
 
-          {/* Booking Details */}
+          {/* Trial Session Details */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
@@ -202,48 +182,22 @@ export function BookingCard({
             </div>
           </div>
 
-          {/* Trial Session Info */}
-          {booking.trial_booking && (
-            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-2 text-sm text-purple-800 font-medium mb-1">
-                <Star className="w-4 h-4" />
-                <span>Prøveseksjon planlagt</span>
-              </div>
-              <div className="text-sm text-purple-700">
-                {format(
-                  new Date(booking.trial_booking.start_time),
-                  "EEEE d. MMMM yyyy 'kl.' HH:mm",
-                  { locale: nb }
-                )}
-              </div>
-              <Link
-                href={`/bookinger/${booking.trial_booking.id}`}
-                className="text-xs text-purple-600 hover:text-purple-800 underline mt-1 inline-block"
-              >
-                Se prøveseksjon detaljer
-              </Link>
-            </div>
-          )}
-
-          {/* Main Booking Link for Trial Sessions */}
-          {booking.is_trial_session && booking.main_booking && (
+          {/* Main Booking Link */}
+          {booking.main_booking && (
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
               <div className="flex items-center gap-2 text-sm text-blue-800 font-medium mb-1">
                 <Calendar className="w-4 h-4" />
                 <span>Hovedseksjon planlagt</span>
               </div>
               <div className="text-sm text-blue-700">
-                {format(
-                  new Date(booking.main_booking.start_time),
-                  "EEEE d. MMMM yyyy 'kl.' HH:mm",
-                  { locale: nb }
-                )}
+                {format(new Date(booking.main_booking.start_time), "EEEE d. MMMM yyyy 'kl.' HH:mm", { locale: nb })}
               </div>
               <Link
                 href={`/bookinger/${booking.main_booking.id}`}
-                className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 inline-block"
+                className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 inline-flex items-center gap-1"
               >
                 Se hovedseksjon detaljer
+                <ArrowRight className="w-3 h-3" />
               </Link>
             </div>
           )}
@@ -314,10 +268,7 @@ export function BookingCard({
               {booking.discount_applied > 0 ? (
                 <div className="flex flex-col">
                   <span className="text-sm text-muted-foreground line-through">
-                    {(booking.total_price + booking.discount_applied).toFixed(
-                      2
-                    )}{" "}
-                    NOK
+                    {(booking.total_price + booking.discount_applied).toFixed(2)} NOK
                   </span>
                   <span>{booking.total_price.toFixed(2)} NOK</span>
                 </div>
@@ -338,7 +289,7 @@ export function BookingCard({
                 }}
                 currentUserId={currentUserId}
                 userRole={userRole}
-                serviceName={services[0]?.title || "Booking"}
+                serviceName={services[0]?.title || "Prøveseksjon"}
                 onStatusDialogOpen={() => setIsStatusDialogOpen(true)}
               />
               {/* Review button for completed bookings (customers only) */}
@@ -385,12 +336,12 @@ export function BookingCard({
           bookingId={booking.id}
           currentStatus={booking.status}
           customerName="Kunde"
-          serviceName={services[0]?.title || "Booking"}
+          serviceName={services[0]?.title || "Prøveseksjon"}
           isOpen={isStatusDialogOpen}
           onOpenChange={setIsStatusDialogOpen}
         />
       )}
-
+      
       {/* Review Dialog for Customers */}
       {userRole === "customer" && booking.status === "completed" && (
         <ReviewDialog
@@ -398,7 +349,7 @@ export function BookingCard({
           onOpenChange={setIsReviewDialogOpen}
           bookingId={booking.id}
           stylistName={booking.stylist?.full_name || "Stylisten"}
-          serviceTitles={services.map((s) => s?.title || "Tjeneste")}
+          serviceTitles={services.map(s => s?.title || "Tjeneste")}
           existingReview={existingReview}
         />
       )}

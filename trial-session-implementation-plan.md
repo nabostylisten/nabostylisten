@@ -142,23 +142,25 @@ Add new step after time selection:
 - Add validation for trial session dates
 - Update step progression logic
 
-### Phase 4: Booking Management Updates
+### ✅ Phase 4: Booking Management Updates
 
-#### 4.1 Booking Card Updates
+#### ✅ 4.1 Booking Card Updates
 
 **File**: `/components/my-bookings/booking-card.tsx`
 
-- Display trial session relationship badge
-- Show trial session date if exists
-- Link between main and trial bookings
+- ✅ Display trial session relationship badge
+- ✅ Show trial session date if exists
+- ✅ Link between main and trial bookings
+- ✅ Fixed pricing display to show correct original and discounted amounts
 
-#### 4.2 New Trial Session Card
+#### ✅ 4.2 New Trial Session Card
 
 **File**: `/components/my-bookings/trial-session-card.tsx`
 
-- Specialized display for trial sessions
-- Link to main booking
-- Actions: move, cancel, view details
+- ✅ Specialized display for trial sessions
+- ✅ Link to main booking
+- ✅ Actions: move, cancel, view details
+- ✅ Purple-themed styling to distinguish from regular bookings
 
 #### 4.3 Move Trial Session
 

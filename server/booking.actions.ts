@@ -558,7 +558,8 @@ interface CreateBookingWithServicesInput {
     discountCode?: string;
 
     // Calculated totals
-    totalPrice: number;
+    totalPrice: number; // Final price after discount
+    originalTotalPrice: number; // Original price before discount
     totalDurationMinutes: number;
 }
 
@@ -682,9 +683,9 @@ export async function createBookingWithServices(
             }
         }
 
-        // 3. Use the final price already calculated by the frontend
-        // The frontend has already applied the discount using common utilities
-        const finalPrice = input.totalPrice;
+        // 3. Use the prices calculated by the frontend
+        const finalPrice = input.totalPrice; // Final price after discount
+        const originalPrice = input.originalTotalPrice; // Original price before discount
         const discountAmountNOK = validatedDiscount?.discountAmountNOK || 0;
 
         // Calculate platform fee breakdown for payment processing
@@ -924,9 +925,9 @@ export async function createBookingWithServices(
             .insert({
                 booking_id: booking.id,
                 payment_intent_id: stripePaymentIntentId,
-                original_amount: input.totalPrice, // Original amount in NOK
+                original_amount: originalPrice, // Original amount before discount in NOK
                 discount_amount: discountAmountNOK, // Discount amount in NOK
-                final_amount: finalPrice, // Final amount in NOK
+                final_amount: finalPrice, // Final amount after discount in NOK
                 platform_fee: platformFeeBreakdown.platformFeeNOK, // Platform fee in NOK
                 stylist_payout: platformFeeBreakdown.stylistPayoutNOK, // Stylist payout in NOK
                 affiliate_commission:
@@ -967,7 +968,7 @@ export async function createBookingWithServices(
                 affiliateCommissionNOK:
                     platformFeeBreakdown.affiliateCommissionNOK || 0,
                 // Additional breakdown for transparency
-                originalTotalAmountNOK: input.totalPrice,
+                originalTotalAmountNOK: originalPrice,
             },
             error: null,
         };

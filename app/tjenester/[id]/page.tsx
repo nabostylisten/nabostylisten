@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MapPin, Star, Clock, CheckCircle, User } from "lucide-react";
+import { MapPin, Star, Clock, CheckCircle, User, TestTube } from "lucide-react";
 import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
@@ -197,6 +197,73 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                 </p>
               </div>
             </BlurFade>
+
+            {/* Trial Session Info */}
+            {service.has_trial_session && (
+              <BlurFade delay={0.15} duration={0.5} inView>
+                <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+                  <CardHeader>
+                    <div className="flex items-center gap-2">
+                      <TestTube className="w-5 h-5 text-primary" />
+                      <CardTitle>Prøvetime tilgjengelig</CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {service.trial_session_price && (
+                        <Card className="text-center p-3 bg-background/50 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">
+                            Pris
+                          </div>
+                          <div className="font-semibold text-lg">
+                            {service.trial_session_price} {service.currency}
+                          </div>
+                        </Card>
+                      )}
+                      {service.trial_session_duration_minutes && (
+                        <Card className="text-center p-3 bg-background/50 rounded-lg">
+                          <div className="text-sm text-muted-foreground mb-1">
+                            Varighet
+                          </div>
+                          <div className="font-semibold text-lg">
+                            {formatDuration(
+                              service.trial_session_duration_minutes
+                            )}
+                          </div>
+                        </Card>
+                      )}
+                      <Card className="text-center p-3 bg-background/50 rounded-lg">
+                        <div className="text-sm text-muted-foreground mb-1">
+                          Booking
+                        </div>
+                        <div className="font-semibold text-lg">
+                          Før hovedtimen
+                        </div>
+                      </Card>
+                    </div>
+                    {service.trial_session_description && (
+                      <div className="pt-2">
+                        <h4 className="font-medium mb-2">Om prøvetimen</h4>
+                        <p className="text-muted-foreground leading-relaxed">
+                          {service.trial_session_description}
+                        </p>
+                      </div>
+                    )}
+                    <div className="bg-muted/50 p-3 rounded-lg">
+                      <h4 className="font-medium text-sm mb-2">
+                        Fordeler med prøvetime:
+                      </h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Test stilen på forhånd</li>
+                        <li>• Sjekk for allergiske reaksjoner</li>
+                        <li>• Perfeksjonér ønsket look</li>
+                        <li>• Bygg tillit til stylisten</li>
+                      </ul>
+                    </div>
+                  </CardContent>
+                </Card>
+              </BlurFade>
+            )}
 
             {/* Stylist Info */}
             <Card>

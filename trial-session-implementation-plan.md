@@ -95,8 +95,7 @@ Add new form fields:
 - Add trial session badge to service cards
 - Display trial session pricing and duration
 - Show trial session availability indicator
-
-**TODO, not yet implemented:** Update different services pages (<http://localhost:3000/tjenester/6faeb7cd-55a7-4c46-9a5f-b3ae09df2246>) to also include information on the trial session.
+- Update different services pages (<http://localhost:3000/tjenester/6faeb7cd-55a7-4c46-9a5f-b3ae09df2246>) to also include information on the trial session.
 
 ### Phase 3: Customer Booking Flow Updates
 

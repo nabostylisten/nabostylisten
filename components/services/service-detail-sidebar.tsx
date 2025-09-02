@@ -9,8 +9,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
-import { Heart, ShoppingCart } from "lucide-react";
+import { Heart, ShoppingCart, TestTube } from "lucide-react";
 import type { PublicServiceData } from "@/server/service.actions";
 
 interface ServiceDetailSidebarProps {
@@ -44,6 +45,14 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
           Fra {service.price} {service.currency}
         </CardTitle>
         <CardDescription>Per behandling</CardDescription>
+        {service.has_trial_session && (
+          <div className="mt-3">
+            <Badge variant="secondary" className="text-xs">
+              <TestTube className="w-3 h-3 mr-1" />
+              Prøvetime tilgjengelig
+            </Badge>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="text-sm text-muted-foreground mb-4">
@@ -56,6 +65,11 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
                 ? "Hjemme hos deg"
                 : "Hos stylist"}
           </p>
+          {service.has_trial_session && service.trial_session_price && service.trial_session_duration_minutes && (
+            <p className="mt-1">
+              Prøvetime: {service.trial_session_price} {service.currency} ({formatDuration(service.trial_session_duration_minutes)})
+            </p>
+          )}
         </div>
 
         <AddToCartButton

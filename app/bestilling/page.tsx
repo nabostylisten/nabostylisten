@@ -16,7 +16,11 @@ import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
-import { cartItemsToBookingItems, getBookingBreakdown, formatCurrency } from "@/lib/booking-calculations";
+import {
+  cartItemsToBookingItems,
+  getBookingBreakdown,
+  formatCurrency,
+} from "@/lib/booking-calculations";
 
 export default function BookingPage() {
   const router = useRouter();
@@ -111,20 +115,25 @@ export default function BookingPage() {
         }
       }
 
-      // Calculate total price including trial session using common utilities
+      // Calculate total price including trial session and discount using common utilities
       const bookingItems = cartItemsToBookingItems(items);
-      const trialSessionData = (bookingData.wantsTrialSession && trialSessionPrice) ? { price: trialSessionPrice } : null;
-      const appliedDiscountData = bookingData.appliedDiscount ? {
-        discountAmount: bookingData.appliedDiscount.discountAmount,
-        code: bookingData.appliedDiscount.code,
-      } : null;
-      
+      const trialSessionData =
+        bookingData.wantsTrialSession && trialSessionPrice
+          ? { price: trialSessionPrice }
+          : null;
+      const appliedDiscountData = bookingData.appliedDiscount
+        ? {
+            discountAmount: bookingData.appliedDiscount.discountAmount,
+            code: bookingData.appliedDiscount.code,
+          }
+        : null;
+
       const breakdown = getBookingBreakdown({
         items: bookingItems,
         trialSession: trialSessionData,
         appliedDiscount: appliedDiscountData,
       });
-      
+
       const totalPriceWithTrial = breakdown.finalTotal;
 
       // Create the booking
@@ -166,7 +175,7 @@ export default function BookingPage() {
 
       if (result.data) {
         // Redirect to payment page with client secret
-        toast.success("Booking opprettet! Videresender til betaling...");
+        toast.success("Videresender til betaling...");
 
         if (!result.data.paymentIntentClientSecret) {
           toast.error("Betalingsintegrasjon feilet. Prøv igjen.");
@@ -349,7 +358,7 @@ export default function BookingPage() {
                 appliedDiscount={bookingData.appliedDiscount}
                 className="sticky top-24"
                 trialSession={
-                  trialSession
+                  bookingData.wantsTrialSession && trialSession
                     ? {
                         price: trialSession.service.trial_session_price || 0,
                         currency: trialSession.service.currency,

@@ -590,10 +590,10 @@ export async function createBookingWithServices(
             }
         }
 
-        // 3. Calculate final price using the validated discount amount
-        // The discount validation already handled max order amount limits
-        const discountAmountNOK = validationResult?.discountAmount || 0;
-        const finalPrice = input.totalPrice - discountAmountNOK;
+        // 3. Use the final price already calculated by the frontend
+        // The frontend has already applied the discount using common utilities
+        const finalPrice = input.totalPrice;
+        const discountAmountNOK = validatedDiscount?.discountAmountNOK || 0;
 
         // Calculate platform fee breakdown for payment processing
         const { calculatePlatformFee } = await import(

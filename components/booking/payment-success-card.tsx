@@ -114,6 +114,8 @@ export function PaymentSuccessCard({
     queryFn: () => getBookingDetails(bookingId),
   });
 
+  console.log({ error });
+
   // Create support email content
   const createSupportEmailUrl = (
     booking: BookingWithRelations | null | undefined
@@ -412,8 +414,10 @@ Med vennlig hilsen`);
                         <span className="text-muted-foreground">Subtotal</span>
                         <span>
                           {(
-                            (booking.booking_services?.reduce((total, bs) => total + (bs.service?.price || 0), 0) || 0) +
-                            (booking.trial_booking?.total_price || 0)
+                            (booking.booking_services?.reduce(
+                              (total, bs) => total + (bs.service?.price || 0),
+                              0
+                            ) || 0) + (booking.trial_booking?.total_price || 0)
                           ).toLocaleString("no-NO", {
                             style: "currency",
                             currency: "NOK",

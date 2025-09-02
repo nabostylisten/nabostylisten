@@ -11,7 +11,6 @@ import {
     createStripePaymentIntent,
     updateStripePaymentIntentMetadata,
 } from "@/lib/stripe/connect";
-import { calculatePlatformFee } from "@/schemas/platform-config.schema";
 import { sendEmail } from "@/lib/resend-utils";
 import { BookingStatusUpdateEmail } from "@/transactional/emails/booking-status-update";
 import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
@@ -291,35 +290,92 @@ export async function getUserBookings(
 export async function getBookingDetails(bookingId: string) {
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    // Check authentication first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+        return { error: "User not authenticated", data: null };
+    }
+
+    // 1. Get main booking data first
+    const { data: booking, error: bookingError } = await supabase
         .from("bookings")
-        .select(`
-            *,
-            customer:profiles!bookings_customer_id_fkey(
-                id,
-                full_name,
-                email,
-                phone_number
-            ),
-            stylist:profiles!bookings_stylist_id_fkey(
-                id,
-                full_name,
-                email,
-                phone_number,
-                stylist_details(
-                    bio,
-                    instagram_profile,
-                    facebook_profile,
-                    tiktok_profile,
-                    youtube_profile,
-                    snapchat_profile,
-                    other_social_media_urls,
-                    can_travel,
-                    has_own_place,
-                    travel_distance_km
-                )
-            ),
-            address:addresses(
+        .select("*")
+        .eq("id", bookingId)
+        .single();
+
+    if (bookingError) {
+        return { error: bookingError.message, data: null };
+    }
+
+    if (!booking) {
+        return { error: "Booking not found", data: null };
+    }
+
+    // Get user profile to check role
+    const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+    // Check if user has access - customer, stylist, or admin
+    const hasAccess = booking.customer_id === user.id ||
+        booking.stylist_id === user.id ||
+        userProfile?.role === "admin";
+
+    if (!hasAccess) {
+        return { error: "Unauthorized access", data: null };
+    }
+
+    // 2. Get customer profile
+    const customer = booking.customer_id
+        ? (await supabase
+            .from("profiles")
+            .select("id, full_name, email, phone_number")
+            .eq("id", booking.customer_id)
+            .single()).data
+        : null;
+
+    // 3. Get stylist profile with details
+    const stylistProfile = booking.stylist_id
+        ? (await supabase
+            .from("profiles")
+            .select("id, full_name, email, phone_number")
+            .eq("id", booking.stylist_id)
+            .single()).data
+        : null;
+
+    const stylistDetails = booking.stylist_id
+        ? (await supabase
+            .from("stylist_details")
+            .select(`
+                bio,
+                instagram_profile,
+                facebook_profile,
+                tiktok_profile,
+                youtube_profile,
+                snapchat_profile,
+                other_social_media_urls,
+                can_travel,
+                has_own_place,
+                travel_distance_km
+            `)
+            .eq("profile_id", booking.stylist_id)
+            .single()).data
+        : null;
+
+    const stylist = stylistProfile
+        ? {
+            ...stylistProfile,
+            stylist_details: stylistDetails || null
+        }
+        : null;
+
+    // 4. Get address if exists
+    const address = booking.address_id
+        ? (await supabase
+            .from("addresses")
+            .select(`
                 id,
                 nickname,
                 street_address,
@@ -328,17 +384,39 @@ export async function getBookingDetails(bookingId: string) {
                 country,
                 country_code,
                 entry_instructions
-            ),
-            discount:discounts(
+            `)
+            .eq("id", booking.address_id)
+            .single()).data
+        : null;
+
+    // 5. Get discount if exists
+    const discount = booking.discount_id
+        ? (await supabase
+            .from("discounts")
+            .select(`
                 id,
                 code,
                 description,
                 discount_percentage,
                 discount_amount,
                 currency
-            ),
-            booking_services(
-                service:services(
+            `)
+            .eq("id", booking.discount_id)
+            .single()).data
+        : null;
+
+    // 6. Get booking services with service details
+    const { data: bookingServices } = await supabase
+        .from("booking_services")
+        .select("service_id")
+        .eq("booking_id", bookingId);
+
+    const booking_services = [];
+    if (bookingServices && bookingServices.length > 0) {
+        for (const bs of bookingServices) {
+            const { data: serviceData } = await supabase
+                .from("services")
+                .select(`
                     id,
                     title,
                     description,
@@ -354,9 +432,21 @@ export async function getBookingDetails(bookingId: string) {
                     trial_session_price,
                     trial_session_duration_minutes,
                     trial_session_description
-                )
-            ),
-            trial_booking:bookings!bookings_trial_booking_id_fkey(
+                `)
+                .eq("id", bs.service_id)
+                .single();
+
+            if (serviceData) {
+                booking_services.push({ service: serviceData });
+            }
+        }
+    }
+
+    // 7. Get trial booking if exists
+    const trial_booking = booking.trial_booking_id
+        ? (await supabase
+            .from("bookings")
+            .select(`
                 id,
                 start_time,
                 end_time,
@@ -364,72 +454,74 @@ export async function getBookingDetails(bookingId: string) {
                 total_duration_minutes,
                 status,
                 is_trial_session
-            ),
-            chats(
-                id,
-                created_at,
-                updated_at,
-                chat_messages(
-                    id,
-                    content,
-                    created_at,
-                    sender_id,
-                    is_read
-                )
-            ),
-            payments(
-                id,
-                payment_intent_id,
-                original_amount,
-                discount_amount,
-                final_amount,
-                platform_fee,
-                stylist_payout,
-                affiliate_commission,
-                currency,
-                status,
-                authorized_at,
-                captured_at,
-                succeeded_at,
-                payout_initiated_at,
-                payout_completed_at,
-                refunded_amount,
-                refund_reason,
-                affiliate_id,
-                affiliate_commission_percentage,
-                discount_code,
-                discount_percentage,
-                discount_fixed_amount
-            )
+            `)
+            .eq("id", booking.trial_booking_id)
+            .single()).data
+        : null;
+
+    // 8. Get chats with messages
+    const { data: chatsData } = await supabase
+        .from("chats")
+        .select("id, created_at, updated_at")
+        .eq("booking_id", bookingId);
+
+    const chats = [];
+    if (chatsData && chatsData.length > 0) {
+        for (const chat of chatsData) {
+            const { data: messages } = await supabase
+                .from("chat_messages")
+                .select("id, content, created_at, sender_id, is_read")
+                .eq("chat_id", chat.id)
+                .order("created_at", { ascending: true });
+
+            chats.push({
+                ...chat,
+                chat_messages: messages || []
+            });
+        }
+    }
+
+    // 9. Get payments
+    const { data: payments } = await supabase
+        .from("payments")
+        .select(`
+            id,
+            payment_intent_id,
+            original_amount,
+            discount_amount,
+            final_amount,
+            platform_fee,
+            stylist_payout,
+            affiliate_commission,
+            currency,
+            status,
+            authorized_at,
+            captured_at,
+            succeeded_at,
+            payout_initiated_at,
+            payout_completed_at,
+            refunded_amount,
+            refund_reason,
+            affiliate_id,
+            affiliate_commission_percentage,
+            discount_code,
+            discount_percentage,
+            discount_fixed_amount
         `)
-        .eq("id", bookingId)
-        .single();
+        .eq("booking_id", bookingId);
 
-    if (error) {
-        return { error: error.message, data: null };
-    }
-
-    // Check if user has access to this booking
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-        return { error: "User not authenticated", data: null };
-    }
-
-    // Get user profile to check role
-    const { data: userProfile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-
-    // Check if user has access - customer, stylist, or admin
-    const hasAccess = data.customer_id === user.id ||
-        data.stylist_id === user.id ||
-        userProfile?.role === "admin";
-
-    if (!hasAccess) {
-        return { error: "Unauthorized access", data: null };
-    }
+    // Combine all data into the expected structure
+    const data = {
+        ...booking,
+        customer,
+        stylist,
+        address,
+        discount,
+        booking_services,
+        trial_booking,
+        chats,
+        payments: payments || []
+    };
 
     return { data, error: null };
 }
@@ -599,7 +691,7 @@ export async function createBookingWithServices(
         const { calculatePlatformFee } = await import(
             "@/schemas/platform-config.schema"
         );
-        
+
         const platformFeeBreakdown = calculatePlatformFee({
             totalAmountNOK: finalPrice,
             hasAffiliate: false, // TODO: Implement affiliate logic
@@ -778,7 +870,6 @@ export async function createBookingWithServices(
                 // Don't fail the entire booking for trial session failure, but log it
                 // The main booking can proceed without trial session
             } else if (trialBookingResult) {
-
                 // Link the same services to the trial booking
                 const trialBookingServices = input.serviceIds.map((
                     serviceId,
@@ -838,7 +929,8 @@ export async function createBookingWithServices(
                 final_amount: finalPrice, // Final amount in NOK
                 platform_fee: platformFeeBreakdown.platformFeeNOK, // Platform fee in NOK
                 stylist_payout: platformFeeBreakdown.stylistPayoutNOK, // Stylist payout in NOK
-                affiliate_commission: platformFeeBreakdown.affiliateCommissionNOK || 0, // Affiliate commission in NOK
+                affiliate_commission:
+                    platformFeeBreakdown.affiliateCommissionNOK || 0, // Affiliate commission in NOK
                 stripe_application_fee_amount: Math.round(
                     paymentIntentResult.data.applicationFeeNOK * 100,
                 ), // Stripe application fee in øre (only this field needs øre for Stripe)
@@ -848,7 +940,8 @@ export async function createBookingWithServices(
                 discount_code: input.discountCode,
                 discount_percentage: validatedDiscount?.discountPercentage ||
                     null,
-                discount_fixed_amount: validatedDiscount?.discountAmountNOK || null, // Fixed discount amount in NOK
+                discount_fixed_amount: validatedDiscount?.discountAmountNOK ||
+                    null, // Fixed discount amount in NOK
                 // TODO: Add affiliate fields when affiliate system is implemented
                 // affiliate_id: affiliateId,
                 // affiliate_commission_percentage: affiliateCommissionPercentage,
@@ -871,7 +964,8 @@ export async function createBookingWithServices(
                 discountAmount: discountAmountNOK,
                 platformFeeNOK: platformFeeBreakdown.platformFeeNOK,
                 stylistPayoutNOK: platformFeeBreakdown.stylistPayoutNOK,
-                affiliateCommissionNOK: platformFeeBreakdown.affiliateCommissionNOK || 0,
+                affiliateCommissionNOK:
+                    platformFeeBreakdown.affiliateCommissionNOK || 0,
                 // Additional breakdown for transparency
                 originalTotalAmountNOK: input.totalPrice,
             },

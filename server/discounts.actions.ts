@@ -18,6 +18,9 @@ interface DiscountValidationResult {
   error?: string;
   discount?: Discount;
   discountAmount?: number;
+  wasLimitedByMaxOrderAmount?: boolean;
+  maxOrderAmountNOK?: number;
+  originalOrderAmountNOK?: number;
 }
 
 /**
@@ -184,6 +187,9 @@ export async function validateDiscountCode({
       isValid: true,
       discount,
       discountAmount,
+      wasLimitedByMaxOrderAmount: !!(discount.maximum_order_amount && orderAmountNOK > discount.maximum_order_amount),
+      maxOrderAmountNOK: discount.maximum_order_amount || undefined,
+      originalOrderAmountNOK: orderAmountNOK,
     };
   } catch (error) {
     console.error("Error validating discount code:", error);

@@ -352,11 +352,8 @@ export const calculateDiscountAmount = ({
 }) => {
     if (discountPercentage !== undefined) {
         const calculatedDiscountNOK = (totalAmountNOK * discountPercentage) / 100;
-        return Math.min(
-            calculatedDiscountNOK,
-            totalAmountNOK *
-                DEFAULT_PLATFORM_CONFIG.discounts.maxPercentageDiscount,
-        );
+        const maxAllowed = totalAmountNOK * DEFAULT_PLATFORM_CONFIG.discounts.maxPercentageDiscount;
+        return Math.min(calculatedDiscountNOK, maxAllowed);
     }
 
     if (discountAmountNOK !== undefined) {

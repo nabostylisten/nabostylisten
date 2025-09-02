@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Percent, X } from "lucide-react";
+import { CheckCircle, Info, Percent, X } from "lucide-react";
 import { validateDiscountCode } from "@/server/discounts.actions";
 import type { DatabaseTables } from "@/types";
 
@@ -34,6 +34,9 @@ interface AppliedDiscount {
   discount: DatabaseTables["discounts"]["Row"];
   discountAmount: number;
   code: string;
+  wasLimitedByMaxOrderAmount?: boolean;
+  maxOrderAmountNOK?: number;
+  originalOrderAmountNOK?: number;
 }
 
 interface ApplyDiscountFormProps {
@@ -80,8 +83,6 @@ export function ApplyDiscountForm({
 
   const validateMutation = useMutation({
     mutationFn: async (data: ApplyDiscountFormData) => {
-      console.log("Validating discount with orderAmountNOK:", orderAmountNOK);
-      
       if (!orderAmountNOK || isNaN(orderAmountNOK)) {
         throw new Error(`Invalid order amount: ${orderAmountNOK}`);
       }
@@ -98,6 +99,9 @@ export function ApplyDiscountForm({
           discount: result.discount,
           discountAmount: result.discountAmount, // Already in NOK
           code: result.discount.code,
+          wasLimitedByMaxOrderAmount: result.wasLimitedByMaxOrderAmount,
+          maxOrderAmountNOK: result.maxOrderAmountNOK,
+          originalOrderAmountNOK: result.originalOrderAmountNOK,
         };
         setAppliedDiscount(discountData);
         onDiscountApplied(discountData);
@@ -189,6 +193,20 @@ export function ApplyDiscountForm({
                 </span>
               </div>
             </div>
+
+            {/* Maximum order amount feedback */}
+            {appliedDiscount.wasLimitedByMaxOrderAmount && appliedDiscount.maxOrderAmountNOK && (
+              <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-sm text-blue-800 dark:text-blue-200">
+                  <p className="font-medium">Rabattgrense nådd</p>
+                  <p>
+                    Denne rabattkoden gjelder kun for bestillinger opp til {formatCurrency(appliedDiscount.maxOrderAmountNOK)}.
+                    Rabatten beregnes derfor kun på {formatCurrency(appliedDiscount.maxOrderAmountNOK)} av den totale ordresummen.
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           // Show discount form

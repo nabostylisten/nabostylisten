@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { Percent, Tag } from "lucide-react";
+import { Info, Percent, Tag } from "lucide-react";
 import type { DatabaseTables } from "@/types";
 
 interface CartItem {
@@ -20,6 +20,9 @@ interface AppliedDiscount {
   discount: DatabaseTables["discounts"]["Row"];
   discountAmount: number;
   code: string;
+  wasLimitedByMaxOrderAmount?: boolean;
+  maxOrderAmountNOK?: number;
+  originalOrderAmountNOK?: number;
 }
 
 interface TrialSessionInfo {
@@ -131,6 +134,15 @@ export function OrderSummary({
               <p className="text-xs text-muted-foreground pl-5">
                 {appliedDiscount.discount.description}
               </p>
+            )}
+            {/* Maximum order amount feedback */}
+            {appliedDiscount.wasLimitedByMaxOrderAmount && appliedDiscount.maxOrderAmountNOK && (
+              <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-xs border border-blue-200 dark:border-blue-800">
+                <Info className="w-3 h-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <p className="text-blue-800 dark:text-blue-200">
+                  <span className="font-medium">Rabattgrense:</span> Denne rabatten gjelder kun for bestillinger opp til {formatCurrency(appliedDiscount.maxOrderAmountNOK)}.
+                </p>
+              </div>
             )}
           </div>
         )}

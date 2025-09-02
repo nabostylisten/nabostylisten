@@ -351,7 +351,7 @@ export const calculateDiscountAmount = ({
     discountAmountNOK?: number;
 }) => {
     if (discountPercentage !== undefined) {
-        const calculatedDiscountNOK = totalAmountNOK * discountPercentage;
+        const calculatedDiscountNOK = (totalAmountNOK * discountPercentage) / 100;
         return Math.min(
             calculatedDiscountNOK,
             totalAmountNOK *

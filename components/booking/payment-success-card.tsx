@@ -70,9 +70,27 @@ type BookingWithRelations = DatabaseTables["bookings"]["Row"] & {
   booking_services: Array<{
     service: Pick<
       DatabaseTables["services"]["Row"],
-      "id" | "title" | "description" | "price" | "duration_minutes"
+      | "id"
+      | "title"
+      | "description"
+      | "price"
+      | "duration_minutes"
+      | "has_trial_session"
+      | "trial_session_price"
+      | "trial_session_duration_minutes"
+      | "trial_session_description"
     > | null;
   }> | null;
+  trial_booking: Pick<
+    DatabaseTables["bookings"]["Row"],
+    | "id"
+    | "start_time"
+    | "end_time"
+    | "total_price"
+    | "total_duration_minutes"
+    | "status"
+    | "is_trial_session"
+  > | null;
 };
 
 interface PaymentSuccessCardProps {
@@ -112,7 +130,12 @@ export function PaymentSuccessCard({
     const bookingDate = booking?.start_time
       ? new Date(booking.start_time).toLocaleDateString("no-NO")
       : "Ikke spesifisert";
-    const totalAmount = booking?.total_price
+    const trialDate = booking?.trial_booking?.start_time
+      ? new Date(booking.trial_booking.start_time).toLocaleDateString("no-NO")
+      : null;
+    const totalAmount = booking?.total_price && booking?.trial_booking?.total_price
+      ? `${booking.total_price + booking.trial_booking.total_price} NOK`
+      : booking?.total_price
       ? `${booking.total_price} NOK`
       : "Ikke spesifisert";
 
@@ -124,7 +147,8 @@ Bookingdetaljer:
 - Booking ID: ${bookingId}
 - Betalings-ID: ${paymentIntentId}
 - Tjenester: ${services}
-- Dato: ${bookingDate}
+- Dato: ${bookingDate}${trialDate ? `
+- Prøvetime dato: ${trialDate}` : ''}
 - Totalt beløp: ${totalAmount}
 
 Vennligst send meg kvitteringen på e-post eller bekreft at betalingen ble mottatt.
@@ -331,6 +355,44 @@ Med vennlig hilsen`);
                           );
                         }
                       )}
+                      
+                      {/* Trial session if exists */}
+                      {booking.trial_booking && (
+                        <div className="pt-2 border-t">
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <p className="font-medium text-primary">Prøvetime</p>
+                              {booking.trial_booking.start_time && (
+                                <p className="text-sm text-muted-foreground">
+                                  {new Date(booking.trial_booking.start_time).toLocaleDateString("no-NO", {
+                                    weekday: "long",
+                                    day: "numeric",
+                                    month: "long",
+                                    hour: "numeric",
+                                    minute: "2-digit",
+                                  })}
+                                </p>
+                              )}
+                              {booking.trial_booking.total_duration_minutes && (
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.trial_booking.total_duration_minutes} minutter
+                                </p>
+                              )}
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium text-primary">
+                                {(booking.trial_booking.total_price || 0).toLocaleString(
+                                  "no-NO",
+                                  {
+                                    style: "currency",
+                                    currency: "NOK",
+                                  }
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     {/* Totals */}
@@ -339,7 +401,9 @@ Med vennlig hilsen`);
                         <span className="text-muted-foreground">Subtotal</span>
                         <span>
                           {(
-                            booking.total_price + booking.discount_applied || 0
+                            booking.total_price + 
+                            booking.discount_applied + 
+                            (booking.trial_booking?.total_price || 0)
                           ).toLocaleString("no-NO", {
                             style: "currency",
                             currency: "NOK",
@@ -363,7 +427,10 @@ Med vennlig hilsen`);
                       <div className="flex justify-between text-lg font-semibold pt-2 border-t">
                         <span>Totalt</span>
                         <span>
-                          {(booking.total_price || 0).toLocaleString("no-NO", {
+                          {(
+                            (booking.total_price || 0) + 
+                            (booking.trial_booking?.total_price || 0)
+                          ).toLocaleString("no-NO", {
                             style: "currency",
                             currency: "NOK",
                           })}

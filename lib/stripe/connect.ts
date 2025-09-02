@@ -472,6 +472,12 @@ export async function createCustomerWithDatabase({
  * Create a Stripe PaymentIntent for a booking with destination charges
  * Pure Stripe operation - no database interaction
  */
+/**
+ * Create a Stripe payment intent for a booking
+ * @param totalAmountNOK - The FINAL amount to charge (already includes discount)
+ * @param discountAmountNOK - The discount amount for metadata/tracking only
+ * @param discountCode - The discount code for metadata/tracking only
+ */
 export async function createStripePaymentIntent({
   totalAmountNOK,
   stylistStripeAccountId,
@@ -483,20 +489,50 @@ export async function createStripePaymentIntent({
   discountAmountNOK = 0,
   discountCode,
 }: {
-  totalAmountNOK: number;
+  totalAmountNOK: number; // Final amount after discount
   stylistStripeAccountId: string;
   bookingId: string;
   customerId: string;
   stylistId: string;
   hasAffiliate?: boolean;
   affiliateId?: string;
-  discountAmountNOK?: number;
-  discountCode?: string;
+  discountAmountNOK?: number; // For metadata only
+  discountCode?: string; // For metadata only
 }) {
   try {
-    // Apply discount to total amount
-    const finalAmountNOK = Math.max(0, totalAmountNOK - discountAmountNOK);
+    // Debug logging
+    console.log("=== STRIPE PAYMENT INTENT DEBUG ===");
+    console.log("Input values:", {
+      totalAmountNOK,
+      discountAmountNOK,
+      bookingId,
+      customerId,
+      stylistId,
+    });
+
+    // totalAmountNOK already has discount applied from calculateBookingPaymentBreakdown
+    // Don't subtract discount again!
+    const finalAmountNOK = totalAmountNOK;
     const finalAmountOre = Math.round(finalAmountNOK * 100);
+
+    console.log("Calculation:", {
+      totalAmountNOK_already_discounted: totalAmountNOK,
+      discountAmountNOK_for_metadata: discountAmountNOK,
+      finalAmountNOK_to_charge: finalAmountNOK,
+      finalAmountOre_to_stripe: finalAmountOre,
+      finalAmountOreType: typeof finalAmountOre,
+      isInteger: Number.isInteger(finalAmountOre),
+      isNaN: isNaN(finalAmountOre),
+    });
+
+    // Validate the amount
+    if (!Number.isInteger(finalAmountOre)) {
+      throw new Error(`Amount must be an integer. Got: ${finalAmountOre} (type: ${typeof finalAmountOre})`);
+    }
+
+    if (finalAmountOre < 50) { // Stripe minimum for NOK is 50 øre
+      throw new Error(`Amount ${finalAmountOre} øre is below Stripe's minimum of 50 øre for NOK`);
+    }
 
     // Calculate fees
     const feeCalculation = calculatePlatformFee({
@@ -533,18 +569,30 @@ export async function createStripePaymentIntent({
       }
     }
 
-    const paymentIntent = await stripe.paymentIntents.create({
+    // Log what we're sending to Stripe
+    const stripePaymentData = {
       amount: finalAmountOre,
       currency: DEFAULT_PLATFORM_CONFIG.payment.defaultCurrency.toLowerCase(),
       application_fee_amount: applicationFeeOre,
       transfer_data: {
         destination: stylistStripeAccountId,
       },
-      capture_method: "manual", // Will be captured by cron job before appointment
+      capture_method: "manual" as const, // Will be captured by cron job before appointment
       metadata,
       // Add description for better tracking
       description: `Booking ${bookingId} - Stylist services`,
+    };
+
+    console.log("Stripe API call data:", {
+      amount: stripePaymentData.amount,
+      amountType: typeof stripePaymentData.amount,
+      isInteger: Number.isInteger(stripePaymentData.amount),
+      currency: stripePaymentData.currency,
+      application_fee_amount: stripePaymentData.application_fee_amount,
+      feeType: typeof stripePaymentData.application_fee_amount,
     });
+
+    const paymentIntent = await stripe.paymentIntents.create(stripePaymentData);
 
     return {
       data: {

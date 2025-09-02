@@ -349,8 +349,21 @@ export async function getBookingDetails(bookingId: string) {
                     requirements,
                     at_customer_place,
                     at_stylist_place,
-                    is_published
+                    is_published,
+                    has_trial_session,
+                    trial_session_price,
+                    trial_session_duration_minutes,
+                    trial_session_description
                 )
+            ),
+            trial_booking:bookings!trial_booking_id(
+                id,
+                start_time,
+                end_time,
+                total_price,
+                total_duration_minutes,
+                status,
+                is_trial_session
             ),
             chats(
                 id,
@@ -440,6 +453,13 @@ interface CreateBookingWithServicesInput {
         entryInstructions?: string;
     };
     customerAddressId?: string; // ID of existing address from addresses table
+
+    // Trial session fields
+    includeTrialSession?: boolean;
+    trialSessionStartTime?: Date;
+    trialSessionEndTime?: Date;
+    trialSessionPrice?: number;
+    trialSessionDurationMinutes?: number;
 
     // Additional details
     messageToStylist?: string;
@@ -602,6 +622,13 @@ export async function createBookingWithServices(
             };
         }
 
+        // Debug logging for payment intent
+        console.log("=== BOOKING ACTION PAYMENT DEBUG ===");
+        console.log("Payment breakdown:", paymentBreakdown);
+        console.log("Final price:", finalPrice);
+        console.log("Discount amount NOK:", paymentBreakdown.discountAmountNOK);
+        console.log("Input discount code:", input.discountCode);
+
         // Create Stripe PaymentIntent with real integration
         const paymentIntentResult = await createStripePaymentIntent({
             totalAmountNOK: finalPrice,
@@ -722,6 +749,77 @@ export async function createBookingWithServices(
                 stripePaymentIntentId,
             );
             return { error: "Failed to link services to booking", data: null };
+        }
+
+        let trialBooking: DatabaseTables["bookings"]["Row"] | null = null;
+        if (
+            input.includeTrialSession && input.trialSessionStartTime &&
+            input.trialSessionEndTime
+        ) {
+            const trialBookingData: DatabaseTables["bookings"]["Insert"] = {
+                customer_id: user.id,
+                stylist_id: input.stylistId,
+                start_time: input.trialSessionStartTime.toISOString(),
+                end_time: input.trialSessionEndTime.toISOString(),
+                message_to_stylist: `Prøvetime for hovedbooking ${booking.id}`,
+                status: "pending",
+                address_id: addressId, // Same location as main booking
+                total_price: input.trialSessionPrice || 0,
+                total_duration_minutes: input.trialSessionDurationMinutes || 0,
+                is_trial_session: true,
+                main_booking_id: booking.id, // Link to main booking
+                discount_applied: 0, // Trial sessions don't have discounts
+            };
+
+            const { data: trialBookingResult, error: trialBookingError } =
+                await supabase
+                    .from("bookings")
+                    .insert(trialBookingData)
+                    .select()
+                    .single();
+
+            if (trialBookingError) {
+                console.error(
+                    "Trial booking creation failed:",
+                    trialBookingError,
+                );
+                // Don't fail the entire booking for trial session failure, but log it
+                // The main booking can proceed without trial session
+            } else if (trialBookingResult) {
+                trialBooking = trialBookingResult;
+
+                // Link the same services to the trial booking
+                const trialBookingServices = input.serviceIds.map((
+                    serviceId,
+                ) => ({
+                    booking_id: trialBookingResult.id,
+                    service_id: serviceId,
+                }));
+
+                const { error: trialServicesError } = await supabase
+                    .from("booking_services")
+                    .insert(trialBookingServices);
+
+                if (trialServicesError) {
+                    console.error(
+                        "Trial booking service linking failed:",
+                        trialServicesError,
+                    );
+                }
+
+                // Update main booking with trial booking reference
+                const { error: mainBookingUpdateError } = await supabase
+                    .from("bookings")
+                    .update({ trial_booking_id: trialBookingResult.id })
+                    .eq("id", booking.id);
+
+                if (mainBookingUpdateError) {
+                    console.error(
+                        "Failed to update main booking with trial reference:",
+                        mainBookingUpdateError,
+                    );
+                }
+            }
         }
 
         // 6. Create a chat for the booking

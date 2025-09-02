@@ -35,6 +35,7 @@ import {
   Search,
   Filter,
   CreditCard,
+  TestTube,
 } from "lucide-react";
 import {
   Pagination,
@@ -74,6 +75,7 @@ type Service = Database["public"]["Tables"]["services"]["Row"] & {
     media_type: Database["public"]["Enums"]["media_type"];
     is_preview_image: boolean;
     created_at: string;
+    publicUrl?: string;
   }>;
 };
 
@@ -172,6 +174,8 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   const totalPages = servicesResult?.totalPages || 0;
   const totalCount = servicesResult?.count || 0;
 
+  console.log(services);
+
   // Helper function to get preview image URL
   const getPreviewImageUrl = (service: Service): string | null => {
     if (!service.media || service.media.length === 0) return null;
@@ -193,6 +197,16 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
 
     // Use the first image from sorted array (preview or oldest)
     const imageToUse = serviceImages[0];
+
+    // Use publicUrl if available, otherwise generate it
+    if (imageToUse.publicUrl) {
+      return imageToUse.publicUrl;
+    }
+
+    // Fall back to generating the URL (for cases where publicUrl might not be set)
+    if (imageToUse.file_path.startsWith("https://images.unsplash.com/")) {
+      return imageToUse.file_path;
+    }
 
     const supabase = createClient();
     const { data } = supabase.storage
@@ -760,6 +774,34 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
                                   )}
                               </div>
                             </div>
+                            {/* Trial Session Info */}
+                            {service.has_trial_session && (
+                              <div>
+                                <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                                  Prøvetime
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <Badge
+                                    variant="default"
+                                    className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200"
+                                  >
+                                    <TestTube className="w-3 h-3 mr-1" />
+                                    Tilgjengelig
+                                  </Badge>
+                                  {service.trial_session_price && (
+                                    <span className="text-xs text-muted-foreground">
+                                      {service.trial_session_price} kr
+                                    </span>
+                                  )}
+                                  {service.trial_session_duration_minutes && (
+                                    <span className="text-xs text-muted-foreground">
+                                      • {service.trial_session_duration_minutes}{" "}
+                                      min
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                         <div className="flex gap-1 ml-3 flex-shrink-0">

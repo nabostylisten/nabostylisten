@@ -204,11 +204,6 @@ FOR SELECT TO authenticated
 USING ( 
     (select auth.uid()) = customer_id 
     OR (select auth.uid()) = stylist_id 
-    OR EXISTS (
-        SELECT 1 FROM public.bookings main 
-        WHERE main.id = bookings.main_booking_id 
-        AND (main.customer_id = (select auth.uid()) OR main.stylist_id = (select auth.uid()))
-    )
 );
 
 -- Admins can view all bookings
@@ -227,11 +222,6 @@ FOR UPDATE TO authenticated
 USING ( 
     (select auth.uid()) = customer_id 
     OR (select auth.uid()) = stylist_id
-    OR (is_trial_session = true AND EXISTS (
-        SELECT 1 FROM public.bookings main 
-        WHERE main.id = bookings.main_booking_id 
-        AND main.stylist_id = (select auth.uid())
-    ))
 );
 
 -- Admins can manage all bookings

@@ -25,7 +25,7 @@ export async function getServices(stylistId: string) {
         .from("services")
         .select(`
       *,
-      service_service_categories!inner (
+      service_service_categories (
         service_categories (
           id,
           name,
@@ -53,7 +53,7 @@ export async function getService(serviceId: string) {
         .from("services")
         .select(`
       *,
-      service_service_categories!inner (
+      service_service_categories (
         service_categories (
           id,
           name,
@@ -258,15 +258,18 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
 
     const {
         search,
-        categoryId,
+        categories,
         location,
         stylistIds,
-        minPrice,
-        maxPrice,
+        minPrice: minPriceString,
+        maxPrice: maxPriceString,
         sortBy = "newest",
         page = 1,
         limit = 12,
     } = filters;
+
+    const minPrice = minPriceString ? parseFloat(minPriceString) : undefined;
+    const maxPrice = maxPriceString ? parseFloat(maxPriceString) : undefined;
 
     let query = supabase
         .from("services")
@@ -318,12 +321,12 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
     }
 
     // Apply category filter
-    if (categoryId) {
+    if (categories && categories.length > 0) {
         // Get service IDs that belong to this category
         const { data: serviceIds } = await supabase
             .from("service_service_categories")
             .select("service_id")
-            .eq("category_id", categoryId);
+            .in("category_id", categories);
 
         if (serviceIds && serviceIds.length > 0) {
             const ids = serviceIds.map((item) => item.service_id);
@@ -354,10 +357,10 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
         query = query.lte("price", maxPrice * 100); // Convert to øre
     }
 
-    // Apply location filter (if provided, filter by city)
-    if (location) {
-        query = query.eq("profiles.addresses.city", location);
-    }
+    // // Apply location filter (if provided, filter by city)
+    // if (location?.address) {
+    //     query = query.eq("profiles.addresses.city", location.address);
+    // }
 
     // Apply sorting
     switch (sortBy) {
@@ -398,7 +401,7 @@ export async function getPublicServices(filters: ServiceFilters = {}) {
         media: service.media?.map((media) => ({
             ...media,
             // Use file_path as URL if it's already a full URL (Unsplash), otherwise use Supabase storage
-            publicUrl: media.file_path.startsWith("http")
+            publicUrl: media.file_path.startsWith("https://images.unsplash.com/")
                 ? media.file_path
                 : getPublicUrl(supabase, "service-media", media.file_path),
         })),
@@ -475,7 +478,7 @@ export async function getPublicService(serviceId: string) {
         media: data.media?.map((media) => ({
             ...media,
             // Use file_path as URL if it's already a full URL (Unsplash), otherwise use Supabase storage
-            publicUrl: media.file_path.startsWith("http")
+            publicUrl: media.file_path.startsWith("https://images.unsplash.com/")
                 ? media.file_path
                 : getPublicUrl(supabase, "service-media", media.file_path),
         })),
@@ -697,16 +700,13 @@ export async function getServiceImages(serviceId: string) {
         }
 
         // Generate public URLs for each image
-        const imagesWithUrls = data.map((image) => {
-            const { data: urlData } = supabase.storage
-                .from("service-media")
-                .getPublicUrl(image.file_path);
-
-            return {
-                ...image,
-                publicUrl: urlData.publicUrl,
-            };
-        });
+        const imagesWithUrls = data.map((image) => ({
+            ...image,
+            // Use file_path as URL if it's already a full URL (Unsplash), otherwise use Supabase storage
+            publicUrl: image.file_path.startsWith("http")
+                ? image.file_path
+                : getPublicUrl(supabase, "service-media", image.file_path),
+        }));
 
         return { data: imagesWithUrls, error: null };
     } catch (error) {
@@ -722,7 +722,10 @@ export async function getServiceImages(serviceId: string) {
 /**
  * Get filtered services for a stylist (used in mine-tjenester page)
  */
-export async function getFilteredStylistServices(stylistId: string, filters: ServiceFilters = {}) {
+export async function getFilteredStylistServices(
+    stylistId: string,
+    filters: ServiceFilters = {},
+) {
     const supabase = await createClient();
 
     // Get current user to verify they can access this stylist's services
@@ -773,7 +776,9 @@ export async function getFilteredStylistServices(stylistId: string, filters: Ser
 
     // Apply search filter
     if (search) {
-        query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
+        query = query.or(
+            `title.ilike.%${search}%,description.ilike.%${search}%`,
+        );
     }
 
     // Apply category filter
@@ -787,9 +792,9 @@ export async function getFilteredStylistServices(stylistId: string, filters: Ser
             const ids = serviceIds.map((item) => item.service_id);
             query = query.in("id", ids);
         } else {
-            return { 
-                data: [], 
-                error: null, 
+            return {
+                data: [],
+                error: null,
                 count: 0,
                 totalPages: 0,
                 currentPage: page,
@@ -799,9 +804,15 @@ export async function getFilteredStylistServices(stylistId: string, filters: Ser
     }
 
     // Apply service destination filter
-    if (serviceDestination?.atCustomerPlace && !serviceDestination?.atStylistPlace) {
+    if (
+        serviceDestination?.atCustomerPlace &&
+        !serviceDestination?.atStylistPlace
+    ) {
         query = query.eq("at_customer_place", true);
-    } else if (serviceDestination?.atStylistPlace && !serviceDestination?.atCustomerPlace) {
+    } else if (
+        serviceDestination?.atStylistPlace &&
+        !serviceDestination?.atCustomerPlace
+    ) {
         query = query.eq("at_stylist_place", true);
     }
 
@@ -840,9 +851,9 @@ export async function getFilteredStylistServices(stylistId: string, filters: Ser
     }
 
     if (!data) {
-        return { 
-            data: [], 
-            error: null, 
+        return {
+            data: [],
+            error: null,
             count: 0,
             totalPages: 0,
             currentPage: page,
@@ -855,7 +866,7 @@ export async function getFilteredStylistServices(stylistId: string, filters: Ser
         ...service,
         media: service.media?.map((media) => ({
             ...media,
-            publicUrl: media.file_path.startsWith("http")
+            publicUrl: media.file_path.startsWith("https://images.unsplash.com/")
                 ? media.file_path
                 : getPublicUrl(supabase, "service-media", media.file_path),
         })),
@@ -929,7 +940,6 @@ export async function getServiceReviews(serviceId: string, limit = 10) {
 
     return { data: transformedReviews, error: null };
 }
-
 
 /**
  * Get review statistics for a specific service

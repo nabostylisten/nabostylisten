@@ -39,8 +39,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X } from "lucide-react";
+import { Plus, X, InfoIcon, TestTube } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import {
   Dropzone,
   DropzoneContent,
@@ -97,11 +99,46 @@ const serviceFormSchema = servicesInsertSchema
     at_stylist_place: z.boolean().optional(),
     includes: z.array(z.string().min(1)).optional(),
     requirements: z.array(z.string().min(1)).optional(),
+    // Trial session fields
+    has_trial_session: z.boolean().optional().default(false),
+    trial_session_price: z
+      .number()
+      .min(1, "Prøvetimepris må være større enn 0")
+      .optional()
+      .nullable(),
+    trial_session_duration_minutes: z
+      .number()
+      .min(30, "Prøvetime må være minst 30 minutter")
+      .max(240, "Prøvetime kan ikke være mer enn 4 timer")
+      .optional()
+      .nullable(),
+    trial_session_description: z
+      .string()
+      .max(500, "Beskrivelse kan ikke være lengre enn 500 tegn")
+      .optional()
+      .nullable(),
   })
   .refine((data) => data.at_customer_place || data.at_stylist_place, {
     message: "Du må velge minst ett sted hvor tjenesten kan utføres",
     path: ["at_customer_place"],
-  });
+  })
+  .refine(
+    (data) => {
+      // If trial session is enabled, all trial fields must be filled
+      if (data.has_trial_session) {
+        return (
+          data.trial_session_price &&
+          data.trial_session_duration_minutes &&
+          data.trial_session_description
+        );
+      }
+      return true;
+    },
+    {
+      message: "Alle prøvetimefelter må fylles ut når prøvetime er aktivert",
+      path: ["trial_session_price"],
+    }
+  );
 
 type ServiceFormData = z.infer<typeof serviceFormSchema>;
 
@@ -122,14 +159,22 @@ export function ServiceForm({
 }: ServiceFormProps) {
   const [uploadedFiles, setUploadedFiles] = React.useState<File[]>([]);
   const [fileProcessing, setFileProcessing] = React.useState(false);
-  
+
   // State for includes and requirements management
   const [newInclude, setNewInclude] = React.useState("");
   const [newRequirement, setNewRequirement] = React.useState("");
-  const [deleteIncludeIndex, setDeleteIncludeIndex] = React.useState<number | null>(null);
-  const [deleteRequirementIndex, setDeleteRequirementIndex] = React.useState<number | null>(null);
-  const [editIncludeIndex, setEditIncludeIndex] = React.useState<number | null>(null);
-  const [editRequirementIndex, setEditRequirementIndex] = React.useState<number | null>(null);
+  const [deleteIncludeIndex, setDeleteIncludeIndex] = React.useState<
+    number | null
+  >(null);
+  const [deleteRequirementIndex, setDeleteRequirementIndex] = React.useState<
+    number | null
+  >(null);
+  const [editIncludeIndex, setEditIncludeIndex] = React.useState<number | null>(
+    null
+  );
+  const [editRequirementIndex, setEditRequirementIndex] = React.useState<
+    number | null
+  >(null);
   const [editIncludeValue, setEditIncludeValue] = React.useState("");
   const [editRequirementValue, setEditRequirementValue] = React.useState("");
 
@@ -148,6 +193,11 @@ export function ServiceForm({
       at_stylist_place: service?.at_stylist_place || true,
       includes: service?.includes || [],
       requirements: service?.requirements || [],
+      has_trial_session: service?.has_trial_session || false,
+      trial_session_price: service?.trial_session_price || undefined,
+      trial_session_duration_minutes:
+        service?.trial_session_duration_minutes || undefined,
+      trial_session_description: service?.trial_session_description || "",
     },
   });
 
@@ -349,6 +399,11 @@ export function ServiceForm({
         at_stylist_place: service.at_stylist_place,
         includes: service.includes || [],
         requirements: service.requirements || [],
+        has_trial_session: service.has_trial_session || false,
+        trial_session_price: service.trial_session_price || undefined,
+        trial_session_duration_minutes:
+          service.trial_session_duration_minutes || undefined,
+        trial_session_description: service.trial_session_description || "",
       });
     } else if (mode === "create") {
       form.reset({
@@ -361,6 +416,10 @@ export function ServiceForm({
         at_stylist_place: true,
         includes: [],
         requirements: [],
+        has_trial_session: false,
+        trial_session_price: undefined,
+        trial_session_duration_minutes: undefined,
+        trial_session_description: "",
       });
     }
     setUploadedFiles([]);
@@ -378,7 +437,10 @@ export function ServiceForm({
   const addRequirement = () => {
     if (newRequirement.trim()) {
       const currentRequirements = form.getValues().requirements || [];
-      form.setValue("requirements", [...currentRequirements, newRequirement.trim()]);
+      form.setValue("requirements", [
+        ...currentRequirements,
+        newRequirement.trim(),
+      ]);
       setNewRequirement("");
     }
   };
@@ -395,7 +457,9 @@ export function ServiceForm({
   const deleteRequirement = (index: number) => {
     const currentRequirements = form.getValues().requirements || [];
     if (index >= 0 && index < currentRequirements.length) {
-      const updatedRequirements = currentRequirements.filter((_, i) => i !== index);
+      const updatedRequirements = currentRequirements.filter(
+        (_, i) => i !== index
+      );
       form.setValue("requirements", updatedRequirements);
     }
     setDeleteRequirementIndex(null);
@@ -574,9 +638,10 @@ export function ServiceForm({
             <div className="space-y-4">
               <FormLabel>Hva er inkludert i tjenesten</FormLabel>
               <FormDescription>
-                Legg til hva kunder får inkludert når de bestiller denne tjenesten
+                Legg til hva kunder får inkludert når de bestiller denne
+                tjenesten
               </FormDescription>
-              
+
               {/* Add new include */}
               <div className="flex gap-2">
                 <Input
@@ -603,59 +668,67 @@ export function ServiceForm({
               {/* Display current includes */}
               {(form.watch("includes")?.length ?? 0) > 0 && (
                 <div className="space-y-2">
-                  {form.watch("includes")?.map((include: string, index: number) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                      {editIncludeIndex === index ? (
-                        <>
-                          <Input
-                            value={editIncludeValue}
-                            onChange={(e) => setEditIncludeValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                saveEditInclude();
-                              } else if (e.key === "Escape") {
-                                cancelEdit();
+                  {form
+                    .watch("includes")
+                    ?.map((include: string, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 bg-muted rounded-md"
+                      >
+                        {editIncludeIndex === index ? (
+                          <>
+                            <Input
+                              value={editIncludeValue}
+                              onChange={(e) =>
+                                setEditIncludeValue(e.target.value)
                               }
-                            }}
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={saveEditInclude}
-                            disabled={!editIncludeValue.trim()}
-                          >
-                            Lagre
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={cancelEdit}
-                          >
-                            Avbryt
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Badge variant="secondary" className="flex-1 justify-start cursor-pointer"
-                            onClick={() => startEditInclude(index, include)}
-                          >
-                            {include}
-                          </Badge>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setDeleteIncludeIndex(index)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  saveEditInclude();
+                                } else if (e.key === "Escape") {
+                                  cancelEdit();
+                                }
+                              }}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={saveEditInclude}
+                              disabled={!editIncludeValue.trim()}
+                            >
+                              Lagre
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={cancelEdit}
+                            >
+                              Avbryt
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <span
+                              className="flex-1 justify-start cursor-pointer"
+                              onClick={() => startEditInclude(index, include)}
+                            >
+                              {include}
+                            </span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setDeleteIncludeIndex(index)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
@@ -664,9 +737,10 @@ export function ServiceForm({
             <div className="space-y-4">
               <FormLabel>Krav for hjemmetjeneste</FormLabel>
               <FormDescription>
-                Legg til krav som må være oppfylt når tjenesten utføres hjemme hos kunden
+                Legg til krav som må være oppfylt når tjenesten utføres hjemme
+                hos kunden
               </FormDescription>
-              
+
               {/* Add new requirement */}
               <div className="flex gap-2">
                 <Input
@@ -693,59 +767,69 @@ export function ServiceForm({
               {/* Display current requirements */}
               {(form.watch("requirements")?.length ?? 0) > 0 && (
                 <div className="space-y-2">
-                  {form.watch("requirements")?.map((requirement: string, index: number) => (
-                    <div key={index} className="flex items-center gap-2 p-2 bg-muted rounded-md">
-                      {editRequirementIndex === index ? (
-                        <>
-                          <Input
-                            value={editRequirementValue}
-                            onChange={(e) => setEditRequirementValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                e.preventDefault();
-                                saveEditRequirement();
-                              } else if (e.key === "Escape") {
-                                cancelEdit();
+                  {form
+                    .watch("requirements")
+                    ?.map((requirement: string, index: number) => (
+                      <div
+                        key={index}
+                        className="flex items-center gap-2 p-2 bg-muted rounded-md"
+                      >
+                        {editRequirementIndex === index ? (
+                          <>
+                            <Input
+                              value={editRequirementValue}
+                              onChange={(e) =>
+                                setEditRequirementValue(e.target.value)
                               }
-                            }}
-                            className="flex-1"
-                          />
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={saveEditRequirement}
-                            disabled={!editRequirementValue.trim()}
-                          >
-                            Lagre
-                          </Button>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={cancelEdit}
-                          >
-                            Avbryt
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Badge variant="secondary" className="flex-1 justify-start cursor-pointer"
-                            onClick={() => startEditRequirement(index, requirement)}
-                          >
-                            {requirement}
-                          </Badge>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setDeleteRequirementIndex(index)}
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  ))}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  saveEditRequirement();
+                                } else if (e.key === "Escape") {
+                                  cancelEdit();
+                                }
+                              }}
+                              className="flex-1"
+                            />
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={saveEditRequirement}
+                              disabled={!editRequirementValue.trim()}
+                            >
+                              Lagre
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={cancelEdit}
+                            >
+                              Avbryt
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <span
+                              className="flex-1 justify-start cursor-pointer"
+                              onClick={() =>
+                                startEditRequirement(index, requirement)
+                              }
+                            >
+                              {requirement}
+                            </span>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setDeleteRequirementIndex(index)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    ))}
                 </div>
               )}
             </div>
@@ -887,6 +971,142 @@ export function ServiceForm({
               </FormMessage>
             </div>
 
+            {/* Trial Session Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <TestTube className="w-5 h-5" />
+                <FormLabel className="text-base font-semibold">
+                  Prøvetime
+                </FormLabel>
+              </div>
+
+              <FormField
+                control={form.control}
+                name="has_trial_session"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">
+                        Tilby prøvetime for denne tjenesten
+                      </FormLabel>
+                      <FormDescription>
+                        Prøvetimer passer for bryllupstjenester, store
+                        fargeendringer eller andre komplekse tjenester
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
+              {form.watch("has_trial_session") && (
+                <>
+                  <Alert>
+                    <InfoIcon className="h-4 w-4" />
+                    <AlertDescription>
+                      <strong>Når prøvetime passer:</strong>
+                      <ul className="mt-2 space-y-1 text-sm">
+                        <li>
+                          • Bryllupstjenester (sminke, hår) - prøvetime 1-3
+                          måneder før
+                        </li>
+                        <li>
+                          • Store arrangementer (ball, graduation) - prøvetime
+                          2-4 uker før
+                        </li>
+                        <li>
+                          • Komplekse fargebehandlinger - for testing av
+                          produkter
+                        </li>
+                      </ul>
+                      <p className="mt-2 text-sm">
+                        <strong>Unngå prøvetime for:</strong> Enkle klipp, basis
+                        manikyr, tjenester under 30 min
+                      </p>
+                    </AlertDescription>
+                  </Alert>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="trial_session_price"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Prøvetimepris (kr) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="250"
+                              value={field.value || ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                field.onChange(
+                                  value === "" ? undefined : Number(value)
+                                );
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="trial_session_duration_minutes"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Varighet (minutter) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="60"
+                              value={field.value || ""}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                field.onChange(
+                                  value === "" ? undefined : Number(value)
+                                );
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={form.control}
+                    name="trial_session_description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Beskrivelse av prøvetime *</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Beskriv hva som inngår i prøvetimen og hva kunden kan forvente..."
+                            className="min-h-[100px]"
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Forklar hva prøvetimen inkluderer og hvordan den
+                          forbereder for hovedtjenesten
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              )}
+            </div>
+
             <DialogFooter>
               <Button
                 type="button"
@@ -905,19 +1125,23 @@ export function ServiceForm({
         </Form>
 
         {/* Delete Include Confirmation Dialog */}
-        <AlertDialog open={deleteIncludeIndex !== null} onOpenChange={() => setDeleteIncludeIndex(null)}>
+        <AlertDialog
+          open={deleteIncludeIndex !== null}
+          onOpenChange={() => setDeleteIncludeIndex(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Slett inkludert element</AlertDialogTitle>
               <AlertDialogDescription>
-                Er du sikker på at du vil slette dette elementet? Denne handlingen kan ikke angres.
+                Er du sikker på at du vil slette dette elementet? Denne
+                handlingen kan ikke angres.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => setDeleteIncludeIndex(null)}>
                 Avbryt
               </AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={() => {
                   if (deleteIncludeIndex !== null) {
                     deleteInclude(deleteIncludeIndex);
@@ -932,19 +1156,25 @@ export function ServiceForm({
         </AlertDialog>
 
         {/* Delete Requirement Confirmation Dialog */}
-        <AlertDialog open={deleteRequirementIndex !== null} onOpenChange={() => setDeleteRequirementIndex(null)}>
+        <AlertDialog
+          open={deleteRequirementIndex !== null}
+          onOpenChange={() => setDeleteRequirementIndex(null)}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Slett krav</AlertDialogTitle>
               <AlertDialogDescription>
-                Er du sikker på at du vil slette dette kravet? Denne handlingen kan ikke angres.
+                Er du sikker på at du vil slette dette kravet? Denne handlingen
+                kan ikke angres.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => setDeleteRequirementIndex(null)}>
+              <AlertDialogCancel
+                onClick={() => setDeleteRequirementIndex(null)}
+              >
                 Avbryt
               </AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 onClick={() => {
                   if (deleteRequirementIndex !== null) {
                     deleteRequirement(deleteRequirementIndex);

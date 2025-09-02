@@ -410,6 +410,7 @@ Med vennlig hilsen`);
 
                     {/* Totals */}
                     <div className="pt-3 border-t space-y-2">
+                      {/* Calculate subtotal from individual service prices + trial session */}
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Subtotal</span>
                         <span>
@@ -425,6 +426,7 @@ Med vennlig hilsen`);
                         </span>
                       </div>
 
+                      {/* Show discount if applied */}
                       {booking.discount_applied > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Rabatt</span>
@@ -438,16 +440,26 @@ Med vennlig hilsen`);
                         </div>
                       )}
 
+                      {/* Show the final amount that was actually paid (calculated correctly) */}
                       <div className="flex justify-between text-lg font-semibold pt-2 border-t">
                         <span>Totalt</span>
                         <span>
-                          {(
-                            (booking.total_price || 0) +
-                            (booking.trial_booking?.total_price || 0)
-                          ).toLocaleString("no-NO", {
-                            style: "currency",
-                            currency: "NOK",
-                          })}
+                          {/* Calculate the correct total: subtotal - discount */}
+                          {(() => {
+                            const serviceSubtotal = booking.booking_services?.reduce(
+                              (total, bs) => total + (bs.service?.price || 0),
+                              0
+                            ) || 0;
+                            const trialSessionAmount = booking.trial_booking?.total_price || 0;
+                            const subtotal = serviceSubtotal + trialSessionAmount;
+                            const discount = booking.discount_applied || 0;
+                            const finalTotal = subtotal - discount;
+                            
+                            return finalTotal.toLocaleString("no-NO", {
+                              style: "currency",
+                              currency: "NOK",
+                            });
+                          })()}
                         </span>
                       </div>
                     </div>

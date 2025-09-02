@@ -181,7 +181,13 @@ CREATE TABLE IF NOT EXISTS public.services (
 
     -- Service details
     includes text[], -- What's included in the service (nullable)
-    requirements text[] -- Requirements for home services (nullable)
+    requirements text[], -- Requirements for home services (nullable)
+    
+    -- Trial session fields
+    has_trial_session boolean DEFAULT false NOT NULL,
+    trial_session_price numeric(10, 2),
+    trial_session_duration_minutes integer,
+    trial_session_description text
 );
 
 -- Junction table to link services to multiple categories
@@ -273,7 +279,12 @@ CREATE TABLE IF NOT EXISTS public.bookings (
     -- Reschedule tracking
     rescheduled_from timestamp with time zone, -- Original start time if booking was moved
     rescheduled_at timestamp with time zone, -- When the reschedule happened
-    reschedule_reason text -- Optional message from stylist explaining the reschedule
+    reschedule_reason text, -- Optional message from stylist explaining the reschedule
+    
+    -- Trial session tracking
+    is_trial_session boolean DEFAULT false NOT NULL,
+    main_booking_id uuid REFERENCES public.bookings(id) ON DELETE CASCADE, -- Link from trial to main booking
+    trial_booking_id uuid REFERENCES public.bookings(id) ON DELETE SET NULL -- Link from main to trial booking
 );
 
 -- Junction table to link a single booking to multiple services

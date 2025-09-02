@@ -198,10 +198,18 @@ CREATE POLICY "Admins can remove service categories" ON public.service_service_c
 FOR DELETE TO authenticated
 USING ( public.get_my_role() = 'admin' );
 
--- Customers and stylists can view bookings they are involved in.
+-- Customers and stylists can view bookings they are involved in, including trial sessions
 CREATE POLICY "Users can view their own bookings." ON public.bookings
 FOR SELECT TO authenticated
-USING ( (select auth.uid()) = customer_id OR (select auth.uid()) = stylist_id );
+USING ( 
+    (select auth.uid()) = customer_id 
+    OR (select auth.uid()) = stylist_id 
+    OR EXISTS (
+        SELECT 1 FROM public.bookings main 
+        WHERE main.id = bookings.main_booking_id 
+        AND (main.customer_id = (select auth.uid()) OR main.stylist_id = (select auth.uid()))
+    )
+);
 
 -- Admins can view all bookings
 CREATE POLICY "Admins can view all bookings" ON public.bookings
@@ -213,10 +221,18 @@ CREATE POLICY "Customers can create bookings." ON public.bookings
 FOR INSERT TO authenticated
 WITH CHECK ( (select auth.uid()) = customer_id );
 
--- Customers and stylists can update bookings they are involved in.
+-- Customers and stylists can update bookings they are involved in, stylists can update trial sessions
 CREATE POLICY "Users can update their own bookings." ON public.bookings
 FOR UPDATE TO authenticated
-USING ( (select auth.uid()) = customer_id OR (select auth.uid()) = stylist_id );
+USING ( 
+    (select auth.uid()) = customer_id 
+    OR (select auth.uid()) = stylist_id
+    OR (is_trial_session = true AND EXISTS (
+        SELECT 1 FROM public.bookings main 
+        WHERE main.id = bookings.main_booking_id 
+        AND main.stylist_id = (select auth.uid())
+    ))
+);
 
 -- Admins can manage all bookings
 CREATE POLICY "Admins can create bookings" ON public.bookings

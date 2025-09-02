@@ -708,6 +708,8 @@ export const bookingsRowSchema = z.object({
   discount_id: z.string().nullable(),
   end_time: z.string(),
   id: z.string(),
+  is_trial_session: z.boolean(),
+  main_booking_id: z.string().nullable(),
   message_to_stylist: z.string().nullable(),
   payment_captured_at: z.string().nullable(),
   payout_email_sent_at: z.string().nullable(),
@@ -722,6 +724,7 @@ export const bookingsRowSchema = z.object({
   stylist_notification_email_sent_at: z.string().nullable(),
   total_duration_minutes: z.number(),
   total_price: z.number(),
+  trial_booking_id: z.string().nullable(),
   updated_at: z.string(),
 });
 
@@ -736,6 +739,8 @@ export const bookingsInsertSchema = z.object({
   discount_id: z.string().optional().nullable(),
   end_time: z.string(),
   id: z.string().optional(),
+  is_trial_session: z.boolean().optional(),
+  main_booking_id: z.string().optional().nullable(),
   message_to_stylist: z.string().optional().nullable(),
   payment_captured_at: z.string().optional().nullable(),
   payout_email_sent_at: z.string().optional().nullable(),
@@ -750,6 +755,7 @@ export const bookingsInsertSchema = z.object({
   stylist_notification_email_sent_at: z.string().optional().nullable(),
   total_duration_minutes: z.number(),
   total_price: z.number(),
+  trial_booking_id: z.string().optional().nullable(),
   updated_at: z.string().optional(),
 });
 
@@ -764,6 +770,8 @@ export const bookingsUpdateSchema = z.object({
   discount_id: z.string().optional().nullable(),
   end_time: z.string().optional(),
   id: z.string().optional(),
+  is_trial_session: z.boolean().optional(),
+  main_booking_id: z.string().optional().nullable(),
   message_to_stylist: z.string().optional().nullable(),
   payment_captured_at: z.string().optional().nullable(),
   payout_email_sent_at: z.string().optional().nullable(),
@@ -778,6 +786,7 @@ export const bookingsUpdateSchema = z.object({
   stylist_notification_email_sent_at: z.string().optional().nullable(),
   total_duration_minutes: z.number().optional(),
   total_price: z.number().optional(),
+  trial_booking_id: z.string().optional().nullable(),
   updated_at: z.string().optional(),
 });
 
@@ -804,10 +813,24 @@ export const bookingsRelationshipsSchema = z.tuple([
     referencedColumns: z.tuple([z.literal("id")]),
   }),
   z.object({
+    foreignKeyName: z.literal("bookings_main_booking_id_fkey"),
+    columns: z.tuple([z.literal("main_booking_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("bookings"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
     foreignKeyName: z.literal("bookings_stylist_id_fkey"),
     columns: z.tuple([z.literal("stylist_id")]),
     isOneToOne: z.literal(false),
     referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("bookings_trial_booking_id_fkey"),
+    columns: z.tuple([z.literal("trial_booking_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("bookings"),
     referencedColumns: z.tuple([z.literal("id")]),
   }),
 ]);
@@ -1490,6 +1513,7 @@ export const servicesRowSchema = z.object({
   currency: z.string(),
   description: z.string().nullable(),
   duration_minutes: z.number(),
+  has_trial_session: z.boolean(),
   id: z.string(),
   includes: z.array(z.string()).nullable(),
   is_published: z.boolean(),
@@ -1497,6 +1521,9 @@ export const servicesRowSchema = z.object({
   requirements: z.array(z.string()).nullable(),
   stylist_id: z.string(),
   title: z.string(),
+  trial_session_description: z.string().nullable(),
+  trial_session_duration_minutes: z.number().nullable(),
+  trial_session_price: z.number().nullable(),
   updated_at: z.string(),
 });
 
@@ -1507,6 +1534,7 @@ export const servicesInsertSchema = z.object({
   currency: z.string().optional(),
   description: z.string().optional().nullable(),
   duration_minutes: z.number(),
+  has_trial_session: z.boolean().optional(),
   id: z.string().optional(),
   includes: z.array(z.string()).optional().nullable(),
   is_published: z.boolean().optional(),
@@ -1514,6 +1542,9 @@ export const servicesInsertSchema = z.object({
   requirements: z.array(z.string()).optional().nullable(),
   stylist_id: z.string(),
   title: z.string(),
+  trial_session_description: z.string().optional().nullable(),
+  trial_session_duration_minutes: z.number().optional().nullable(),
+  trial_session_price: z.number().optional().nullable(),
   updated_at: z.string().optional(),
 });
 
@@ -1524,6 +1555,7 @@ export const servicesUpdateSchema = z.object({
   currency: z.string().optional(),
   description: z.string().optional().nullable(),
   duration_minutes: z.number().optional(),
+  has_trial_session: z.boolean().optional(),
   id: z.string().optional(),
   includes: z.array(z.string()).optional().nullable(),
   is_published: z.boolean().optional(),
@@ -1531,6 +1563,9 @@ export const servicesUpdateSchema = z.object({
   requirements: z.array(z.string()).optional().nullable(),
   stylist_id: z.string().optional(),
   title: z.string().optional(),
+  trial_session_description: z.string().optional().nullable(),
+  trial_session_duration_minutes: z.number().optional().nullable(),
+  trial_session_price: z.number().optional().nullable(),
   updated_at: z.string().optional(),
 });
 
@@ -3554,9 +3589,9 @@ export const geometryColumnsUpdateSchema = z.object({
 });
 
 export const postgisDeprecateArgsSchema = z.object({
+  newname: z.string(),
   oldname: z.string(),
   version: z.string(),
-  newname: z.string(),
 });
 
 export const postgisDeprecateReturnsSchema = z.undefined();
@@ -3577,10 +3612,10 @@ export const postgisScriptsPgsqlVersionArgsSchema = z.object({});
 export const postgisScriptsPgsqlVersionReturnsSchema = z.string();
 
 export const postgisSelectivityArgsSchema = z.object({
-  att_name: z.string(),
-  geom: z.unknown(),
   tbl: z.unknown(),
   mode: z.string().optional(),
+  geom: z.unknown(),
+  att_name: z.string(),
 });
 
 export const postgisSelectivityReturnsSchema = z.number();
@@ -3599,15 +3634,15 @@ export const stBestsridArgsSchema = z.object({
 export const stBestsridReturnsSchema = z.number();
 
 export const stContainsArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stContainsReturnsSchema = z.boolean();
 
 export const stContainsproperlyArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const stContainsproperlyReturnsSchema = z.boolean();
@@ -3618,8 +3653,8 @@ export const stCoveredbyArgsSchema = z.union([
     geog2: z.unknown(),
   }),
   z.object({
-    geom2: z.unknown(),
     geom1: z.unknown(),
+    geom2: z.unknown(),
   }),
 ]);
 
@@ -3655,8 +3690,8 @@ export const stDwithinArgsSchema = z.object({
 export const stDwithinReturnsSchema = z.boolean();
 
 export const stEqualsArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stEqualsReturnsSchema = z.boolean();
@@ -3667,8 +3702,8 @@ export const stIntersectsArgsSchema = z.union([
     geog2: z.unknown(),
   }),
   z.object({
-    geom2: z.unknown(),
     geom1: z.unknown(),
+    geom2: z.unknown(),
   }),
 ]);
 
@@ -3729,17 +3764,17 @@ export const stTouchesArgsSchema = z.object({
 export const stTouchesReturnsSchema = z.boolean();
 
 export const stVoronoiArgsSchema = z.object({
-  tolerance: z.number().optional(),
+  return_polygons: z.boolean().optional(),
   g1: z.unknown(),
   clip: z.unknown().optional(),
-  return_polygons: z.boolean().optional(),
+  tolerance: z.number().optional(),
 });
 
 export const stVoronoiReturnsSchema = z.unknown();
 
 export const stWithinArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stWithinReturnsSchema = z.boolean();
@@ -3752,31 +3787,31 @@ export const addauthReturnsSchema = z.boolean();
 
 export const addgeometrycolumnArgsSchema = z.union([
   z.object({
+    schema_name: z.string(),
+    table_name: z.string(),
+    column_name: z.string(),
+    new_srid: z.number(),
+    new_type: z.string(),
+    new_dim: z.number(),
+    use_typmod: z.boolean().optional(),
+  }),
+  z.object({
+    use_typmod: z.boolean().optional(),
     new_srid_in: z.number(),
-    new_type: z.string(),
-    new_dim: z.number(),
-    use_typmod: z.boolean().optional(),
-    column_name: z.string(),
-    table_name: z.string(),
-    schema_name: z.string(),
     catalog_name: z.string(),
-  }),
-  z.object({
     schema_name: z.string(),
     table_name: z.string(),
     column_name: z.string(),
-    new_srid: z.number(),
     new_type: z.string(),
     new_dim: z.number(),
-    use_typmod: z.boolean().optional(),
   }),
   z.object({
+    use_typmod: z.boolean().optional(),
     table_name: z.string(),
     column_name: z.string(),
     new_srid: z.number(),
     new_type: z.string(),
     new_dim: z.number(),
-    use_typmod: z.boolean().optional(),
   }),
 ]);
 
@@ -3914,8 +3949,8 @@ export const enablelongtransactionsArgsSchema = z.object({});
 export const enablelongtransactionsReturnsSchema = z.string();
 
 export const equalsArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const equalsReturnsSchema = z.boolean();
@@ -4022,15 +4057,15 @@ export const geometryAnalyzeArgsSchema = z.object({
 export const geometryAnalyzeReturnsSchema = z.boolean();
 
 export const geometryBelowArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryBelowReturnsSchema = z.boolean();
 
 export const geometryCmpArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryCmpReturnsSchema = z.number();
@@ -4064,22 +4099,22 @@ export const geometryDistanceBoxArgsSchema = z.object({
 export const geometryDistanceBoxReturnsSchema = z.number();
 
 export const geometryDistanceCentroidArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometryDistanceCentroidReturnsSchema = z.number();
 
 export const geometryEqArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryEqReturnsSchema = z.boolean();
 
 export const geometryGeArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryGeReturnsSchema = z.boolean();
@@ -4134,8 +4169,8 @@ export const geometryInArgsSchema = z.object({
 export const geometryInReturnsSchema = z.unknown();
 
 export const geometryLeArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryLeReturnsSchema = z.boolean();
@@ -4189,15 +4224,15 @@ export const geometryOverlaps3dArgsSchema = z.object({
 export const geometryOverlaps3dReturnsSchema = z.boolean();
 
 export const geometryOverleftArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryOverleftReturnsSchema = z.boolean();
 
 export const geometryOverrightArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryOverrightReturnsSchema = z.boolean();
@@ -4216,8 +4251,8 @@ export const geometryRightArgsSchema = z.object({
 export const geometryRightReturnsSchema = z.boolean();
 
 export const geometrySameArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const geometrySameReturnsSchema = z.boolean();
@@ -4272,8 +4307,8 @@ export const geometryTypmodOutArgsSchema = z.object({
 export const geometryTypmodOutReturnsSchema = z.unknown();
 
 export const geometryWithinArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const geometryWithinReturnsSchema = z.boolean();
@@ -4429,11 +4464,11 @@ export const polygonReturnsSchema = z.unknown();
 
 export const populateGeometryColumnsArgsSchema = z.union([
   z.object({
+    tbl_oid: z.unknown(),
     use_typmod: z.boolean().optional(),
   }),
   z.object({
     use_typmod: z.boolean().optional(),
-    tbl_oid: z.unknown(),
   }),
 ]);
 
@@ -4455,15 +4490,15 @@ export const postgisConstraintDimsReturnsSchema = z.number();
 
 export const postgisConstraintSridArgsSchema = z.object({
   geomschema: z.string(),
-  geomcolumn: z.string(),
   geomtable: z.string(),
+  geomcolumn: z.string(),
 });
 
 export const postgisConstraintSridReturnsSchema = z.number();
 
 export const postgisConstraintTypeArgsSchema = z.object({
-  geomcolumn: z.string(),
   geomschema: z.string(),
+  geomcolumn: z.string(),
   geomtable: z.string(),
 });
 
@@ -4566,9 +4601,9 @@ export const postgisSvnVersionArgsSchema = z.object({});
 export const postgisSvnVersionReturnsSchema = z.string();
 
 export const postgisTypeNameArgsSchema = z.object({
-  use_new_name: z.boolean().optional(),
   geomname: z.string(),
   coord_dimension: z.number(),
+  use_new_name: z.boolean().optional(),
 });
 
 export const postgisTypeNameReturnsSchema = z.string();
@@ -4612,8 +4647,8 @@ export const spheroidOutArgsSchema = z.object({
 export const spheroidOutReturnsSchema = z.unknown();
 
 export const st3dclosestpointArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dclosestpointReturnsSchema = z.unknown();
@@ -4632,15 +4667,15 @@ export const st3dlengthArgsSchema = z.object({
 export const st3dlengthReturnsSchema = z.number();
 
 export const st3dlongestlineArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dlongestlineReturnsSchema = z.unknown();
 
 export const st3dmakeboxArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const st3dmakeboxReturnsSchema = z.unknown();
@@ -4659,8 +4694,8 @@ export const st3dperimeterArgsSchema = z.object({
 export const st3dperimeterReturnsSchema = z.number();
 
 export const st3dshortestlineArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const st3dshortestlineReturnsSchema = z.unknown();
@@ -4678,10 +4713,10 @@ export const stAngleArgsSchema = z.union([
     line2: z.unknown(),
   }),
   z.object({
-    pt3: z.unknown(),
     pt4: z.unknown().optional(),
     pt1: z.unknown(),
     pt2: z.unknown(),
+    pt3: z.unknown(),
   }),
 ]);
 
@@ -4757,14 +4792,14 @@ export const stAsgeojsonArgsSchema = z.union([
   }),
   z.object({
     geom: z.unknown(),
-    options: z.number().optional(),
     maxdecimaldigits: z.number().optional(),
+    options: z.number().optional(),
   }),
   z.object({
-    maxdecimaldigits: z.number().optional(),
-    pretty_bool: z.boolean().optional(),
     r: z.record(z.unknown()),
     geom_column: z.string().optional(),
+    maxdecimaldigits: z.number().optional(),
+    pretty_bool: z.boolean().optional(),
   }),
 ]);
 
@@ -4784,19 +4819,19 @@ export const stAsgmlArgsSchema = z.union([
   z.object({
     geom: z.unknown(),
     maxdecimaldigits: z.number().optional(),
-    nprefix: z.string().optional(),
     options: z.number().optional(),
-    id: z.string().optional(),
-    version: z.number(),
-  }),
-  z.object({
-    maxdecimaldigits: z.number().optional(),
-    options: z.number().optional(),
-    geom: z.unknown(),
   }),
   z.object({
     version: z.number(),
     geog: z.unknown(),
+    maxdecimaldigits: z.number().optional(),
+    options: z.number().optional(),
+    nprefix: z.string().optional(),
+    id: z.string().optional(),
+  }),
+  z.object({
+    version: z.number(),
+    geom: z.unknown(),
     maxdecimaldigits: z.number().optional(),
     options: z.number().optional(),
     nprefix: z.string().optional(),
@@ -4817,14 +4852,14 @@ export const stAskmlArgsSchema = z.union([
     "": z.string(),
   }),
   z.object({
-    geog: z.unknown(),
+    geom: z.unknown(),
     maxdecimaldigits: z.number().optional(),
     nprefix: z.string().optional(),
   }),
   z.object({
-    geom: z.unknown(),
-    nprefix: z.string().optional(),
     maxdecimaldigits: z.number().optional(),
+    geog: z.unknown(),
+    nprefix: z.string().optional(),
   }),
 ]);
 
@@ -4838,18 +4873,18 @@ export const stAslatlontextArgsSchema = z.object({
 export const stAslatlontextReturnsSchema = z.string();
 
 export const stAsmarc21ArgsSchema = z.object({
-  format: z.string().optional(),
   geom: z.unknown(),
+  format: z.string().optional(),
 });
 
 export const stAsmarc21ReturnsSchema = z.string();
 
 export const stAsmvtgeomArgsSchema = z.object({
   geom: z.unknown(),
+  bounds: z.unknown(),
   extent: z.number().optional(),
   buffer: z.number().optional(),
   clip_geom: z.boolean().optional(),
-  bounds: z.unknown(),
 });
 
 export const stAsmvtgeomReturnsSchema = z.unknown();
@@ -4865,8 +4900,8 @@ export const stAssvgArgsSchema = z.union([
   }),
   z.object({
     geom: z.unknown(),
-    maxdecimaldigits: z.number().optional(),
     rel: z.number().optional(),
+    maxdecimaldigits: z.number().optional(),
   }),
 ]);
 
@@ -4888,30 +4923,30 @@ export const stAstextReturnsSchema = z.string();
 
 export const stAstwkbArgsSchema = z.union([
   z.object({
+    prec: z.number().optional(),
     geom: z.unknown(),
     with_boxes: z.boolean().optional(),
-    prec: z.number().optional(),
-    prec_z: z.number().optional(),
-    prec_m: z.number().optional(),
     with_sizes: z.boolean().optional(),
+    prec_m: z.number().optional(),
+    prec_z: z.number().optional(),
   }),
   z.object({
-    prec: z.number().optional(),
-    geom: z.array(z.unknown()),
-    ids: z.array(z.number()),
-    prec_z: z.number().optional(),
     prec_m: z.number().optional(),
     with_sizes: z.boolean().optional(),
     with_boxes: z.boolean().optional(),
+    geom: z.array(z.unknown()),
+    ids: z.array(z.number()),
+    prec: z.number().optional(),
+    prec_z: z.number().optional(),
   }),
 ]);
 
 export const stAstwkbReturnsSchema = z.string();
 
 export const stAsx3dArgsSchema = z.object({
+  options: z.number().optional(),
   geom: z.unknown(),
   maxdecimaldigits: z.number().optional(),
-  options: z.number().optional(),
 });
 
 export const stAsx3dReturnsSchema = z.string();
@@ -4922,8 +4957,8 @@ export const stAzimuthArgsSchema = z.union([
     geog2: z.unknown(),
   }),
   z.object({
-    geom1: z.unknown(),
     geom2: z.unknown(),
+    geom1: z.unknown(),
   }),
 ]);
 
@@ -4944,14 +4979,14 @@ export const stBoundingdiagonalReturnsSchema = z.unknown();
 
 export const stBufferArgsSchema = z.union([
   z.object({
-    radius: z.number(),
     geom: z.unknown(),
-    options: z.string().optional(),
+    radius: z.number(),
+    quadsegs: z.number(),
   }),
   z.object({
     radius: z.number(),
     geom: z.unknown(),
-    quadsegs: z.number(),
+    options: z.string().optional(),
   }),
 ]);
 
@@ -5025,8 +5060,8 @@ export const stCollectionhomogenizeArgsSchema = z.object({
 export const stCollectionhomogenizeReturnsSchema = z.unknown();
 
 export const stConcavehullArgsSchema = z.object({
-  param_geom: z.unknown(),
   param_pctconvex: z.number(),
+  param_geom: z.unknown(),
   param_allow_holes: z.boolean().optional(),
 });
 
@@ -5047,15 +5082,15 @@ export const stCoorddimReturnsSchema = z.number();
 export const stCurvetolineArgsSchema = z.object({
   tol: z.number().optional(),
   flags: z.number().optional(),
-  toltype: z.number().optional(),
   geom: z.unknown(),
+  toltype: z.number().optional(),
 });
 
 export const stCurvetolineReturnsSchema = z.unknown();
 
 export const stDelaunaytrianglesArgsSchema = z.object({
-  g1: z.unknown(),
   tolerance: z.number().optional(),
+  g1: z.unknown(),
   flags: z.number().optional(),
 });
 
@@ -5063,8 +5098,8 @@ export const stDelaunaytrianglesReturnsSchema = z.unknown();
 
 export const stDifferenceArgsSchema = z.object({
   gridsize: z.number().optional(),
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stDifferenceReturnsSchema = z.unknown();
@@ -5076,8 +5111,8 @@ export const stDimensionArgsSchema = z.object({
 export const stDimensionReturnsSchema = z.number();
 
 export const stDisjointArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stDisjointReturnsSchema = z.boolean();
@@ -5111,8 +5146,8 @@ export const stDistancesphereArgsSchema = z.union([
 export const stDistancesphereReturnsSchema = z.number();
 
 export const stDistancespheroidArgsSchema = z.object({
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
 });
 
 export const stDistancespheroidReturnsSchema = z.number();
@@ -5158,21 +5193,21 @@ export const stEnvelopeReturnsSchema = z.unknown();
 
 export const stExpandArgsSchema = z.union([
   z.object({
-    dx: z.number(),
-    dy: z.number(),
-    box: z.unknown(),
-  }),
-  z.object({
-    dx: z.number(),
-    dy: z.number(),
-    dz: z.number().optional(),
-    box: z.unknown(),
-  }),
-  z.object({
-    dz: z.number().optional(),
     dm: z.number().optional(),
+    dy: z.number(),
     dx: z.number(),
+    dz: z.number().optional(),
     geom: z.unknown(),
+  }),
+  z.object({
+    dy: z.number(),
+    box: z.unknown(),
+    dx: z.number(),
+  }),
+  z.object({
+    dz: z.number().optional(),
+    box: z.unknown(),
+    dx: z.number(),
     dy: z.number(),
   }),
 ]);
@@ -5198,30 +5233,30 @@ export const stForce2dArgsSchema = z.object({
 export const stForce2dReturnsSchema = z.unknown();
 
 export const stForce3dArgsSchema = z.object({
-  geom: z.unknown(),
   zvalue: z.number().optional(),
+  geom: z.unknown(),
 });
 
 export const stForce3dReturnsSchema = z.unknown();
 
 export const stForce3dmArgsSchema = z.object({
-  mvalue: z.number().optional(),
   geom: z.unknown(),
+  mvalue: z.number().optional(),
 });
 
 export const stForce3dmReturnsSchema = z.unknown();
 
 export const stForce3dzArgsSchema = z.object({
-  zvalue: z.number().optional(),
   geom: z.unknown(),
+  zvalue: z.number().optional(),
 });
 
 export const stForce3dzReturnsSchema = z.unknown();
 
 export const stForce4dArgsSchema = z.object({
-  zvalue: z.number().optional(),
-  mvalue: z.number().optional(),
   geom: z.unknown(),
+  mvalue: z.number().optional(),
+  zvalue: z.number().optional(),
 });
 
 export const stForce4dReturnsSchema = z.unknown();
@@ -5265,12 +5300,12 @@ export const stForcesfsReturnsSchema = z.unknown();
 export const stGeneratepointsArgsSchema = z.union([
   z.object({
     area: z.unknown(),
+    seed: z.number(),
     npoints: z.number(),
   }),
   z.object({
-    seed: z.number(),
-    area: z.unknown(),
     npoints: z.number(),
+    area: z.unknown(),
   }),
 ]);
 
@@ -5320,10 +5355,10 @@ export const stGeomcollfromwkbArgsSchema = z.object({
 export const stGeomcollfromwkbReturnsSchema = z.unknown();
 
 export const stGeometricmedianArgsSchema = z.object({
-  max_iter: z.number().optional(),
-  fail_if_not_converged: z.boolean().optional(),
   g: z.unknown(),
   tolerance: z.number().optional(),
+  max_iter: z.number().optional(),
+  fail_if_not_converged: z.boolean().optional(),
 });
 
 export const stGeometricmedianReturnsSchema = z.unknown();
@@ -5422,10 +5457,10 @@ export const stHausdorffdistanceArgsSchema = z.object({
 export const stHausdorffdistanceReturnsSchema = z.number();
 
 export const stHexagonArgsSchema = z.object({
-  size: z.number(),
-  cell_i: z.number(),
   cell_j: z.number(),
+  cell_i: z.number(),
   origin: z.unknown().optional(),
+  size: z.number(),
 });
 
 export const stHexagonReturnsSchema = z.unknown();
@@ -5438,16 +5473,16 @@ export const stHexagongridArgsSchema = z.object({
 export const stHexagongridReturnsSchema = z.array(z.record(z.unknown()));
 
 export const stInterpolatepointArgsSchema = z.object({
-  line: z.unknown(),
   point: z.unknown(),
+  line: z.unknown(),
 });
 
 export const stInterpolatepointReturnsSchema = z.number();
 
 export const stIntersectionArgsSchema = z.object({
-  gridsize: z.number().optional(),
-  geom1: z.unknown(),
   geom2: z.unknown(),
+  geom1: z.unknown(),
+  gridsize: z.number().optional(),
 });
 
 export const stIntersectionReturnsSchema = z.unknown();
@@ -5501,8 +5536,8 @@ export const stIsvalidArgsSchema = z.object({
 export const stIsvalidReturnsSchema = z.boolean();
 
 export const stIsvaliddetailArgsSchema = z.object({
-  geom: z.unknown(),
   flags: z.number().optional(),
+  geom: z.unknown(),
 });
 
 export const gisValidDetailSchema = z.object({
@@ -5552,8 +5587,8 @@ export const stLettersArgsSchema = z.object({
 export const stLettersReturnsSchema = z.unknown();
 
 export const stLinefromencodedpolylineArgsSchema = z.object({
-  nprecision: z.number().optional(),
   txtin: z.string(),
+  nprecision: z.number().optional(),
 });
 
 export const stLinefromencodedpolylineReturnsSchema = z.unknown();
@@ -5602,26 +5637,26 @@ export const stLinetocurveArgsSchema = z.object({
 export const stLinetocurveReturnsSchema = z.unknown();
 
 export const stLocatealongArgsSchema = z.object({
-  geometry: z.unknown(),
   measure: z.number(),
+  geometry: z.unknown(),
   leftrightoffset: z.number().optional(),
 });
 
 export const stLocatealongReturnsSchema = z.unknown();
 
 export const stLocatebetweenArgsSchema = z.object({
-  geometry: z.unknown(),
   frommeasure: z.number(),
   tomeasure: z.number(),
   leftrightoffset: z.number().optional(),
+  geometry: z.unknown(),
 });
 
 export const stLocatebetweenReturnsSchema = z.unknown();
 
 export const stLocatebetweenelevationsArgsSchema = z.object({
+  toelevation: z.number(),
   geometry: z.unknown(),
   fromelevation: z.number(),
-  toelevation: z.number(),
 });
 
 export const stLocatebetweenelevationsReturnsSchema = z.unknown();
@@ -5682,8 +5717,8 @@ export const stMemsizeArgsSchema = z.object({
 export const stMemsizeReturnsSchema = z.number();
 
 export const stMinimumboundingcircleArgsSchema = z.object({
-  inputgeom: z.unknown(),
   segs_per_quarter: z.number().optional(),
+  inputgeom: z.unknown(),
 });
 
 export const stMinimumboundingcircleReturnsSchema = z.unknown();
@@ -5889,10 +5924,10 @@ export const stPointfromwkbArgsSchema = z.object({
 export const stPointfromwkbReturnsSchema = z.unknown();
 
 export const stPointmArgsSchema = z.object({
-  xcoordinate: z.number(),
-  mcoordinate: z.number(),
   srid: z.number().optional(),
+  xcoordinate: z.number(),
   ycoordinate: z.number(),
+  mcoordinate: z.number(),
 });
 
 export const stPointmReturnsSchema = z.unknown();
@@ -5911,19 +5946,19 @@ export const stPointsReturnsSchema = z.unknown();
 
 export const stPointzArgsSchema = z.object({
   ycoordinate: z.number(),
-  zcoordinate: z.number(),
   srid: z.number().optional(),
   xcoordinate: z.number(),
+  zcoordinate: z.number(),
 });
 
 export const stPointzReturnsSchema = z.unknown();
 
 export const stPointzmArgsSchema = z.object({
-  ycoordinate: z.number(),
-  mcoordinate: z.number(),
   srid: z.number().optional(),
-  xcoordinate: z.number(),
+  ycoordinate: z.number(),
   zcoordinate: z.number(),
+  mcoordinate: z.number(),
+  xcoordinate: z.number(),
 });
 
 export const stPointzmReturnsSchema = z.unknown();
@@ -5977,22 +6012,22 @@ export const stQuantizecoordinatesArgsSchema = z.object({
 export const stQuantizecoordinatesReturnsSchema = z.unknown();
 
 export const stReduceprecisionArgsSchema = z.object({
-  gridsize: z.number(),
   geom: z.unknown(),
+  gridsize: z.number(),
 });
 
 export const stReduceprecisionReturnsSchema = z.unknown();
 
 export const stRelateArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stRelateReturnsSchema = z.string();
 
 export const stRemoverepeatedpointsArgsSchema = z.object({
-  tolerance: z.number().optional(),
   geom: z.unknown(),
+  tolerance: z.number().optional(),
 });
 
 export const stRemoverepeatedpointsReturnsSchema = z.unknown();
@@ -6016,16 +6051,16 @@ export const stSetsridArgsSchema = z.union([
     srid: z.number(),
   }),
   z.object({
-    srid: z.number(),
     geom: z.unknown(),
+    srid: z.number(),
   }),
 ]);
 
 export const stSetsridReturnsSchema = z.unknown();
 
 export const stSharedpathsArgsSchema = z.object({
-  geom2: z.unknown(),
   geom1: z.unknown(),
+  geom2: z.unknown(),
 });
 
 export const stSharedpathsReturnsSchema = z.unknown();
@@ -6044,8 +6079,8 @@ export const stShortestlineArgsSchema = z.object({
 export const stShortestlineReturnsSchema = z.unknown();
 
 export const stSimplifypolygonhullArgsSchema = z.object({
-  geom: z.unknown(),
   vertex_fraction: z.number(),
+  geom: z.unknown(),
   is_outer: z.boolean().optional(),
 });
 
@@ -6059,9 +6094,9 @@ export const stSplitArgsSchema = z.object({
 export const stSplitReturnsSchema = z.unknown();
 
 export const stSquareArgsSchema = z.object({
+  cell_j: z.number(),
   size: z.number(),
   cell_i: z.number(),
-  cell_j: z.number(),
   origin: z.unknown().optional(),
 });
 
@@ -6092,9 +6127,9 @@ export const stStartpointArgsSchema = z.object({
 export const stStartpointReturnsSchema = z.unknown();
 
 export const stSubdivideArgsSchema = z.object({
-  maxvertices: z.number().optional(),
-  geom: z.unknown(),
   gridsize: z.number().optional(),
+  geom: z.unknown(),
+  maxvertices: z.number().optional(),
 });
 
 export const stSubdivideReturnsSchema = z.array(z.unknown());
@@ -6133,11 +6168,11 @@ export const stSymmetricdifferenceArgsSchema = z.object({
 export const stSymmetricdifferenceReturnsSchema = z.unknown();
 
 export const stTileenvelopeArgsSchema = z.object({
+  zoom: z.number(),
   x: z.number(),
   y: z.number(),
   bounds: z.unknown().optional(),
   margin: z.number().optional(),
-  zoom: z.number(),
 });
 
 export const stTileenvelopeReturnsSchema = z.unknown();
@@ -6145,17 +6180,17 @@ export const stTileenvelopeReturnsSchema = z.unknown();
 export const stTransformArgsSchema = z.union([
   z.object({
     geom: z.unknown(),
+    from_proj: z.string(),
     to_proj: z.string(),
   }),
   z.object({
-    to_proj: z.string(),
     geom: z.unknown(),
     from_proj: z.string(),
-  }),
-  z.object({
     to_srid: z.number(),
-    from_proj: z.string(),
+  }),
+  z.object({
     geom: z.unknown(),
+    to_proj: z.string(),
   }),
 ]);
 
@@ -6176,26 +6211,26 @@ export const stUnionArgsSchema = z.union([
     geom2: z.unknown(),
   }),
   z.object({
-    geom2: z.unknown(),
-    geom1: z.unknown(),
     gridsize: z.number(),
+    geom1: z.unknown(),
+    geom2: z.unknown(),
   }),
 ]);
 
 export const stUnionReturnsSchema = z.unknown();
 
 export const stVoronoilinesArgsSchema = z.object({
-  extend_to: z.unknown().optional(),
-  g1: z.unknown(),
   tolerance: z.number().optional(),
+  g1: z.unknown(),
+  extend_to: z.unknown().optional(),
 });
 
 export const stVoronoilinesReturnsSchema = z.unknown();
 
 export const stVoronoipolygonsArgsSchema = z.object({
   tolerance: z.number().optional(),
-  g1: z.unknown(),
   extend_to: z.unknown().optional(),
+  g1: z.unknown(),
 });
 
 export const stVoronoipolygonsReturnsSchema = z.unknown();
@@ -6214,8 +6249,8 @@ export const stWkttosqlReturnsSchema = z.unknown();
 
 export const stWrapxArgsSchema = z.object({
   geom: z.unknown(),
-  wrap: z.number(),
   move: z.number(),
+  wrap: z.number(),
 });
 
 export const stWrapxReturnsSchema = z.unknown();
@@ -6293,11 +6328,11 @@ export const unlockrowsArgsSchema = z.object({
 export const unlockrowsReturnsSchema = z.number();
 
 export const updategeometrysridArgsSchema = z.object({
-  new_srid_in: z.number(),
-  column_name: z.string(),
-  table_name: z.string(),
-  schema_name: z.string(),
   catalogn_name: z.string(),
+  schema_name: z.string(),
+  table_name: z.string(),
+  column_name: z.string(),
+  new_srid_in: z.number(),
 });
 
 export const updategeometrysridReturnsSchema = z.string();

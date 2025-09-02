@@ -96,6 +96,8 @@ Add new form fields:
 - Display trial session pricing and duration
 - Show trial session availability indicator
 
+**TODO, not yet implemented:** Update different services pages (<http://localhost:3000/tjenester/6faeb7cd-55a7-4c46-9a5f-b3ae09df2246>) to also include information on the trial session.
+
 ### Phase 3: Customer Booking Flow Updates
 
 #### 3.1 New Booking Stepper Step

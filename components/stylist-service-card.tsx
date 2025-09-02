@@ -102,15 +102,18 @@ export function StylistServiceCard({
       <CardHeader className="pb-4">
         <div className="flex items-start justify-between">
           <div className="flex-1 min-w-0">
-            <CardTitle className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
+            <CardTitle className="text-xl font-semibold text-foreground mb-4 line-clamp-2">
               {service.title}
             </CardTitle>
-            <div className="flex flex-col gap-2">
-              <div>
-                <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+
+            {/* Metadata Grid - Responsive Layout */}
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+              {/* Categories */}
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-muted-foreground block">
                   Kategorier
                 </span>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1">
                   {service.service_service_categories?.length ? (
                     service.service_service_categories.map((relation) => (
                       <Badge
@@ -128,14 +131,16 @@ export function StylistServiceCard({
                   )}
                 </div>
               </div>
-              <div>
-                <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+
+              {/* Location */}
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-muted-foreground block">
                   Leveringssted
                 </span>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1">
                   {service.at_customer_place && (
                     <Badge variant="outline" className="text-xs">
-                      Hjemme hos kunde
+                      Hos kunde
                     </Badge>
                   )}
                   {service.at_stylist_place && (
@@ -150,13 +155,31 @@ export function StylistServiceCard({
                   )}
                 </div>
               </div>
-              {/* Trial Session Info */}
+
+              {/* Published Status */}
+              <div className="space-y-1">
+                <span className="text-xs font-semibold text-muted-foreground block">
+                  Status
+                </span>
+                <Badge
+                  variant={service.is_published ? "default" : "secondary"}
+                  className={
+                    service.is_published
+                      ? "text-xs bg-green-100 text-green-700 border-green-200 hover:bg-green-200 w-fit"
+                      : "text-xs w-fit"
+                  }
+                >
+                  {service.is_published ? "Publisert" : "Ikke publisert"}
+                </Badge>
+              </div>
+
+              {/* Trial Session Info - Full width when present */}
               {service.has_trial_session && (
-                <div>
-                  <span className="text-xs font-semibold text-muted-foreground mb-1 block">
+                <div className="sm:col-span-2 lg:col-span-1 xl:col-span-2 space-y-1">
+                  <span className="text-xs font-semibold text-muted-foreground block">
                     Prøvetime
                   </span>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center flex-wrap gap-2">
                     <Badge
                       variant="default"
                       className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200"
@@ -165,34 +188,18 @@ export function StylistServiceCard({
                       Tilgjengelig
                     </Badge>
                     {service.trial_session_price && (
-                      <span className="text-xs text-muted-foreground">
+                      <Badge variant="outline" className="text-xs">
                         {service.trial_session_price} kr
-                      </span>
+                      </Badge>
                     )}
                     {service.trial_session_duration_minutes && (
-                      <span className="text-xs text-muted-foreground">
-                        • {service.trial_session_duration_minutes} min
-                      </span>
+                      <Badge variant="outline" className="text-xs">
+                        {service.trial_session_duration_minutes} min
+                      </Badge>
                     )}
                   </div>
                 </div>
               )}
-              {/* Published Status */}
-              <div>
-                <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                  Status
-                </span>
-                <Badge
-                  variant={service.is_published ? "default" : "secondary"}
-                  className={
-                    service.is_published
-                      ? "text-xs bg-green-100 text-green-700 border-green-200 hover:bg-green-200"
-                      : "text-xs"
-                  }
-                >
-                  {service.is_published ? "Publisert" : "Ikke publisert"}
-                </Badge>
-              </div>
             </div>
           </div>
           <div className="flex gap-1 ml-3 flex-shrink-0">

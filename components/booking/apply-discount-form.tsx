@@ -86,12 +86,9 @@ export function ApplyDiscountForm({
         throw new Error(`Invalid order amount: ${orderAmountNOK}`);
       }
       
-      // Convert NOK to cents for backend validation
-      const orderAmountCents = Math.round(orderAmountNOK * 100);
-      
       const result = await validateDiscountCode({
         code: data.code.trim(),
-        orderAmountCents,
+        orderAmountNOK,
       });
       return result;
     },
@@ -99,7 +96,7 @@ export function ApplyDiscountForm({
       if (result.isValid && result.discount && result.discountAmount !== undefined) {
         const discountData = {
           discount: result.discount,
-          discountAmount: result.discountAmount / 100, // Convert cents back to NOK
+          discountAmount: result.discountAmount, // Already in NOK
           code: result.discount.code,
         };
         setAppliedDiscount(discountData);
@@ -184,7 +181,7 @@ export function ApplyDiscountForm({
                   </Badge>
                 ) : (
                   <Badge variant="secondary">
-                    {formatCurrency((appliedDiscount.discount.discount_amount || 0) / 100)}
+                    {formatCurrency(appliedDiscount.discount.discount_amount || 0)}
                   </Badge>
                 )}
                 <span className="font-medium text-green-600 dark:text-green-400">

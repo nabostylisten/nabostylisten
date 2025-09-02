@@ -478,7 +478,7 @@ export async function createBookingWithServices(
 
             const validationResult = await validateDiscountCode({
                 code: input.discountCode,
-                orderAmountCents: Math.round(input.totalPrice * 100),
+                orderAmountNOK: input.totalPrice,
                 profileId: user.id,
             });
 
@@ -505,9 +505,7 @@ export async function createBookingWithServices(
             validatedDiscount = {
                 id: discount.id,
                 discountPercentage: discount.discount_percentage || undefined,
-                discountAmountNOK: validationResult.discountAmount
-                    ? (validationResult.discountAmount / 100)
-                    : undefined,
+                discountAmountNOK: validationResult.discountAmount || undefined,
             };
         }
 

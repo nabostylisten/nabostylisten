@@ -41,11 +41,11 @@ export async function getDiscountByCode(code: string) {
  */
 export async function validateDiscountCode({
   code,
-  orderAmountCents,
+  orderAmountNOK,
   profileId,
 }: {
   code: string;
-  orderAmountCents: number;
+  orderAmountNOK: number;
   profileId?: string;
 }): Promise<DiscountValidationResult> {
   const supabase = await createClient();
@@ -149,33 +149,30 @@ export async function validateDiscountCode({
     // 6. Check minimum order amount
     if (
       discount.minimum_order_amount &&
-      orderAmountCents < discount.minimum_order_amount
+      orderAmountNOK < discount.minimum_order_amount
     ) {
-      const minAmount = discount.minimum_order_amount / 100;
       return {
         isValid: false,
         error: `Minimum ordrebeløp for denne rabattkoden er ${
-          minAmount.toLocaleString("no-NO")
+          discount.minimum_order_amount.toLocaleString("no-NO")
         } kr`,
       };
     }
 
     // 7. Calculate discount amount with maximum order amount as cap
     let discountAmount = 0;
-    let discountableAmount = orderAmountCents;
+    let discountableAmount = orderAmountNOK;
 
     // If there's a maximum order amount, cap the discountable amount
     if (discount.maximum_order_amount) {
       discountableAmount = Math.min(
-        orderAmountCents,
+        orderAmountNOK,
         discount.maximum_order_amount,
       );
     }
 
     if (discount.discount_percentage !== null) {
-      discountAmount = Math.round(
-        (discountableAmount * discount.discount_percentage) / 100,
-      );
+      discountAmount = (discountableAmount * discount.discount_percentage) / 100;
     } else if (discount.discount_amount !== null) {
       discountAmount = Math.min(discount.discount_amount, discountableAmount);
     }

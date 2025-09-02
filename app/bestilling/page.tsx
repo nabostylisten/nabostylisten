@@ -17,17 +17,12 @@ import { toast } from "sonner";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 
-
 export default function BookingPage() {
   const router = useRouter();
   const { items, getTotalItems, getTotalPrice, getCurrentStylist, clearCart } =
     useCartStore();
-  const {
-    bookingData,
-    setBookingContext,
-    setProcessingState,
-    clearBooking
-  } = useBookingStore();
+  const { bookingData, setBookingContext, setProcessingState, clearBooking } =
+    useBookingStore();
   const [isRedirectingToCheckout, setIsRedirectingToCheckout] = useState(false);
   const [stripeOnboardingError, setStripeOnboardingError] = useState<{
     show: boolean;
@@ -44,10 +39,18 @@ export default function BookingPage() {
   }, 0);
 
   // Calculate trial session information
-  const hasTrialSession = items.some(item => item.service.has_trial_session);
-  const trialSessionPrice = items.find(item => item.service.has_trial_session)?.service.trial_session_price || undefined;
-  const trialSessionDurationMinutes = items.find(item => item.service.has_trial_session)?.service.trial_session_duration_minutes || undefined;
-  const trialSessionDescription = items.find(item => item.service.has_trial_session)?.service.trial_session_description || undefined;
+  const hasTrialSession = items.some((item) => item.service.has_trial_session);
+  const trialSessionPrice =
+    items.find((item) => item.service.has_trial_session)?.service
+      .trial_session_price || undefined;
+  const trialSessionDurationMinutes =
+    items.find((item) => item.service.has_trial_session)?.service
+      .trial_session_duration_minutes || undefined;
+  const trialSessionDescription =
+    items.find((item) => item.service.has_trial_session)?.service
+      .trial_session_description || undefined;
+  const trialSession =
+    items.find((item) => item.service.has_trial_session) || undefined;
 
   // Initialize booking context when component mounts or cart changes
   useEffect(() => {
@@ -323,6 +326,15 @@ export default function BookingPage() {
                 items={items}
                 appliedDiscount={bookingData.appliedDiscount}
                 className="sticky top-24"
+                trialSession={
+                  trialSession
+                    ? {
+                        price: trialSession.service.trial_session_price || 0,
+                        currency: trialSession.service.currency,
+                        title: trialSession.service.title,
+                      }
+                    : null
+                }
               />
             </BlurFade>
           </div>

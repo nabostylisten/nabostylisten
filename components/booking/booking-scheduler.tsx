@@ -57,6 +57,7 @@ interface BookingSchedulerProps {
   selectedStartTime?: Date;
   currentBookingStart?: Date;
   currentBookingEnd?: Date;
+  customTimeSlotValidator?: (date: Date, hour: number) => boolean; // Custom validation function
 }
 
 export function BookingScheduler({
@@ -66,6 +67,7 @@ export function BookingScheduler({
   selectedStartTime,
   currentBookingStart,
   currentBookingEnd,
+  customTimeSlotValidator,
 }: BookingSchedulerProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -262,6 +264,11 @@ export function BookingScheduler({
         return false;
       }
 
+      // Check custom validator first (if provided)
+      if (customTimeSlotValidator && !customTimeSlotValidator(date, hour)) {
+        return false;
+      }
+
       // Check if we have enough consecutive hours available
       for (let i = 0; i < requiredHours; i++) {
         const checkHour = hour + i;
@@ -279,7 +286,7 @@ export function BookingScheduler({
 
       return true;
     },
-    [requiredHours, isHourInWorkTime, isTimeSlotUnavailable]
+    [requiredHours, isHourInWorkTime, isTimeSlotUnavailable, customTimeSlotValidator]
   );
 
   // Check if a time slot is part of the current selection
@@ -508,11 +515,15 @@ export function BookingScheduler({
                     const isSelected = isSlotSelected(day, hour);
                     const isCurrentBooking = isSlotCurrentBooking(day, hour);
 
-                    // Determine if slot is effectively unavailable (past, explicitly unavailable, or not work time)
-                    const isEffectivelyUnavailable = !isAvailable || isUnavailable || isPast;
+                    // Check if custom validator rejects this slot
+                    const isCustomValidatorRejected = customTimeSlotValidator && !customTimeSlotValidator(day, hour);
+                    
+                    // Determine if slot is effectively unavailable (past, explicitly unavailable, not work time, or custom validator rejects)
+                    const isEffectivelyUnavailable = !isAvailable || isUnavailable || isPast || isCustomValidatorRejected;
                     
                     // Check if it's available but can't be selected due to insufficient consecutive hours
-                    const hasInsufficientTime = isAvailable && !isUnavailable && !isPast && !canSelect;
+                    // (but not rejected by custom validator - those should be gray, not yellow)
+                    const hasInsufficientTime = isAvailable && !isUnavailable && !isPast && !isCustomValidatorRejected && !canSelect;
 
                     return (
                       <div

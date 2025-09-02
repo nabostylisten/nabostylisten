@@ -74,6 +74,10 @@ export interface BookingStore {
   // Step validation helpers
   canProceedFromStep: (stepId: string) => boolean;
   isStepAccessible: (stepId: string) => boolean;
+  
+  // Total calculation helpers
+  getTotalAmount: () => number;
+  getTrialSessionAmount: () => number;
 }
 
 export const useBookingStore = create<BookingStore>()(
@@ -200,6 +204,22 @@ export const useBookingStore = create<BookingStore>()(
             return false;
         }
       },
+
+      getTotalAmount: () => {
+        const state = get();
+        const serviceAmount = state.serviceAmountNOK || 0;
+        const trialAmount = state.getTrialSessionAmount();
+        const discountAmount = state.bookingData.appliedDiscount?.discountAmount || 0;
+        return serviceAmount + trialAmount - discountAmount;
+      },
+
+      getTrialSessionAmount: () => {
+        const state = get();
+        if (state.bookingData.wantsTrialSession && state.trialSessionPrice) {
+          return state.trialSessionPrice;
+        }
+        return 0;
+      },
     }),
     {
       name: "nabostylisten:booking-storage",
@@ -227,6 +247,16 @@ export const useBookingStore = create<BookingStore>()(
           }
           if (state.bookingData.endTime && typeof state.bookingData.endTime === 'string') {
             state.bookingData.endTime = new Date(state.bookingData.endTime);
+          }
+          // Handle trial session dates
+          if (state.bookingData.trialSessionDate && typeof state.bookingData.trialSessionDate === 'string') {
+            state.bookingData.trialSessionDate = new Date(state.bookingData.trialSessionDate);
+          }
+          if (state.bookingData.trialSessionStartTime && typeof state.bookingData.trialSessionStartTime === 'string') {
+            state.bookingData.trialSessionStartTime = new Date(state.bookingData.trialSessionStartTime);
+          }
+          if (state.bookingData.trialSessionEndTime && typeof state.bookingData.trialSessionEndTime === 'string') {
+            state.bookingData.trialSessionEndTime = new Date(state.bookingData.trialSessionEndTime);
           }
         }
       },

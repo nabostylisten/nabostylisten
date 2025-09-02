@@ -22,21 +22,31 @@ interface AppliedDiscount {
   code: string;
 }
 
+interface TrialSessionInfo {
+  price: number;
+  currency: string;
+  title: string;
+}
+
 interface OrderSummaryProps {
   items: CartItem[];
   appliedDiscount?: AppliedDiscount | null;
+  trialSession?: TrialSessionInfo | null;
   className?: string;
 }
 
 export function OrderSummary({
   items,
   appliedDiscount,
+  trialSession,
   className,
 }: OrderSummaryProps) {
-  const subtotal = items.reduce((total, item) => {
+  const itemsSubtotal = items.reduce((total, item) => {
     return total + item.service.price * item.quantity;
   }, 0);
 
+  const trialSessionAmount = trialSession?.price || 0;
+  const subtotal = itemsSubtotal + trialSessionAmount;
   const discountAmount = appliedDiscount?.discountAmount || 0;
   const total = subtotal - discountAmount;
 
@@ -74,6 +84,16 @@ export function OrderSummary({
               <span>{formatCurrency(item.service.price * item.quantity)}</span>
             </div>
           ))}
+
+          {/* Trial session line item */}
+          {trialSession && (
+            <div className="flex justify-between text-sm">
+              <span className="flex items-center gap-2">
+                <span>Prøvetime</span>
+              </span>
+              <span>{formatCurrency(trialSession.price)}</span>
+            </div>
+          )}
         </div>
 
         <Separator />

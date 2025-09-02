@@ -208,7 +208,7 @@ CREATE TABLE IF NOT EXISTS public.discounts (
 
     -- Discount configuration (either percentage OR fixed amount, not both)
     discount_percentage numeric(5, 2) CHECK (discount_percentage >= 0 AND discount_percentage <= 100),
-    discount_amount integer, -- In øre/cents
+    discount_amount numeric(10, 2), -- In NOK
     currency text DEFAULT 'NOK' NOT NULL,
 
     -- Usage limits
@@ -222,8 +222,8 @@ CREATE TABLE IF NOT EXISTS public.discounts (
     expires_at timestamp with time zone,
 
     -- Order amount requirements
-    minimum_order_amount integer, -- In øre/cents
-    maximum_order_amount integer, -- In øre/cents
+    minimum_order_amount numeric(10, 2), -- In NOK
+    maximum_order_amount numeric(10, 2), -- In NOK
 
     CONSTRAINT discount_check CHECK (
         (discount_percentage IS NOT NULL AND discount_amount IS NULL) OR

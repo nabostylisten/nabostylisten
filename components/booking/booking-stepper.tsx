@@ -68,7 +68,6 @@ function createStepperSteps(hasTrialSession: boolean) {
   return baseSteps;
 }
 
-
 interface BookingStepperProps {
   stylistId: string;
   serviceDurationMinutes: number;
@@ -103,7 +102,9 @@ export function BookingStepper({
     updateBookingData,
     canProceedFromStep,
     isStepAccessible,
-    setBookingContext
+    setBookingContext,
+    getTotalAmount,
+    getTrialSessionAmount,
   } = useBookingStore();
 
   // Create stepper dynamically based on trial session availability
@@ -125,7 +126,18 @@ export function BookingStepper({
       trialSessionDurationMinutes,
       trialSessionDescription,
     });
-  }, [stylistId, serviceDurationMinutes, serviceAmountNOK, stylistCanTravel, stylistHasOwnPlace, hasTrialSession, trialSessionPrice, trialSessionDurationMinutes, trialSessionDescription, setBookingContext]);
+  }, [
+    stylistId,
+    serviceDurationMinutes,
+    serviceAmountNOK,
+    stylistCanTravel,
+    stylistHasOwnPlace,
+    hasTrialSession,
+    trialSessionPrice,
+    trialSessionDurationMinutes,
+    trialSessionDescription,
+    setBookingContext,
+  ]);
 
   const handleTimeSlotSelect = (startTime: Date, endTime: Date) => {
     updateBookingData({ startTime, endTime });
@@ -134,7 +146,6 @@ export function BookingStepper({
   const handleUpdateBookingData = (updates: Partial<typeof bookingData>) => {
     updateBookingData(updates);
   };
-
 
   return (
     <div className="w-full">
@@ -194,7 +205,11 @@ export function BookingStepper({
             {!isMobile &&
               methods.switch({
                 "time-selection": () => renderStepContent("time-selection"),
-                ...(hasTrialSession ? { "trial-session": () => renderStepContent("trial-session") } : {}),
+                ...(hasTrialSession
+                  ? {
+                      "trial-session": () => renderStepContent("trial-session"),
+                    }
+                  : {}),
                 "location-details": () => renderStepContent("location-details"),
                 "message-discount": () => renderStepContent("message-discount"),
                 payment: () => renderStepContent("payment"),
@@ -206,9 +221,20 @@ export function BookingStepper({
                 onClick={() => {
                   methods.prev();
                   // Update our store state to match
-                  const steps = hasTrialSession 
-                    ? ["time-selection", "trial-session", "location-details", "message-discount", "payment"] as const
-                    : ["time-selection", "location-details", "message-discount", "payment"] as const;
+                  const steps = hasTrialSession
+                    ? ([
+                        "time-selection",
+                        "trial-session",
+                        "location-details",
+                        "message-discount",
+                        "payment",
+                      ] as const)
+                    : ([
+                        "time-selection",
+                        "location-details",
+                        "message-discount",
+                        "payment",
+                      ] as const);
                   const currentIndex = steps.indexOf(currentStep);
                   if (currentIndex > 0) {
                     setCurrentStep(steps[currentIndex - 1]);
@@ -225,9 +251,20 @@ export function BookingStepper({
                   } else {
                     methods.next();
                     // Update our store state to match
-                    const steps = hasTrialSession 
-                      ? ["time-selection", "trial-session", "location-details", "message-discount", "payment"] as const
-                      : ["time-selection", "location-details", "message-discount", "payment"] as const;
+                    const steps = hasTrialSession
+                      ? ([
+                          "time-selection",
+                          "trial-session",
+                          "location-details",
+                          "message-discount",
+                          "payment",
+                        ] as const)
+                      : ([
+                          "time-selection",
+                          "location-details",
+                          "message-discount",
+                          "payment",
+                        ] as const);
                     const currentIndex = steps.indexOf(currentStep);
                     if (currentIndex < steps.length - 1) {
                       setCurrentStep(steps[currentIndex + 1]);
@@ -284,7 +321,9 @@ export function BookingStepper({
               stylistCanTravel={stylistCanTravel}
               stylistHasOwnPlace={stylistHasOwnPlace}
               location={bookingData.location}
-              onLocationChange={(location) => handleUpdateBookingData({ location })}
+              onLocationChange={(location) =>
+                handleUpdateBookingData({ location })
+              }
               selectedAddressId={bookingData.customerAddressId}
               onAddressSelect={(addressId, address) =>
                 handleUpdateBookingData({
@@ -324,7 +363,9 @@ export function BookingStepper({
                       placeholder="F.eks. allergier, preferanser, eller andre viktige detaljer..."
                       value={bookingData.messageToStylist || ""}
                       onChange={(e) =>
-                        handleUpdateBookingData({ messageToStylist: e.target.value })
+                        handleUpdateBookingData({
+                          messageToStylist: e.target.value,
+                        })
                       }
                     />
                   </div>
@@ -332,9 +373,11 @@ export function BookingStepper({
               </Card>
 
               <ApplyDiscountForm
-                orderAmountNOK={serviceAmountNOK}
+                orderAmountNOK={serviceAmountNOK + getTrialSessionAmount()}
                 onDiscountApplied={(discount) => {
-                  handleUpdateBookingData({ appliedDiscount: discount || undefined });
+                  handleUpdateBookingData({
+                    appliedDiscount: discount || undefined,
+                  });
                 }}
                 initialDiscountCode={bookingData.appliedDiscount?.code}
               />
@@ -358,13 +401,35 @@ export function BookingStepper({
                     <h4 className="font-medium">Sammendrag</h4>
                     {bookingData.startTime && (
                       <p className="text-sm">
-                        <strong>Tid:</strong>{" "}
+                        <strong>Hovedtime:</strong>{" "}
                         {format(bookingData.startTime, "EEEE d. MMMM, HH:mm", {
                           locale: nb,
                         })}{" "}
                         - {format(bookingData.endTime!, "HH:mm")}
                       </p>
                     )}
+                    {bookingData.wantsTrialSession &&
+                      bookingData.trialSessionStartTime && (
+                        <p className="text-sm flex items-center gap-2">
+                          <span>
+                            <strong>Prøvetime:</strong>{" "}
+                            {format(
+                              bookingData.trialSessionStartTime,
+                              "EEEE d. MMMM, HH:mm",
+                              {
+                                locale: nb,
+                              }
+                            )}{" "}
+                            -{" "}
+                            {format(bookingData.trialSessionEndTime!, "HH:mm")}
+                            {trialSessionPrice && (
+                              <span className="ml-2 text-muted-foreground">
+                                ({trialSessionPrice} NOK)
+                              </span>
+                            )}
+                          </span>
+                        </p>
+                      )}
                     <p className="text-sm">
                       <strong>Lokasjon:</strong>{" "}
                       {bookingData.location === "stylist"
@@ -378,11 +443,35 @@ export function BookingStepper({
                     )}
                     {bookingData.appliedDiscount && (
                       <p className="text-sm">
-                        <strong>Rabattkode:</strong> {bookingData.appliedDiscount.code}
+                        <strong>Rabattkode:</strong>{" "}
+                        {bookingData.appliedDiscount.code}
                         <span className="ml-2 text-green-600">
-                          (-{bookingData.appliedDiscount.discountAmount.toLocaleString('no-NO')} kr)
+                          (-
+                          {bookingData.appliedDiscount.discountAmount.toLocaleString(
+                            "no-NO"
+                          )}{" "}
+                          kr)
                         </span>
                       </p>
+                    )}
+                    {bookingData.wantsTrialSession && trialSessionPrice && (
+                      <div className="pt-2 border-t border-border">
+                        <p className="text-sm font-medium">
+                          <strong>Totalt:</strong>{" "}
+                          {serviceAmountNOK + trialSessionPrice} NOK
+                          {bookingData.appliedDiscount && (
+                            <span className="text-muted-foreground">
+                              {" "}
+                              ({serviceAmountNOK} NOK + {trialSessionPrice} NOK
+                              prøvetime
+                              {bookingData.appliedDiscount
+                                ? ` - ${bookingData.appliedDiscount.discountAmount} NOK rabatt`
+                                : ""}
+                              )
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     )}
                   </div>
                   <p className="text-sm text-muted-foreground">

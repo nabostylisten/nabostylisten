@@ -1,252 +1,207 @@
 "use client";
 
-import React from "react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
-  TestTube,
-  HelpCircle,
-  Clock,
-  Calendar,
   CheckCircle,
-  XCircle,
-  Euro,
-  Lightbulb,
-  Shield,
-  Users,
+  Clock,
+  CreditCard,
+  Calendar,
+  AlertTriangle,
 } from "lucide-react";
 
 interface TrialSessionInfoDialogProps {
-  children?: React.ReactNode;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   trialSessionPrice?: number;
   trialSessionDurationMinutes?: number;
-  trialSessionDescription?: string;
 }
 
 export function TrialSessionInfoDialog({
-  children,
+  open,
+  onOpenChange,
   trialSessionPrice,
   trialSessionDurationMinutes,
-  trialSessionDescription,
 }: TrialSessionInfoDialogProps) {
+  // Format duration
+  const formatDuration = (minutes: number) => {
+    if (!minutes) return "";
+    if (minutes < 60) {
+      return `${minutes} min`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    if (remainingMinutes === 0) {
+      return `${hours} ${hours === 1 ? "time" : "timer"}`;
+    }
+    return `${hours}t ${remainingMinutes}min`;
+  };
+
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        {children || (
-          <Button variant="outline" size="sm">
-            <HelpCircle className="w-4 h-4 mr-2" />
-            Hva er en prøvetime?
-          </Button>
-        )}
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <TestTube className="w-5 h-5" />
-            Alt du trenger å vite om prøvetimer
+            <Clock className="w-5 h-5" />
+            Alt om prøvetimer
           </DialogTitle>
           <DialogDescription>
-            En komplett guide til hvordan prøvetimer fungerer på Nabostylisten
+            Lær alt du trenger å vite om prøvetimer og hvordan de fungerer
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">
           {/* What is a trial session */}
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Lightbulb className="w-5 h-5" />
+            <CardContent className="pt-6">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <CheckCircle className="w-5 h-5 text-green-600" />
                 Hva er en prøvetime?
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                {trialSessionDescription || 
-                "En prøvetime er en kortere sesjon der du kan teste ut stylisten og tjenesten før du committer til en full behandling. Dette gir både deg og stylisten mulighet til å bli kjent og sikre at dere passer godt sammen."}
+              </h3>
+              <p className="text-muted-foreground leading-relaxed">
+                En prøvetime er en redusert versjon av hovedtjenesten som
+                utføres før den egentlige bookingen. Dette gir deg mulighet til
+                å teste stilen, sjekke for allergiske reaksjoner, og sikre at du
+                er 100% fornøyd før den store dagen.
               </p>
-              
-              <div className="flex flex-wrap gap-2">
-                {trialSessionPrice && (
-                  <Badge variant="secondary">
-                    <Euro className="w-3 h-3 mr-1" />
-                    {trialSessionPrice} kr
-                  </Badge>
-                )}
-                {trialSessionDurationMinutes && (
-                  <Badge variant="secondary">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {trialSessionDurationMinutes} minutter
-                  </Badge>
-                )}
+            </CardContent>
+          </Card>
+
+          {/* When to use trial sessions */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-blue-600" />
+                Når bør du velge prøvetime?
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                  <span className="text-sm">
+                    <strong>Bryllup og store arrangementer:</strong> Test stilen
+                    måneder på forhånd
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                  <span className="text-sm">
+                    <strong>Første gang hos stylisten:</strong> Bygg tillit og
+                    kjemi
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                  <span className="text-sm">
+                    <strong>Allergitesting:</strong> Test produkter på forhånd
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle className="w-4 h-4 text-green-600 mt-0.5" />
+                  <span className="text-sm">
+                    <strong>Store forandringer:</strong> Test dramatiske
+                    fargeendringer
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Pricing and timing */}
+          {(trialSessionPrice || trialSessionDurationMinutes) && (
+            <Card>
+              <CardContent className="pt-6">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <CreditCard className="w-5 h-5 text-purple-600" />
+                  Pris og varighet
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {trialSessionPrice && (
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">
+                        Prøvetime koster
+                      </div>
+                      <div className="font-semibold text-lg">
+                        {trialSessionPrice} NOK
+                      </div>
+                    </div>
+                  )}
+                  {trialSessionDurationMinutes && (
+                    <div className="text-center p-3 bg-muted/50 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">
+                        Varighet
+                      </div>
+                      <div className="font-semibold text-lg">
+                        {formatDuration(trialSessionDurationMinutes)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Important rules */}
+          <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+            <CardContent className="pt-6">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-yellow-600" />
+                Viktige regler
+              </h3>
+              <div className="space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-sm">
+                    <strong>Timing:</strong> Prøvetimen må bookes før
+                    hovedbookingen
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-sm">
+                    <strong>Avbestillingsregler:</strong> Samme regler som
+                    vanlige bookinger
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-sm">
+                    <strong>Refusjon:</strong> Prøvetimen refunderes ikke ved
+                    avbestilling av hovedbooking
+                  </span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <span className="text-sm">
+                    <strong>Endringer:</strong> Stylisten kan flytte prøvetimen
+                    ved behov. Dette kan avtales i chat etter booking.
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
           {/* Benefits */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
+          <Card className="border-green-200 bg-green-50 dark:bg-green-950/20">
+            <CardContent className="pt-6">
+              <h3 className="font-semibold mb-3 flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 Fordeler med prøvetime
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-3">
-                <div className="flex items-start gap-3">
-                  <Users className="w-4 h-4 mt-1 text-blue-600 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-sm">Bli kjent med stylisten</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Test kjemien og kommunikasjonen før hovedbehandlingen
-                    </p>
-                  </div>
+              </h3>
+              <div className="flex flex-col gap-2">
+                <div className="text-sm">
+                  <strong>Trygghet:</strong> Test stilen på forhånd
                 </div>
-                <div className="flex items-start gap-3">
-                  <TestTube className="w-4 h-4 mt-1 text-purple-600 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-sm">Test produkter og teknikker</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Prøv ut produkter og se hvordan din hud/hår reagerer
-                    </p>
-                  </div>
+                <div className="text-sm">
+                  <strong>Perfeksjon:</strong> Juster detaljer før hovedtimen
                 </div>
-                <div className="flex items-start gap-3">
-                  <Lightbulb className="w-4 h-4 mt-1 text-yellow-600 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-sm">Diskuter forventninger</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Avklar ønsker og forventninger i rolige omgivelser
-                    </p>
-                  </div>
+                <div className="text-sm">
+                  <strong>Allergitest:</strong> Sjekk for reaksjoner
                 </div>
-                <div className="flex items-start gap-3">
-                  <Shield className="w-4 h-4 mt-1 text-green-600 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-medium text-sm">Trygghet og tillit</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Bygg tillit før du investerer i en lengre behandling
-                    </p>
-                  </div>
+                <div className="text-sm">
+                  <strong>Kommunikasjon:</strong> Bygg forhold til stylisten
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* How it works */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="w-5 h-5" />
-                Hvordan fungerer det?
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">1</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm">Book prøvetimen</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Velg en dato som passer deg - prøvetimen må være før hovedbookingen
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">2</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm">Møt stylisten</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Dra på prøvetimen og bli kjent med stylisten og deres arbeidsmåte
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950 flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-bold text-blue-600 dark:text-blue-400">3</span>
-                  </div>
-                  <div>
-                    <h4 className="font-medium text-sm">Hovedbehandling</h4>
-                    <p className="text-xs text-muted-foreground">
-                      Hvis alt gikk bra, møt opp til hovedbehandlingen med trygghet
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Timing and cancellation */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="w-5 h-5" />
-                Viktig å vite
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 mt-0.5 text-green-600 flex-shrink-0" />
-                  <span>Prøvetimen må gjennomføres før hovedbookingen din</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 mt-0.5 text-green-600 flex-shrink-0" />
-                  <span>Du betaler for prøvetimen separat fra hovedbehandlingen</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle className="w-4 h-4 mt-0.5 text-green-600 flex-shrink-0" />
-                  <span>Samme avbestillingsregler gjelder som for vanlige bookinger</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <XCircle className="w-4 h-4 mt-0.5 text-red-600 flex-shrink-0" />
-                  <span>Du er ikke forpliktet til å gjennomføre hovedbehandlingen etter prøvetimen</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* FAQ */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <HelpCircle className="w-5 h-5" />
-                Ofte stilte spørsmål
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h4 className="font-medium text-sm mb-1">Kan jeg avbestille prøvetimen?</h4>
-                <p className="text-xs text-muted-foreground">
-                  Ja, samme avbestillingsregler gjelder som for vanlige bookinger. 
-                  Avbestill minst 24 timer i forveien for full refusjon.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm mb-1">Hva hvis jeg ikke liker prøvetimen?</h4>
-                <p className="text-xs text-muted-foreground">
-                  Du kan avbestille hovedbookingen etter prøvetimen hvis du ikke er fornøyd. 
-                  Vanlige avbestillingsregler gjelder.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm mb-1">Må jeg ha prøvetime?</h4>
-                <p className="text-xs text-muted-foreground">
-                  Nei, prøvetimer er helt valgfritt. Du kan hoppe direkte til hovedbehandlingen 
-                  hvis du foretrekker det.
-                </p>
               </div>
             </CardContent>
           </Card>

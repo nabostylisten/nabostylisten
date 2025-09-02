@@ -33,7 +33,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subMonths(now, 3),
       expires_at: addMonths(now, 3),
-      minimum_order_amount: 50000, // 500 NOK in øre
+      minimum_order_amount: 500, // 500 NOK
     },
 
     // Standard fixed amount discount
@@ -41,7 +41,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       code: "SOMMER100",
       description: "100 kr rabatt på alle tjenester",
       discount_percentage: null,
-      discount_amount: 10000, // 100 NOK in øre
+      discount_amount: 100, // 100 NOK
       currency: "NOK",
       max_uses: 50,
       current_uses: 5,
@@ -49,7 +49,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subMonths(now, 2),
       expires_at: addMonths(now, 1),
-      minimum_order_amount: 80000, // 800 NOK in øre
+      minimum_order_amount: 800, // 800 NOK
     },
 
     // High percentage discount with order limits
@@ -65,8 +65,8 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subMonths(now, 1),
       expires_at: addMonths(now, 6),
-      minimum_order_amount: 100000, // 1000 NOK in øre
-      maximum_order_amount: 500000, // 5000 NOK in øre
+      minimum_order_amount: 1000, // 1000 NOK
+      maximum_order_amount: 5000, // 5000 NOK
     },
 
     // Small fixed discount with no minimum
@@ -74,7 +74,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       code: "PRØV50",
       description: "50 kr rabatt - ingen minimumskjøp",
       discount_percentage: null,
-      discount_amount: 5000, // 50 NOK in øre
+      discount_amount: 50, // 50 NOK
       currency: "NOK",
       max_uses: 200,
       current_uses: 45,
@@ -99,14 +99,14 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true, // Still active but expired
       valid_from: new Date("2023-01-01"),
       expires_at: new Date("2023-12-31"),
-      minimum_order_amount: 50000,
+      minimum_order_amount: 500,
     },
 
     {
       code: "OLDCAMPAIGN",
       description: "Gammel kampanje - utgått forrige måned",
       discount_percentage: null,
-      discount_amount: 15000, // 150 NOK
+      discount_amount: 150, // 150 NOK
       currency: "NOK",
       max_uses: 50,
       current_uses: 35,
@@ -114,7 +114,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subMonths(now, 3),
       expires_at: subMonths(now, 1), // Expired last month
-      minimum_order_amount: 70000,
+      minimum_order_amount: 700,
     },
 
     // === NOT YET ACTIVE DISCOUNTS ===
@@ -131,14 +131,14 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: addMonths(now, 1), // Starts next month
       expires_at: addMonths(now, 6),
-      minimum_order_amount: 60000,
+      minimum_order_amount: 600,
     },
 
     {
       code: "NEWYEAR2025",
       description: "Nyttårskampanje - starter om 2 måneder",
       discount_percentage: null,
-      discount_amount: 20000, // 200 NOK
+      discount_amount: 200, // 200 NOK
       currency: "NOK",
       max_uses: 150,
       current_uses: 0,
@@ -146,7 +146,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: addMonths(now, 2),
       expires_at: addMonths(now, 4),
-      minimum_order_amount: 100000,
+      minimum_order_amount: 1000,
     },
 
     // === INACTIVE DISCOUNTS ===
@@ -163,7 +163,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: false, // Deactivated
       valid_from: subMonths(now, 1),
       expires_at: addMonths(now, 2),
-      minimum_order_amount: 40000,
+      minimum_order_amount: 400,
     },
 
     // === MAXED OUT DISCOUNTS ===
@@ -180,7 +180,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subDays(now, 15),
       expires_at: addDays(now, 15),
-      minimum_order_amount: 75000,
+      minimum_order_amount: 750,
     },
 
     // === UNLIMITED USE DISCOUNTS ===
@@ -197,7 +197,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subMonths(now, 6),
       expires_at: null, // Never expires
-      minimum_order_amount: 30000,
+      minimum_order_amount: 300,
     },
 
     // === MULTIPLE USE PER USER ===
@@ -206,7 +206,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       code: "LOYALTY5X",
       description: "Lojalitetsrabatt - kan brukes 5 ganger per kunde",
       discount_percentage: null,
-      discount_amount: 7500, // 75 NOK
+      discount_amount: 75, // 75 NOK
       currency: "NOK",
       max_uses: 500,
       current_uses: 123,
@@ -214,7 +214,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subMonths(now, 2),
       expires_at: addMonths(now, 4),
-      minimum_order_amount: 50000,
+      minimum_order_amount: 500,
     },
 
     // === HIGH VALUE DISCOUNTS ===
@@ -223,7 +223,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       code: "PREMIUM500",
       description: "500 kr rabatt på store bestillinger",
       discount_percentage: null,
-      discount_amount: 50000, // 500 NOK
+      discount_amount: 500, // 500 NOK
       currency: "NOK",
       max_uses: 30,
       current_uses: 8,
@@ -231,7 +231,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subDays(now, 45),
       expires_at: addDays(now, 45),
-      minimum_order_amount: 200000, // 2000 NOK minimum
+      minimum_order_amount: 2000, // 2000 NOK minimum
     },
 
     // === EDGE CASE PERCENTAGES ===
@@ -263,8 +263,8 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: now,
       expires_at: addDays(now, 7),
-      minimum_order_amount: 100000,
-      maximum_order_amount: 150000, // Limited to prevent huge discounts
+      minimum_order_amount: 1000,
+      maximum_order_amount: 1500, // Limited to prevent huge discounts
     },
 
     // === EXACT BOUNDARY DISCOUNTS ===
@@ -281,7 +281,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: now,
       expires_at: addDays(now, 1), // Expires tomorrow
-      minimum_order_amount: 60000,
+      minimum_order_amount: 600,
     },
 
     {
@@ -296,14 +296,14 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subDays(now, 30),
       expires_at: subDays(now, 1), // Expired yesterday
-      minimum_order_amount: 50000,
+      minimum_order_amount: 500,
     },
 
     {
       code: "STARTSTOMORROW",
       description: "Starter i morgen",
       discount_percentage: null,
-      discount_amount: 12500, // 125 NOK
+      discount_amount: 125, // 125 NOK
       currency: "NOK",
       max_uses: 75,
       current_uses: 0,
@@ -311,7 +311,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: addDays(now, 1), // Starts tomorrow
       expires_at: addDays(now, 31),
-      minimum_order_amount: 70000,
+      minimum_order_amount: 700,
     },
 
     // === COMPLEX ORDER AMOUNT RESTRICTIONS ===
@@ -328,15 +328,15 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subDays(now, 10),
       expires_at: addDays(now, 20),
-      minimum_order_amount: 20000, // 200 NOK
-      maximum_order_amount: 30000, // 300 NOK
+      minimum_order_amount: 200, // 200 NOK
+      maximum_order_amount: 300, // 300 NOK
     },
 
     {
       code: "BIGSPENDER",
       description: "For store bestillinger over 5000 kr",
       discount_percentage: null,
-      discount_amount: 100000, // 1000 NOK off
+      discount_amount: 1000, // 1000 NOK off
       currency: "NOK",
       max_uses: 20,
       current_uses: 3,
@@ -344,7 +344,7 @@ export async function createDiscountCodes(seed: SeedClient) {
       is_active: true,
       valid_from: subMonths(now, 1),
       expires_at: addMonths(now, 3),
-      minimum_order_amount: 500000, // 5000 NOK minimum
+      minimum_order_amount: 5000, // 5000 NOK minimum
     },
 
     // === SPECIAL TEST CASES ===

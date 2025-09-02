@@ -318,6 +318,10 @@ async function transformNearbyServiceToServiceWithRelations(
     created_at: nearbyService.service_created_at,
     updated_at: nearbyService.service_created_at, // Not available from RPC
     stylist_id: nearbyService.stylist_id,
+    has_trial_session: nearbyService.service_has_trial_session,
+    trial_session_price: nearbyService.service_trial_session_price,
+    trial_session_duration_minutes: nearbyService.service_trial_session_duration_minutes,
+    trial_session_description: nearbyService.service_trial_session_description,
     includes: null, // Not available from RPC
     requirements: null, // Not available from RPC
     service_service_categories: serviceData?.service_service_categories || [],

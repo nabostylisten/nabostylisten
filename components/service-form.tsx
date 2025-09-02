@@ -100,7 +100,7 @@ const serviceFormSchema = servicesInsertSchema
     includes: z.array(z.string().min(1)).optional(),
     requirements: z.array(z.string().min(1)).optional(),
     // Trial session fields
-    has_trial_session: z.boolean().optional().default(false),
+    has_trial_session: z.boolean().default(false),
     trial_session_price: z
       .number()
       .min(1, "Prøvetimepris må være større enn 0")
@@ -117,6 +117,7 @@ const serviceFormSchema = servicesInsertSchema
       .max(500, "Beskrivelse kan ikke være lengre enn 500 tegn")
       .optional()
       .nullable(),
+    is_published: z.boolean().default(false),
   })
   .refine((data) => data.at_customer_place || data.at_stylist_place, {
     message: "Du må velge minst ett sted hvor tjenesten kan utføres",
@@ -198,6 +199,7 @@ export function ServiceForm({
       trial_session_duration_minutes:
         service?.trial_session_duration_minutes || undefined,
       trial_session_description: service?.trial_session_description || "",
+      is_published: service?.is_published || false,
     },
   });
 
@@ -404,6 +406,7 @@ export function ServiceForm({
         trial_session_duration_minutes:
           service.trial_session_duration_minutes || undefined,
         trial_session_description: service.trial_session_description || "",
+        is_published: service.is_published || false,
       });
     } else if (mode === "create") {
       form.reset({
@@ -420,6 +423,7 @@ export function ServiceForm({
         trial_session_price: undefined,
         trial_session_duration_minutes: undefined,
         trial_session_description: "",
+        is_published: false,
       });
     }
     setUploadedFiles([]);
@@ -1106,6 +1110,30 @@ export function ServiceForm({
                 </>
               )}
             </div>
+
+            {/* Publish Status */}
+            <FormField
+              control={form.control}
+              name="is_published"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">
+                      Publiser tjenesten
+                    </FormLabel>
+                    <FormDescription>
+                      Kun publiserte tjenester er synlige for kunder. Du kan endre dette senere.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
 
             <DialogFooter>
               <Button

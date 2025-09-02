@@ -16,6 +16,12 @@ export interface BookingStepData {
   startTime?: Date;
   endTime?: Date;
   
+  // Trial session step
+  trialSessionDate?: Date;
+  trialSessionStartTime?: Date;
+  trialSessionEndTime?: Date;
+  wantsTrialSession?: boolean;
+  
   // Location step
   location: "stylist" | "customer";
   customerAddress?: string;
@@ -29,7 +35,7 @@ export interface BookingStepData {
 
 export interface BookingStore {
   // Current step in the booking flow
-  currentStep: "time-selection" | "location-details" | "message-discount" | "payment";
+  currentStep: "time-selection" | "trial-session" | "location-details" | "message-discount" | "payment";
   
   // Booking data across all steps
   bookingData: BookingStepData;
@@ -40,6 +46,10 @@ export interface BookingStore {
   serviceAmountNOK?: number;
   stylistCanTravel?: boolean;
   stylistHasOwnPlace?: boolean;
+  hasTrialSession?: boolean;
+  trialSessionPrice?: number;
+  trialSessionDurationMinutes?: number;
+  trialSessionDescription?: string;
   
   // Processing state
   isProcessingBooking: boolean;
@@ -53,6 +63,10 @@ export interface BookingStore {
     serviceAmountNOK: number;
     stylistCanTravel?: boolean;
     stylistHasOwnPlace?: boolean;
+    hasTrialSession?: boolean;
+    trialSessionPrice?: number;
+    trialSessionDurationMinutes?: number;
+    trialSessionDescription?: string;
   }) => void;
   setProcessingState: (isProcessing: boolean) => void;
   clearBooking: () => void;
@@ -74,6 +88,10 @@ export const useBookingStore = create<BookingStore>()(
       serviceAmountNOK: undefined,
       stylistCanTravel: undefined,
       stylistHasOwnPlace: undefined,
+      hasTrialSession: undefined,
+      trialSessionPrice: undefined,
+      trialSessionDurationMinutes: undefined,
+      trialSessionDescription: undefined,
       isProcessingBooking: false,
 
       setCurrentStep: (step) => {
@@ -112,6 +130,10 @@ export const useBookingStore = create<BookingStore>()(
           serviceAmountNOK: undefined,
           stylistCanTravel: undefined,
           stylistHasOwnPlace: undefined,
+          hasTrialSession: undefined,
+          trialSessionPrice: undefined,
+          trialSessionDurationMinutes: undefined,
+          trialSessionDescription: undefined,
           isProcessingBooking: false,
         });
       },
@@ -123,6 +145,15 @@ export const useBookingStore = create<BookingStore>()(
         switch (stepId) {
           case "time-selection":
             return !!(bookingData.startTime && bookingData.endTime);
+          case "trial-session":
+            // If trial session is not wanted, can proceed
+            if (!bookingData.wantsTrialSession) return true;
+            // If trial session is wanted, must have selected date/time
+            return !!(
+              bookingData.trialSessionDate &&
+              bookingData.trialSessionStartTime &&
+              bookingData.trialSessionEndTime
+            );
           case "location-details":
             return !!(
               bookingData.location &&
@@ -145,16 +176,23 @@ export const useBookingStore = create<BookingStore>()(
         switch (stepId) {
           case "time-selection":
             return true; // First step is always accessible
-          case "location-details":
+          case "trial-session":
             return state.canProceedFromStep("time-selection");
+          case "location-details":
+            return (
+              state.canProceedFromStep("time-selection") &&
+              (state.hasTrialSession ? state.canProceedFromStep("trial-session") : true)
+            );
           case "message-discount":
             return (
               state.canProceedFromStep("time-selection") &&
+              (state.hasTrialSession ? state.canProceedFromStep("trial-session") : true) &&
               state.canProceedFromStep("location-details")
             );
           case "payment":
             return (
               state.canProceedFromStep("time-selection") &&
+              (state.hasTrialSession ? state.canProceedFromStep("trial-session") : true) &&
               state.canProceedFromStep("location-details") &&
               state.canProceedFromStep("message-discount")
             );
@@ -175,6 +213,10 @@ export const useBookingStore = create<BookingStore>()(
         serviceAmountNOK: state.serviceAmountNOK,
         stylistCanTravel: state.stylistCanTravel,
         stylistHasOwnPlace: state.stylistHasOwnPlace,
+        hasTrialSession: state.hasTrialSession,
+        trialSessionPrice: state.trialSessionPrice,
+        trialSessionDurationMinutes: state.trialSessionDurationMinutes,
+        trialSessionDescription: state.trialSessionDescription,
       }),
       // Handle Date object rehydration
       onRehydrateStorage: () => (state) => {

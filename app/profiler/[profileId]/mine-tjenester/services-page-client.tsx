@@ -1,13 +1,11 @@
 "use client";
 
 import * as React from "react";
-import Image from "next/image";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -28,14 +26,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import {
   Plus,
-  Edit,
-  Trash2,
   Scissors,
-  ImageIcon,
   Search,
   Filter,
   CreditCard,
-  TestTube,
 } from "lucide-react";
 import {
   Pagination,
@@ -48,13 +42,13 @@ import {
 } from "@/components/ui/pagination";
 import { ServiceForm } from "@/components/service-form";
 import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
+import { StylistServiceCard } from "@/components/stylist-service-card";
 import {
   deleteService,
   getFilteredStylistServices,
   getServiceCategories,
 } from "@/server/service.actions";
 import { getCurrentUserStripeStatus } from "@/server/stripe.actions";
-import { createClient } from "@/lib/supabase/client";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Database } from "@/types/database.types";
@@ -175,46 +169,6 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   const totalCount = servicesResult?.count || 0;
 
   console.log(services);
-
-  // Helper function to get preview image URL
-  const getPreviewImageUrl = (service: Service): string | null => {
-    if (!service.media || service.media.length === 0) return null;
-
-    // Filter only service images and sort them: preview first, then by creation date
-    const serviceImages = service.media
-      .filter((media) => media.media_type === "service_image")
-      .sort((a, b) => {
-        // Preview images first
-        if (a.is_preview_image && !b.is_preview_image) return -1;
-        if (!a.is_preview_image && b.is_preview_image) return 1;
-        // Then by creation date (oldest first as fallback)
-        return (
-          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-        );
-      });
-
-    if (serviceImages.length === 0) return null;
-
-    // Use the first image from sorted array (preview or oldest)
-    const imageToUse = serviceImages[0];
-
-    // Use publicUrl if available, otherwise generate it
-    if (imageToUse.publicUrl) {
-      return imageToUse.publicUrl;
-    }
-
-    // Fall back to generating the URL (for cases where publicUrl might not be set)
-    if (imageToUse.file_path.startsWith("https://images.unsplash.com/")) {
-      return imageToUse.file_path;
-    }
-
-    const supabase = createClient();
-    const { data } = supabase.storage
-      .from("service-media")
-      .getPublicUrl(imageToUse.file_path);
-
-    return data.publicUrl;
-  };
 
   // Delete service mutation
   const deleteMutation = useMutation({
@@ -686,173 +640,20 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
       {!isLoading && !error && services && services.length > 0 ? (
         <BlurFade delay={0.2} duration={0.5} inView>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service, index) => {
-              const previewImageUrl = getPreviewImageUrl(service);
-
-              return (
-                <BlurFade
-                  key={service.id}
-                  delay={index * 0.05}
-                  duration={0.5}
-                  inView
-                >
-                  <Card className="flex flex-col hover:shadow-lg transition-shadow duration-200 h-full">
-                    {/* Service Image - Smaller for 3-column layout */}
-                    <div className="relative aspect-[4/3] bg-muted rounded-t-lg overflow-hidden">
-                      {previewImageUrl ? (
-                        <Image
-                          src={previewImageUrl}
-                          alt={service.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                        />
-                      ) : (
-                        <div className="flex items-center justify-center h-full text-muted-foreground">
-                          <ImageIcon className="w-12 h-12" />
-                        </div>
-                      )}
-                    </div>
-
-                    <CardHeader className="pb-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <CardTitle className="text-xl font-semibold text-foreground mb-3 line-clamp-2">
-                            {service.title}
-                          </CardTitle>
-                          <div className="flex flex-col gap-2">
-                            <div>
-                              <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                                Kategorier
-                              </span>
-                              <div className="flex flex-wrap gap-2">
-                                {service.service_service_categories?.length ? (
-                                  service.service_service_categories.map(
-                                    (relation) => (
-                                      <Badge
-                                        key={relation.service_categories.id}
-                                        variant="secondary"
-                                        className="text-xs font-medium"
-                                      >
-                                        {relation.service_categories.name}
-                                      </Badge>
-                                    )
-                                  )
-                                ) : (
-                                  <Badge
-                                    variant="secondary"
-                                    className="text-xs font-medium"
-                                  >
-                                    Ukategorisert
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                            <div>
-                              <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                                Leveringssted
-                              </span>
-                              <div className="flex flex-wrap gap-2">
-                                {service.at_customer_place && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Hjemme hos kunde
-                                  </Badge>
-                                )}
-                                {service.at_stylist_place && (
-                                  <Badge variant="outline" className="text-xs">
-                                    På salong
-                                  </Badge>
-                                )}
-                                {!service.at_customer_place &&
-                                  !service.at_stylist_place && (
-                                    <Badge
-                                      variant="outline"
-                                      className="text-xs"
-                                    >
-                                      Ikke spesifisert
-                                    </Badge>
-                                  )}
-                              </div>
-                            </div>
-                            {/* Trial Session Info */}
-                            {service.has_trial_session && (
-                              <div>
-                                <span className="text-xs font-semibold text-muted-foreground mb-1 block">
-                                  Prøvetime
-                                </span>
-                                <div className="flex items-center gap-2">
-                                  <Badge
-                                    variant="default"
-                                    className="text-xs bg-emerald-100 text-emerald-700 border-emerald-200 hover:bg-emerald-200"
-                                  >
-                                    <TestTube className="w-3 h-3 mr-1" />
-                                    Tilgjengelig
-                                  </Badge>
-                                  {service.trial_session_price && (
-                                    <span className="text-xs text-muted-foreground">
-                                      {service.trial_session_price} kr
-                                    </span>
-                                  )}
-                                  {service.trial_session_duration_minutes && (
-                                    <span className="text-xs text-muted-foreground">
-                                      • {service.trial_session_duration_minutes}{" "}
-                                      min
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-1 ml-3 flex-shrink-0">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEditService(service)}
-                            className="h-8 w-8 p-0 hover:bg-muted"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDeleteService(service)}
-                            className="h-8 w-8 p-0 hover:bg-destructive/10 hover:text-destructive"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="flex-1 flex flex-col justify-between pt-0 pb-4">
-                      {service.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-2">
-                          {service.description}
-                        </p>
-                      )}
-                      <div className="flex flex-col gap-2 pt-4 border-t border-border/50">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-muted-foreground">
-                            Pris
-                          </span>
-                          <span className="text-lg font-bold text-foreground">
-                            {service.price} kr
-                          </span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-semibold text-muted-foreground">
-                            Varighet
-                          </span>
-                          <span className="text-sm text-muted-foreground">
-                            {service.duration_minutes} minutter
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </BlurFade>
-              );
-            })}
+            {services.map((service, index) => (
+              <BlurFade
+                key={service.id}
+                delay={index * 0.05}
+                duration={0.5}
+                inView
+              >
+                <StylistServiceCard
+                  service={service}
+                  onEdit={handleEditService}
+                  onDelete={handleDeleteService}
+                />
+              </BlurFade>
+            ))}
           </div>
         </BlurFade>
       ) : (

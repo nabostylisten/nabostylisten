@@ -43,6 +43,12 @@ export default function BookingPage() {
     return total + item.service.duration_minutes * item.quantity;
   }, 0);
 
+  // Calculate trial session information
+  const hasTrialSession = items.some(item => item.service.has_trial_session);
+  const trialSessionPrice = items.find(item => item.service.has_trial_session)?.service.trial_session_price || undefined;
+  const trialSessionDurationMinutes = items.find(item => item.service.has_trial_session)?.service.trial_session_duration_minutes || undefined;
+  const trialSessionDescription = items.find(item => item.service.has_trial_session)?.service.trial_session_description || undefined;
+
   // Initialize booking context when component mounts or cart changes
   useEffect(() => {
     if (currentStylist && totalPrice && totalDurationMinutes) {
@@ -299,6 +305,10 @@ export default function BookingPage() {
                     stylistHasOwnPlace={
                       stylistDetails.data.has_own_place ?? true
                     }
+                    hasTrialSession={hasTrialSession}
+                    trialSessionPrice={trialSessionPrice}
+                    trialSessionDurationMinutes={trialSessionDurationMinutes}
+                    trialSessionDescription={trialSessionDescription}
                     onComplete={handleBookingComplete}
                   />
                 )}

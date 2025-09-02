@@ -7,6 +7,7 @@ import {
   MapPin,
   CreditCard,
   MessageSquare,
+  TestTube,
 } from "lucide-react";
 import { defineStepper } from "@/components/stepper";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -17,36 +18,55 @@ import { Textarea } from "@/components/ui/textarea";
 import { BookingScheduler } from "@/components/booking/booking-scheduler";
 import { BookingAddressSelector } from "@/components/addresses";
 import { ApplyDiscountForm } from "@/components/booking/apply-discount-form";
+import { TrialSessionStep } from "@/components/booking/trial-session-step";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { useBookingStore } from "@/stores/booking.store";
 
-const { Stepper } = defineStepper(
-  {
-    id: "time-selection",
-    title: "1. Velg tidspunkt",
-    description: "Finn ledig tid hos stylisten",
-    icon: <Calendar className="w-4 h-4" />,
-  },
-  {
-    id: "location-details",
-    title: "2. Lokasjon",
-    description: "Hvor skal tjenesten utføres",
-    icon: <MapPin className="w-4 h-4" />,
-  },
-  {
-    id: "message-discount",
-    title: "3. Melding og rabatt",
-    description: "Tilleggsinfo og rabattkoder",
-    icon: <MessageSquare className="w-4 h-4" />,
-  },
-  {
-    id: "payment",
-    title: "4. Betaling",
-    description: "Fullfør bookingen",
-    icon: <CreditCard className="w-4 h-4" />,
+// Create stepper steps dynamically based on trial session availability
+function createStepperSteps(hasTrialSession: boolean) {
+  const baseSteps = [
+    {
+      id: "time-selection",
+      title: "1. Velg tidspunkt",
+      description: "Finn ledig tid hos stylisten",
+      icon: <Calendar className="w-4 h-4" />,
+    },
+  ];
+
+  if (hasTrialSession) {
+    baseSteps.push({
+      id: "trial-session",
+      title: "2. Prøvetime",
+      description: "Velg dato for prøvetime",
+      icon: <TestTube className="w-4 h-4" />,
+    });
   }
-);
+
+  const nextNumber = hasTrialSession ? 3 : 2;
+  baseSteps.push(
+    {
+      id: "location-details",
+      title: `${nextNumber}. Lokasjon`,
+      description: "Hvor skal tjenesten utføres",
+      icon: <MapPin className="w-4 h-4" />,
+    },
+    {
+      id: "message-discount",
+      title: `${nextNumber + 1}. Melding og rabatt`,
+      description: "Tilleggsinfo og rabattkoder",
+      icon: <MessageSquare className="w-4 h-4" />,
+    },
+    {
+      id: "payment",
+      title: `${nextNumber + 2}. Betaling`,
+      description: "Fullfør bookingen",
+      icon: <CreditCard className="w-4 h-4" />,
+    }
+  );
+
+  return baseSteps;
+}
 
 
 interface BookingStepperProps {
@@ -55,6 +75,10 @@ interface BookingStepperProps {
   serviceAmountNOK: number;
   stylistCanTravel: boolean;
   stylistHasOwnPlace: boolean;
+  hasTrialSession?: boolean;
+  trialSessionPrice?: number;
+  trialSessionDurationMinutes?: number;
+  trialSessionDescription?: string;
   onComplete: () => void;
 }
 
@@ -64,6 +88,10 @@ export function BookingStepper({
   serviceAmountNOK,
   stylistCanTravel,
   stylistHasOwnPlace,
+  hasTrialSession,
+  trialSessionPrice,
+  trialSessionDurationMinutes,
+  trialSessionDescription,
   onComplete,
 }: BookingStepperProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -78,6 +106,12 @@ export function BookingStepper({
     setBookingContext
   } = useBookingStore();
 
+  // Create stepper dynamically based on trial session availability
+  const { Stepper } = React.useMemo(() => {
+    const stepperSteps = createStepperSteps(hasTrialSession || false);
+    return defineStepper(...stepperSteps);
+  }, [hasTrialSession]);
+
   // Update booking context when props change
   useEffect(() => {
     setBookingContext({
@@ -86,8 +120,12 @@ export function BookingStepper({
       serviceAmountNOK,
       stylistCanTravel,
       stylistHasOwnPlace,
+      hasTrialSession,
+      trialSessionPrice,
+      trialSessionDurationMinutes,
+      trialSessionDescription,
     });
-  }, [stylistId, serviceDurationMinutes, serviceAmountNOK, stylistCanTravel, stylistHasOwnPlace, setBookingContext]);
+  }, [stylistId, serviceDurationMinutes, serviceAmountNOK, stylistCanTravel, stylistHasOwnPlace, hasTrialSession, trialSessionPrice, trialSessionDurationMinutes, trialSessionDescription, setBookingContext]);
 
   const handleTimeSlotSelect = (startTime: Date, endTime: Date) => {
     updateBookingData({ startTime, endTime });
@@ -156,6 +194,7 @@ export function BookingStepper({
             {!isMobile &&
               methods.switch({
                 "time-selection": () => renderStepContent("time-selection"),
+                ...(hasTrialSession ? { "trial-session": () => renderStepContent("trial-session") } : {}),
                 "location-details": () => renderStepContent("location-details"),
                 "message-discount": () => renderStepContent("message-discount"),
                 payment: () => renderStepContent("payment"),
@@ -167,7 +206,9 @@ export function BookingStepper({
                 onClick={() => {
                   methods.prev();
                   // Update our store state to match
-                  const steps = ["time-selection", "location-details", "message-discount", "payment"] as const;
+                  const steps = hasTrialSession 
+                    ? ["time-selection", "trial-session", "location-details", "message-discount", "payment"] as const
+                    : ["time-selection", "location-details", "message-discount", "payment"] as const;
                   const currentIndex = steps.indexOf(currentStep);
                   if (currentIndex > 0) {
                     setCurrentStep(steps[currentIndex - 1]);
@@ -184,7 +225,9 @@ export function BookingStepper({
                   } else {
                     methods.next();
                     // Update our store state to match
-                    const steps = ["time-selection", "location-details", "message-discount", "payment"] as const;
+                    const steps = hasTrialSession 
+                      ? ["time-selection", "trial-session", "location-details", "message-discount", "payment"] as const
+                      : ["time-selection", "location-details", "message-discount", "payment"] as const;
                     const currentIndex = steps.indexOf(currentStep);
                     if (currentIndex < steps.length - 1) {
                       setCurrentStep(steps[currentIndex + 1]);
@@ -218,6 +261,18 @@ export function BookingStepper({
               serviceDurationMinutes={serviceDurationMinutes}
               onTimeSlotSelect={handleTimeSlotSelect}
               selectedStartTime={bookingData.startTime}
+            />
+          </Stepper.Panel>
+        );
+
+      case "trial-session":
+        return (
+          <Stepper.Panel>
+            <TrialSessionStep
+              trialSessionPrice={trialSessionPrice}
+              trialSessionDurationMinutes={trialSessionDurationMinutes}
+              trialSessionDescription={trialSessionDescription}
+              mainBookingDate={bookingData.startTime}
             />
           </Stepper.Panel>
         );

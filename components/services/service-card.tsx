@@ -34,6 +34,10 @@ export type ServiceWithRelations = {
   stylist_id: string;
   created_at: string;
   updated_at: string;
+  has_trial_session?: boolean;
+  trial_session_price?: number | null;
+  trial_session_duration_minutes?: number | null;
+  trial_session_description?: string | null;
   service_service_categories?: Array<{
     service_categories: {
       id: string;

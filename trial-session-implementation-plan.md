@@ -32,7 +32,7 @@ A trial session is a preliminary version of a service that happens before the ma
 
 ## Implementation Phases
 
-### Phase 1: Database Schema Updates
+### ✅ Phase 1: Database Schema Updates
 
 #### 1.1 Services Table Updates
 
@@ -73,7 +73,7 @@ CREATE POLICY "Stylists can update their trial sessions" ON public.bookings
     );
 ```
 
-### Phase 2: Service Management UI Updates
+### ✅ Phase 2: Service Management UI Updates
 
 #### 2.1 Service Form Component Updates
 

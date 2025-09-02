@@ -356,7 +356,7 @@ export async function getBookingDetails(bookingId: string) {
                     trial_session_description
                 )
             ),
-            trial_booking:bookings!trial_booking_id(
+            trial_booking:bookings!bookings_trial_booking_id_fkey(
                 id,
                 start_time,
                 end_time,
@@ -590,23 +590,20 @@ export async function createBookingWithServices(
             }
         }
 
-        // 3. Calculate enhanced payment breakdown with discount support
-        const { calculateBookingPaymentBreakdown } = await import(
+        // 3. Calculate final price using the validated discount amount
+        // The discount validation already handled max order amount limits
+        const discountAmountNOK = validationResult?.discountAmount || 0;
+        const finalPrice = input.totalPrice - discountAmountNOK;
+
+        // Calculate platform fee breakdown for payment processing
+        const { calculatePlatformFee } = await import(
             "@/schemas/platform-config.schema"
         );
-
-        const paymentBreakdown = calculateBookingPaymentBreakdown({
-            serviceAmountNOK: input.totalPrice,
+        
+        const platformFeeBreakdown = calculatePlatformFee({
+            totalAmountNOK: finalPrice,
             hasAffiliate: false, // TODO: Implement affiliate logic
-            appliedDiscount: validatedDiscount
-                ? {
-                    discountPercentage: validatedDiscount.discountPercentage,
-                    discountAmountNOK: validatedDiscount.discountAmountNOK,
-                }
-                : undefined,
         });
-
-        const finalPrice = paymentBreakdown.totalAmountNOK;
 
         // Get stylist Stripe account ID for payment processing
         const { data: stylistDetails, error: stylistError } = await supabase
@@ -622,12 +619,7 @@ export async function createBookingWithServices(
             };
         }
 
-        // Debug logging for payment intent
-        console.log("=== BOOKING ACTION PAYMENT DEBUG ===");
-        console.log("Payment breakdown:", paymentBreakdown);
-        console.log("Final price:", finalPrice);
-        console.log("Discount amount NOK:", paymentBreakdown.discountAmountNOK);
-        console.log("Input discount code:", input.discountCode);
+        // Calculate final price after discounts
 
         // Create Stripe PaymentIntent with real integration
         const paymentIntentResult = await createStripePaymentIntent({
@@ -637,7 +629,7 @@ export async function createBookingWithServices(
             customerId: user.id,
             stylistId: input.stylistId,
             hasAffiliate: false, // TODO: Implement affiliate logic
-            discountAmountNOK: paymentBreakdown.discountAmountNOK || 0,
+            discountAmountNOK: discountAmountNOK,
             discountCode: input.discountCode,
         });
 
@@ -690,7 +682,7 @@ export async function createBookingWithServices(
             status: "pending",
             address_id: addressId,
             discount_id: validatedDiscount?.id || null,
-            discount_applied: paymentBreakdown.discountAmountNOK || 0,
+            discount_applied: discountAmountNOK,
             total_price: finalPrice,
             total_duration_minutes: input.totalDurationMinutes,
             stripe_payment_intent_id: stripePaymentIntentId,
@@ -751,7 +743,7 @@ export async function createBookingWithServices(
             return { error: "Failed to link services to booking", data: null };
         }
 
-        let trialBooking: DatabaseTables["bookings"]["Row"] | null = null;
+        // Create trial session booking if requested
         if (
             input.includeTrialSession && input.trialSessionStartTime &&
             input.trialSessionEndTime
@@ -786,7 +778,6 @@ export async function createBookingWithServices(
                 // Don't fail the entire booking for trial session failure, but log it
                 // The main booking can proceed without trial session
             } else if (trialBookingResult) {
-                trialBooking = trialBookingResult;
 
                 // Link the same services to the trial booking
                 const trialBookingServices = input.serviceIds.map((
@@ -842,32 +833,22 @@ export async function createBookingWithServices(
             .insert({
                 booking_id: booking.id,
                 payment_intent_id: stripePaymentIntentId,
-                original_amount: Math.round(
-                    paymentBreakdown.originalTotalAmountNOK * 100,
-                ), // Original amount in øre
-                discount_amount: Math.round(
-                    (paymentBreakdown.discountAmountNOK || 0) * 100,
-                ), // Discount amount in øre
-                final_amount: Math.round(paymentBreakdown.totalAmountNOK * 100), // Final amount in øre
-                platform_fee: Math.round(paymentBreakdown.platformFeeNOK * 100), // Platform fee in øre
-                stylist_payout: Math.round(
-                    paymentBreakdown.stylistPayoutNOK * 100,
-                ), // Stylist payout in øre
-                affiliate_commission: Math.round(
-                    (paymentBreakdown.affiliateCommissionNOK || 0) * 100,
-                ), // Affiliate commission in øre
+                original_amount: input.totalPrice, // Original amount in NOK
+                discount_amount: discountAmountNOK, // Discount amount in NOK
+                final_amount: finalPrice, // Final amount in NOK
+                platform_fee: platformFeeBreakdown.platformFeeNOK, // Platform fee in NOK
+                stylist_payout: platformFeeBreakdown.stylistPayoutNOK, // Stylist payout in NOK
+                affiliate_commission: platformFeeBreakdown.affiliateCommissionNOK || 0, // Affiliate commission in NOK
                 stripe_application_fee_amount: Math.round(
                     paymentIntentResult.data.applicationFeeNOK * 100,
-                ), // Stripe application fee in øre
+                ), // Stripe application fee in øre (only this field needs øre for Stripe)
                 currency: "NOK",
                 status: "pending",
                 refunded_amount: 0, // Default to 0, will be updated when refunds occur
                 discount_code: input.discountCode,
                 discount_percentage: validatedDiscount?.discountPercentage ||
                     null,
-                discount_fixed_amount: validatedDiscount?.discountAmountNOK
-                    ? Math.round(validatedDiscount.discountAmountNOK * 100)
-                    : null,
+                discount_fixed_amount: validatedDiscount?.discountAmountNOK || null, // Fixed discount amount in NOK
                 // TODO: Add affiliate fields when affiliate system is implemented
                 // affiliate_id: affiliateId,
                 // affiliate_commission_percentage: affiliateCommissionPercentage,
@@ -886,18 +867,13 @@ export async function createBookingWithServices(
                 booking,
                 stripePaymentIntentId,
                 paymentIntentClientSecret,
-                finalPrice: paymentBreakdown.totalAmountNOK,
-                discountAmount: paymentBreakdown.discountAmountNOK || 0,
-                platformFeeNOK: paymentBreakdown.platformFeeNOK,
-                stylistPayoutNOK: paymentBreakdown.stylistPayoutNOK,
-                affiliateCommissionNOK:
-                    paymentBreakdown.affiliateCommissionNOK || 0,
+                finalPrice: finalPrice,
+                discountAmount: discountAmountNOK,
+                platformFeeNOK: platformFeeBreakdown.platformFeeNOK,
+                stylistPayoutNOK: platformFeeBreakdown.stylistPayoutNOK,
+                affiliateCommissionNOK: platformFeeBreakdown.affiliateCommissionNOK || 0,
                 // Additional breakdown for transparency
-                originalTotalAmountNOK: paymentBreakdown.originalTotalAmountNOK,
-                platformFeeReductionNOK:
-                    paymentBreakdown.platformFeeReductionNOK || 0,
-                stylistPayoutReductionNOK:
-                    paymentBreakdown.stylistPayoutReductionNOK || 0,
+                originalTotalAmountNOK: input.totalPrice,
             },
             error: null,
         };

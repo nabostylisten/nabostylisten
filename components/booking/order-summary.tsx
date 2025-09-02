@@ -5,6 +5,12 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Info, Percent, Tag } from "lucide-react";
 import type { DatabaseTables } from "@/types";
+import { 
+  cartItemsToBookingItems, 
+  getBookingBreakdown, 
+  formatCurrency, 
+  formatPercentage 
+} from "@/lib/booking-calculations";
 
 interface CartItem {
   service: {
@@ -44,31 +50,21 @@ export function OrderSummary({
   trialSession,
   className,
 }: OrderSummaryProps) {
-  const itemsSubtotal = items.reduce((total, item) => {
-    return total + item.service.price * item.quantity;
-  }, 0);
+  // Convert cart items to booking items format and get calculated breakdown
+  const bookingItems = cartItemsToBookingItems(items);
+  const trialSessionData = trialSession ? { price: trialSession.price } : null;
+  const appliedDiscountData = appliedDiscount ? {
+    discountAmount: appliedDiscount.discountAmount,
+    code: appliedDiscount.code,
+    wasLimitedByMaxOrderAmount: appliedDiscount.wasLimitedByMaxOrderAmount,
+    maxOrderAmountNOK: appliedDiscount.maxOrderAmountNOK,
+  } : null;
 
-  const trialSessionAmount = trialSession?.price || 0;
-  const subtotal = itemsSubtotal + trialSessionAmount;
-  const discountAmount = appliedDiscount?.discountAmount || 0;
-  const total = subtotal - discountAmount;
-
-  const formatCurrency = (amount: number) => {
-    return (
-      amount.toLocaleString("no-NO", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }) + " kr"
-    );
-  };
-
-  const formatPercentage = (percentage: number) => {
-    return (
-      percentage.toLocaleString("no-NO", {
-        maximumFractionDigits: 1,
-      }) + "%"
-    );
-  };
+  const breakdown = getBookingBreakdown({
+    items: bookingItems,
+    trialSession: trialSessionData,
+    appliedDiscount: appliedDiscountData,
+  });
 
   return (
     <Card className={className}>
@@ -104,7 +100,7 @@ export function OrderSummary({
         {/* Subtotal */}
         <div className="flex justify-between text-sm">
           <span>Subtotal</span>
-          <span>{formatCurrency(subtotal)}</span>
+          <span>{breakdown.formattedSubtotal}</span>
         </div>
 
         {/* Applied discount */}
@@ -126,7 +122,7 @@ export function OrderSummary({
                   </Badge>
                 ) : null}
                 <span className="text-green-600 font-medium">
-                  -{formatCurrency(discountAmount)}
+                  -{breakdown.formattedDiscountAmount}
                 </span>
               </div>
             </div>
@@ -152,16 +148,16 @@ export function OrderSummary({
         {/* Total */}
         <div className="flex justify-between font-semibold text-lg">
           <span>Total</span>
-          <span>{formatCurrency(total)}</span>
+          <span>{breakdown.formattedFinalTotal}</span>
         </div>
 
         {/* Savings indicator */}
-        {appliedDiscount && discountAmount > 0 && (
+        {appliedDiscount && breakdown.discountAmount > 0 && (
           <div className="bg-green-50 dark:bg-green-950/20 rounded-lg p-3">
             <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
               <Percent className="w-4 h-4" />
               <span className="text-sm font-medium">
-                Du sparer {formatCurrency(discountAmount)}!
+                Du sparer {breakdown.formattedDiscountAmount}!
               </span>
             </div>
           </div>

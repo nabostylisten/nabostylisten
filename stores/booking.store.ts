@@ -9,25 +9,28 @@ export interface AppliedDiscount {
   discount: DatabaseTables["discounts"]["Row"];
   discountAmount: number;
   code: string;
+  wasLimitedByMaxOrderAmount?: boolean;
+  maxOrderAmountNOK?: number;
+  originalOrderAmountNOK?: number;
 }
 
 export interface BookingStepData {
   // Time selection step
   startTime?: Date;
   endTime?: Date;
-  
+
   // Trial session step
   trialSessionDate?: Date;
   trialSessionStartTime?: Date;
   trialSessionEndTime?: Date;
   wantsTrialSession?: boolean;
-  
+
   // Location step
   location: "stylist" | "customer";
   customerAddress?: string;
   customerAddressId?: string;
   customerAddressDetails?: Address;
-  
+
   // Message and discount step
   messageToStylist?: string;
   appliedDiscount?: AppliedDiscount;
@@ -35,11 +38,16 @@ export interface BookingStepData {
 
 export interface BookingStore {
   // Current step in the booking flow
-  currentStep: "time-selection" | "trial-session" | "location-details" | "message-discount" | "payment";
-  
+  currentStep:
+    | "time-selection"
+    | "trial-session"
+    | "location-details"
+    | "message-discount"
+    | "payment";
+
   // Booking data across all steps
   bookingData: BookingStepData;
-  
+
   // Context data for the booking
   stylistId?: string;
   serviceDurationMinutes?: number;
@@ -50,10 +58,10 @@ export interface BookingStore {
   trialSessionPrice?: number;
   trialSessionDurationMinutes?: number;
   trialSessionDescription?: string;
-  
+
   // Processing state
   isProcessingBooking: boolean;
-  
+
   // Actions
   setCurrentStep: (step: BookingStore["currentStep"]) => void;
   updateBookingData: (updates: Partial<BookingStepData>) => void;
@@ -70,11 +78,11 @@ export interface BookingStore {
   }) => void;
   setProcessingState: (isProcessing: boolean) => void;
   clearBooking: () => void;
-  
+
   // Step validation helpers
   canProceedFromStep: (stepId: string) => boolean;
   isStepAccessible: (stepId: string) => boolean;
-  
+
   // Total calculation helpers
   getTotalAmount: () => number;
   getTrialSessionAmount: () => number;
@@ -104,7 +112,7 @@ export const useBookingStore = create<BookingStore>()(
 
       updateBookingData: (updates) => {
         set((state) => ({
-          bookingData: { ...state.bookingData, ...updates }
+          bookingData: { ...state.bookingData, ...updates },
         }));
       },
 
@@ -114,8 +122,8 @@ export const useBookingStore = create<BookingStore>()(
           // Update default location based on stylist capabilities
           bookingData: {
             ...state.bookingData,
-            location: context.stylistHasOwnPlace ? "stylist" : "customer"
-          }
+            location: context.stylistHasOwnPlace ? "stylist" : "customer",
+          },
         }));
       },
 
@@ -145,7 +153,7 @@ export const useBookingStore = create<BookingStore>()(
       canProceedFromStep: (stepId) => {
         const state = get();
         const { bookingData } = state;
-        
+
         switch (stepId) {
           case "time-selection":
             return !!(bookingData.startTime && bookingData.endTime);
@@ -163,7 +171,8 @@ export const useBookingStore = create<BookingStore>()(
               bookingData.location &&
               (bookingData.location === "stylist" ||
                 (bookingData.location === "customer" &&
-                  (bookingData.customerAddressId || bookingData.customerAddress)))
+                  (bookingData.customerAddressId ||
+                    bookingData.customerAddress)))
             );
           case "message-discount":
             return true; // Optional fields
@@ -176,7 +185,7 @@ export const useBookingStore = create<BookingStore>()(
 
       isStepAccessible: (stepId) => {
         const state = get();
-        
+
         switch (stepId) {
           case "time-selection":
             return true; // First step is always accessible
@@ -185,18 +194,24 @@ export const useBookingStore = create<BookingStore>()(
           case "location-details":
             return (
               state.canProceedFromStep("time-selection") &&
-              (state.hasTrialSession ? state.canProceedFromStep("trial-session") : true)
+              (state.hasTrialSession
+                ? state.canProceedFromStep("trial-session")
+                : true)
             );
           case "message-discount":
             return (
               state.canProceedFromStep("time-selection") &&
-              (state.hasTrialSession ? state.canProceedFromStep("trial-session") : true) &&
+              (state.hasTrialSession
+                ? state.canProceedFromStep("trial-session")
+                : true) &&
               state.canProceedFromStep("location-details")
             );
           case "payment":
             return (
               state.canProceedFromStep("time-selection") &&
-              (state.hasTrialSession ? state.canProceedFromStep("trial-session") : true) &&
+              (state.hasTrialSession
+                ? state.canProceedFromStep("trial-session")
+                : true) &&
               state.canProceedFromStep("location-details") &&
               state.canProceedFromStep("message-discount")
             );
@@ -209,7 +224,8 @@ export const useBookingStore = create<BookingStore>()(
         const state = get();
         const serviceAmount = state.serviceAmountNOK || 0;
         const trialAmount = state.getTrialSessionAmount();
-        const discountAmount = state.bookingData.appliedDiscount?.discountAmount || 0;
+        const discountAmount =
+          state.bookingData.appliedDiscount?.discountAmount || 0;
         return serviceAmount + trialAmount - discountAmount;
       },
 
@@ -242,21 +258,42 @@ export const useBookingStore = create<BookingStore>()(
       onRehydrateStorage: () => (state) => {
         if (state && state.bookingData) {
           // Convert string dates back to Date objects
-          if (state.bookingData.startTime && typeof state.bookingData.startTime === 'string') {
+          if (
+            state.bookingData.startTime &&
+            typeof state.bookingData.startTime === "string"
+          ) {
             state.bookingData.startTime = new Date(state.bookingData.startTime);
           }
-          if (state.bookingData.endTime && typeof state.bookingData.endTime === 'string') {
+          if (
+            state.bookingData.endTime &&
+            typeof state.bookingData.endTime === "string"
+          ) {
             state.bookingData.endTime = new Date(state.bookingData.endTime);
           }
           // Handle trial session dates
-          if (state.bookingData.trialSessionDate && typeof state.bookingData.trialSessionDate === 'string') {
-            state.bookingData.trialSessionDate = new Date(state.bookingData.trialSessionDate);
+          if (
+            state.bookingData.trialSessionDate &&
+            typeof state.bookingData.trialSessionDate === "string"
+          ) {
+            state.bookingData.trialSessionDate = new Date(
+              state.bookingData.trialSessionDate,
+            );
           }
-          if (state.bookingData.trialSessionStartTime && typeof state.bookingData.trialSessionStartTime === 'string') {
-            state.bookingData.trialSessionStartTime = new Date(state.bookingData.trialSessionStartTime);
+          if (
+            state.bookingData.trialSessionStartTime &&
+            typeof state.bookingData.trialSessionStartTime === "string"
+          ) {
+            state.bookingData.trialSessionStartTime = new Date(
+              state.bookingData.trialSessionStartTime,
+            );
           }
-          if (state.bookingData.trialSessionEndTime && typeof state.bookingData.trialSessionEndTime === 'string') {
-            state.bookingData.trialSessionEndTime = new Date(state.bookingData.trialSessionEndTime);
+          if (
+            state.bookingData.trialSessionEndTime &&
+            typeof state.bookingData.trialSessionEndTime === "string"
+          ) {
+            state.bookingData.trialSessionEndTime = new Date(
+              state.bookingData.trialSessionEndTime,
+            );
           }
         }
       },

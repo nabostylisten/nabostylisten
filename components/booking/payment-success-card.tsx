@@ -133,11 +133,12 @@ export function PaymentSuccessCard({
     const trialDate = booking?.trial_booking?.start_time
       ? new Date(booking.trial_booking.start_time).toLocaleDateString("no-NO")
       : null;
-    const totalAmount = booking?.total_price && booking?.trial_booking?.total_price
-      ? `${booking.total_price + booking.trial_booking.total_price} NOK`
-      : booking?.total_price
-      ? `${booking.total_price} NOK`
-      : "Ikke spesifisert";
+    const totalAmount =
+      booking?.total_price && booking?.trial_booking?.total_price
+        ? `${booking.total_price + booking.trial_booking.total_price} NOK`
+        : booking?.total_price
+          ? `${booking.total_price} NOK`
+          : "Ikke spesifisert";
 
     const body = encodeURIComponent(`Hei Nabostylisten-teamet,
 
@@ -147,8 +148,12 @@ Bookingdetaljer:
 - Booking ID: ${bookingId}
 - Betalings-ID: ${paymentIntentId}
 - Tjenester: ${services}
-- Dato: ${bookingDate}${trialDate ? `
-- Prøvetime dato: ${trialDate}` : ''}
+- Dato: ${bookingDate}${
+      trialDate
+        ? `
+- Prøvetime dato: ${trialDate}`
+        : ""
+    }
 - Totalt beløp: ${totalAmount}
 
 Vennligst send meg kvitteringen på e-post eller bekreft at betalingen ble mottatt.
@@ -162,6 +167,8 @@ Med vennlig hilsen`);
   const content =
     STATUS_CONTENT_MAP[paymentStatus] || STATUS_CONTENT_MAP.default;
   const Icon = content.icon;
+
+  console.log({ booking });
 
   if (isLoading) {
     return (
@@ -355,16 +362,20 @@ Med vennlig hilsen`);
                           );
                         }
                       )}
-                      
+
                       {/* Trial session if exists */}
                       {booking.trial_booking && (
                         <div className="pt-2 border-t">
                           <div className="flex justify-between items-start">
                             <div className="flex-1">
-                              <p className="font-medium text-primary">Prøvetime</p>
+                              <p className="font-medium text-primary">
+                                Prøvetime
+                              </p>
                               {booking.trial_booking.start_time && (
                                 <p className="text-sm text-muted-foreground">
-                                  {new Date(booking.trial_booking.start_time).toLocaleDateString("no-NO", {
+                                  {new Date(
+                                    booking.trial_booking.start_time
+                                  ).toLocaleDateString("no-NO", {
                                     weekday: "long",
                                     day: "numeric",
                                     month: "long",
@@ -375,19 +386,19 @@ Med vennlig hilsen`);
                               )}
                               {booking.trial_booking.total_duration_minutes && (
                                 <p className="text-sm text-muted-foreground">
-                                  {booking.trial_booking.total_duration_minutes} minutter
+                                  {booking.trial_booking.total_duration_minutes}{" "}
+                                  minutter
                                 </p>
                               )}
                             </div>
                             <div className="text-right">
                               <p className="font-medium text-primary">
-                                {(booking.trial_booking.total_price || 0).toLocaleString(
-                                  "no-NO",
-                                  {
-                                    style: "currency",
-                                    currency: "NOK",
-                                  }
-                                )}
+                                {(
+                                  booking.trial_booking.total_price || 0
+                                ).toLocaleString("no-NO", {
+                                  style: "currency",
+                                  currency: "NOK",
+                                })}
                               </p>
                             </div>
                           </div>
@@ -401,8 +412,7 @@ Med vennlig hilsen`);
                         <span className="text-muted-foreground">Subtotal</span>
                         <span>
                           {(
-                            booking.total_price + 
-                            booking.discount_applied + 
+                            (booking.booking_services?.reduce((total, bs) => total + (bs.service?.price || 0), 0) || 0) +
                             (booking.trial_booking?.total_price || 0)
                           ).toLocaleString("no-NO", {
                             style: "currency",
@@ -428,7 +438,7 @@ Med vennlig hilsen`);
                         <span>Totalt</span>
                         <span>
                           {(
-                            (booking.total_price || 0) + 
+                            (booking.total_price || 0) +
                             (booking.trial_booking?.total_price || 0)
                           ).toLocaleString("no-NO", {
                             style: "currency",

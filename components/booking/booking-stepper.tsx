@@ -4,6 +4,7 @@ import React, { useEffect } from "react";
 import {
   Calendar,
   Clock,
+  Info,
   MapPin,
   CreditCard,
   MessageSquare,
@@ -22,6 +23,7 @@ import { TrialSessionStep } from "@/components/booking/trial-session-step";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { useBookingStore } from "@/stores/booking.store";
+import { formatCurrency, getBookingBreakdown } from "@/lib/booking-calculations";
 
 // Create stepper steps dynamically based on trial session availability
 function createStepperSteps(hasTrialSession: boolean) {
@@ -386,6 +388,22 @@ export function BookingStepper({
         );
 
       case "payment":
+        // Calculate breakdown using common utilities
+        const bookingItems = [{ price: serviceAmountNOK, quantity: 1 }];
+        const trialSessionData = (bookingData.wantsTrialSession && trialSessionPrice) ? { price: trialSessionPrice } : null;
+        const appliedDiscountData = bookingData.appliedDiscount ? {
+          discountAmount: bookingData.appliedDiscount.discountAmount,
+          code: bookingData.appliedDiscount.code,
+          wasLimitedByMaxOrderAmount: bookingData.appliedDiscount.wasLimitedByMaxOrderAmount,
+          maxOrderAmountNOK: bookingData.appliedDiscount.maxOrderAmountNOK,
+        } : null;
+        
+        const breakdown = getBookingBreakdown({
+          items: bookingItems,
+          trialSession: trialSessionData,
+          appliedDiscount: appliedDiscountData,
+        });
+
         return (
           <Stepper.Panel>
             <Card>
@@ -424,7 +442,7 @@ export function BookingStepper({
                             {format(bookingData.trialSessionEndTime!, "HH:mm")}
                             {trialSessionPrice && (
                               <span className="ml-2 text-muted-foreground">
-                                ({trialSessionPrice} NOK)
+                                ({formatCurrency(trialSessionPrice)})
                               </span>
                             )}
                           </span>
@@ -442,37 +460,50 @@ export function BookingStepper({
                       </p>
                     )}
                     {bookingData.appliedDiscount && (
-                      <p className="text-sm">
-                        <strong>Rabattkode:</strong>{" "}
-                        {bookingData.appliedDiscount.code}
-                        <span className="ml-2 text-green-600">
-                          (-
-                          {bookingData.appliedDiscount.discountAmount.toLocaleString(
-                            "no-NO"
-                          )}{" "}
-                          kr)
-                        </span>
-                      </p>
-                    )}
-                    {bookingData.wantsTrialSession && trialSessionPrice && (
-                      <div className="pt-2 border-t border-border">
-                        <p className="text-sm font-medium">
-                          <strong>Totalt:</strong>{" "}
-                          {serviceAmountNOK + trialSessionPrice} NOK
-                          {bookingData.appliedDiscount && (
-                            <span className="text-muted-foreground">
-                              {" "}
-                              ({serviceAmountNOK} NOK + {trialSessionPrice} NOK
-                              prøvetime
-                              {bookingData.appliedDiscount
-                                ? ` - ${bookingData.appliedDiscount.discountAmount} NOK rabatt`
-                                : ""}
-                              )
-                            </span>
-                          )}
+                      <div className="space-y-2">
+                        <p className="text-sm">
+                          <strong>Rabattkode:</strong>{" "}
+                          {bookingData.appliedDiscount.code}
+                          <span className="ml-2 text-green-600">
+                            (-{breakdown.formattedDiscountAmount})
+                          </span>
                         </p>
+                        {/* Maximum order amount feedback */}
+                        {bookingData.appliedDiscount
+                          .wasLimitedByMaxOrderAmount &&
+                          bookingData.appliedDiscount.maxOrderAmountNOK && (
+                            <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-xs border border-blue-200 dark:border-blue-800">
+                              <Info className="w-3 h-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                              <p className="text-blue-800 dark:text-blue-200">
+                                <span className="font-medium">
+                                  Rabattgrense:
+                                </span>{" "}
+                                Denna rabatten gjelder kun for bestillinger opp
+                                til{" "}
+                                {formatCurrency(
+                                  bookingData.appliedDiscount.maxOrderAmountNOK
+                                )}
+                                .
+                              </p>
+                            </div>
+                          )}
                       </div>
                     )}
+                    <div className="pt-2 border-t border-border">
+                      <p className="text-sm font-medium">
+                        <strong>Totalt:</strong>{" "}
+                        {breakdown.formattedFinalTotal}
+                        {bookingData.appliedDiscount && (
+                          <span className="text-muted-foreground">
+                            {" "}
+                            ({breakdown.formattedServiceSubtotal}
+                            {breakdown.hasTrialSession && ` + ${breakdown.formattedTrialSessionAmount} prøvetime`}
+                            {breakdown.hasDiscount && ` - ${breakdown.formattedDiscountAmount} rabatt`}
+                            )
+                          </span>
+                        )}
+                      </p>
+                    </div>
                   </div>
                   <p className="text-sm text-muted-foreground">
                     Ved å fullføre bookingen godtar du våre vilkår og

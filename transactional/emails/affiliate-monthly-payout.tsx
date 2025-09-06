@@ -4,6 +4,7 @@ import {
   Head,
   Heading,
   Html,
+  Img,
   Link,
   Preview,
   Section,
@@ -11,9 +12,15 @@ import {
   Button,
   Hr,
 } from "@react-email/components";
-import * as React from "react";
+import {
+  baseStyles,
+  sectionStyles,
+  buttonStyles,
+  colors,
+} from "./utils/styles";
 
 interface AffiliateMonthlyPayoutProps {
+  logoUrl: string;
   stylistName: string;
   payoutAmount: number;
   currency: string;
@@ -26,201 +33,186 @@ interface AffiliateMonthlyPayoutProps {
 }
 
 export const AffiliateMonthlyPayout = ({
+  logoUrl,
   stylistName = "Anna",
-  payoutAmount = 2450.50,
+  payoutAmount = 2450.5,
   currency = "NOK",
   periodStart = "2024-03-01",
   periodEnd = "2024-03-31",
   totalBookings = 12,
-  totalCommissions = 2450.50,
+  totalCommissions = 2450.5,
   dashboardUrl = "https://nabostylisten.no/profiler/123/partner/utbetalinger",
   payoutDate = "2024-04-05",
 }: AffiliateMonthlyPayoutProps) => {
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('no-NO', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return new Date(dateString).toLocaleDateString("no-NO", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
   const formatAmount = (amount: number) => {
-    return amount.toLocaleString('no-NO', {
+    return amount.toLocaleString("no-NO", {
       minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      maximumFractionDigits: 2,
     });
   };
+
+  const previewText = `Din månedlige partnerutbetaling er på vei! 💰`;
 
   return (
     <Html>
       <Head />
-      <Preview>Din månedlige partnerutbetaling er på vei! 💰</Preview>
+      <Preview>{previewText}</Preview>
       <Body style={main}>
         <Container style={container}>
-            <Section style={section}>
-              <Heading style={h1}>Din partnerutbetaling er på vei! 💰</Heading>
-              
-              <Text style={text}>
-                Kjære {stylistName},
+          <Section style={logoContainer}>
+            <Img
+              src={logoUrl}
+              width="120"
+              height="36"
+              alt="Nabostylisten"
+              style={logo}
+            />
+          </Section>
+
+          <Heading style={heading}>Din partnerutbetaling er på vei! 💰</Heading>
+
+          <Text style={paragraph}>Kjære {stylistName},</Text>
+
+          <Text style={paragraph}>
+            Vi er glade for å informere deg om din månedlige partnerutbetaling
+            for perioden {formatDate(periodStart)} - {formatDate(periodEnd)}.
+          </Text>
+
+          <Section style={summarySection}>
+            <Heading style={subHeading}>Utbetalingssammendrag</Heading>
+
+            <div style={summaryGrid}>
+              <div style={summaryItem}>
+                <Text style={summaryLabel}>Periode</Text>
+                <Text style={summaryValue}>
+                  {formatDate(periodStart)} - {formatDate(periodEnd)}
+                </Text>
+              </div>
+
+              <div style={summaryItem}>
+                <Text style={summaryLabel}>Antall bookinger</Text>
+                <Text style={summaryValue}>{totalBookings} stk</Text>
+              </div>
+
+              <div style={summaryItem}>
+                <Text style={summaryLabel}>Total provisjon opptjent</Text>
+                <Text style={summaryValue}>
+                  {formatAmount(totalCommissions)} {currency}
+                </Text>
+              </div>
+
+              <div style={summaryItem}>
+                <Text style={summaryLabel}>Utbetalingsdato</Text>
+                <Text style={summaryValue}>{formatDate(payoutDate)}</Text>
+              </div>
+            </div>
+
+            <Hr style={hr} />
+
+            <div style={totalSection}>
+              <Text style={totalLabel}>Utbetalingsbeløp</Text>
+              <Text style={totalAmount}>
+                {formatAmount(payoutAmount)} {currency}
               </Text>
-              
-              <Text style={text}>
-                Vi er glade for å informere deg om din månedlige partnerutbetaling for 
-                perioden {formatDate(periodStart)} - {formatDate(periodEnd)}.
-              </Text>
+            </div>
+          </Section>
 
-              <Section style={summarySection}>
-                <Heading style={h2}>Utbetalingssammendrag</Heading>
-                
-                <div style={summaryGrid}>
-                  <div style={summaryItem}>
-                    <Text style={summaryLabel}>Periode</Text>
-                    <Text style={summaryValue}>
-                      {formatDate(periodStart)} - {formatDate(periodEnd)}
-                    </Text>
-                  </div>
-                  
-                  <div style={summaryItem}>
-                    <Text style={summaryLabel}>Antall bookinger</Text>
-                    <Text style={summaryValue}>{totalBookings} stk</Text>
-                  </div>
-                  
-                  <div style={summaryItem}>
-                    <Text style={summaryLabel}>Total provisjon opptjent</Text>
-                    <Text style={summaryValue}>
-                      {formatAmount(totalCommissions)} {currency}
-                    </Text>
-                  </div>
-                  
-                  <div style={summaryItem}>
-                    <Text style={summaryLabel}>Utbetalingsdato</Text>
-                    <Text style={summaryValue}>{formatDate(payoutDate)}</Text>
-                  </div>
-                </div>
-                
-                <Hr style={hr} />
-                
-                <div style={totalSection}>
-                  <Text style={totalLabel}>Utbetalingsbeløp</Text>
-                  <Text style={totalAmount}>
-                    {formatAmount(payoutAmount)} {currency}
-                  </Text>
-                </div>
-              </Section>
+          <Section style={infoSection}>
+            <Heading style={subHeading}>Viktig informasjon</Heading>
 
-              <Section style={infoSection}>
-                <Heading style={h2}>Viktig informasjon</Heading>
-                
-                <Text style={infoItem}>
-                  💳 <strong>Utbetaling:</strong> Beløpet vil bli overført til din registrerte 
-                  bankkonto innen 2-5 virkedager
-                </Text>
-                
-                <Text style={infoItem}>
-                  📊 <strong>Rapport:</strong> Detaljert provisjonsrapport finner du i ditt 
-                  partnerdashboard
-                </Text>
-                
-                <Text style={infoItem}>
-                  📧 <strong>Kvittering:</strong> Du vil motta en separat e-post når 
-                  utbetalingen er gjennomført
-                </Text>
-                
-                <Text style={infoItem}>
-                  🧾 <strong>Skatt:</strong> Husk å oppgi partnerinntekter i din selvangivelse
-                </Text>
-              </Section>
+            <Text style={infoItem}>
+              <strong>Rapport:</strong> Detaljert provisjonsrapport finner du i
+              ditt partner-dashboard
+            </Text>
 
-              <Section style={ctaSection}>
-                <Button style={button} href={dashboardUrl}>
-                  Se detaljert rapport
-                </Button>
-              </Section>
+            <Text style={infoItem}>
+              <strong>Kvittering:</strong> Du vil motta en separat e-post når
+              utbetalingen er gjennomført
+            </Text>
+          </Section>
 
-              <Section style={performanceSection}>
-                <Heading style={h2}>Din månedsprestasjon 📈</Heading>
-                
-                <Text style={text}>
-                  Flotte resultater denne måneden! Du har henvist {totalBookings} bookinger 
-                  og tjent {formatAmount(totalCommissions)} {currency} i provisjon.
-                </Text>
-                
-                <Text style={text}>
-                  Fortsett det gode arbeidet med å dele din partnerkode og hjelpe kunder 
-                  med å finne de beste stylisttjenestene. Jo mer du deler, jo mer tjener du!
-                </Text>
-              </Section>
+          <Section style={ctaSection}>
+            <Button style={button} href={dashboardUrl}>
+              Se detaljert rapport
+            </Button>
+          </Section>
 
-              <Text style={text}>
-                Hvis du har spørsmål om utbetalingen eller partnerprogrammet, kontakt oss gjerne 
-                på <Link href="mailto:partner@nabostylisten.no" style={link}>partner@nabostylisten.no</Link>
-              </Text>
-              
-              <Text style={signature}>
-                Takk for ditt samarbeid!<br />
-                Nabostylisten Partner Team
-              </Text>
-            </Section>
-          </Container>
+          <Section style={performanceSection}>
+            <Heading style={subHeading}>Din prestasjon denne måneden</Heading>
+
+            <Text style={paragraph}>
+              Flotte resultater denne måneden! Du har henvist {totalBookings}{" "}
+              bookinger og tjent {formatAmount(totalCommissions)} {currency} i
+              provisjon.
+            </Text>
+
+            <Text style={paragraph}>
+              Fortsett det gode arbeidet med å dele din partnerkode og hjelpe
+              kunder med å finne de beste stylisttjenestene. Jo mer du deler, jo
+              mer tjener du!
+            </Text>
+          </Section>
+
+          <Hr style={hr} />
+
+          <Text style={paragraph}>
+            Hvis du har spørsmål om utbetalingen eller partnerprogrammet,
+            kontakt oss gjerne på{" "}
+            <Link href="mailto:partner@nabostylisten.no" style={link}>
+              partner@nabostylisten.no
+            </Link>
+          </Text>
+
+          <Text style={footer}>
+            Takk for ditt samarbeid!
+            <br />
+            Nabostylisten Partner Team
+          </Text>
+        </Container>
       </Body>
     </Html>
   );
 };
 
+AffiliateMonthlyPayout.PreviewProps = {
+  logoUrl: "https://example.com/logo.png",
+  stylistName: "Anna Nordmann",
+  payoutAmount: 2450.5,
+  currency: "NOK",
+  periodStart: "2024-03-01",
+  periodEnd: "2024-03-31",
+  totalBookings: 12,
+  totalCommissions: 2450.5,
+  dashboardUrl: "https://nabostylisten.no/profiler/123/partner/utbetalinger",
+  payoutDate: "2024-04-05",
+} as AffiliateMonthlyPayoutProps;
+
 export default AffiliateMonthlyPayout;
 
-const main = {
-  backgroundColor: "#ffffff",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-};
+// Using shared Nabostylisten branded styles
+const main = baseStyles.main;
+const container = baseStyles.container;
+const logoContainer = baseStyles.logoContainer;
+const logo = baseStyles.logo;
+const heading = baseStyles.heading;
+const subHeading = baseStyles.subHeading;
+const paragraph = baseStyles.paragraph;
+const hr = baseStyles.hr;
+const footer = baseStyles.footer;
+const link = baseStyles.link;
 
-const container = {
-  margin: "0 auto",
-  padding: "20px 0 48px",
-};
-
-const section = {
-  padding: "24px",
-  border: "solid 1px #dedede",
-  borderRadius: "5px",
-  textAlign: "left" as const,
-};
-
-const h1 = {
-  color: "#333",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-  fontSize: "24px",
-  fontWeight: "bold",
-  margin: "30px 0",
-  padding: "0",
-};
-
-const h2 = {
-  color: "#333",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-  fontSize: "20px",
-  fontWeight: "bold",
-  margin: "20px 0 10px 0",
-  padding: "0",
-};
-
-const text = {
-  color: "#333",
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
-  fontSize: "14px",
-  lineHeight: "24px",
-  margin: "16px 0",
-};
-
+// Specific styles for payout email
 const summarySection = {
-  backgroundColor: "#f8f9fa",
-  padding: "24px",
-  borderRadius: "8px",
-  margin: "24px 0",
+  ...sectionStyles.infoSection,
+  backgroundColor: colors.muted,
 };
 
 const summaryGrid = {
@@ -231,13 +223,14 @@ const summaryGrid = {
 };
 
 const summaryItem = {
-  padding: "12px",
-  backgroundColor: "white",
-  borderRadius: "6px",
+  padding: "12px 16px",
+  backgroundColor: colors.white,
+  borderRadius: "8px",
+  border: `1px solid ${colors.border}`,
 };
 
 const summaryLabel = {
-  color: "#666",
+  color: colors.mutedForeground,
   fontSize: "12px",
   fontWeight: "500",
   textTransform: "uppercase" as const,
@@ -246,89 +239,54 @@ const summaryLabel = {
 };
 
 const summaryValue = {
-  color: "#333",
+  color: colors.foreground,
   fontSize: "16px",
   fontWeight: "600",
   margin: "0",
 };
 
-const hr = {
-  borderColor: "#e1e5e9",
-  margin: "20px 0",
-};
-
 const totalSection = {
   textAlign: "center" as const,
-  padding: "20px",
-  backgroundColor: "#e8f5e8",
-  borderRadius: "8px",
-  border: "2px solid #28a745",
+  padding: "24px",
+  backgroundColor: colors.accent,
+  borderRadius: "12px",
+  border: `2px solid ${colors.accentForeground}`,
 };
 
 const totalLabel = {
-  color: "#155724",
+  color: colors.accentForeground,
   fontSize: "14px",
   fontWeight: "600",
   margin: "0 0 8px 0",
 };
 
 const totalAmount = {
-  color: "#155724",
+  color: colors.accentForeground,
   fontSize: "32px",
   fontWeight: "bold",
   margin: "0",
 };
 
 const infoSection = {
-  margin: "32px 0",
-  backgroundColor: "#fff3cd",
-  padding: "20px",
-  borderRadius: "8px",
-  borderLeft: "4px solid #ffc107",
+  ...sectionStyles.detailsSection,
+  backgroundColor: colors.warning,
+  border: `2px solid ${colors.warningBorder}`,
 };
 
 const infoItem = {
-  color: "#333",
+  color: colors.warningText,
   fontSize: "14px",
-  lineHeight: "24px",
+  lineHeight: "1.6",
   margin: "12px 0",
 };
 
-const ctaSection = {
-  textAlign: "center" as const,
-  margin: "32px 0",
-};
-
-const button = {
-  backgroundColor: "#007bff",
-  borderRadius: "5px",
-  color: "#fff",
-  fontSize: "16px",
-  fontWeight: "bold",
-  textDecoration: "none",
-  textAlign: "center" as const,
-  display: "block",
-  width: "200px",
-  padding: "14px 7px",
-  margin: "0 auto",
-};
+const ctaSection = sectionStyles.actionSection;
+const button = buttonStyles.primary;
 
 const performanceSection = {
   margin: "32px 0",
-  backgroundColor: "#e8f4fd",
-  padding: "20px",
-  borderRadius: "8px",
-  borderLeft: "4px solid #007bff",
-};
-
-const link = {
-  color: "#007bff",
-  textDecoration: "underline",
-};
-
-const signature = {
-  color: "#333",
-  fontSize: "14px",
-  lineHeight: "24px",
-  margin: "32px 0 0 0",
+  padding: "24px",
+  backgroundColor: colors.secondary,
+  borderRadius: "12px",
+  border: `2px solid ${colors.secondaryForeground}`,
 };

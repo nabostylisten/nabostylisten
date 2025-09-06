@@ -107,12 +107,12 @@ This implementation uses traditional discount codes instead of complex link trac
 
 ## Phase 4: Admin Management System (Customer-facing: "Partner")
 
-### 4.1 Unified Admin Interface
+### ✅ 4.1 Unified Admin Interface
 
 - **`/app/admin/partner/page.tsx`**: Single page with tabs
 - Page title: "Partner Administrasjon"
 
-### 4.2 Tab Structure (Following admin-dashboard.tsx pattern)
+### ✅ 4.2 Tab Structure (Following admin-dashboard.tsx pattern)
 
 ```typescript
 const affiliateTabs = [
@@ -143,14 +143,14 @@ const affiliateTabs = [
 ];
 ```
 
-### 4.3 Tab Components (`/components/admin/affiliate/`)
+### ✅ 4.3 Tab Components (`/components/admin/affiliate/`)
 
 - **`AffiliateApplicationsTab`**: Application queue, approval/rejection workflow
 - **`AffiliateCodesTab`**: Active codes, performance metrics, bulk operations
 - **`AffiliatePayoutsTab`**: Commission processing, Stripe Connect integration
 - **`AffiliateAnalyticsTab`**: Platform-wide affiliate performance, top performers
 
-### 4.4 Individual Tab Components
+### ✅ 4.4 Individual Tab Components
 
 - **`AffiliateApplicationReview`**: Application review interface
 - **`AffiliateCodeManagement`**: Code management table
@@ -223,6 +223,11 @@ const checkAffiliateDiscount = async (cart: Cart, userId?: string) => {
 
 - Use existing platform config for commission percentage
 - Apply commission as customer discount (stylist absorbs cost)
+- **TODO:** Note that we must make a change to this.
+  Instead we'll have Platform-funded commission (most common in marketplaces)
+  • Platform takes a slightly smaller cut when affiliate commission is applied.
+  • ✅ Pros: Stylist keeps their normal share, customer unaffected. Commission acts as a marketing cost for the platform.
+  • ❌ Cons: Platform margins are reduced.
 - Track both customer savings and stylist commission
 - Handle refunds by reversing commission
 

@@ -56,6 +56,20 @@ export async function createAffiliateApplication(
     return { error: "Kunne ikke opprette partnersøknad", data: null };
   }
 
+  // Send notification to administrators
+  try {
+    const { sendAffiliateApplicationReceivedNotification } = await import("./affiliate-notifications.actions");
+    const notificationResult = await sendAffiliateApplicationReceivedNotification(application.id);
+    
+    if (notificationResult.error) {
+      console.error("Failed to send admin notification:", notificationResult.error);
+      // Don't fail the application creation, just log the error
+    }
+  } catch (error) {
+    console.error("Error sending admin notification:", error);
+    // Don't fail the application creation, just log the error
+  }
+
   return { error: null, data: application };
 }
 

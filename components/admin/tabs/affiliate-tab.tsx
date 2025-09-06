@@ -6,18 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { 
-  UserCheck, 
-  DollarSign, 
-  TrendingUp, 
-  Search, 
+import {
+  UserCheck,
+  DollarSign,
+  TrendingUp,
+  Search,
   Filter,
   Download,
   Eye,
   CheckCircle,
   XCircle,
   AlertCircle,
-  Users
+  Users,
+  Loader,
 } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { useQuery } from "@tanstack/react-query";
@@ -28,18 +29,20 @@ import {
   getAllAffiliateApplications,
   getAffiliateMetrics,
   approveAffiliateApplication,
-  rejectAffiliateApplication
+  rejectAffiliateApplication,
 } from "@/server/affiliate/affiliate-applications.actions";
 
 import {
   getAllAffiliateCommissions,
-  getCommissionMetrics
+  getCommissionMetrics,
 } from "@/server/affiliate/affiliate-commission.actions";
 
 import {
   getAllAffiliateCodes,
-  deactivateAffiliateCode
+  deactivateAffiliateCode,
 } from "@/server/affiliate/affiliate-codes.actions";
+
+import { AffiliateApplicationDetailsDialog } from "@/components/admin/affiliate-application-details-dialog";
 
 interface AffiliateApplication {
   id: string;
@@ -79,51 +82,112 @@ interface Commission {
 
 function ApplicationsSubTab() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "pending" | "approved" | "rejected"
+  >("all");
+  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+  const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
 
-  const { data: applications, isLoading, refetch } = useQuery({
+  const {
+    data: applications,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["affiliate-applications"],
-    queryFn: getAllAffiliateApplications
+    queryFn: getAllAffiliateApplications,
   });
 
   const handleApprove = async (applicationId: string) => {
-    const result = await approveAffiliateApplication(applicationId);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Partner søknad godkjent!");
-      refetch();
+    const actionKey = `approve-${applicationId}`;
+    setLoadingActions(prev => new Set(prev).add(actionKey));
+    
+    try {
+      const result = await approveAffiliateApplication(applicationId);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Partner søknad godkjent!");
+        refetch();
+      }
+    } catch (error) {
+      toast.error("En uventet feil oppstod");
+    } finally {
+      setLoadingActions(prev => {
+        const next = new Set(prev);
+        next.delete(actionKey);
+        return next;
+      });
     }
   };
 
   const handleReject = async (applicationId: string) => {
-    const result = await rejectAffiliateApplication(applicationId);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Partner søknad avvist");
-      refetch();
+    const actionKey = `reject-${applicationId}`;
+    setLoadingActions(prev => new Set(prev).add(actionKey));
+    
+    try {
+      const result = await rejectAffiliateApplication(applicationId);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Partner søknad avvist");
+        refetch();
+      }
+    } catch (error) {
+      toast.error("En uventet feil oppstod");
+    } finally {
+      setLoadingActions(prev => {
+        const next = new Set(prev);
+        next.delete(actionKey);
+        return next;
+      });
     }
   };
 
-  const filteredApplications = applications?.data?.filter((app: AffiliateApplication) => {
-    const matchesSearch = app.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         app.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || app.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  }) || [];
+  const filteredApplications =
+    applications?.data?.filter((app) => {
+      const matchesSearch =
+        app.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.email.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus =
+        statusFilter === "all" || app.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    }) || [];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "pending":
-        return <Badge variant="outline" className="text-yellow-600 border-yellow-200"><AlertCircle className="w-3 h-3 mr-1" />Venter</Badge>;
+        return (
+          <Badge
+            variant="outline"
+            className="text-yellow-600 border-yellow-200"
+          >
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Venter
+          </Badge>
+        );
       case "approved":
-        return <Badge variant="outline" className="text-green-600 border-green-200"><CheckCircle className="w-3 h-3 mr-1" />Godkjent</Badge>;
+        return (
+          <Badge variant="outline" className="text-green-600 border-green-200">
+            <CheckCircle className="w-3 h-3 mr-1" />
+            Godkjent
+          </Badge>
+        );
       case "rejected":
-        return <Badge variant="outline" className="text-red-600 border-red-200"><XCircle className="w-3 h-3 mr-1" />Avvist</Badge>;
+        return (
+          <Badge variant="outline" className="text-red-600 border-red-200">
+            <XCircle className="w-3 h-3 mr-1" />
+            Avvist
+          </Badge>
+        );
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
+  };
+
+  const handleViewDetails = (applicationId: string) => {
+    setSelectedApplicationId(applicationId);
+    setIsDetailsDialogOpen(true);
   };
 
   return (
@@ -167,17 +231,18 @@ function ApplicationsSubTab() {
           <Card>
             <CardContent className="p-8 text-center">
               <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">Ingen søknader funnet</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                Ingen søknader funnet
+              </h3>
               <p className="text-muted-foreground">
-                {searchTerm || statusFilter !== "all" 
+                {searchTerm || statusFilter !== "all"
                   ? "Ingen søknader matcher dine søkekriterier."
-                  : "Det er ingen partner søknader å vise for øyeblikket."
-                }
+                  : "Det er ingen partner søknader å vise for øyeblikket."}
               </p>
             </CardContent>
           </Card>
         ) : (
-          filteredApplications.map((app: AffiliateApplication) => (
+          filteredApplications.map((app) => (
             <Card key={app.id}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
@@ -187,64 +252,76 @@ function ApplicationsSubTab() {
                       {getStatusBadge(app.status)}
                     </div>
                     <p className="text-sm text-muted-foreground">{app.email}</p>
-                    {app.instagram_handle && (
-                      <p className="text-sm text-muted-foreground">
-                        Instagram: @{app.instagram_handle}
-                      </p>
-                    )}
-                    {app.experience_years && (
-                      <p className="text-sm text-muted-foreground">
-                        Erfaring: {app.experience_years} år
-                      </p>
-                    )}
-                    {app.specialties && app.specialties.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {app.specialties.map((specialty, index) => (
-                          <Badge key={index} variant="secondary" className="text-xs">
-                            {specialty}
-                          </Badge>
-                        ))}
-                      </div>
-                    )}
                     <p className="text-xs text-muted-foreground">
-                      Søkt: {new Date(app.created_at).toLocaleDateString('no-NO')}
+                      Søkt:{" "}
+                      {new Date(app.created_at).toLocaleDateString("no-NO")}
                     </p>
                   </div>
-                  
-                  {app.status === "pending" && (
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleApprove(app.id)}
-                      >
-                        <CheckCircle className="w-4 h-4 mr-1" />
-                        Godkjenn
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleReject(app.id)}
-                      >
-                        <XCircle className="w-4 h-4 mr-1" />
-                        Avvis
-                      </Button>
-                    </div>
-                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleViewDetails(app.id)}
+                    >
+                      <Eye className="w-4 h-4 mr-1" />
+                      Detaljer
+                    </Button>
+                    {app.status === "pending" && (
+                      <>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleApprove(app.id)}
+                          disabled={loadingActions.has(`approve-${app.id}`) || loadingActions.has(`reject-${app.id}`)}
+                        >
+                          {loadingActions.has(`approve-${app.id}`) ? (
+                            <Loader className="w-4 h-4 mr-1 animate-spin" />
+                          ) : (
+                            <CheckCircle className="w-4 h-4 mr-1" />
+                          )}
+                          {loadingActions.has(`approve-${app.id}`) ? "Godkjenner..." : "Godkjenn"}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleReject(app.id)}
+                          disabled={loadingActions.has(`approve-${app.id}`) || loadingActions.has(`reject-${app.id}`)}
+                        >
+                          {loadingActions.has(`reject-${app.id}`) ? (
+                            <Loader className="w-4 h-4 mr-1 animate-spin" />
+                          ) : (
+                            <XCircle className="w-4 h-4 mr-1" />
+                          )}
+                          {loadingActions.has(`reject-${app.id}`) ? "Avviser..." : "Avvis"}
+                        </Button>
+                      </>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
           ))
         )}
       </div>
+
+      <AffiliateApplicationDetailsDialog
+        applicationId={selectedApplicationId}
+        open={isDetailsDialogOpen}
+        onOpenChange={setIsDetailsDialogOpen}
+      />
     </div>
   );
 }
 
 function CodesSubTab() {
-  const { data: codes, isLoading, refetch } = useQuery({
+  const {
+    data: codes,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["affiliate-codes"],
-    queryFn: () => getAllAffiliateCodes()
+    queryFn: () => getAllAffiliateCodes(),
   });
 
   const handleDeactivateCode = async (codeId: string) => {
@@ -296,13 +373,15 @@ function CodesSubTab() {
                     <div className="flex items-center justify-between">
                       <div>
                         <h4 className="font-semibold">{code.stylist_name}</h4>
-                        <p className="text-lg font-mono font-bold text-primary">{code.code}</p>
+                        <p className="text-lg font-mono font-bold text-primary">
+                          {code.code}
+                        </p>
                       </div>
                       <Badge variant={code.is_active ? "default" : "secondary"}>
                         {code.is_active ? "Aktiv" : "Inaktiv"}
                       </Badge>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Klikk</p>
@@ -313,12 +392,16 @@ function CodesSubTab() {
                         <p className="font-semibold">{code.conversions}</p>
                       </div>
                     </div>
-                    
+
                     <div>
-                      <p className="text-muted-foreground text-sm">Opptjent provisjon</p>
-                      <p className="font-semibold text-lg">{code.commission_earned.toFixed(2)} NOK</p>
+                      <p className="text-muted-foreground text-sm">
+                        Opptjent provisjon
+                      </p>
+                      <p className="font-semibold text-lg">
+                        {code.commission_earned.toFixed(2)} NOK
+                      </p>
                     </div>
-                    
+
                     {code.is_active && (
                       <Button
                         variant="outline"
@@ -343,12 +426,12 @@ function CodesSubTab() {
 function CommissionsSubTab() {
   const { data: commissions, isLoading } = useQuery({
     queryKey: ["affiliate-commissions"],
-    queryFn: getAllAffiliateCommissions
+    queryFn: getAllAffiliateCommissions,
   });
 
   const { data: metrics } = useQuery({
     queryKey: ["commission-metrics"],
-    queryFn: getCommissionMetrics
+    queryFn: getCommissionMetrics,
   });
 
   return (
@@ -372,8 +455,12 @@ function CommissionsSubTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Total provisjon</p>
-                  <p className="text-2xl font-bold">{metrics.data.totalCommissions.toFixed(2)} NOK</p>
+                  <p className="text-sm text-muted-foreground">
+                    Total provisjon
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {metrics.data.totalCommissions.toFixed(2)} NOK
+                  </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-muted-foreground" />
               </div>
@@ -383,8 +470,12 @@ function CommissionsSubTab() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">Venter på utbetaling</p>
-                  <p className="text-2xl font-bold">{metrics.data.pendingCommissions.toFixed(2)} NOK</p>
+                  <p className="text-sm text-muted-foreground">
+                    Venter på utbetaling
+                  </p>
+                  <p className="text-2xl font-bold">
+                    {metrics.data.pendingCommissions.toFixed(2)} NOK
+                  </p>
                 </div>
                 <AlertCircle className="h-8 w-8 text-yellow-500" />
               </div>
@@ -395,7 +486,9 @@ function CommissionsSubTab() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Utbetalt</p>
-                  <p className="text-2xl font-bold">{metrics.data.paidCommissions.toFixed(2)} NOK</p>
+                  <p className="text-2xl font-bold">
+                    {metrics.data.paidCommissions.toFixed(2)} NOK
+                  </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-500" />
               </div>
@@ -420,7 +513,7 @@ function CommissionsSubTab() {
             </CardContent>
           </Card>
         ) : (
-          commissions?.data?.map((commission: Commission) => (
+          commissions?.data?.map((commission) => (
             <Card key={commission.id}>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
@@ -430,17 +523,29 @@ function CommissionsSubTab() {
                       Booking ID: {commission.booking_id}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {new Date(commission.created_at).toLocaleDateString('no-NO')}
+                      {new Date(commission.created_at).toLocaleDateString(
+                        "no-NO"
+                      )}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-lg">{commission.amount.toFixed(2)} NOK</p>
-                    <Badge variant={
-                      commission.status === "paid" ? "default" :
-                      commission.status === "pending" ? "secondary" : "destructive"
-                    }>
-                      {commission.status === "paid" ? "Utbetalt" :
-                       commission.status === "pending" ? "Venter" : "Kansellert"}
+                    <p className="font-semibold text-lg">
+                      {commission.amount.toFixed(2)} NOK
+                    </p>
+                    <Badge
+                      variant={
+                        commission.status === "paid"
+                          ? "default"
+                          : commission.status === "pending"
+                            ? "secondary"
+                            : "destructive"
+                      }
+                    >
+                      {commission.status === "paid"
+                        ? "Utbetalt"
+                        : commission.status === "pending"
+                          ? "Venter"
+                          : "Kansellert"}
                     </Badge>
                   </div>
                 </div>
@@ -456,20 +561,11 @@ function CommissionsSubTab() {
 export default function AffiliateTab() {
   const { data: metrics } = useQuery({
     queryKey: ["affiliate-metrics"],
-    queryFn: getAffiliateMetrics
+    queryFn: getAffiliateMetrics,
   });
 
   return (
     <div className="space-y-6">
-      <BlurFade duration={0.5} inView>
-        <div>
-          <h2 className="text-2xl font-bold">Partner System</h2>
-          <p className="text-muted-foreground">
-            Administrer partner søknader, koder og provisjoner
-          </p>
-        </div>
-      </BlurFade>
-
       <BlurFade delay={0.1} duration={0.5} inView>
         {metrics?.data && (
           <div className="grid md:grid-cols-4 gap-4">
@@ -477,8 +573,12 @@ export default function AffiliateTab() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Aktive partnere</p>
-                    <p className="text-2xl font-bold">{metrics.data.activeAffiliates}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Aktive partnere
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {metrics.data.activeAffiliates}
+                    </p>
                   </div>
                   <UserCheck className="h-8 w-8 text-muted-foreground" />
                 </div>
@@ -488,8 +588,12 @@ export default function AffiliateTab() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Ventende søknader</p>
-                    <p className="text-2xl font-bold">{metrics.data.pendingApplications}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Ventende søknader
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {metrics.data.pendingApplications}
+                    </p>
                   </div>
                   <AlertCircle className="h-8 w-8 text-yellow-500" />
                 </div>
@@ -499,8 +603,12 @@ export default function AffiliateTab() {
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-muted-foreground">Total omsetning</p>
-                    <p className="text-2xl font-bold">{metrics.data.totalRevenue.toFixed(2)} NOK</p>
+                    <p className="text-sm text-muted-foreground">
+                      Total omsetning
+                    </p>
+                    <p className="text-2xl font-bold">
+                      {metrics.data.totalRevenue.toFixed(2)} NOK
+                    </p>
                   </div>
                   <TrendingUp className="h-8 w-8 text-green-500" />
                 </div>
@@ -511,7 +619,9 @@ export default function AffiliateTab() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Provisjoner</p>
-                    <p className="text-2xl font-bold">{metrics.data.totalCommissions.toFixed(2)} NOK</p>
+                    <p className="text-2xl font-bold">
+                      {metrics.data.totalCommissions.toFixed(2)} NOK
+                    </p>
                   </div>
                   <DollarSign className="h-8 w-8 text-muted-foreground" />
                 </div>

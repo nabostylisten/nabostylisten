@@ -60,7 +60,7 @@ This implementation uses traditional discount codes instead of complex link trac
 
 ## Phase 2: Stylist Experience (Customer-facing: "Partner")
 
-### 2.1 Application Flow
+### ✅ 2.1 Application Flow
 
 - **`/app/profiler/[profileId]/partner/soknad/page.tsx`**: Application form
 - Page title: "Bli Partner" / "Partner Søknad"
@@ -69,7 +69,7 @@ This implementation uses traditional discount codes instead of complex link trac
   - Marketing strategy, social reach, expected referrals
   - Terms and conditions acceptance
 
-### 2.2 Affiliate Management
+### ✅ 2.2 Affiliate Management
 
 - **`/app/profiler/[profileId]/partner/page.tsx`**: Main partner page
 - Page title: "Partner Dashboard"

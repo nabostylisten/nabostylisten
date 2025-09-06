@@ -3,7 +3,15 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Scissors, CreditCard, Percent, Wrench, Users } from "lucide-react";
+import {
+  LayoutDashboard,
+  FileText,
+  Scissors,
+  CreditCard,
+  Percent,
+  Wrench,
+  Users,
+} from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { shouldShowDevTools } from "@/lib/dev-utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -47,7 +55,7 @@ const adminSidebarItems = [
     title: "Partner",
     href: "/admin/partner",
     icon: Users,
-    description: "Partner administrasjon",
+    description: "Administrer partner-program",
   },
 ];
 
@@ -107,7 +115,11 @@ export const AdminSidebar = ({ className }: AdminSidebarProps) => {
                 const Icon = item.icon;
 
                 return (
-                  <BlurFade key={item.href} delay={(adminSidebarItems.length + index) * 0.05} duration={0.5}>
+                  <BlurFade
+                    key={item.href}
+                    delay={(adminSidebarItems.length + index) * 0.05}
+                    duration={0.5}
+                  >
                     <Link
                       href={item.href}
                       className={cn(

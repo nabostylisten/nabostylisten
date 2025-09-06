@@ -5,16 +5,150 @@ import { sendEmail } from "@/lib/resend-utils";
 import { AffiliateApplicationApproved } from "@/transactional/emails/affiliate-application-approved";
 import { AffiliateApplicationRejected } from "@/transactional/emails/affiliate-application-rejected";
 import { AffiliateMonthlyPayout } from "@/transactional/emails/affiliate-monthly-payout";
+import { AffiliateApplicationReceivedEmail } from "@/transactional/emails/affiliate-application-received";
+import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
+
+/**
+ * Send email notification to admins when new affiliate application is received
+ */
+export async function sendAffiliateApplicationReceivedNotification(
+  applicationId: string,
+) {
+  const supabase = await createClient();
+
+  try {
+    // Get application details with stylist information
+    const { data: application, error: appError } = await supabase
+      .from("affiliate_applications")
+      .select(`
+        *,
+        stylist:profiles!affiliate_applications_stylist_id_fkey(
+          full_name,
+          email
+        )
+      `)
+      .eq("id", applicationId)
+      .single();
+
+    if (appError || !application || !application.stylist) {
+      console.error(
+        "Error fetching application for admin notification:",
+        appError,
+      );
+      return { error: "Kunne ikke finne søknadsinformasjon", data: null };
+    }
+
+    // Get all admin users
+    const { data: admins, error: adminError } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .eq("role", "admin");
+
+    if (adminError) {
+      console.error(
+        "Error fetching admin users for affiliate notification:",
+        adminError,
+      );
+      return { error: "Kunne ikke finne administratorer", data: null };
+    }
+
+    if (!admins || admins.length === 0) {
+      console.log(
+        "No admin users found for affiliate application notification",
+      );
+      return { error: "Ingen administratorer funnet", data: null };
+    }
+
+    const logoUrl = getNabostylistenLogoUrl("png");
+
+    // Send email to all admin users
+    const emailPromises = [];
+
+    for (const admin of admins) {
+      if (admin.email) {
+        emailPromises.push(
+          sendEmail({
+            to: [admin.email],
+            subject: `Ny partner-søknad fra ${
+              application.stylist.full_name || "ukjent stylist"
+            }`,
+            react: AffiliateApplicationReceivedEmail({
+              logoUrl,
+              applicantName: application.stylist.full_name || "Ukjent",
+              applicantEmail: application.stylist.email || "Ikke oppgitt",
+              applicationId: application.id,
+              submittedAt: new Date(application.created_at),
+              expectedReferrals: application.expected_referrals || 0,
+              socialMediaReach: application.social_media_reach || 0,
+              reason: application.reason || "",
+              marketingStrategy: application.marketing_strategy || "",
+            }),
+          }),
+        );
+      }
+    }
+
+    // Wait for all emails to be sent
+    const results = await Promise.allSettled(emailPromises);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    results.forEach((result, index) => {
+      if (result.status === "fulfilled") {
+        if (result.value?.error) {
+          console.error(
+            `Failed to send email to admin ${admins[index].email}:`,
+            result.value.error,
+          );
+          errorCount++;
+        } else {
+          successCount++;
+        }
+      } else {
+        console.error(
+          `Failed to send email to admin ${admins[index].email}:`,
+          result.reason,
+        );
+        errorCount++;
+      }
+    });
+
+    console.log(
+      `Sent ${successCount} affiliate application admin notifications. Errors: ${errorCount}`,
+    );
+
+    return {
+      error: errorCount > 0
+        ? `${errorCount} av ${admins.length} e-poster feilet`
+        : null,
+      data: {
+        sent: successCount,
+        total: admins.length,
+        errors: errorCount,
+      },
+    };
+  } catch (error) {
+    console.error(
+      "Error in sendAffiliateApplicationReceivedNotification:",
+      error,
+    );
+    return {
+      error: "En uventet feil oppstod ved sending av admin-varsel",
+      data: null,
+    };
+  }
+}
 
 /**
  * Send email notification when affiliate application is approved
  */
 export async function sendAffiliateApplicationApprovedEmail(
   stylistId: string,
-  affiliateCode: string
+  affiliateCode: string,
 ) {
   const supabase = await createClient();
-  
+
   try {
     // Get stylist information
     const { data: stylist, error: stylistError } = await supabase
@@ -23,7 +157,7 @@ export async function sendAffiliateApplicationApprovedEmail(
       .eq("id", stylistId)
       .single();
 
-    if (stylistError || !stylist) {
+    if (stylistError || !stylist || !stylist.email) {
       console.error("Error fetching stylist for email:", stylistError);
       return { error: "Kunne ikke finne stylist", data: null };
     }
@@ -41,18 +175,24 @@ export async function sendAffiliateApplicationApprovedEmail(
       return { error: "Kunne ikke finne partnerkode", data: null };
     }
 
-    const commissionPercentage = Math.round((affiliateLink.commission_percentage || 0.2) * 100);
-    const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${stylistId}/partner`;
+    const commissionPercentage = Math.round(
+      (affiliateLink.commission_percentage || 0.2) * 100,
+    );
+    const dashboardUrl =
+      `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${stylistId}/partner`;
+
+    const logoUrl = getNabostylistenLogoUrl("png");
 
     // Send email
     const { error } = await sendEmail({
       to: [stylist.email],
       subject: "🎉 Din partnersøknad har blitt godkjent!",
       react: AffiliateApplicationApproved({
+        logoUrl,
         stylistName: stylist.full_name || "Partner",
         affiliateCode,
         commissionPercentage,
-        dashboardUrl
+        dashboardUrl,
       }),
     });
 
@@ -64,7 +204,10 @@ export async function sendAffiliateApplicationApprovedEmail(
     return { error: null, data: null };
   } catch (error) {
     console.error("Error in sendAffiliateApplicationApprovedEmail:", error);
-    return { error: "En uventet feil oppstod ved sending av e-post", data: null };
+    return {
+      error: "En uventet feil oppstod ved sending av e-post",
+      data: null,
+    };
   }
 }
 
@@ -73,10 +216,10 @@ export async function sendAffiliateApplicationApprovedEmail(
  */
 export async function sendAffiliateApplicationRejectedEmail(
   stylistId: string,
-  rejectionReason?: string
+  rejectionReason?: string,
 ) {
   const supabase = await createClient();
-  
+
   try {
     // Get stylist information
     const { data: stylist, error: stylistError } = await supabase
@@ -85,12 +228,13 @@ export async function sendAffiliateApplicationRejectedEmail(
       .eq("id", stylistId)
       .single();
 
-    if (stylistError || !stylist) {
+    if (stylistError || !stylist || !stylist.email) {
       console.error("Error fetching stylist for email:", stylistError);
       return { error: "Kunne ikke finne stylist", data: null };
     }
 
-    const reapplyUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${stylistId}/partner/soknad`;
+    const reapplyUrl =
+      `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${stylistId}/partner/soknad`;
 
     // Send email
     const { error } = await sendEmail({
@@ -99,7 +243,7 @@ export async function sendAffiliateApplicationRejectedEmail(
       react: AffiliateApplicationRejected({
         stylistName: stylist.full_name || "Partner",
         rejectionReason,
-        reapplyUrl
+        reapplyUrl,
       }),
     });
 
@@ -111,7 +255,10 @@ export async function sendAffiliateApplicationRejectedEmail(
     return { error: null, data: null };
   } catch (error) {
     console.error("Error in sendAffiliateApplicationRejectedEmail:", error);
-    return { error: "En uventet feil oppstod ved sending av e-post", data: null };
+    return {
+      error: "En uventet feil oppstod ved sending av e-post",
+      data: null,
+    };
   }
 }
 
@@ -119,10 +266,10 @@ export async function sendAffiliateApplicationRejectedEmail(
  * Send monthly payout notification email to affiliate
  */
 export async function sendAffiliateMonthlyPayoutEmail(
-  payoutId: string
+  payoutId: string,
 ) {
   const supabase = await createClient();
-  
+
   try {
     // Get payout information with stylist details
     const { data: payout, error: payoutError } = await supabase
@@ -143,7 +290,8 @@ export async function sendAffiliateMonthlyPayoutEmail(
       return { error: "Kunne ikke finne utbetalingsinformasjon", data: null };
     }
 
-    const dashboardUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${payout.stylist.id}/partner/utbetalinger`;
+    const dashboardUrl =
+      `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${payout.stylist.id}/partner/utbetalinger`;
 
     // Send email
     const { error } = await sendEmail({
@@ -158,7 +306,7 @@ export async function sendAffiliateMonthlyPayoutEmail(
         totalBookings: payout.total_bookings || 0,
         totalCommissions: Number(payout.total_commission_earned || 0),
         dashboardUrl,
-        payoutDate: payout.created_at
+        payoutDate: payout.created_at,
       }),
     });
 
@@ -170,7 +318,10 @@ export async function sendAffiliateMonthlyPayoutEmail(
     return { error: null, data: null };
   } catch (error) {
     console.error("Error in sendAffiliateMonthlyPayoutEmail:", error);
-    return { error: "En uventet feil oppstod ved sending av e-post", data: null };
+    return {
+      error: "En uventet feil oppstod ved sending av e-post",
+      data: null,
+    };
   }
 }
 
@@ -179,10 +330,10 @@ export async function sendAffiliateMonthlyPayoutEmail(
  */
 export async function sendAffiliateWelcomeEmail(
   stylistId: string,
-  applicationId: string
+  applicationId: string,
 ) {
   const supabase = await createClient();
-  
+
   try {
     // Get application and affiliate code information
     const { data: application, error: appError } = await supabase
@@ -211,18 +362,24 @@ export async function sendAffiliateWelcomeEmail(
       .single();
 
     if (linkError || !affiliateLink) {
-      console.error("Error fetching affiliate link for welcome email:", linkError);
+      console.error(
+        "Error fetching affiliate link for welcome email:",
+        linkError,
+      );
       return { error: "Kunne ikke finne partnerkode", data: null };
     }
 
     // Send the approval email (which serves as welcome email)
     return await sendAffiliateApplicationApprovedEmail(
       stylistId,
-      affiliateLink.link_code
+      affiliateLink.link_code,
     );
   } catch (error) {
     console.error("Error in sendAffiliateWelcomeEmail:", error);
-    return { error: "En uventet feil oppstod ved sending av velkomst-e-post", data: null };
+    return {
+      error: "En uventet feil oppstod ved sending av velkomst-e-post",
+      data: null,
+    };
   }
 }
 
@@ -231,7 +388,7 @@ export async function sendAffiliateWelcomeEmail(
  */
 export async function sendMonthlyPayoutEmails() {
   const supabase = await createClient();
-  
+
   try {
     // Get all pending payouts
     const { data: payouts, error: payoutsError } = await supabase
@@ -247,7 +404,10 @@ export async function sendMonthlyPayoutEmails() {
 
     if (!payouts || payouts.length === 0) {
       console.log("No pending payouts to send emails for");
-      return { error: null, data: { sent: 0, message: "Ingen ventende utbetalinger" } };
+      return {
+        error: null,
+        data: { sent: 0, message: "Ingen ventende utbetalinger" },
+      };
     }
 
     let sentCount = 0;
@@ -256,12 +416,12 @@ export async function sendMonthlyPayoutEmails() {
     // Send email for each payout
     for (const payout of payouts) {
       const result = await sendAffiliateMonthlyPayoutEmail(payout.id);
-      
+
       if (result.error) {
         errors.push(`Payout ${payout.id}: ${result.error}`);
       } else {
         sentCount++;
-        
+
         // Mark email as sent
         await supabase
           .from("affiliate_payouts")
@@ -270,18 +430,23 @@ export async function sendMonthlyPayoutEmails() {
       }
     }
 
-    console.log(`Sent ${sentCount} affiliate payout emails. Errors: ${errors.length}`);
-    
+    console.log(
+      `Sent ${sentCount} affiliate payout emails. Errors: ${errors.length}`,
+    );
+
     return {
       error: errors.length > 0 ? errors.join("; ") : null,
       data: {
         sent: sentCount,
         total: payouts.length,
-        errors
-      }
+        errors,
+      },
     };
   } catch (error) {
     console.error("Error in sendMonthlyPayoutEmails:", error);
-    return { error: "En uventet feil oppstod ved sending av utbetalings-e-poster", data: null };
+    return {
+      error: "En uventet feil oppstod ved sending av utbetalings-e-poster",
+      data: null,
+    };
   }
 }

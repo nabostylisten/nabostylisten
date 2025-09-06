@@ -25,7 +25,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
-import { updateBookingStatus } from "@/server/booking.actions";
+import { updateBookingStatus } from "@/server/booking/lifecycle.actions";
 import type { Database } from "@/types/database.types";
 
 type BookingStatus = Database["public"]["Tables"]["bookings"]["Row"]["status"];

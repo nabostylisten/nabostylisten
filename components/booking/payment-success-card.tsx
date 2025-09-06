@@ -16,7 +16,7 @@ import {
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { getBookingDetails } from "@/server/booking.actions";
+import { getBookingDetails } from "@/server/booking/crud.actions";
 import type { DatabaseTables } from "@/types/database-helpers";
 import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
 

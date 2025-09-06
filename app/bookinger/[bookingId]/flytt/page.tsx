@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { notFound, redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
 import { MoveBookingContent } from "@/components/booking/move-booking-content";
-import { getBookingDetails } from "@/server/booking.actions";
+import { getBookingDetails } from "@/server/booking/crud.actions";
 import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default async function MoveBookingPage({

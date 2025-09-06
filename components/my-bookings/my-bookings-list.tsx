@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
-import { getUserBookings } from "@/server/booking.actions";
+import { getUserBookings } from "@/server/booking/crud.actions";
 import { BookingCard } from "./booking-card";
 import { TrialSessionCard } from "./trial-session-card";
 import { Skeleton } from "@/components/ui/skeleton";

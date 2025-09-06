@@ -10,7 +10,7 @@ import { ArrowLeft, Clock, User, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BookingStepper, OrderSummary } from "@/components/booking";
-import { createBookingWithServices } from "@/server/booking.actions";
+import { createBookingWithServices } from "@/server/booking/creation.actions";
 import { getStylistDetails } from "@/server/profile.actions";
 import { useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";

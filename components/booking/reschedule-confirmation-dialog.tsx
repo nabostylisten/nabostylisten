@@ -21,10 +21,8 @@ import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import {
-  rescheduleBooking,
-  calculateOptimalTrialSessionTime,
-} from "@/server/booking.actions";
+import { rescheduleBooking } from "@/server/booking/lifecycle.actions";
+import { calculateOptimalTrialSessionTime } from "@/server/booking/trial-sessions.actions";
 import { addUnavailability } from "@/server/availability.actions";
 import { DatabaseTables } from "@/types";
 import { useQuery } from "@tanstack/react-query";

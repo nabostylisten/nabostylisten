@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { getBookingDetails } from "@/server/booking.actions";
+import { getBookingDetails } from "@/server/booking/crud.actions";
 import {
   Card,
   CardContent,

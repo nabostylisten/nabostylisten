@@ -110,7 +110,7 @@ The booking email communication system manages all email notifications related t
 - Calls `sendPostPaymentEmails()` server action asynchronously
 - Handles email failures gracefully without affecting user experience
 
-**Server Action**: `sendPostPaymentEmails()` in `server/booking.actions.ts`
+**Server Action**: `sendPostPaymentEmails()` in `server/booking/notifications.actions.ts`
 - Fetches complete booking details with relations
 - Checks user notification preferences
 - Formats common data (dates, services, addresses)

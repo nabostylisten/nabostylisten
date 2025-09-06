@@ -16,7 +16,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { cancelBooking } from "@/server/booking.actions";
+import { cancelBooking } from "@/server/booking/lifecycle.actions";
 import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
 import type { Database } from "@/types/database.types";
 

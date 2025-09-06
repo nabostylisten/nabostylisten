@@ -5,7 +5,7 @@ import { Loader2 } from "lucide-react";
 // Get Stripe instance for server-side payment intent retrieval
 import { stripe } from "@/lib/stripe/config";
 import { PaymentSuccessCard } from "@/components/booking/payment-success-card";
-import { sendPostPaymentEmails } from "@/server/booking.actions";
+import { sendPostPaymentEmails } from "@/server/booking/notifications.actions";
 
 interface SuccessPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

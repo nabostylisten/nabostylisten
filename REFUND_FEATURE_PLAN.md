@@ -111,7 +111,7 @@ Implementation of comprehensive refund functionality for the Nabostylisten platf
 
 ### 2.2 Automatic Refund Integration
 
-**File**: `server/booking.actions.ts`
+**File**: `server/booking/lifecycle.actions.ts`
 
 **Enhanced Functions**:
 

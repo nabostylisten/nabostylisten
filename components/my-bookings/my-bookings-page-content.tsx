@@ -24,7 +24,7 @@ import { useState, useEffect } from "react";
 import { BookingsWithoutReviewsAlerts } from "../reviews/bookings-without-reviews-alerts";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { useQuery } from "@tanstack/react-query";
-import { getBookingCounts } from "@/server/booking.actions";
+import { getBookingCounts } from "@/server/booking/crud.actions";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 

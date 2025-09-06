@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, FileText, Scissors, CreditCard, Percent, Wrench } from "lucide-react";
+import { LayoutDashboard, FileText, Scissors, CreditCard, Percent, Wrench, Users } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { shouldShowDevTools } from "@/lib/dev-utils";
 import { useAuth } from "@/hooks/use-auth";
@@ -42,6 +42,12 @@ const adminSidebarItems = [
     href: "/admin/rabattkoder",
     icon: Percent,
     description: "Administrer rabattkoder og kampanjer",
+  },
+  {
+    title: "Partner",
+    href: "/admin/partner",
+    icon: Users,
+    description: "Partner administrasjon",
   },
 ];
 

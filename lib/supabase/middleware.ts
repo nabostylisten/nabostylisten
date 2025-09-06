@@ -39,10 +39,37 @@ function isPublicRoute(pathname: string): boolean {
   return publicRoutePatterns.some((pattern) => pattern.test(pathname));
 }
 
-export async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({
+export async function updateSession(
+  request: NextRequest,
+  response?: NextResponse
+) {
+  // Handle affiliate code tracking first
+  const url = request.nextUrl.clone();
+  const affiliateCode = url.searchParams.get('code');
+  
+  let supabaseResponse = response || NextResponse.next({
     request,
   });
+  
+  if (affiliateCode && !response) {
+    // Create response to redirect and remove the code parameter from URL
+    supabaseResponse = NextResponse.redirect(url.origin + url.pathname);
+    
+    // Set affiliate attribution cookie
+    const attribution = {
+      code: affiliateCode.toUpperCase(),
+      attributed_at: new Date().toISOString(),
+      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
+    };
+    
+    supabaseResponse.cookies.set('affiliate_attribution', JSON.stringify(attribution), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+      path: '/'
+    });
+  }
 
   // If the env vars are not set, skip middleware check. You can remove this
   // once you setup the project.

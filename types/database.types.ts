@@ -2058,6 +2058,73 @@ export type Database = {
           },
         ]
       }
+      affiliate_commissions: {
+        Row: {
+          affiliate_id: string
+          amount: number
+          booking_id: string
+          commission_percentage: number
+          created_at: string
+          currency: string
+          id: string
+          notes: string | null
+          paid_at: string | null
+          payout_id: string | null
+          status: Database["public"]["Enums"]["affiliate_payout_status"]
+          updated_at: string
+        }
+        Insert: {
+          affiliate_id: string
+          amount: number
+          booking_id: string
+          commission_percentage: number
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payout_id?: string | null
+          status?: Database["public"]["Enums"]["affiliate_payout_status"]
+          updated_at?: string
+        }
+        Update: {
+          affiliate_id?: string
+          amount?: number
+          booking_id?: string
+          commission_percentage?: number
+          created_at?: string
+          currency?: string
+          id?: string
+          notes?: string | null
+          paid_at?: string | null
+          payout_id?: string | null
+          status?: Database["public"]["Enums"]["affiliate_payout_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_payout_id_fkey"
+            columns: ["payout_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_payouts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       affiliate_links: {
         Row: {
           application_id: string
@@ -2126,6 +2193,7 @@ export type Database = {
           affiliate_link_id: string
           created_at: string
           currency: string
+          email_sent: boolean
           id: string
           notes: string | null
           payout_amount: number
@@ -2145,6 +2213,7 @@ export type Database = {
           affiliate_link_id: string
           created_at?: string
           currency?: string
+          email_sent?: boolean
           id?: string
           notes?: string | null
           payout_amount: number
@@ -2164,6 +2233,7 @@ export type Database = {
           affiliate_link_id?: string
           created_at?: string
           currency?: string
+          email_sent?: boolean
           id?: string
           notes?: string | null
           payout_amount?: number

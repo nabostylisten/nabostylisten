@@ -14,6 +14,13 @@ export interface AppliedDiscount {
   originalOrderAmountNOK?: number;
 }
 
+export interface AffiliateAttribution {
+  affiliateCode: string;
+  stylistName: string;
+  discountAmount: number;
+  applicableServices: string[];
+}
+
 export interface BookingStepData {
   // Time selection step
   startTime?: Date;
@@ -34,6 +41,7 @@ export interface BookingStepData {
   // Message and discount step
   messageToStylist?: string;
   appliedDiscount?: AppliedDiscount;
+  affiliateAttribution?: AffiliateAttribution;
 }
 
 export interface BookingStore {

@@ -346,6 +346,75 @@ export const affiliateClicksRelationshipsSchema = z.tuple([
   }),
 ]);
 
+export const affiliateCommissionsRowSchema = z.object({
+  affiliate_id: z.string(),
+  amount: z.number(),
+  booking_id: z.string(),
+  commission_percentage: z.number(),
+  created_at: z.string(),
+  currency: z.string(),
+  id: z.string(),
+  notes: z.string().nullable(),
+  paid_at: z.string().nullable(),
+  payout_id: z.string().nullable(),
+  status: AffiliatePayoutStatusSchema,
+  updated_at: z.string(),
+});
+
+export const affiliateCommissionsInsertSchema = z.object({
+  affiliate_id: z.string(),
+  amount: z.number(),
+  booking_id: z.string(),
+  commission_percentage: z.number(),
+  created_at: z.string().optional(),
+  currency: z.string().optional(),
+  id: z.string().optional(),
+  notes: z.string().optional().nullable(),
+  paid_at: z.string().optional().nullable(),
+  payout_id: z.string().optional().nullable(),
+  status: AffiliatePayoutStatusSchema.optional(),
+  updated_at: z.string().optional(),
+});
+
+export const affiliateCommissionsUpdateSchema = z.object({
+  affiliate_id: z.string().optional(),
+  amount: z.number().optional(),
+  booking_id: z.string().optional(),
+  commission_percentage: z.number().optional(),
+  created_at: z.string().optional(),
+  currency: z.string().optional(),
+  id: z.string().optional(),
+  notes: z.string().optional().nullable(),
+  paid_at: z.string().optional().nullable(),
+  payout_id: z.string().optional().nullable(),
+  status: AffiliatePayoutStatusSchema.optional(),
+  updated_at: z.string().optional(),
+});
+
+export const affiliateCommissionsRelationshipsSchema = z.tuple([
+  z.object({
+    foreignKeyName: z.literal("affiliate_commissions_affiliate_id_fkey"),
+    columns: z.tuple([z.literal("affiliate_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("profiles"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("affiliate_commissions_booking_id_fkey"),
+    columns: z.tuple([z.literal("booking_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("bookings"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+  z.object({
+    foreignKeyName: z.literal("affiliate_commissions_payout_id_fkey"),
+    columns: z.tuple([z.literal("payout_id")]),
+    isOneToOne: z.literal(false),
+    referencedRelation: z.literal("affiliate_payouts"),
+    referencedColumns: z.tuple([z.literal("id")]),
+  }),
+]);
+
 export const affiliateLinksRowSchema = z.object({
   application_id: z.string(),
   click_count: z.number(),
@@ -415,6 +484,7 @@ export const affiliatePayoutsRowSchema = z.object({
   affiliate_link_id: z.string(),
   created_at: z.string(),
   currency: z.string(),
+  email_sent: z.boolean(),
   id: z.string(),
   notes: z.string().nullable(),
   payout_amount: z.number(),
@@ -435,6 +505,7 @@ export const affiliatePayoutsInsertSchema = z.object({
   affiliate_link_id: z.string(),
   created_at: z.string().optional(),
   currency: z.string().optional(),
+  email_sent: z.boolean().optional(),
   id: z.string().optional(),
   notes: z.string().optional().nullable(),
   payout_amount: z.number(),
@@ -455,6 +526,7 @@ export const affiliatePayoutsUpdateSchema = z.object({
   affiliate_link_id: z.string().optional(),
   created_at: z.string().optional(),
   currency: z.string().optional(),
+  email_sent: z.boolean().optional(),
   id: z.string().optional(),
   notes: z.string().optional().nullable(),
   payout_amount: z.number().optional(),

@@ -12,6 +12,7 @@ import {
   MessageCircle,
   Scissors,
   Star,
+  Users,
 } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 
@@ -68,6 +69,12 @@ const getSidebarItems = (userRole?: string) => {
       href: "/inntekter",
       icon: DollarSign,
       description: "Inntekter og utbetalinger",
+    });
+    baseItems.push({
+      title: "Partner",
+      href: "/partner",
+      icon: Users,
+      description: "Partner-program",
     });
   }
 

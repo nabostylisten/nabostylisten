@@ -26,6 +26,7 @@ ALTER TABLE public.affiliate_applications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.affiliate_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.affiliate_clicks ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.affiliate_payouts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.affiliate_commissions ENABLE ROW LEVEL SECURITY;
 
 -- A function to check the current user's role (recommended for performance).
 CREATE OR REPLACE FUNCTION public.get_my_role()
@@ -1009,6 +1010,28 @@ WITH CHECK ( public.get_my_role() = 'admin' );
 
 -- Only admins can update affiliate payouts
 CREATE POLICY "Only admins can update affiliate payouts" ON public.affiliate_payouts
+FOR UPDATE TO authenticated
+USING ( public.get_my_role() = 'admin' )
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- ========== AFFILIATE COMMISSIONS POLICIES ==========
+-- Users can view their own affiliate commissions
+CREATE POLICY "Users can view their own affiliate commissions" ON public.affiliate_commissions
+FOR SELECT TO authenticated
+USING ( (select auth.uid()) = affiliate_id );
+
+-- Admins can view all affiliate commissions
+CREATE POLICY "Admins can view all affiliate commissions" ON public.affiliate_commissions
+FOR SELECT TO authenticated
+USING ( public.get_my_role() = 'admin' );
+
+-- Only system/admin can create affiliate commissions (automated process)
+CREATE POLICY "Only system can create affiliate commissions" ON public.affiliate_commissions
+FOR INSERT TO authenticated
+WITH CHECK ( public.get_my_role() = 'admin' );
+
+-- Only admins can update affiliate commissions (for status changes, payouts)
+CREATE POLICY "Only admins can update affiliate commissions" ON public.affiliate_commissions
 FOR UPDATE TO authenticated
 USING ( public.get_my_role() = 'admin' )
 WITH CHECK ( public.get_my_role() = 'admin' );

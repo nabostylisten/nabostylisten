@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/stores/cart.store";
-import { ArrowLeft, ShoppingCart, Trash2, ChevronUp, ChevronDown } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Trash2, ChevronUp, ChevronDown, Tag } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -24,6 +24,10 @@ import { AuthDialog } from "@/components/auth-dialog";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
 import { BlurFade } from "@/components/magicui/blur-fade";
+
+// Affiliate components
+import { AffiliateDiscountBanner, AffiliateAttributionInfo, ManualAffiliateCodeEntry } from "@/components/affiliate/affiliate-discount-banner";
+import { useAffiliateAttribution } from "@/hooks/use-affiliate-attribution";
 
 export default function CartPage() {
   const router = useRouter();
@@ -46,6 +50,35 @@ export default function CartPage() {
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
   const currentStylist = getCurrentStylist();
+  
+  // Prepare cart items for affiliate hook
+  const cartItems = items.map(item => ({
+    serviceId: item.service.id,
+    quantity: item.quantity
+  }));
+  
+  // Use affiliate attribution hook
+  const {
+    discount,
+    canAutoApply,
+    discountAmount,
+    stylistName,
+    affiliateCode,
+    applicableServices,
+    submitManualCode,
+    isValidatingCode,
+    manualCodeError,
+    getSavingsSummary,
+    getAttributionStatus
+  } = useAffiliateAttribution({
+    cartItems,
+    userId: user?.id,
+    enabled: cartItems.length > 0
+  });
+  
+  const savings = getSavingsSummary();
+  const attributionStatus = getAttributionStatus();
+  const finalTotal = totalPrice - discountAmount;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -315,6 +348,50 @@ export default function CartPage() {
               </CardContent>
               </Card>
             </BlurFade>
+            
+            {/* Affiliate Discount Section */}
+            <BlurFade delay={0.12} duration={0.5} inView>
+              <div className="space-y-4">
+                {/* Auto-applicable discount banner */}
+                {canAutoApply && stylistName && affiliateCode && (
+                  <AffiliateDiscountBanner
+                    stylistName={stylistName}
+                    affiliateCode={affiliateCode}
+                    discountAmount={discountAmount}
+                    applicableServices={applicableServices?.map(s => s.title) || []}
+                    isAutoApplied={true}
+                  />
+                )}
+                
+                {/* Attribution info without applicable services */}
+                {attributionStatus === "no-applicable-services" && stylistName && affiliateCode && (
+                  <AffiliateAttributionInfo
+                    stylistName={stylistName}
+                    affiliateCode={affiliateCode}
+                    daysRemaining={30} // This would be calculated from actual attribution data
+                  />
+                )}
+                
+                {/* Manual code entry */}
+                {attributionStatus === "none" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="flex items-center gap-2 text-base">
+                        <Tag className="w-4 h-4" />
+                        Har du en partnerkode?
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ManualAffiliateCodeEntry
+                        onCodeSubmit={submitManualCode}
+                        isValidating={isValidatingCode}
+                        error={manualCodeError || undefined}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            </BlurFade>
           </div>
 
           {/* Order Summary */}
@@ -341,9 +418,26 @@ export default function CartPage() {
                 
                 <Separator />
                 
+                {/* Show discount breakdown when applicable */}
+                {discountAmount > 0 && (
+                  <>
+                    <div className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span>Subtotal</span>
+                        <span>{totalPrice.toFixed(2)} NOK</span>
+                      </div>
+                      <div className="flex justify-between text-sm text-green-600">
+                        <span>Partnerrabatt ({affiliateCode})</span>
+                        <span>-{discountAmount.toFixed(2)} NOK</span>
+                      </div>
+                    </div>
+                    <Separator />
+                  </>
+                )}
+                
                 <div className="flex justify-between font-semibold text-lg">
                   <span>Total</span>
-                  <span>{totalPrice.toFixed(2)} NOK</span>
+                  <span>{finalTotal.toFixed(2)} NOK</span>
                 </div>
                 
                 <div className="space-y-2 pt-4">

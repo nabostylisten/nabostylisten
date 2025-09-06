@@ -657,8 +657,39 @@ CREATE TABLE IF NOT EXISTS public.affiliate_payouts (
     -- Stripe payout tracking
     stripe_transfer_id text,
     stripe_payout_id text,
+    
+    -- Email tracking
+    email_sent boolean DEFAULT false NOT NULL,
 
     -- Metadata
+    notes text
+);
+
+-- Table for detailed affiliate commission tracking
+CREATE TABLE IF NOT EXISTS public.affiliate_commissions (
+    id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+
+    -- Link to the booking that generated this commission
+    booking_id uuid NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
+    
+    -- Link to the affiliate who earned this commission
+    affiliate_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    
+    -- Commission details
+    amount numeric(10, 2) NOT NULL,
+    currency text DEFAULT 'NOK' NOT NULL,
+    commission_percentage numeric(5, 2) NOT NULL, -- The percentage used for this commission
+    
+    -- Status tracking
+    status public.affiliate_payout_status DEFAULT 'pending' NOT NULL,
+    
+    -- Payout tracking
+    payout_id uuid REFERENCES public.affiliate_payouts(id) ON DELETE SET NULL,
+    paid_at timestamp with time zone,
+    
+    -- Additional metadata
     notes text
 );
 
@@ -777,6 +808,7 @@ CREATE TRIGGER update_platform_config_updated_at BEFORE UPDATE ON public.platfor
 CREATE TRIGGER update_affiliate_applications_updated_at BEFORE UPDATE ON public.affiliate_applications FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_affiliate_links_updated_at BEFORE UPDATE ON public.affiliate_links FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 CREATE TRIGGER update_affiliate_payouts_updated_at BEFORE UPDATE ON public.affiliate_payouts FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_affiliate_commissions_updated_at BEFORE UPDATE ON public.affiliate_commissions FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 -- Trigger to automatically create a profile when a new user signs up
 CREATE TRIGGER on_auth_user_created
@@ -1118,6 +1150,11 @@ CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_booking_id ON public.affiliate_c
 CREATE INDEX IF NOT EXISTS idx_affiliate_clicks_created_at ON public.affiliate_clicks(created_at);
 CREATE INDEX IF NOT EXISTS idx_affiliate_links_link_code ON public.affiliate_links(link_code);
 CREATE INDEX IF NOT EXISTS idx_affiliate_links_stylist_id ON public.affiliate_links(stylist_id);
+CREATE INDEX IF NOT EXISTS idx_affiliate_payouts_email_sent ON public.affiliate_payouts(email_sent);
+CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_booking_id ON public.affiliate_commissions(booking_id);
+CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_affiliate_id ON public.affiliate_commissions(affiliate_id);
+CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_status ON public.affiliate_commissions(status);
+CREATE INDEX IF NOT EXISTS idx_affiliate_commissions_payout_id ON public.affiliate_commissions(payout_id);
 CREATE INDEX IF NOT EXISTS idx_payments_affiliate_id ON public.payments(affiliate_id);
 CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON public.payments(booking_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);

@@ -11,11 +11,13 @@ import {
   DollarSign,
   Settings,
   Activity,
+  UserCheck,
 } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 
 // Import tab components
 import OverviewTab from "./tabs/overview-tab";
+import AffiliateTab from "./tabs/affiliate-tab";
 import { ChartCardSkeleton } from "@/components/charts/chart-skeletons";
 
 // Placeholder components for tabs not yet implemented
@@ -160,6 +162,12 @@ const tabs = [
     component: OverviewTab,
   },
   {
+    value: "affiliates",
+    label: "Partnere",
+    icon: UserCheck,
+    component: AffiliateTab,
+  },
+  {
     value: "users",
     label: "Brukere",
     icon: Users,
@@ -208,7 +216,7 @@ export default function AdminDashboard() {
       <BlurFade delay={0.15} duration={0.5} inView>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <div className="flex w-full items-center justify-center md:justify-start mb-6">
-            <TabsList className="grid w-full grid-cols-3 md:grid-cols-6 h-auto p-1">
+            <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto p-1">
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 return (

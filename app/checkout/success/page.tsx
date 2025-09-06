@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import { stripe } from "@/lib/stripe/config";
 import { PaymentSuccessCard } from "@/components/booking/payment-success-card";
 import { sendPostPaymentEmails } from "@/server/booking/notifications.actions";
+import { trackAffiliateCommission } from "@/server/affiliate/affiliate-commission.actions";
 
 interface SuccessPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
@@ -43,6 +44,12 @@ async function PaymentStatus({
     await sendPostPaymentEmails(bookingId).catch((error) => {
       console.error("Failed to send post-payment emails:", error);
       // Don't fail the page render if emails fail
+    });
+    
+    // Track affiliate commission if applicable - don't wait to avoid blocking
+    trackAffiliateCommission(bookingId).catch((error) => {
+      console.error("Failed to track affiliate commission:", error);
+      // Don't fail the page render if affiliate tracking fails
     });
   }
 

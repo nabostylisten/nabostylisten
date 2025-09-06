@@ -38,6 +38,7 @@ interface CreateBookingWithServicesInput {
     // Additional details
     messageToStylist?: string;
     discountCode?: string;
+    affiliateCode?: string; // For affiliate attribution
 
     // Calculated totals
     totalPrice: number; // Final price after discount
@@ -58,11 +59,17 @@ export async function createBookingWithServices(
 
     // Start a transaction-like operation
     try {
-        // 1. Handle discount validation if provided
+        // 1. Handle discount validation and affiliate attribution if provided
         let validatedDiscount: {
             id: string;
             discountPercentage?: number;
             discountAmountNOK?: number;
+        } | null = null;
+        
+        let affiliateData: {
+            id: string;
+            commissionPercentage: number;
+            discountAmount: number;
         } | null = null;
 
         if (input.discountCode) {
@@ -102,6 +109,34 @@ export async function createBookingWithServices(
                 discountPercentage: discount.discount_percentage || undefined,
                 discountAmountNOK: validationResult.discountAmount || undefined,
             };
+        }
+        
+        // Handle affiliate code validation and commission calculation
+        if (input.affiliateCode) {
+            // Import affiliate checkout actions
+            const { checkAffiliateDiscount } = await import(
+                "../affiliate/affiliate-checkout.actions"
+            );
+            
+            // Prepare cart items format for affiliate validation
+            const cartItems = input.serviceIds.map(serviceId => ({
+                serviceId,
+                quantity: 1 // Each service in booking is treated as quantity 1
+            }));
+            
+            const affiliateResult = await checkAffiliateDiscount(cartItems, user.id);
+            
+            if (affiliateResult.data?.hasAffiliateAttribution && 
+                affiliateResult.data?.isAutoApplicable && 
+                affiliateResult.data?.affiliateCode?.toUpperCase() === input.affiliateCode.toUpperCase()) {
+                
+                affiliateData = {
+                    id: affiliateResult.data.stylistId!,
+                    commissionPercentage: affiliateResult.data.commissionAmount > 0 ? 
+                        (affiliateResult.data.commissionAmount / input.totalPrice) * 100 : 5, // Default 5%
+                    discountAmount: affiliateResult.data.discountAmount || 0
+                };
+            }
         }
 
         // 2. Handle address for customer location
@@ -168,7 +203,7 @@ export async function createBookingWithServices(
         // 3. Use the prices calculated by the frontend
         const finalPrice = input.totalPrice; // Final price after discount
         const originalPrice = input.originalTotalPrice; // Original price before discount
-        const discountAmountNOK = validatedDiscount?.discountAmountNOK || 0;
+        const discountAmountNOK = (validatedDiscount?.discountAmountNOK || 0) + (affiliateData?.discountAmount || 0);
 
         // Calculate platform fee breakdown for payment processing
         const { calculatePlatformFee } = await import(
@@ -177,7 +212,7 @@ export async function createBookingWithServices(
 
         const platformFeeBreakdown = calculatePlatformFee({
             totalAmountNOK: finalPrice,
-            hasAffiliate: false, // TODO: Implement affiliate logic
+            hasAffiliate: !!affiliateData,
         });
 
         // Get stylist Stripe account ID for payment processing
@@ -203,9 +238,9 @@ export async function createBookingWithServices(
             bookingId: `temp_${Date.now()}`, // Temporary ID, will be updated after booking creation
             customerId: user.id,
             stylistId: input.stylistId,
-            hasAffiliate: false, // TODO: Implement affiliate logic
+            hasAffiliate: !!affiliateData,
             discountAmountNOK: discountAmountNOK,
-            discountCode: input.discountCode,
+            discountCode: input.discountCode || input.affiliateCode,
         });
 
         if (paymentIntentResult.error || !paymentIntentResult.data) {
@@ -446,14 +481,13 @@ export async function createBookingWithServices(
                 currency: "NOK",
                 status: "pending",
                 refunded_amount: 0, // Default to 0, will be updated when refunds occur
-                discount_code: input.discountCode,
+                discount_code: input.discountCode || input.affiliateCode,
                 discount_percentage: validatedDiscount?.discountPercentage ||
                     null,
                 discount_fixed_amount: validatedDiscount?.discountAmountNOK ||
                     null, // Fixed discount amount in NOK
-                // TODO: Add affiliate fields when affiliate system is implemented
-                // affiliate_id: affiliateId,
-                // affiliate_commission_percentage: affiliateCommissionPercentage,
+                affiliate_id: affiliateData?.id || null,
+                affiliate_commission_percentage: affiliateData?.commissionPercentage || null,
             });
 
         if (paymentError) {

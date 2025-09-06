@@ -924,6 +924,244 @@
         }
       ]
     },
+    "affiliate_commissions": {
+      "id": "public.affiliate_commissions",
+      "schemaName": "public",
+      "tableName": "affiliate_commissions",
+      "fields": [
+        {
+          "id": "public.affiliate_commissions.id",
+          "name": "id",
+          "columnName": "id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": true,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.created_at",
+          "name": "created_at",
+          "columnName": "created_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.updated_at",
+          "name": "updated_at",
+          "columnName": "updated_at",
+          "type": "timestamptz",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.booking_id",
+          "name": "booking_id",
+          "columnName": "booking_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.affiliate_id",
+          "name": "affiliate_id",
+          "columnName": "affiliate_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.amount",
+          "name": "amount",
+          "columnName": "amount",
+          "type": "numeric",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.currency",
+          "name": "currency",
+          "columnName": "currency",
+          "type": "text",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.commission_percentage",
+          "name": "commission_percentage",
+          "columnName": "commission_percentage",
+          "type": "numeric",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.status",
+          "name": "status",
+          "columnName": "status",
+          "type": "affiliate_payout_status",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.payout_id",
+          "name": "payout_id",
+          "columnName": "payout_id",
+          "type": "uuid",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.paid_at",
+          "name": "paid_at",
+          "columnName": "paid_at",
+          "type": "timestamptz",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.affiliate_commissions.notes",
+          "name": "notes",
+          "columnName": "notes",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "affiliate_payouts",
+          "type": "affiliate_payouts",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "affiliate_commissionsToaffiliate_payouts",
+          "relationFromFields": [
+            "payout_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "bookings",
+          "type": "bookings",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "affiliate_commissionsTobookings",
+          "relationFromFields": [
+            "booking_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "profiles",
+          "type": "profiles",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "affiliate_commissionsToprofiles",
+          "relationFromFields": [
+            "affiliate_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        }
+      ],
+      "uniqueConstraints": [
+        {
+          "name": "affiliate_commissions_pkey",
+          "fields": [
+            "id"
+          ],
+          "nullNotDistinct": false
+        }
+      ]
+    },
     "affiliate_links": {
       "id": "public.affiliate_links",
       "schemaName": "public",
@@ -1451,6 +1689,20 @@
           "maxLength": null
         },
         {
+          "id": "public.affiliate_payouts.email_sent",
+          "name": "email_sent",
+          "columnName": "email_sent",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "affiliate_links",
           "type": "affiliate_links",
           "isRequired": true,
@@ -1499,6 +1751,20 @@
             "id"
           ],
           "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "affiliate_commissions",
+          "type": "affiliate_commissions",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "affiliate_commissionsToaffiliate_payouts",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
           "isId": false,
           "isGenerated": false,
           "sequence": false,
@@ -2673,6 +2939,48 @@
           "maxLength": null
         },
         {
+          "id": "public.bookings.is_trial_session",
+          "name": "is_trial_session",
+          "columnName": "is_trial_session",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.main_booking_id",
+          "name": "main_booking_id",
+          "columnName": "main_booking_id",
+          "type": "uuid",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.trial_booking_id",
+          "name": "trial_booking_id",
+          "columnName": "trial_booking_id",
+          "type": "uuid",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
           "name": "addresses",
           "type": "addresses",
           "isRequired": false,
@@ -2680,6 +2988,42 @@
           "relationName": "bookingsToaddresses",
           "relationFromFields": [
             "address_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "bookings_bookings_main_booking_idTobookings",
+          "type": "bookings",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "bookings_main_booking_idTobookings",
+          "relationFromFields": [
+            "main_booking_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "bookings_bookings_trial_booking_idTobookings",
+          "type": "bookings",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "bookings_trial_booking_idTobookings",
+          "relationFromFields": [
+            "trial_booking_id"
           ],
           "relationToFields": [
             "id"
@@ -2759,6 +3103,20 @@
           "hasDefaultValue": false
         },
         {
+          "name": "affiliate_commissions",
+          "type": "affiliate_commissions",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "affiliate_commissionsTobookings",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
           "name": "booking_notes",
           "type": "booking_notes",
           "isRequired": false,
@@ -2778,6 +3136,34 @@
           "isRequired": false,
           "kind": "object",
           "relationName": "booking_servicesTobookings",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "bookings_bookings_main_booking_idTobookings",
+          "type": "bookings",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "bookings_main_booking_idTobookings",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "bookings_bookings_trial_booking_idTobookings",
+          "type": "bookings",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "bookings_trial_booking_idTobookings",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,
@@ -5281,7 +5667,7 @@
           "id": "public.discounts.discount_amount",
           "name": "discount_amount",
           "columnName": "discount_amount",
-          "type": "int4",
+          "type": "numeric",
           "isRequired": false,
           "kind": "scalar",
           "isList": false,
@@ -5393,7 +5779,7 @@
           "id": "public.discounts.minimum_order_amount",
           "name": "minimum_order_amount",
           "columnName": "minimum_order_amount",
-          "type": "int4",
+          "type": "numeric",
           "isRequired": false,
           "kind": "scalar",
           "isList": false,
@@ -5407,7 +5793,7 @@
           "id": "public.discounts.maximum_order_amount",
           "name": "maximum_order_amount",
           "columnName": "maximum_order_amount",
-          "type": "int4",
+          "type": "numeric",
           "isRequired": false,
           "kind": "scalar",
           "isList": false,
@@ -11926,6 +12312,20 @@
           "hasDefaultValue": false
         },
         {
+          "name": "affiliate_commissions",
+          "type": "affiliate_commissions",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "affiliate_commissionsToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
           "name": "affiliate_links",
           "type": "affiliate_links",
           "isRequired": false,
@@ -14562,6 +14962,62 @@
           "name": "requirements",
           "columnName": "requirements",
           "type": "text[]",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.services.has_trial_session",
+          "name": "has_trial_session",
+          "columnName": "has_trial_session",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.services.trial_session_description",
+          "name": "trial_session_description",
+          "columnName": "trial_session_description",
+          "type": "text",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.services.trial_session_duration_minutes",
+          "name": "trial_session_duration_minutes",
+          "columnName": "trial_session_duration_minutes",
+          "type": "int4",
+          "isRequired": false,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.services.trial_session_price",
+          "name": "trial_session_price",
+          "columnName": "trial_session_price",
+          "type": "numeric",
           "isRequired": false,
           "kind": "scalar",
           "isList": false,

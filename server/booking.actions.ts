@@ -467,9 +467,40 @@ export async function getBookingDetails(bookingId: string) {
                 total_price,
                 total_duration_minutes,
                 status,
-                is_trial_session
+                is_trial_session,
+                message_to_stylist,
+                discount_applied
             `)
             .eq("id", booking.trial_booking_id)
+            .single()).data
+        : null;
+
+    // 7a. Get main booking if this is a trial session
+    const main_booking = booking.main_booking_id
+        ? (await supabase
+            .from("bookings")
+            .select(`
+                id,
+                start_time,
+                end_time,
+                total_price,
+                total_duration_minutes,
+                status,
+                is_trial_session,
+                message_to_stylist,
+                discount_applied,
+                discount_id,
+                booking_services(
+                    service:services(
+                        id,
+                        title,
+                        price,
+                        currency,
+                        duration_minutes
+                    )
+                )
+            `)
+            .eq("id", booking.main_booking_id)
             .single()).data
         : null;
 
@@ -533,6 +564,7 @@ export async function getBookingDetails(bookingId: string) {
         discount,
         booking_services,
         trial_booking,
+        main_booking,
         chats,
         payments: payments || [],
     };

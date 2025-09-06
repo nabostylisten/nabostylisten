@@ -33,6 +33,9 @@ import {
   Settings,
   FileText,
   Plus,
+  TestTube,
+  ArrowRight,
+  Link as LinkIcon,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -48,7 +51,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getBookingNotes } from "@/server/booking-note.actions";
 import { Database } from "@/types/database.types";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { BookingPricingDisplay, getPricingBreakdown } from "@/lib/booking-pricing-display";
+import {
+  BookingPricingDisplay,
+  getPricingBreakdown,
+} from "@/lib/booking-pricing-display";
 import { formatCurrency } from "@/lib/booking-calculations";
 
 interface BookingDetailsContentProps {
@@ -218,7 +224,28 @@ export function BookingDetailsContent({
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    {booking.is_trial_session && (
+                      <Badge
+                        variant="outline"
+                        className="text-purple-600 bg-purple-50/30 border-purple-200 dark:text-purple-400 dark:bg-purple-900/30 dark:border-purple-800"
+                      >
+                        <TestTube className="w-3 h-3 mr-1" />
+                        Prøvetime
+                      </Badge>
+                    )}
+                    {!booking.is_trial_session && booking.trial_booking && (
+                      <Badge
+                        variant="outline"
+                        className="text-blue-600 bg-blue-50/30 border-blue-200 dark:text-blue-400 dark:bg-blue-900/30 dark:border-blue-800"
+                      >
+                        <TestTube className="w-3 h-3 mr-1" />
+                        Har prøvetime
+                      </Badge>
+                    )}
+                  </div>
                   <CardTitle className="text-2xl">
+                    {booking.is_trial_session ? "Prøvetime: " : ""}
                     {services.length > 0 ? services[0].title : "Booking"}
                     {services.length > 1 &&
                       ` +${services.length - 1} tjenester til`}
@@ -245,7 +272,8 @@ export function BookingDetailsContent({
                     serviceName={services[0]?.title || "Booking"}
                   />
                   {/* Stylist actions for pending bookings, or admin actions */}
-                  {((userRole === "stylist" && booking.status === "pending") || userRole === "admin") && (
+                  {((userRole === "stylist" && booking.status === "pending") ||
+                    userRole === "admin") && (
                     <Button
                       variant="outline"
                       size="sm"
@@ -332,6 +360,179 @@ export function BookingDetailsContent({
             </CardContent>
           </Card>
         </BlurFade>
+
+        {/* Trial Session Information - shown when viewing main booking */}
+        {booking.trial_booking && (
+          <BlurFade delay={0.18} duration={0.5}>
+            <Card className="border-purple-200 bg-purple-50/30 dark:border-purple-800 dark:bg-purple-900/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-200">
+                  <TestTube className="w-5 h-5" />
+                  Tilknyttet prøvetime
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        {format(
+                          new Date(booking.trial_booking.start_time),
+                          "EEEE d. MMMM yyyy",
+                          { locale: nb }
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        {format(
+                          new Date(booking.trial_booking.start_time),
+                          "HH:mm"
+                        )}{" "}
+                        -{" "}
+                        {format(
+                          new Date(booking.trial_booking.end_time),
+                          "HH:mm"
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    <div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          booking.trial_booking.status === "completed"
+                            ? "text-blue-600 border-blue-200"
+                            : booking.trial_booking.status === "confirmed"
+                              ? "text-green-600 border-green-200"
+                              : booking.trial_booking.status === "pending"
+                                ? "text-yellow-600 border-yellow-200"
+                                : "text-red-600 border-red-200"
+                        }
+                      >
+                        {booking.trial_booking.status === "pending" && "Venter"}
+                        {booking.trial_booking.status === "confirmed" &&
+                          "Bekreftet"}
+                        {booking.trial_booking.status === "completed" &&
+                          "Fullført"}
+                        {booking.trial_booking.status === "cancelled" &&
+                          "Avlyst"}
+                      </Badge>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/bookinger/${booking.trial_booking.id}`}>
+                        Se prøvetime
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </BlurFade>
+        )}
+
+        {/* Main Booking Information - shown when viewing trial session */}
+        {booking.main_booking && (
+          <BlurFade delay={0.18} duration={0.5}>
+            <Card className="border-blue-200 bg-blue-50/30 dark:border-blue-800 dark:bg-blue-900/30">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+                  <LinkIcon className="w-5 h-5" />
+                  Tilknyttet hovedbooking
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        {format(
+                          new Date(booking.main_booking.start_time),
+                          "EEEE d. MMMM yyyy",
+                          { locale: nb }
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-muted-foreground" />
+                      <span>
+                        {format(
+                          new Date(booking.main_booking.start_time),
+                          "HH:mm"
+                        )}{" "}
+                        -{" "}
+                        {format(
+                          new Date(booking.main_booking.end_time),
+                          "HH:mm"
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Show main booking services */}
+                  {booking.main_booking.booking_services &&
+                    booking.main_booking.booking_services.length > 0 && (
+                      <div>
+                        <h4 className="text-sm font-medium mb-2">Tjenester:</h4>
+                        <div className="space-y-1">
+                          {booking.main_booking.booking_services.map(
+                            (bs: any) => (
+                              <div
+                                key={bs.service.id}
+                                className="flex justify-between text-sm"
+                              >
+                                <span>{bs.service.title}</span>
+                                <span className="text-muted-foreground">
+                                  {bs.service.price} {bs.service.currency}
+                                </span>
+                              </div>
+                            )
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  <div className="flex items-center justify-between pt-2">
+                    <div>
+                      <Badge
+                        variant="outline"
+                        className={
+                          booking.main_booking.status === "completed"
+                            ? "text-blue-600 border-blue-200"
+                            : booking.main_booking.status === "confirmed"
+                              ? "text-green-600 border-green-200"
+                              : booking.main_booking.status === "pending"
+                                ? "text-yellow-600 border-yellow-200"
+                                : "text-red-600 border-red-200"
+                        }
+                      >
+                        {booking.main_booking.status === "pending" && "Venter"}
+                        {booking.main_booking.status === "confirmed" &&
+                          "Bekreftet"}
+                        {booking.main_booking.status === "completed" &&
+                          "Fullført"}
+                        {booking.main_booking.status === "cancelled" &&
+                          "Avlyst"}
+                      </Badge>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <Link href={`/bookinger/${booking.main_booking.id}`}>
+                        Se hovedbooking
+                        <ArrowRight className="w-4 h-4 ml-2" />
+                      </Link>
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </BlurFade>
+        )}
 
         {/* Stylist Info */}
         <BlurFade delay={0.2} duration={0.5}>
@@ -467,16 +668,29 @@ export function BookingDetailsContent({
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Receipt className="w-5 h-5" />
-                Prissammendrag
+                {booking.is_trial_session
+                  ? "Prøvetime prissammendrag"
+                  : "Prissammendrag"}
               </CardTitle>
+              {booking.is_trial_session && (
+                <CardDescription>
+                  Dette er prisen for prøvetimen. Hovedbookingen har egne
+                  priser.
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {/* Service breakdown */}
                 <div className="space-y-3">
-                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Tjenester</h4>
+                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                    Tjenester
+                  </h4>
                   {services.map((service) => (
-                    <div key={service.id} className="flex justify-between items-start">
+                    <div
+                      key={service.id}
+                      className="flex justify-between items-start"
+                    >
                       <div className="flex-1">
                         <span className="font-medium">{service.title}</span>
                         <div className="text-sm text-muted-foreground">
@@ -492,7 +706,9 @@ export function BookingDetailsContent({
 
                 {(() => {
                   // Calculate pricing breakdown
-                  const payment = Array.isArray(booking.payments) ? booking.payments[0] : booking.payments;
+                  const payment = Array.isArray(booking.payments)
+                    ? booking.payments[0]
+                    : booking.payments;
                   const breakdown = getPricingBreakdown(
                     {
                       total_price: booking.total_price,
@@ -518,10 +734,14 @@ export function BookingDetailsContent({
                           <span>
                             Rabatt anvendt
                             {breakdown.discountCode && (
-                              <span className="text-muted-foreground ml-1">({breakdown.discountCode})</span>
+                              <span className="text-muted-foreground ml-1">
+                                ({breakdown.discountCode})
+                              </span>
                             )}
                           </span>
-                          <span>-{formatCurrency(breakdown.discountAmount)}</span>
+                          <span>
+                            -{formatCurrency(breakdown.discountAmount)}
+                          </span>
                         </div>
                       )}
 
@@ -544,32 +764,87 @@ export function BookingDetailsContent({
                           />
                         </div>
                       </div>
+
+                      {/* Trial session pricing explanation */}
+                      {booking.is_trial_session && (
+                        <div className="p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                          <div className="flex items-start gap-2">
+                            <TestTube className="w-4 h-4 text-purple-600 dark:text-purple-400 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm">
+                              <p className="font-medium text-purple-800 dark:text-purple-200 mb-1">
+                                Prøvetime
+                              </p>
+                              <p className="text-purple-700 dark:text-purple-300">
+                                Dette er en redusert pris for å prøve tjenesten.
+                                {booking.main_booking && (
+                                  <span className="ml-1">
+                                    Hovedbookingen har full pris for alle
+                                    tjenester.
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Main booking pricing note when viewing main booking with trial */}
+                      {!booking.is_trial_session && booking.trial_booking && (
+                        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                          <div className="flex items-start gap-2">
+                            <LinkIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                            <div className="text-sm">
+                              <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">
+                                Hovedbooking
+                              </p>
+                              <p className="text-blue-700 dark:text-blue-300">
+                                Dette er full pris for alle tjenester.
+                                Prøvetimen har egen redusert pris.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </>
                   );
                 })()}
 
                 {/* Payment Status */}
                 {(() => {
-                  const payment = Array.isArray(booking.payments) ? booking.payments[0] : booking.payments;
+                  const payment = Array.isArray(booking.payments)
+                    ? booking.payments[0]
+                    : booking.payments;
                   if (!payment) return null;
-                  
+
                   return (
                     <div className="pt-4 border-t">
                       <div className="flex items-center gap-2 text-sm">
                         <CreditCard className="w-4 h-4" />
                         <span>
                           Betaling:{" "}
-                          <span className={payment.status === "succeeded" ? "text-green-600" : "text-yellow-600"}>
+                          <span
+                            className={
+                              payment.status === "succeeded"
+                                ? "text-green-600"
+                                : "text-yellow-600"
+                            }
+                          >
                             {payment.status === "succeeded"
                               ? "Fullført"
                               : "Venter"}
                           </span>
                         </span>
-                        {payment.status === "succeeded" && payment.succeeded_at && (
-                          <span className="text-muted-foreground ml-2">
-                            • {format(new Date(payment.succeeded_at), "d. MMM yyyy", { locale: nb })}
-                          </span>
-                        )}
+                        {payment.status === "succeeded" &&
+                          payment.succeeded_at && (
+                            <span className="text-muted-foreground ml-2">
+                              •{" "}
+                              {format(
+                                new Date(payment.succeeded_at),
+                                "d. MMM yyyy",
+                                { locale: nb }
+                              )}
+                            </span>
+                          )}
                       </div>
                     </div>
                   );
@@ -620,10 +895,14 @@ export function BookingDetailsContent({
                         <BookingNoteCard
                           key={note.id}
                           note={note}
-                          onEdit={userRole === "stylist" ? () => {
-                            setEditingNote(note);
-                            setIsBookingNotesDialogOpen(true);
-                          } : undefined}
+                          onEdit={
+                            userRole === "stylist"
+                              ? () => {
+                                  setEditingNote(note);
+                                  setIsBookingNotesDialogOpen(true);
+                                }
+                              : undefined
+                          }
                         />
                       ))}
                     </div>
@@ -635,10 +914,9 @@ export function BookingDetailsContent({
                       Ingen notater ennå
                     </h3>
                     <p className="text-sm text-center mb-4">
-                      {userRole === "admin" 
+                      {userRole === "admin"
                         ? "Ingen notater er opprettet for denne bookingen ennå."
-                        : "Opprett ditt første bookingnotat for å dokumentere tjenesten og dele informasjon med kunden."
-                      }
+                        : "Opprett ditt første bookingnotat for å dokumentere tjenesten og dele informasjon med kunden."}
                     </p>
                     {userRole === "stylist" && (
                       <Button

@@ -205,9 +205,11 @@ export function BookingDetailsContent({
         {/* Header */}
         <BlurFade delay={0.1} duration={0.5}>
           <div className="flex items-center justify-between">
-            <Button variant="ghost" onClick={() => router.back()}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Tilbake til bookinger
+            <Button variant="ghost" asChild>
+              <Link href={`/profiler/${userId}/mine-bookinger`}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Tilbake til bookinger
+              </Link>
             </Button>
             <Button variant="outline" asChild>
               <Link href={`/bookinger/${booking.id}/chat`}>

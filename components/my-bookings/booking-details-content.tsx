@@ -48,6 +48,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { getBookingNotes } from "@/server/booking-note.actions";
 import { Database } from "@/types/database.types";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { BookingPricingDisplay, getPricingBreakdown } from "@/lib/booking-pricing-display";
+import { formatCurrency } from "@/lib/booking-calculations";
 
 interface BookingDetailsContentProps {
   bookingId: string;
@@ -469,46 +471,109 @@ export function BookingDetailsContent({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {services.map((service) => (
-                  <div key={service.id} className="flex justify-between">
-                    <span>{service.title}</span>
-                    <span>
-                      {service.price.toFixed(2)} {service.currency}
-                    </span>
-                  </div>
-                ))}
-
-                {booking.discount_id && booking.discount_applied > 0 && (
-                  <>
-                    <Separator />
-                    <div className="flex justify-between text-green-600">
-                      <span>Rabatt anvendt</span>
-                      <span>-{booking.discount_applied.toFixed(2)} NOK</span>
-                    </div>
-                  </>
-                )}
-
-                <Separator />
-                <div className="flex justify-between text-lg font-semibold">
-                  <span>Totalt</span>
-                  <span>{booking.total_price.toFixed(2)} NOK</span>
-                </div>
-
-                {/* Payment Status */}
-                {booking.payments && (
-                  <div className="pt-2">
-                    <div className="flex items-center gap-2 text-sm">
-                      <CreditCard className="w-4 h-4" />
-                      <span>
-                        Betaling:{" "}
-                        {booking.payments.status === "succeeded"
-                          ? "Fullført"
-                          : "Venter"}
+              <div className="space-y-4">
+                {/* Service breakdown */}
+                <div className="space-y-3">
+                  <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">Tjenester</h4>
+                  {services.map((service) => (
+                    <div key={service.id} className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <span className="font-medium">{service.title}</span>
+                        <div className="text-sm text-muted-foreground">
+                          {service.duration_minutes} min
+                        </div>
+                      </div>
+                      <span className="font-medium">
+                        {formatCurrency(service.price)}
                       </span>
                     </div>
-                  </div>
-                )}
+                  ))}
+                </div>
+
+                {(() => {
+                  // Calculate pricing breakdown
+                  const payment = Array.isArray(booking.payments) ? booking.payments[0] : booking.payments;
+                  const breakdown = getPricingBreakdown(
+                    {
+                      total_price: booking.total_price,
+                      discount_applied: booking.discount_applied || 0,
+                      is_trial_session: booking.is_trial_session,
+                    },
+                    payment,
+                    booking.discount
+                  );
+
+                  return (
+                    <>
+                      {/* Subtotal */}
+                      <Separator />
+                      <div className="flex justify-between">
+                        <span>Subtotal</span>
+                        <span>{formatCurrency(breakdown.originalAmount)}</span>
+                      </div>
+
+                      {/* Discount */}
+                      {breakdown.hasDiscount && (
+                        <div className="flex justify-between text-green-600">
+                          <span>
+                            Rabatt anvendt
+                            {breakdown.discountCode && (
+                              <span className="text-muted-foreground ml-1">({breakdown.discountCode})</span>
+                            )}
+                          </span>
+                          <span>-{formatCurrency(breakdown.discountAmount)}</span>
+                        </div>
+                      )}
+
+                      {/* Total */}
+                      <Separator />
+                      <div className="flex justify-between items-center">
+                        <span className="text-lg font-semibold">
+                          {booking.is_trial_session ? "Prøvepris" : "Totalt"}
+                        </span>
+                        <div className="text-right">
+                          <BookingPricingDisplay
+                            booking={{
+                              total_price: booking.total_price,
+                              discount_applied: booking.discount_applied || 0,
+                              is_trial_session: booking.is_trial_session,
+                            }}
+                            payment={payment}
+                            discount={booking.discount}
+                            options={{ showDiscountCode: false }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  );
+                })()}
+
+                {/* Payment Status */}
+                {(() => {
+                  const payment = Array.isArray(booking.payments) ? booking.payments[0] : booking.payments;
+                  if (!payment) return null;
+                  
+                  return (
+                    <div className="pt-4 border-t">
+                      <div className="flex items-center gap-2 text-sm">
+                        <CreditCard className="w-4 h-4" />
+                        <span>
+                          Betaling:{" "}
+                          <span className={payment.status === "succeeded" ? "text-green-600" : "text-yellow-600"}>
+                            {payment.status === "succeeded"
+                              ? "Fullført"
+                              : "Venter"}
+                          </span>
+                        </span>
+                        {payment.status === "succeeded" && payment.succeeded_at && (
+                          <span className="text-muted-foreground ml-2">
+                            • {format(new Date(payment.succeeded_at), "d. MMM yyyy", { locale: nb })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </CardContent>
           </Card>

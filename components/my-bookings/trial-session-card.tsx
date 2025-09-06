@@ -27,6 +27,7 @@ import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
+import { BookingPricingDisplay } from "@/lib/booking-pricing-display";
 
 // Infer the booking type from the server action return type
 type GetUserBookingsResult = Awaited<ReturnType<typeof getUserBookings>>;
@@ -263,17 +264,16 @@ export function TrialSessionCard({
           {/* Footer */}
           <div className="flex justify-between items-center pt-2 border-t">
             <div className="text-lg font-semibold">
-              {/* Trial sessions typically have lower or zero price */}
-              <span className="text-purple-700 dark:text-purple-300">
-                {booking.total_price > 0 ? (
-                  <>
-                    {booking.total_price.toFixed(2)} NOK
-                    <span className="text-xs ml-1">(prøvepris)</span>
-                  </>
-                ) : (
-                  <span className="text-green-600">Gratis prøvetime</span>
-                )}
-              </span>
+              <BookingPricingDisplay
+                booking={{
+                  total_price: booking.total_price,
+                  discount_applied: booking.discount_applied || 0,
+                  is_trial_session: true,
+                }}
+                payment={Array.isArray(booking.payments) ? booking.payments[0] : booking.payments}
+                discount={booking.discount}
+                options={{ showDiscountCode: false, isTrialSession: true }}
+              />
             </div>
             <div className="flex gap-2">
               {/* Actions dropdown for both customers and stylists */}

@@ -28,6 +28,7 @@ import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
+import { BookingPricingDisplay, DiscountInfoDisplay } from "@/lib/booking-pricing-display";
 
 // Infer the booking type from the server action return type
 type GetUserBookingsResult = Awaited<ReturnType<typeof getUserBookings>>;
@@ -284,63 +285,33 @@ export function BookingCard({
 
           {/* Discount Applied */}
           {booking.discount && booking.discount_applied > 0 && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <CreditCard className="w-4 h-4" />
-              <span>
-                Rabatt anvendt ({booking.discount.code}): -
-                {booking.discount_applied.toFixed(2)} NOK
-              </span>
+            <div className="flex items-center gap-2">
+              <CreditCard className="w-4 h-4 text-green-600" />
+              <DiscountInfoDisplay
+                booking={{
+                  total_price: booking.total_price,
+                  discount_applied: booking.discount_applied,
+                  is_trial_session: booking.is_trial_session,
+                }}
+                payment={Array.isArray(booking.payments) ? booking.payments[0] : booking.payments}
+                discount={booking.discount}
+              />
             </div>
           )}
 
           {/* Footer */}
           <div className="flex justify-between items-center pt-2 border-t">
             <div className="text-lg font-semibold">
-              {(() => {
-                // Use payment data if available for most accurate pricing
-                const payment = Array.isArray(booking.payments)
-                  ? booking.payments[0]
-                  : booking.payments;
-                if (
-                  payment &&
-                  payment.original_amount &&
-                  payment.discount_amount > 0
-                ) {
-                  return (
-                    <div className="flex flex-col">
-                      <span className="text-sm text-muted-foreground line-through">
-                        {payment.original_amount.toFixed(2)} NOK
-                      </span>
-                      <span className="text-green-600">
-                        {payment.final_amount.toFixed(2)} NOK
-                        <span className="text-xs ml-1">
-                          (-{payment.discount_amount.toFixed(2)} NOK)
-                        </span>
-                      </span>
-                    </div>
-                  );
-                }
-                // Fall back to booking data if payment data not available
-                if (booking.discount_applied > 0) {
-                  const originalAmount =
-                    booking.total_price + booking.discount_applied;
-                  return (
-                    <div className="flex flex-col">
-                      <span className="text-sm text-muted-foreground line-through">
-                        {originalAmount.toFixed(2)} NOK
-                      </span>
-                      <span className="text-green-600">
-                        {booking.total_price.toFixed(2)} NOK
-                        <span className="text-xs ml-1">
-                          (-{booking.discount_applied.toFixed(2)} NOK)
-                        </span>
-                      </span>
-                    </div>
-                  );
-                }
-                // No discount applied
-                return <span>{booking.total_price.toFixed(2)} NOK</span>;
-              })()}
+              <BookingPricingDisplay
+                booking={{
+                  total_price: booking.total_price,
+                  discount_applied: booking.discount_applied,
+                  is_trial_session: booking.is_trial_session,
+                }}
+                payment={Array.isArray(booking.payments) ? booking.payments[0] : booking.payments}
+                discount={booking.discount}
+                options={{ showDiscountCode: false }}
+              />
             </div>
             <div className="flex gap-2">
               {/* Actions dropdown for both customers and stylists */}

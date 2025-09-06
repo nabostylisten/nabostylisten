@@ -2152,31 +2152,53 @@ export async function rescheduleBooking({
         return { error: "User not authenticated", data: null };
     }
 
-    // Get booking details to verify access and get current times
-    // Include trial session relationships for validation
+    // Get booking details first
     const { data: booking, error: bookingError } = await supabase
         .from("bookings")
-        .select(`
-            *,
-            trial_booking:bookings!trial_booking_id(
-                id,
-                start_time,
-                end_time,
-                status
-            ),
-            main_booking:bookings!main_booking_id(
-                id,
-                start_time,
-                end_time,
-                status
-            )
-        `)
+        .select("*")
         .eq("id", bookingId)
         .single();
-
+        
     if (bookingError || !booking) {
         return { error: "Booking not found", data: null };
     }
+
+    // Get related trial/main booking data separately
+    let trialBooking = null;
+    let mainBooking = null;
+    
+    if (booking.trial_booking_id) {
+        const { data: trial } = await supabase
+            .from("bookings")
+            .select("id, start_time, end_time, status, is_trial_session")
+            .eq("id", booking.trial_booking_id)
+            .single();
+        trialBooking = trial;
+    }
+    
+    if (booking.main_booking_id) {
+        const { data: main } = await supabase
+            .from("bookings")
+            .select("id, start_time, end_time, status, is_trial_session")
+            .eq("id", booking.main_booking_id)
+            .single();
+        mainBooking = main;
+    }
+    
+    // Attach the related bookings to the main booking object
+    booking.trial_booking = trialBooking;
+    booking.main_booking = mainBooking;
+        
+    console.log("Debug: Booking with separate queries:", JSON.stringify({
+        booking: {
+            id: booking.id,
+            is_trial_session: booking.is_trial_session,
+            trial_booking_id: booking.trial_booking_id,
+            main_booking_id: booking.main_booking_id,
+            trial_booking: booking.trial_booking,
+            main_booking: booking.main_booking
+        }
+    }, null, 2));
 
     // Check if user is the assigned stylist
     if (booking.stylist_id !== user.id) {
@@ -2209,7 +2231,17 @@ export async function rescheduleBooking({
 
     // Validate trial session constraints
     const isTrialSession = booking.is_trial_session === true;
-    const hasTrialSession = booking.trial_booking != null;
+    const hasTrialSession = booking.trial_booking != null && booking.trial_booking_id != null;
+    
+    console.log("Debug: Trial session constraints:", {
+        isTrialSession,
+        hasTrialSession,
+        moveBothBookings,
+        trial_booking_id: booking.trial_booking_id,
+        main_booking_id: booking.main_booking_id,
+        trial_booking_exists: !!booking.trial_booking,
+        main_booking_exists: !!booking.main_booking
+    });
 
     if (isTrialSession && booking.main_booking) {
         const mainBookingDate = new Date(booking.main_booking.start_time);
@@ -2278,50 +2310,117 @@ export async function rescheduleBooking({
 
     // Handle moving trial session booking if requested
     if (moveBothBookings && hasTrialSession && !isTrialSession && booking.trial_booking) {
-        const originalMainStart = new Date(booking.start_time);
-        const originalMainEnd = new Date(booking.end_time);
-        const originalTrialStart = new Date(booking.trial_booking.start_time);
-        const originalTrialEnd = new Date(booking.trial_booking.end_time);
-        
-        // Calculate the time difference between original trial and main bookings
-        const timeDifference = originalMainStart.getTime() - originalTrialStart.getTime();
-        const durationDifference = originalMainEnd.getTime() - originalTrialEnd.getTime();
-        
-        // Calculate new trial session times maintaining the same relative timing
-        const newTrialStart = new Date(newStart.getTime() - timeDifference);
-        const newTrialEnd = new Date(newEnd.getTime() - durationDifference);
-        
-        // Validate that the new trial times are in the future
-        if (newTrialStart <= now) {
+        try {
+            console.log("Debug: Full booking object:", JSON.stringify({
+                id: booking.id,
+                start_time: booking.start_time,
+                end_time: booking.end_time,
+                trial_booking: booking.trial_booking,
+                trial_booking_id: booking.trial_booking_id
+            }, null, 2));
+            
+            if (!booking.trial_booking.start_time || !booking.trial_booking.end_time) {
+                console.error("Missing trial booking dates:", {
+                    trial_booking: booking.trial_booking,
+                    trial_booking_id: booking.trial_booking_id
+                });
+                return { 
+                    error: "Prøvetimen mangler datoer", 
+                    data: null 
+                };
+            }
+            
+            const originalMainStart = new Date(booking.start_time);
+            const originalMainEnd = new Date(booking.end_time);
+            const originalTrialStart = new Date(booking.trial_booking.start_time);
+            const originalTrialEnd = new Date(booking.trial_booking.end_time);
+            
+            // Validate original dates
+            if (isNaN(originalMainStart.getTime()) || isNaN(originalTrialStart.getTime()) || 
+                isNaN(originalTrialEnd.getTime()) || isNaN(originalMainEnd.getTime())) {
+                console.error("Invalid original dates:", {
+                    originalMainStart: booking.start_time,
+                    originalTrialStart: booking.trial_booking.start_time,
+                    originalTrialEnd: booking.trial_booking.end_time,
+                    originalMainEnd: booking.end_time
+                });
+                return { 
+                    error: "Ugyldig dato i opprinnelige bookinger", 
+                    data: null 
+                };
+            }
+            
+            // Calculate the time difference between original trial and main bookings
+            const timeDifference = originalMainStart.getTime() - originalTrialStart.getTime();
+            const trialDuration = originalTrialEnd.getTime() - originalTrialStart.getTime();
+            
+            // Calculate new trial session times maintaining the same relative timing
+            const newTrialStart = new Date(newStart.getTime() - timeDifference);
+            const newTrialEnd = new Date(newTrialStart.getTime() + trialDuration);
+            
+            // Validate calculated dates
+            if (isNaN(newTrialStart.getTime()) || isNaN(newTrialEnd.getTime())) {
+                console.error("Invalid calculated trial dates:", {
+                    newStart: newStart.toISOString(),
+                    timeDifference,
+                    trialDuration,
+                    newTrialStart: newTrialStart.toString(),
+                    newTrialEnd: newTrialEnd.toString()
+                });
+                return { 
+                    error: "Kunne ikke beregne nye datoer for prøvetimen", 
+                    data: null 
+                };
+            }
+            
+            // Validate that the new trial times are in the future
+            if (newTrialStart <= now) {
+                return { 
+                    error: "Den nye prøvetimen ville være i fortiden. Velg et senere tidspunkt for hovedbookingen.", 
+                    data: null 
+                };
+            }
+            
+            // Ensure trial is still before main booking with 24h gap
+            const hoursBeforeMain = (newStart.getTime() - newTrialEnd.getTime()) / (1000 * 60 * 60);
+            if (hoursBeforeMain < 24) {
+                return { 
+                    error: "Den nye prøvetimen ville være for nær hovedbookingen. Velg et senere tidspunkt for hovedbookingen.", 
+                    data: null 
+                };
+            }
+            
+            // Update the trial booking
+            const trialUpdateData: DatabaseTables["bookings"]["Update"] = {
+                start_time: newTrialStart.toISOString(),
+                end_time: newTrialEnd.toISOString(),
+                rescheduled_from: booking.trial_booking.start_time,
+                rescheduled_at: new Date().toISOString(),
+                reschedule_reason: `Flyttet sammen med hovedbooking: ${rescheduleReason}`.trim(),
+            };
+            
+            const { success: trialSuccess, data: validatedTrialData } = bookingsUpdateSchema.safeParse(trialUpdateData);
+            if (!trialSuccess) {
+                console.error("Trial booking validation failed:", trialSuccess);
+                return { error: "Invalid trial booking data", data: null };
+            }
+            
+            const { error: trialUpdateError } = await supabase
+                .from("bookings")
+                .update(validatedTrialData)
+                .eq("id", booking.trial_booking.id);
+                
+            if (trialUpdateError) {
+                // Log the error but don't fail the entire operation since main booking succeeded
+                console.error("Failed to update trial booking:", trialUpdateError);
+                // Could consider a partial success response here
+            }
+        } catch (error) {
+            console.error("Error in trial booking update:", error);
             return { 
-                error: "Den nye prøvetimen ville være i fortiden. Velg et senere tidspunkt for hovedbookingen.", 
+                error: "Feil ved oppdatering av prøvetimen", 
                 data: null 
             };
-        }
-        
-        // Update the trial booking
-        const trialUpdateData: DatabaseTables["bookings"]["Update"] = {
-            start_time: newTrialStart.toISOString(),
-            end_time: newTrialEnd.toISOString(),
-            rescheduled_from: booking.trial_booking.start_time,
-            rescheduled_at: new Date().toISOString(),
-            reschedule_reason: `Flyttet sammen med hovedbooking: ${rescheduleReason}`.trim(),
-        };
-        
-        const { success: trialSuccess, data: validatedTrialData } = bookingsUpdateSchema.safeParse(trialUpdateData);
-        if (!trialSuccess) {
-            return { error: "Invalid trial booking data", data: null };
-        }
-        
-        const { error: trialUpdateError } = await supabase
-            .from("bookings")
-            .update(validatedTrialData)
-            .eq("id", booking.trial_booking.id);
-            
-        if (trialUpdateError) {
-            // Log the error but don't fail the entire operation since main booking succeeded
-            console.error("Failed to update trial booking:", trialUpdateError);
-            // Could consider a partial success response here
         }
     }
 
@@ -2515,4 +2614,100 @@ export async function rescheduleBooking({
     );
 
     return { data: updatedBooking, error: null };
+}
+
+/**
+ * Calculate the optimal trial session time for a given main booking time
+ * Maintains relative timing and provides the calculated time
+ */
+export async function calculateOptimalTrialSessionTime({
+    originalMainStart,
+    originalTrialStart,
+    originalTrialEnd,
+    newMainStart,
+}: {
+    originalMainStart: string;
+    originalTrialStart: string;
+    originalTrialEnd: string;
+    newMainStart: string;
+}) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+
+    // Calculate original time difference and duration
+    const originalMainDate = new Date(originalMainStart);
+    const originalTrialDate = new Date(originalTrialStart);
+    const originalTrialEndDate = new Date(originalTrialEnd);
+    const newMainDate = new Date(newMainStart);
+    
+    // Validate input dates
+    if (isNaN(originalMainDate.getTime()) || isNaN(originalTrialDate.getTime()) || 
+        isNaN(originalTrialEndDate.getTime()) || isNaN(newMainDate.getTime())) {
+        console.error("Invalid input dates:", {
+            originalMainStart,
+            originalTrialStart,
+            originalTrialEnd,
+            newMainStart
+        });
+        return {
+            error: "Ugyldig dato oppgitt for beregning",
+            data: null,
+        };
+    }
+    
+    const timeDifference = originalMainDate.getTime() - originalTrialDate.getTime();
+    const trialDuration = originalTrialEndDate.getTime() - originalTrialDate.getTime();
+    
+    // Calculate ideal trial session time (maintaining same relative timing)
+    const idealTrialStart = new Date(newMainDate.getTime() - timeDifference);
+    const idealTrialEnd = new Date(idealTrialStart.getTime() + trialDuration);
+    
+    // Validate calculated dates
+    if (isNaN(idealTrialStart.getTime()) || isNaN(idealTrialEnd.getTime())) {
+        console.error("Invalid calculated dates:", {
+            newMainDate: newMainDate.toISOString(),
+            timeDifference,
+            trialDuration,
+            idealTrialStart: idealTrialStart.toString(),
+            idealTrialEnd: idealTrialEnd.toString()
+        });
+        return {
+            error: "Kunne ikke beregne nytt tidspunkt for prøvetime",
+            data: null,
+        };
+    }
+    
+    // Validate basic constraints
+    const now = new Date();
+    const hoursBeforeMain = (newMainDate.getTime() - idealTrialEnd.getTime()) / (1000 * 60 * 60);
+    
+    // Check if calculated time meets basic requirements
+    if (idealTrialStart <= now) {
+        return {
+            error: "Den beregnede prøvetiden ville være i fortiden. Hovedbookingen må flyttes til et senere tidspunkt.",
+            data: null,
+        };
+    }
+    
+    if (hoursBeforeMain < 24) {
+        return {
+            error: "Den beregnede prøvetiden ville være for nær hovedbookingen. Hovedbookingen må flyttes til et senere tidspunkt.",
+            data: null,
+        };
+    }
+    
+    // Return the calculated times - the actual availability check will happen during booking update
+    return {
+        data: {
+            start: idealTrialStart.toISOString(),
+            end: idealTrialEnd.toISOString(),
+            isIdealTime: true, // We're maintaining relative timing
+        },
+        error: null,
+    };
 }

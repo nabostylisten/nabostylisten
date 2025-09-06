@@ -27,7 +27,6 @@ import { nb } from "date-fns/locale";
 import { MoveBookingScheduler } from "./move-booking-scheduler";
 import { RescheduleConfirmationDialog } from "./reschedule-confirmation-dialog";
 import { toast } from "sonner";
-import type { DatabaseTables } from "@/types";
 
 interface MoveBookingContentProps {
   bookingId: string;
@@ -64,8 +63,6 @@ export function MoveBookingContent({
 
   // Get constraint dates for trial sessions
   const mainBookingDate = mainBooking ? new Date(mainBooking.start_time) : null;
-  const trialConstraintDate =
-    hasTrialSession && !isTrialSession ? new Date(currentStartTime) : null;
 
   const handleTimeSlotSelect = (startTime: Date, endTime: Date) => {
     // Validate trial session constraints

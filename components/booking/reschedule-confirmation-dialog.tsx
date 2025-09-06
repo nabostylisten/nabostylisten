@@ -15,21 +15,19 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Calendar,
-  Clock,
-  AlertTriangle,
-  ArrowRight,
-  ChevronRight,
-} from "lucide-react";
+import { Calendar, Clock, AlertTriangle, ArrowRight } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { rescheduleBooking } from "@/server/booking.actions";
+import {
+  rescheduleBooking,
+  calculateOptimalTrialSessionTime,
+} from "@/server/booking.actions";
 import { addUnavailability } from "@/server/availability.actions";
 import { DatabaseTables } from "@/types";
+import { useQuery } from "@tanstack/react-query";
 
 interface RescheduleConfirmationDialogProps {
   open: boolean;
@@ -62,6 +60,30 @@ export function RescheduleConfirmationDialog({
   >("available");
   const [hasInformedCustomer, setHasInformedCustomer] = useState(false);
   const [rescheduleReason, setRescheduleReason] = useState("");
+  // Calculate optimal trial session time when moving both bookings
+  const trialTimeCalculation = useQuery({
+    queryKey: [
+      "calculateTrialTime",
+      bookingId,
+      newStartTime,
+      newEndTime,
+      moveBothBookings,
+    ],
+    queryFn: async () => {
+      if (!moveBothBookings || !trialBooking || !newStartTime || !newEndTime) {
+        return null;
+      }
+
+      return await calculateOptimalTrialSessionTime({
+        originalMainStart: currentStartTime.toISOString(),
+        originalTrialStart: trialBooking.start_time,
+        originalTrialEnd: trialBooking.end_time,
+        newMainStart: newStartTime.toISOString(),
+      });
+    },
+    enabled:
+      moveBothBookings && !!trialBooking && !!newStartTime && !!newEndTime,
+  });
 
   const rescheduleBookingMutation = useMutation({
     mutationFn: async () => {
@@ -110,6 +132,14 @@ export function RescheduleConfirmationDialog({
       return;
     }
 
+    // Check if trial session calculation failed when moving both bookings
+    if (moveBothBookings && trialTimeCalculation.data?.error) {
+      toast.error(
+        `Kan ikke flytte begge bookingene: ${trialTimeCalculation.data.error}`
+      );
+      return;
+    }
+
     rescheduleBookingMutation.mutate();
   };
 
@@ -150,9 +180,33 @@ export function RescheduleConfirmationDialog({
                     "EEEE d. MMMM yyyy 'kl.' HH:mm",
                     { locale: nb }
                   )}
-                  <ArrowRight className="w-4 h-4" />{" "}
-                  <em>Beregnes automatisk</em>
+                  <ArrowRight className="w-4 h-4" />
+                  {trialTimeCalculation.isLoading ? (
+                    <em>Beregner...</em>
+                  ) : trialTimeCalculation.error ? (
+                    <em>Kunne ikke beregne</em>
+                  ) : trialTimeCalculation.data?.data ? (
+                    <span className="font-semibold">
+                      {format(
+                        new Date(trialTimeCalculation.data.data.start),
+                        "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                        { locale: nb }
+                      )}
+                    </span>
+                  ) : (
+                    <em>Beregnes automatisk</em>
+                  )}
                 </p>
+                {trialTimeCalculation.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {trialTimeCalculation.error.message}
+                  </p>
+                )}
+                {trialTimeCalculation.data?.error && (
+                  <p className="mt-1 text-xs text-red-600">
+                    {trialTimeCalculation.data.error}
+                  </p>
+                )}
               </div>
             </div>
           )}
@@ -287,12 +341,18 @@ export function RescheduleConfirmationDialog({
           <Button
             onClick={handleConfirm}
             disabled={
-              !hasInformedCustomer || rescheduleBookingMutation.isPending
+              !hasInformedCustomer ||
+              rescheduleBookingMutation.isPending ||
+              (moveBothBookings &&
+                (trialTimeCalculation.isLoading ||
+                  !!trialTimeCalculation.data?.error))
             }
           >
             {rescheduleBookingMutation.isPending
               ? "Flytter booking..."
-              : "Flytt booking"}
+              : moveBothBookings && trialTimeCalculation.isLoading
+                ? "Beregner prøvetime..."
+                : "Flytt booking"}
           </Button>
         </DialogFooter>
       </DialogContent>

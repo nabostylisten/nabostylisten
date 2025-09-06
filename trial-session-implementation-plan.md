@@ -163,7 +163,7 @@ Add new step after time selection:
 - ✅ Actions: move, cancel, view details
 - ✅ Purple-themed styling to distinguish from regular bookings
 
-#### 4.3 Move Trial Session
+#### ✅ 4.3 Move Trial Session
 
 **File**: `/components/booking/move-trial-session-content.tsx`
 

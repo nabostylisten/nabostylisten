@@ -161,6 +161,7 @@ export function CancelBookingDialog({
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["booking", booking.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-bookings"] }); // Invalidate all user bookings queries
 
       // Show success toast with refund info
       const entityName = booking.is_trial_session ? "Prøvetimen" : "Booking";

@@ -171,7 +171,7 @@ Add new step after time selection:
 - Additional validation: maintain before main booking
 - Notify customer of changes
 
-#### 4.4 Cancel Trial Session
+#### ✅ 4.4 Cancel Trial Session
 
 Update: `/components/my-bookings/cancel-booking-dialog.tsx`
 
@@ -180,9 +180,9 @@ Update: `/components/my-bookings/cancel-booking-dialog.tsx`
   - Stylist cancels: 100% refund
   - Customer cancels: standard rules apply
 
-### Phase 5: Server Actions Updates
+### ✅ Phase 5: Server Actions Updates
 
-#### 5.1 Service Actions
+#### ✅ 5.1 Service Actions
 
 **File**: `/server/service.actions.ts`
 
@@ -201,7 +201,7 @@ export async function createService(data: ServiceFormData) {
 }
 ```
 
-#### 5.2 Booking Actions
+#### ✅ 5.2 Booking Actions
 
 **File**: `/server/booking.actions.ts`
 

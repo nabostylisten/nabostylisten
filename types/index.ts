@@ -479,3 +479,118 @@ export interface DiscountFormData {
   isActive: boolean;
   restrictedUsers?: string[]; // Array of user IDs
 }
+
+// Affiliate attribution types with strict validation
+export const affiliateAttributionSchema = z.object({
+  code: z.string().min(1, "Affiliate code cannot be empty"),
+  attributed_at: z.iso.datetime("Invalid attribution timestamp"),
+  expires_at: z.iso.datetime("Invalid expiration timestamp"),
+  original_user_id: z.uuid("Invalid user ID").optional(), // Track who originally clicked
+});
+
+export type AffiliateAttribution = z.infer<typeof affiliateAttributionSchema>;
+
+// Cookie attribution (for anonymous users)
+export const affiliateAttributionCookieSchema = affiliateAttributionSchema
+  .extend({
+    visitor_session: z.string().min(1, "Visitor session required").optional(),
+  });
+
+export type AffiliateAttributionCookie = z.infer<
+  typeof affiliateAttributionCookieSchema
+>;
+
+// Database attribution (for logged-in users)
+export const affiliateAttributionDbSchema = affiliateAttributionSchema.extend({
+  id: z.string().uuid(),
+  user_id: z.string().uuid("Invalid user ID"),
+  converted_booking_id: z.string().uuid("Invalid booking ID").optional(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+});
+
+export type AffiliateAttributionDb = z.infer<
+  typeof affiliateAttributionDbSchema
+>;
+
+// Affiliate code validation result
+export const affiliateCodeValidationSchema = z.object({
+  success: z.boolean(),
+  code: z.string().optional(),
+  stylist_id: z.string().uuid().optional(),
+  stylist_name: z.string().optional(),
+  commission_percentage: z.number().min(0).max(100).optional(),
+  error: z.string().optional(),
+  is_active: z.boolean().optional(),
+  is_expired: z.boolean().optional(),
+});
+
+export type AffiliateCodeValidation = z.infer<
+  typeof affiliateCodeValidationSchema
+>;
+
+// Affiliate discount calculation
+export const affiliateDiscountSchema = z.object({
+  code: z.string(),
+  stylist_id: z.string().uuid(),
+  stylist_name: z.string(),
+  applicable_service_ids: z.array(z.string().uuid()),
+  discount_amount: z.number().min(0), // Amount in øre
+  commission_percentage: z.number().min(0).max(100),
+  attribution: affiliateAttributionSchema,
+});
+
+export type AffiliateDiscount = z.infer<typeof affiliateDiscountSchema>;
+
+// Commission tracking
+export const affiliateCommissionSchema = z.object({
+  id: z.string().uuid(),
+  booking_id: z.string().uuid(),
+  stylist_id: z.string().uuid(),
+  affiliate_code: z.string(),
+  commission_amount: z.number().min(0), // Amount in øre
+  commission_percentage: z.number().min(0).max(100),
+  status: z.enum(["pending", "paid", "reversed"]),
+  attributed_user_id: z.string().uuid().optional(), // Who originally clicked the code
+  created_at: z.string().datetime(),
+  paid_at: z.string().datetime().optional(),
+  reversed_at: z.string().datetime().optional(),
+});
+
+export type AffiliateCommission = z.infer<typeof affiliateCommissionSchema>;
+
+// Helper functions for affiliate attribution
+export function parseAffiliateAttributionCookie(
+  cookieValue: string,
+): { success: boolean; data?: AffiliateAttributionCookie; error?: string } {
+  try {
+    const parsed = JSON.parse(cookieValue);
+    const result = affiliateAttributionCookieSchema.safeParse(parsed);
+
+    if (result.success) {
+      return { success: true, data: result.data };
+    } else {
+      return {
+        success: false,
+        error: result.error.issues.map((issue) => issue.message).join(", "),
+      };
+    }
+  } catch {
+    return { success: false, error: "Invalid JSON in cookie" };
+  }
+}
+
+export function createAffiliateAttributionCookie(
+  code: string,
+  originalUserId?: string,
+): AffiliateAttributionCookie {
+  const now = new Date();
+  const expiresAt = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days
+
+  return {
+    code: code.toUpperCase(),
+    attributed_at: now.toISOString(),
+    expires_at: expiresAt.toISOString(),
+    original_user_id: originalUserId,
+  };
+}

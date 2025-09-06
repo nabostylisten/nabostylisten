@@ -52,15 +52,14 @@ export async function updateSession(
   });
   
   if (affiliateCode && !response) {
+    // Import here to avoid circular dependencies
+    const { createAffiliateAttributionCookie } = await import("@/types");
+    
     // Create response to redirect and remove the code parameter from URL
     supabaseResponse = NextResponse.redirect(url.origin + url.pathname);
     
-    // Set affiliate attribution cookie
-    const attribution = {
-      code: affiliateCode.toUpperCase(),
-      attributed_at: new Date().toISOString(),
-      expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days
-    };
+    // Create typed affiliate attribution cookie
+    const attribution = createAffiliateAttributionCookie(affiliateCode);
     
     supabaseResponse.cookies.set('affiliate_attribution', JSON.stringify(attribution), {
       httpOnly: true,
@@ -110,6 +109,17 @@ export async function updateSession(
   // with the Supabase client, your users may be randomly logged out.
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
+
+  // Transfer affiliate attribution from cookie to database for logged-in users
+  if (user?.sub) {
+    try {
+      const { transferCookieToDatabase } = await import("@/server/affiliate/attribution.actions");
+      await transferCookieToDatabase(user.sub);
+    } catch (error) {
+      console.warn("Failed to transfer affiliate attribution:", error);
+      // Don't block the request if affiliate transfer fails
+    }
+  }
 
   // Check if the current route is public
   const isPublic = isPublicRoute(request.nextUrl.pathname);

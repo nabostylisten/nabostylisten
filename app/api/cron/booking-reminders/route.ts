@@ -103,10 +103,22 @@ export async function POST(request: NextRequest) {
         const bookingEndTime = format(new Date(booking.end_time), "HH:mm");
         const bookingTime = `${bookingStartTime} - ${bookingEndTime}`;
 
-        // Get service names
+        // Get service names and handle trial session prefix
         const serviceNames = booking.services?.map((bs) =>
           bs.service?.title
         ).filter(Boolean) || [];
+
+        const baseServiceName = serviceNames[0] || "Din time";
+        const isTrialSession = booking.is_trial_session === true;
+        
+        // Create appropriate service display name and subject
+        const displayServiceName = isTrialSession 
+          ? `Prøvetime: ${baseServiceName}`
+          : baseServiceName;
+          
+        const subjectServiceName = isTrialSession 
+          ? "Din prøvetime" 
+          : baseServiceName;
 
         // Determine location and address
         const location = booking.address_id
@@ -119,13 +131,13 @@ export async function POST(request: NextRequest) {
         // Send reminder email
         const { error: emailError } = await sendEmail({
           to: [booking.customer.email],
-          subject: `Påminnelse: ${serviceNames[0] || "Din time"} i morgen`,
+          subject: `Påminnelse: ${subjectServiceName} i morgen`,
           react: BookingReminderEmail({
             logoUrl: getNabostylistenLogoUrl(),
             customerName: booking.customer.full_name || "Kunde",
             stylistName: booking.stylist.full_name || "Stylist",
             bookingId: booking.id,
-            serviceName: serviceNames.join(", ") || "Skjønnhetstjeneste",
+            serviceName: displayServiceName,
             bookingDate: bookingDate,
             bookingTime: bookingTime,
             location: location,
@@ -135,6 +147,7 @@ export async function POST(request: NextRequest) {
             stylistPhone: booking.stylist.phone_number || undefined,
             totalPrice: booking.total_price || 0,
             currency: "NOK",
+            isTrialSession: isTrialSession,
           }),
         });
 

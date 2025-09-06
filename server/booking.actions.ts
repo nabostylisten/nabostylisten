@@ -1265,6 +1265,7 @@ export async function cancelBooking(bookingId: string, reason?: string) {
                     message: reason || "Booking cancelled",
                     location,
                     cancelledBy,
+                    isTrialSession: fullBooking.is_trial_session || false,
                     refundInfo:
                         refundAmountNOK > 0 || stylistCompensationNOK > 0
                             ? {
@@ -1512,6 +1513,7 @@ export async function updateBookingStatus({
                 status,
                 message,
                 location,
+                isTrialSession: booking.is_trial_session || false,
             };
 
             // Send email to customer (only if they want notifications)
@@ -2525,6 +2527,7 @@ export async function rescheduleBooking({
                     newBookingTime,
                     rescheduleReason: rescheduleReason,
                     location,
+                    isTrialSession: fullBooking.is_trial_session || false,
                 };
 
                 const customerEmailSubject = `Booking flyttet: ${serviceName}`;

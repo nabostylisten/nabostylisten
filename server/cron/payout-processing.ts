@@ -21,6 +21,7 @@ interface BookingWithPayment {
   stylist_id: string;
   start_time: string;
   payout_processed_at: string | null;
+  is_trial_session?: boolean;
   customer: {
     id: string;
     email: string | null;
@@ -31,11 +32,13 @@ interface BookingWithPayment {
     email: string | null;
     full_name: string | null;
   } | null;
-  booking_services: Array<{
-    service: {
-      title: string | null;
-    } | null;
-  }> | null;
+  booking_services:
+    | Array<{
+      service: {
+        title: string | null;
+      } | null;
+    }>
+    | null;
   payments: {
     id: string;
     final_amount: number;
@@ -49,7 +52,7 @@ interface BookingWithPayment {
 /**
  * Shared logic for processing payouts across all bookings
  * Used by both cron jobs and dev tools
- * 
+ *
  * @param bookings - Array of bookings to process payouts for
  * @param logPrefix - Prefix for console logs (e.g., "[PAYOUT_PROCESSING]" or "[DEV_PAYOUT_PROCESSING]")
  * @param isDev - Whether this is running in dev mode (affects email subject prefix and transfer simulation)
@@ -57,11 +60,11 @@ interface BookingWithPayment {
 export async function processPayoutsForBookings(
   bookings: BookingWithPayment[],
   logPrefix: string = "[PAYOUT_PROCESSING]",
-  isDev: boolean = false
+  isDev: boolean = false,
 ): Promise<PayoutProcessingResult> {
   const supabase = await createClient();
   const now = new Date();
-  
+
   let payoutsProcessed = 0;
   let errorsCount = 0;
   let emailsSent = 0;
@@ -98,13 +101,16 @@ export async function processPayoutsForBookings(
       );
 
       // Simulate or perform actual Stripe Connect transfer
-      let transferResult: { data: { transferId: string } | null; error: string | null };
-      
+      let transferResult: {
+        data: { transferId: string } | null;
+        error: string | null;
+      };
+
       if (isDev) {
         // Simulate transfer for development
-        transferResult = { 
-          data: { transferId: `dev_transfer_${booking.id}_${Date.now()}` }, 
-          error: null
+        transferResult = {
+          data: { transferId: `dev_transfer_${booking.id}_${Date.now()}` },
+          error: null,
         };
       } else {
         // TODO: Implement actual Stripe Connect transfer when ready
@@ -112,11 +118,11 @@ export async function processPayoutsForBookings(
         //   payment.payment_intent_id,
         //   booking.id,
         // );
-        
+
         // For now, simulate in production too
-        transferResult = { 
-          data: { transferId: `transfer_${booking.id}_${Date.now()}` }, 
-          error: null
+        transferResult = {
+          data: { transferId: `transfer_${booking.id}_${Date.now()}` },
+          error: null,
         };
       }
 
@@ -132,9 +138,9 @@ export async function processPayoutsForBookings(
       // Update the booking to mark payout as processed
       const { error: updateError } = await supabase
         .from("bookings")
-        .update({ 
+        .update({
           payout_processed_at: now.toISOString(),
-          payout_email_sent_at: now.toISOString()
+          payout_email_sent_at: now.toISOString(),
         })
         .eq("id", booking.id);
 
@@ -151,7 +157,7 @@ export async function processPayoutsForBookings(
         .update({
           payout_initiated_at: now.toISOString(),
           payout_completed_at: now.toISOString(),
-          stylist_transfer_id: transferResult.data.transferId
+          stylist_transfer_id: transferResult.data.transferId,
         })
         .eq("booking_id", booking.id);
 
@@ -169,11 +175,17 @@ export async function processPayoutsForBookings(
         "d. MMMM yyyy",
         { locale: nb },
       );
-      const serviceName = booking.booking_services
+      let serviceName = booking.booking_services
         ?.map((bs) => bs.service?.title)
         .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
+      // Add trial session prefix if applicable
+      if (booking.is_trial_session) {
+        serviceName = `Prøvetime: ${serviceName}`;
+      }
+
       const emailSubjectPrefix = isDev ? "[DEV] " : "";
+      const subjectBase = `Utbetaling behandlet - ${serviceName}`;
 
       // Send payout notification to stylist
       if (booking.stylist?.email) {
@@ -187,7 +199,7 @@ export async function processPayoutsForBookings(
           try {
             const { error: stylistPayoutEmailError } = await sendEmail({
               to: [booking.stylist.email],
-              subject: `${emailSubjectPrefix}Utbetaling behandlet - ${serviceName}`,
+              subject: `${emailSubjectPrefix}${subjectBase}`,
               react: PaymentNotificationEmail({
                 logoUrl: getNabostylistenLogoUrl(),
                 recipientProfileId: booking.stylist_id,
@@ -238,9 +250,13 @@ export async function processPayoutsForBookings(
 
         if (canSendToCustomer) {
           try {
+            const customerSubjectBase = booking.is_trial_session
+              ? `Prøvetime fullført - ${serviceName.replace("Prøvetime: ", "")}`
+              : `Tjeneste fullført - ${serviceName}`;
+
             const { error: customerPayoutEmailError } = await sendEmail({
               to: [booking.customer.email],
-              subject: `${emailSubjectPrefix}Tjeneste fullført - ${serviceName}`,
+              subject: `${emailSubjectPrefix}${customerSubjectBase}`,
               react: PaymentNotificationEmail({
                 logoUrl: getNabostylistenLogoUrl(),
                 recipientProfileId: booking.customer_id,
@@ -299,7 +315,7 @@ export async function processPayoutsForBookings(
     payoutsProcessed,
     emailsSent,
     errors: errorsCount,
-    message: isDev 
+    message: isDev
       ? "DEV: Payout processing completed successfully"
       : "Payout processing completed.",
   };

@@ -42,6 +42,7 @@ interface BookingStatusUpdateEmailProps {
     stylistCompensation?: number;
     refundPercentage: number;
   };
+  isTrialSession?: boolean;
 }
 
 export const BookingStatusUpdateEmail = ({
@@ -59,32 +60,35 @@ export const BookingStatusUpdateEmail = ({
   recipientType = "customer",
   cancelledBy,
   refundInfo,
+  isTrialSession = false,
 }: BookingStatusUpdateEmailProps) => {
   const statusLabels = {
     confirmed: "Bekreftet",
     cancelled: "Avlyst",
   };
 
+  const bookingType = isTrialSession ? "prøvetime" : "booking";
+  
   const statusDescriptions = {
     confirmed:
       recipientType === "customer"
-        ? `Din booking er bekreftet av ${stylistName}. Se frem til en fantastisk opplevelse!`
-        : `Du har bekreftet bookingen med ${customerName}. Forbered deg på å levere en fantastisk opplevelse!`,
+        ? `Din ${bookingType} er bekreftet av ${stylistName}. Se frem til en fantastisk opplevelse!`
+        : `Du har bekreftet ${isTrialSession ? "prøvetimen" : "bookingen"} med ${customerName}. Forbered deg på å levere en fantastisk opplevelse!`,
     cancelled: (() => {
       if (recipientType === "customer") {
         return cancelledBy === "customer"
-          ? `Du har avlyst din booking med ${stylistName}. Vi beklager at det ikke passet for deg denne gangen.`
-          : `Din booking har blitt avlyst av ${stylistName}. Vi beklager ulempen dette måtte medføre.`;
+          ? `Du har avlyst din ${bookingType} med ${stylistName}. Vi beklager at det ikke passet for deg denne gangen.`
+          : `Din ${bookingType} har blitt avlyst av ${stylistName}. Vi beklager ulempen dette måtte medføre.`;
       } else {
         return cancelledBy === "stylist"
-          ? `Du har avlyst bookingen med ${customerName}. Kunden er informert om avlysningen.`
-          : `${customerName} har avlyst bookingen. Du vil motta kompensasjon hvis det gjelder.`;
+          ? `Du har avlyst ${isTrialSession ? "prøvetimen" : "bookingen"} med ${customerName}. Kunden er informert om avlysningen.`
+          : `${customerName} har avlyst ${isTrialSession ? "prøvetimen" : "bookingen"}. Du vil motta kompensasjon hvis det gjelder.`;
       }
     })(),
   };
 
 
-  const previewText = `Booking ${statusLabels[status].toLowerCase()}: ${serviceName}`;
+  const previewText = `${isTrialSession ? "Prøvetime" : "Booking"} ${statusLabels[status].toLowerCase()}: ${serviceName}`;
 
   return (
     <Html>
@@ -103,13 +107,13 @@ export const BookingStatusUpdateEmail = ({
           </Section>
 
           <Heading style={heading}>
-            Booking {statusLabels[status].toLowerCase()}
+            {isTrialSession ? "Prøvetime" : "Booking"} {statusLabels[status].toLowerCase()}
           </Heading>
 
           <Text style={paragraph}>
             {recipientType === "customer"
-              ? `Hei ${customerName}! Din booking hos ${stylistName} har fått en statusoppdatering.`
-              : `Hei ${stylistName}! Bookingen med ${customerName} har fått en statusoppdatering.`}
+              ? `Hei ${customerName}! Din ${bookingType} hos ${stylistName} har fått en statusoppdatering.`
+              : `Hei ${stylistName}! ${isTrialSession ? "Prøvetimen" : "Bookingen"} med ${customerName} har fått en statusoppdatering.`}
           </Text>
 
           <Section
@@ -125,7 +129,7 @@ export const BookingStatusUpdateEmail = ({
 
           {/* Booking Details */}
           <Section style={bookingDetailsSection}>
-            <Text style={sectionHeader}>Bookingdetaljer:</Text>
+            <Text style={sectionHeader}>{isTrialSession ? "Prøvetimedetaljer:" : "Bookingdetaljer:"}</Text>
 
             <div style={detailRow}>
               <Text style={detailLabel}>Tjeneste:</Text>
@@ -227,14 +231,14 @@ export const BookingStatusUpdateEmail = ({
             <Section style={ctaSection}>
               <Text style={paragraph}>
                 {recipientType === "customer"
-                  ? "Se alle detaljer for bookingen din og kommuniser direkte med stylisten."
-                  : "Se alle detaljer for bookingen og kommuniser med kunden om nødvendig."}
+                  ? `Se alle detaljer for ${isTrialSession ? "prøvetimen" : "bookingen"} din og kommuniser direkte med stylisten.`
+                  : `Se alle detaljer for ${isTrialSession ? "prøvetimen" : "bookingen"} og kommuniser med kunden om nødvendig.`}
               </Text>
               <Button
                 style={{ ...button, backgroundColor: statusColors[status] }}
                 href={`${baseUrl}/bookinger/${bookingId}`}
               >
-                Se booking
+                Se {isTrialSession ? "prøvetime" : "booking"}
               </Button>
             </Section>
           )}
@@ -257,7 +261,7 @@ export const BookingStatusUpdateEmail = ({
           {status === "cancelled" && recipientType === "stylist" && (
             <Section style={ctaSection}>
               <Text style={paragraph}>
-                Bookingen er nå avlyst og kunden er informert. Du kan se andre
+                {isTrialSession ? "Prøvetimen" : "Bookingen"} er nå avlyst og kunden er informert. Du kan se andre
                 ventende forespørsler i din bookingsoversikt.
               </Text>
               <Button
@@ -278,7 +282,7 @@ export const BookingStatusUpdateEmail = ({
             </Link>
           </Text>
 
-          <Text style={footer}>Booking ID: {bookingId}</Text>
+          <Text style={footer}>{isTrialSession ? "Prøvetime" : "Booking"} ID: {bookingId}</Text>
         </Container>
       </Body>
     </Html>
@@ -291,7 +295,7 @@ BookingStatusUpdateEmail.PreviewProps = {
   stylistName: "Anna Stylist",
   bookingId: "booking_12345",
   stylistId: "stylist_67890",
-  serviceName: "Hårklipp og styling",
+  serviceName: "Prøvetime: Hårklipp og styling",
   bookingDate: "15. januar 2024",
   bookingTime: "14:00 - 15:30",
   status: "cancelled" as const,
@@ -303,6 +307,7 @@ BookingStatusUpdateEmail.PreviewProps = {
     refundAmount: 800,
     refundPercentage: 1.0,
   },
+  isTrialSession: true,
 } as BookingStatusUpdateEmailProps;
 
 export default BookingStatusUpdateEmail;

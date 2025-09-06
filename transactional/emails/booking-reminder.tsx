@@ -36,6 +36,7 @@ interface BookingReminderEmailProps {
   stylistPhone?: string;
   totalPrice: number;
   currency: string;
+  isTrialSession?: boolean;
 }
 
 export const BookingReminderEmail = ({
@@ -52,6 +53,7 @@ export const BookingReminderEmail = ({
   stylistPhone = "+47 123 45 678",
   totalPrice = 650,
   currency = "NOK",
+  isTrialSession = false,
 }: BookingReminderEmailProps) => {
   const previewText = `Påminnelse: ${serviceName} i morgen kl ${bookingTime.split(" - ")[0]}`;
 
@@ -75,16 +77,16 @@ export const BookingReminderEmail = ({
             <Text style={reminderText}>Påminnelse</Text>
           </Section>
 
-          <Heading style={heading}>Din time er i morgen!</Heading>
+          <Heading style={heading}>Din {isTrialSession ? "prøvetime" : "time"} er i morgen!</Heading>
 
           <Text style={paragraph}>
             Hei {customerName}! Dette er en vennlig påminnelse om din kommende
-            time hos {stylistName}.
+            {isTrialSession ? " prøvetime" : " time"} hos {stylistName}.
           </Text>
 
           {/* Booking Details */}
           <Section style={bookingDetailsSection}>
-            <Text style={sectionHeader}>Detaljer for din booking:</Text>
+            <Text style={sectionHeader}>Detaljer for din {isTrialSession ? "prøvetime" : "booking"}:</Text>
 
             <div style={detailRow}>
               <Text style={detailLabel}>Tjeneste:</Text>
@@ -169,7 +171,7 @@ export const BookingReminderEmail = ({
               style={button}
               href={`${baseUrl}/profiler/${customerName}/mine-bookinger/${bookingId}`}
             >
-              Se booking
+              Se {isTrialSession ? "prøvetime" : "booking"}
             </Button>
           </Section>
 
@@ -187,7 +189,7 @@ export const BookingReminderEmail = ({
             </Link>
           </Text>
 
-          <Text style={footer}>Booking ID: {bookingId}</Text>
+          <Text style={footer}>{isTrialSession ? "Prøvetime" : "Booking"} ID: {bookingId}</Text>
         </Container>
       </Body>
     </Html>
@@ -199,7 +201,7 @@ BookingReminderEmail.PreviewProps = {
   customerName: "Ola Nordmann",
   stylistName: "Anna Stylist",
   bookingId: "booking_12345",
-  serviceName: "Hårklipp og styling",
+  serviceName: "Prøvetime: Hårklipp og styling",
   bookingDate: "15. januar 2024",
   bookingTime: "14:00 - 15:30",
   location: "Hjemme hos deg",
@@ -208,6 +210,7 @@ BookingReminderEmail.PreviewProps = {
   stylistPhone: "+47 123 45 678",
   totalPrice: 650,
   currency: "NOK",
+  isTrialSession: true,
 } as BookingReminderEmailProps;
 
 export default BookingReminderEmail;

@@ -25,6 +25,7 @@ interface BookingWithDetails {
   total_price: number;
   payment_captured_at: string | null;
   rescheduled_from: string | null;
+  is_trial_session?: boolean;
   customer: {
     id: string;
     email: string | null;
@@ -35,17 +36,19 @@ interface BookingWithDetails {
     email: string | null;
     full_name: string | null;
   } | null;
-  booking_services: Array<{
-    service: {
-      title: string | null;
-    } | null;
-  }> | null;
+  booking_services:
+    | Array<{
+      service: {
+        title: string | null;
+      } | null;
+    }>
+    | null;
 }
 
 /**
  * Shared logic for processing payments across all bookings
  * Used by both cron jobs and dev tools
- * 
+ *
  * @param bookings - Array of bookings to process payments for
  * @param logPrefix - Prefix for console logs (e.g., "[PAYMENT_PROCESSING]" or "[DEV_PAYMENT_PROCESSING]")
  * @param isDev - Whether this is running in dev mode (affects email subject prefix)
@@ -53,11 +56,11 @@ interface BookingWithDetails {
 export async function processPaymentsForBookings(
   bookings: BookingWithDetails[],
   logPrefix: string = "[PAYMENT_PROCESSING]",
-  isDev: boolean = false
+  isDev: boolean = false,
 ): Promise<PaymentProcessingResult> {
   const supabase = await createClient();
   const now = new Date();
-  
+
   let paymentsProcessed = 0;
   let errorsCount = 0;
   let emailsSent = 0;
@@ -75,10 +78,10 @@ export async function processPaymentsForBookings(
 
       // Check if this booking was rescheduled
       const isRescheduled = !!booking.rescheduled_from;
-      const rescheduleInfo = isRescheduled 
+      const rescheduleInfo = isRescheduled
         ? ` (rescheduled from ${booking.rescheduled_from})`
         : "";
-      
+
       console.log(
         `${logPrefix} Processing payment for booking ${booking.id} (starts at ${booking.start_time})${rescheduleInfo}`,
       );
@@ -135,15 +138,21 @@ export async function processPaymentsForBookings(
               "d. MMMM yyyy",
               { locale: nb },
             );
-            const serviceName = booking.booking_services
+            let serviceName = booking.booking_services
               ?.map((bs) => bs.service?.title)
               .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
+            // Add trial session prefix if applicable
+            if (booking.is_trial_session) {
+              serviceName = `Prøvetime: ${serviceName}`;
+            }
+
             const emailSubjectPrefix = isDev ? "[DEV] " : "";
+            const subjectBase = `Betaling bekreftet - ${serviceName}`;
 
             const { error: customerPaymentEmailError } = await sendEmail({
               to: [booking.customer.email],
-              subject: `${emailSubjectPrefix}Betaling bekreftet - ${serviceName}`,
+              subject: `${emailSubjectPrefix}${subjectBase}`,
               react: PaymentNotificationEmail({
                 logoUrl: getNabostylistenLogoUrl(),
                 recipientProfileId: booking.customer_id,
@@ -156,7 +165,9 @@ export async function processPaymentsForBookings(
                 totalAmount: totalAmount,
                 currency: "NOK",
                 paymentMethod: "Bankkort", // TODO: Get actual payment method from Stripe
-                transactionId: isDev ? `dev_booking_${booking.id}` : `booking_${booking.id}`, // TODO: Use actual Stripe transaction ID
+                transactionId: isDev
+                  ? `dev_booking_${booking.id}`
+                  : `booking_${booking.id}`, // TODO: Use actual Stripe transaction ID
               }),
             });
 
@@ -195,17 +206,23 @@ export async function processPaymentsForBookings(
               "d. MMMM yyyy",
               { locale: nb },
             );
-            const serviceName = booking.booking_services
+            let serviceName = booking.booking_services
               ?.map((bs) => bs.service?.title)
               .filter(Boolean)[0] || "Skjønnhetstjeneste";
 
+            // Add trial session prefix if applicable
+            if (booking.is_trial_session) {
+              serviceName = `Prøvetime: ${serviceName}`;
+            }
+
             const emailSubjectPrefix = isDev ? "[DEV] " : "";
+            const subjectBase = `Betaling mottatt - ${serviceName}`;
 
             // TODO: Only send payout notification after service completion
             // For now, we'll send a payment received notification to stylist
             const { error: stylistPaymentEmailError } = await sendEmail({
               to: [booking.stylist.email],
-              subject: `${emailSubjectPrefix}Betaling mottatt - ${serviceName}`,
+              subject: `${emailSubjectPrefix}${subjectBase}`,
               react: PaymentNotificationEmail({
                 logoUrl: getNabostylistenLogoUrl(),
                 recipientProfileId: booking.stylist_id,
@@ -220,7 +237,9 @@ export async function processPaymentsForBookings(
                 platformFee: platformFeeNOK,
                 stylistPayout: stylistPayoutNOK,
                 paymentMethod: "Bankkort", // TODO: Get actual payment method
-                transactionId: isDev ? `dev_booking_${booking.id}` : `booking_${booking.id}`, // TODO: Use actual Stripe transaction ID
+                transactionId: isDev
+                  ? `dev_booking_${booking.id}`
+                  : `booking_${booking.id}`, // TODO: Use actual Stripe transaction ID
                 payoutMethod: "Bankkonto", // TODO: Get actual payout method from Stripe Connect
               }),
             });
@@ -267,8 +286,8 @@ export async function processPaymentsForBookings(
     paymentsProcessed,
     emailsSent,
     errors: errorsCount,
-    message: isDev 
-      ? "DEV: Payment processing completed successfully" 
+    message: isDev
+      ? "DEV: Payment processing completed successfully"
       : "Payment processing completed. Note: Full Stripe integration pending.",
   };
 }

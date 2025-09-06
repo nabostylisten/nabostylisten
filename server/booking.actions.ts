@@ -2136,11 +2136,13 @@ export async function rescheduleBooking({
     newStartTime,
     newEndTime,
     rescheduleReason,
+    moveBothBookings = false,
 }: {
     bookingId: string;
     newStartTime: string;
     newEndTime: string;
     rescheduleReason: string;
+    moveBothBookings?: boolean;
 }) {
     const supabase = await createClient();
 
@@ -2151,9 +2153,24 @@ export async function rescheduleBooking({
     }
 
     // Get booking details to verify access and get current times
+    // Include trial session relationships for validation
     const { data: booking, error: bookingError } = await supabase
         .from("bookings")
-        .select("*")
+        .select(`
+            *,
+            trial_booking:bookings!trial_booking_id(
+                id,
+                start_time,
+                end_time,
+                status
+            ),
+            main_booking:bookings!main_booking_id(
+                id,
+                start_time,
+                end_time,
+                status
+            )
+        `)
         .eq("id", bookingId)
         .single();
 
@@ -2190,6 +2207,43 @@ export async function rescheduleBooking({
         return { error: "New booking time must be in the future", data: null };
     }
 
+    // Validate trial session constraints
+    const isTrialSession = booking.is_trial_session === true;
+    const hasTrialSession = booking.trial_booking != null;
+
+    if (isTrialSession && booking.main_booking) {
+        const mainBookingDate = new Date(booking.main_booking.start_time);
+        
+        // Trial session must be before main booking
+        if (newStart >= mainBookingDate) {
+            return { 
+                error: "Prøvetimen må være før hovedbookingen", 
+                data: null 
+            };
+        }
+        
+        // Must be at least 24 hours before main booking
+        const hoursBeforeMain = (mainBookingDate.getTime() - newEnd.getTime()) / (1000 * 60 * 60);
+        if (hoursBeforeMain < 24) {
+            return { 
+                error: "Prøvetimen må være minst 24 timer før hovedbookingen", 
+                data: null 
+            };
+        }
+    }
+
+    if (hasTrialSession && !isTrialSession && booking.trial_booking) {
+        const trialBookingDate = new Date(booking.trial_booking.start_time);
+        
+        // Main booking must be after trial session (unless we're moving both)
+        if (!moveBothBookings && newStart <= trialBookingDate) {
+            return { 
+                error: "Hovedbookingen må være etter prøvetimen. Aktiver 'Flytt også prøvetimen' for å flytte begge.", 
+                data: null 
+            };
+        }
+    }
+
     // Store original start time for tracking
     const originalStartTime = booking.start_time;
 
@@ -2220,6 +2274,55 @@ export async function rescheduleBooking({
 
     if (updateError || !updatedBooking) {
         return { error: "Failed to reschedule booking", data: null };
+    }
+
+    // Handle moving trial session booking if requested
+    if (moveBothBookings && hasTrialSession && !isTrialSession && booking.trial_booking) {
+        const originalMainStart = new Date(booking.start_time);
+        const originalMainEnd = new Date(booking.end_time);
+        const originalTrialStart = new Date(booking.trial_booking.start_time);
+        const originalTrialEnd = new Date(booking.trial_booking.end_time);
+        
+        // Calculate the time difference between original trial and main bookings
+        const timeDifference = originalMainStart.getTime() - originalTrialStart.getTime();
+        const durationDifference = originalMainEnd.getTime() - originalTrialEnd.getTime();
+        
+        // Calculate new trial session times maintaining the same relative timing
+        const newTrialStart = new Date(newStart.getTime() - timeDifference);
+        const newTrialEnd = new Date(newEnd.getTime() - durationDifference);
+        
+        // Validate that the new trial times are in the future
+        if (newTrialStart <= now) {
+            return { 
+                error: "Den nye prøvetimen ville være i fortiden. Velg et senere tidspunkt for hovedbookingen.", 
+                data: null 
+            };
+        }
+        
+        // Update the trial booking
+        const trialUpdateData: DatabaseTables["bookings"]["Update"] = {
+            start_time: newTrialStart.toISOString(),
+            end_time: newTrialEnd.toISOString(),
+            rescheduled_from: booking.trial_booking.start_time,
+            rescheduled_at: new Date().toISOString(),
+            reschedule_reason: `Flyttet sammen med hovedbooking: ${rescheduleReason}`.trim(),
+        };
+        
+        const { success: trialSuccess, data: validatedTrialData } = bookingsUpdateSchema.safeParse(trialUpdateData);
+        if (!trialSuccess) {
+            return { error: "Invalid trial booking data", data: null };
+        }
+        
+        const { error: trialUpdateError } = await supabase
+            .from("bookings")
+            .update(validatedTrialData)
+            .eq("id", booking.trial_booking.id);
+            
+        if (trialUpdateError) {
+            // Log the error but don't fail the entire operation since main booking succeeded
+            console.error("Failed to update trial booking:", trialUpdateError);
+            // Could consider a partial success response here
+        }
     }
 
     // Send reschedule notification emails to both customer and stylist

@@ -15,7 +15,13 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar, Clock, AlertTriangle } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  AlertTriangle,
+  ArrowRight,
+  ChevronRight,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -23,6 +29,7 @@ import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
 import { rescheduleBooking } from "@/server/booking.actions";
 import { addUnavailability } from "@/server/availability.actions";
+import { DatabaseTables } from "@/types";
 
 interface RescheduleConfirmationDialogProps {
   open: boolean;
@@ -33,6 +40,8 @@ interface RescheduleConfirmationDialogProps {
   newStartTime?: Date;
   newEndTime?: Date;
   customerName: string;
+  moveBothBookings?: boolean;
+  trialBooking?: DatabaseTables["bookings"]["Row"];
 }
 
 export function RescheduleConfirmationDialog({
@@ -44,6 +53,8 @@ export function RescheduleConfirmationDialog({
   newStartTime,
   newEndTime,
   customerName,
+  moveBothBookings = false,
+  trialBooking,
 }: RescheduleConfirmationDialogProps) {
   const router = useRouter();
   const [availabilityOption, setAvailabilityOption] = useState<
@@ -64,6 +75,7 @@ export function RescheduleConfirmationDialog({
         newStartTime: newStartTime.toISOString(),
         newEndTime: newEndTime.toISOString(),
         rescheduleReason,
+        moveBothBookings,
       });
 
       if (result.error) {
@@ -117,6 +129,34 @@ export function RescheduleConfirmationDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* Move Both Bookings Indicator */}
+          {moveBothBookings && trialBooking && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
+                <Calendar className="w-4 h-4" />
+                <span className="font-semibold">
+                  Begge bookingene vil bli flyttet
+                </span>
+              </div>
+              <div className="text-sm text-blue-700 dark:text-blue-300">
+                <p>
+                  Prøvetimen vil automatisk flyttes for å beholde samme
+                  tidsforskjell som før.
+                </p>
+                <p className="mt-1 flex gap-2 items-center">
+                  <strong>Prøvetime:</strong>{" "}
+                  {format(
+                    new Date(trialBooking.start_time),
+                    "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                    { locale: nb }
+                  )}
+                  <ArrowRight className="w-4 h-4" />{" "}
+                  <em>Beregnes automatisk</em>
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Time Change Summary */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30">
@@ -213,7 +253,7 @@ export function RescheduleConfirmationDialog({
           </div>
 
           {/* Customer Informed Checkbox */}
-          <div className="flex items-start space-x-3 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="flex items-start space-x-3 p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
             <Checkbox
               id="informed"
               checked={hasInformedCustomer}
@@ -224,11 +264,11 @@ export function RescheduleConfirmationDialog({
             <div className="grid gap-1.5 leading-none">
               <Label
                 htmlFor="informed"
-                className="text-sm font-medium text-amber-900 cursor-pointer"
+                className="text-sm font-medium text-amber-900 dark:text-amber-100 cursor-pointer"
               >
                 Jeg har informert {customerName} om denne endringen
               </Label>
-              <p className="text-xs text-amber-700">
+              <p className="text-xs text-amber-700 dark:text-amber-300">
                 Bekreft at du har snakket med kunden om flyttingen via
                 booking-chatten eller telefon
               </p>

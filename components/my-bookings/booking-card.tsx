@@ -23,55 +23,15 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getReviewByBookingId } from "@/server/review.actions";
-import type { Database } from "@/types/database.types";
+import type { getUserBookings } from "@/server/booking.actions";
 import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
 
-// Type for the booking with all related data
-type BookingWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
-  stylist: {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-    role: string;
-  } | null;
-  addresses: {
-    street_address: string;
-    city: string;
-    postal_code: string;
-    entry_instructions: string | null;
-  } | null;
-  discounts: {
-    code: string;
-    discount_percentage: number | null;
-    discount_amount: number | null;
-  } | null;
-  booking_services: Array<{
-    services: {
-      id: string;
-      title: string;
-      description: string | null;
-      price: number;
-      currency: string;
-      duration_minutes: number;
-    } | null;
-  }>;
-  chats: { id: string } | null;
-  trial_booking?: {
-    id: string;
-    start_time: string;
-    end_time: string;
-    status: string;
-  } | null;
-  main_booking?: {
-    id: string;
-    start_time: string;
-    end_time: string;
-    status: string;
-  } | null;
-};
+// Infer the booking type from the server action return type
+type GetUserBookingsResult = Awaited<ReturnType<typeof getUserBookings>>;
+type BookingWithDetails = NonNullable<GetUserBookingsResult["data"]>[number];
 
 interface BookingCardProps {
   booking: BookingWithDetails;
@@ -90,7 +50,7 @@ export function BookingCard({
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
   const services =
-    booking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
+    booking.booking_services?.map((bs) => bs.service).filter(Boolean) || [];
   const hasChat = booking.chats && booking.chats.id;
 
   // Check if there's an existing review for this booking
@@ -188,13 +148,25 @@ export function BookingCard({
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span>
-                {format(startTime, "EEEE d. MMMM yyyy", { locale: nb })}
+                {(() => {
+                  try {
+                    return format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
+                  } catch (error) {
+                    return "Ugyldig dato";
+                  }
+                })()}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
               <span>
-                {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
+                {(() => {
+                  try {
+                    return `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+                  } catch (error) {
+                    return "Ugyldig tid";
+                  }
+                })()}
                 <span className="text-muted-foreground ml-1">
                   ({booking.total_duration_minutes} min)
                 </span>
@@ -203,21 +175,27 @@ export function BookingCard({
           </div>
 
           {/* Trial Session Info */}
-          {booking.trial_booking && (
+          {booking.trial_booking && Array.isArray(booking.trial_booking) && booking.trial_booking.length > 0 && (
             <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
               <div className="flex items-center gap-2 text-sm text-purple-800 font-medium mb-1">
                 <Star className="w-4 h-4" />
                 <span>Prøveseksjon planlagt</span>
               </div>
               <div className="text-sm text-purple-700">
-                {format(
-                  new Date(booking.trial_booking.start_time),
-                  "EEEE d. MMMM yyyy 'kl.' HH:mm",
-                  { locale: nb }
-                )}
+                {(() => {
+                  try {
+                    return format(
+                      new Date(booking.trial_booking[0].start_time),
+                      "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                      { locale: nb }
+                    );
+                  } catch (error) {
+                    return "Ugyldig dato";
+                  }
+                })()}
               </div>
               <Link
-                href={`/bookinger/${booking.trial_booking.id}`}
+                href={`/bookinger/${booking.trial_booking[0].id}`}
                 className="text-xs text-purple-600 hover:text-purple-800 underline mt-1 inline-block"
               >
                 Se prøveseksjon detaljer
@@ -226,21 +204,27 @@ export function BookingCard({
           )}
 
           {/* Main Booking Link for Trial Sessions */}
-          {booking.is_trial_session && booking.main_booking && (
+          {booking.is_trial_session && booking.main_booking && Array.isArray(booking.main_booking) && booking.main_booking.length > 0 && (
             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
               <div className="flex items-center gap-2 text-sm text-blue-800 font-medium mb-1">
                 <Calendar className="w-4 h-4" />
                 <span>Hovedseksjon planlagt</span>
               </div>
               <div className="text-sm text-blue-700">
-                {format(
-                  new Date(booking.main_booking.start_time),
-                  "EEEE d. MMMM yyyy 'kl.' HH:mm",
-                  { locale: nb }
-                )}
+                {(() => {
+                  try {
+                    return format(
+                      new Date(booking.main_booking[0].start_time),
+                      "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                      { locale: nb }
+                    );
+                  } catch (error) {
+                    return "Ugyldig dato";
+                  }
+                })()}
               </div>
               <Link
-                href={`/bookinger/${booking.main_booking.id}`}
+                href={`/bookinger/${booking.main_booking[0].id}`}
                 className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 inline-block"
               >
                 Se hovedseksjon detaljer
@@ -299,11 +283,12 @@ export function BookingCard({
           )}
 
           {/* Discount Applied */}
-          {booking.discount_id && booking.discount_applied > 0 && (
+          {booking.discount && booking.discount_applied > 0 && (
             <div className="flex items-center gap-2 text-sm text-green-600">
               <CreditCard className="w-4 h-4" />
               <span>
-                Rabatt anvendt: -{booking.discount_applied.toFixed(2)} NOK
+                Rabatt anvendt ({booking.discount.code}): -
+                {booking.discount_applied.toFixed(2)} NOK
               </span>
             </div>
           )}
@@ -311,19 +296,51 @@ export function BookingCard({
           {/* Footer */}
           <div className="flex justify-between items-center pt-2 border-t">
             <div className="text-lg font-semibold">
-              {booking.discount_applied > 0 ? (
-                <div className="flex flex-col">
-                  <span className="text-sm text-muted-foreground line-through">
-                    {(booking.total_price + booking.discount_applied).toFixed(
-                      2
-                    )}{" "}
-                    NOK
-                  </span>
-                  <span>{booking.total_price.toFixed(2)} NOK</span>
-                </div>
-              ) : (
-                <span>{booking.total_price.toFixed(2)} NOK</span>
-              )}
+              {(() => {
+                // Use payment data if available for most accurate pricing
+                const payment = Array.isArray(booking.payments)
+                  ? booking.payments[0]
+                  : booking.payments;
+                if (
+                  payment &&
+                  payment.original_amount &&
+                  payment.discount_amount > 0
+                ) {
+                  return (
+                    <div className="flex flex-col">
+                      <span className="text-sm text-muted-foreground line-through">
+                        {payment.original_amount.toFixed(2)} NOK
+                      </span>
+                      <span className="text-green-600">
+                        {payment.final_amount.toFixed(2)} NOK
+                        <span className="text-xs ml-1">
+                          (-{payment.discount_amount.toFixed(2)} NOK)
+                        </span>
+                      </span>
+                    </div>
+                  );
+                }
+                // Fall back to booking data if payment data not available
+                if (booking.discount_applied > 0) {
+                  const originalAmount =
+                    booking.total_price + booking.discount_applied;
+                  return (
+                    <div className="flex flex-col">
+                      <span className="text-sm text-muted-foreground line-through">
+                        {originalAmount.toFixed(2)} NOK
+                      </span>
+                      <span className="text-green-600">
+                        {booking.total_price.toFixed(2)} NOK
+                        <span className="text-xs ml-1">
+                          (-{booking.discount_applied.toFixed(2)} NOK)
+                        </span>
+                      </span>
+                    </div>
+                  );
+                }
+                // No discount applied
+                return <span>{booking.total_price.toFixed(2)} NOK</span>;
+              })()}
             </div>
             <div className="flex gap-2">
               {/* Actions dropdown for both customers and stylists */}

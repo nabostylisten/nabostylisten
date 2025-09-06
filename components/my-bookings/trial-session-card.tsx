@@ -9,7 +9,6 @@ import {
   MapPin,
   User,
   MessageSquare,
-  CreditCard,
   Home,
   Building2,
   ChevronRight,
@@ -23,49 +22,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getReviewByBookingId } from "@/server/review.actions";
-import type { Database } from "@/types/database.types";
+import type { getUserBookings } from "@/server/booking.actions";
 import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
 
-// Type for the trial session booking with main booking details
-type TrialSessionWithDetails = Database["public"]["Tables"]["bookings"]["Row"] & {
-  stylist: {
-    id: string;
-    full_name: string | null;
-    email: string | null;
-    role: string;
-  } | null;
-  addresses: {
-    street_address: string;
-    city: string;
-    postal_code: string;
-    entry_instructions: string | null;
-  } | null;
-  discounts: {
-    code: string;
-    discount_percentage: number | null;
-    discount_amount: number | null;
-  } | null;
-  booking_services: Array<{
-    services: {
-      id: string;
-      title: string;
-      description: string | null;
-      price: number;
-      currency: string;
-      duration_minutes: number;
-    } | null;
-  }>;
-  chats: { id: string } | null;
-  main_booking?: {
-    id: string;
-    start_time: string;
-    end_time: string;
-    status: string;
-  } | null;
-};
+// Infer the booking type from the server action return type
+type GetUserBookingsResult = Awaited<ReturnType<typeof getUserBookings>>;
+type TrialSessionWithDetails = NonNullable<
+  GetUserBookingsResult["data"]
+>[number];
 
 interface TrialSessionCardProps {
   booking: TrialSessionWithDetails;
@@ -81,19 +48,32 @@ export function TrialSessionCard({
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
 
-  const startTime = new Date(booking.start_time);
-  const endTime = new Date(booking.end_time);
+  // Safe date parsing with error handling
+  const startTime = (() => {
+    try {
+      return new Date(booking.start_time);
+    } catch {
+      return new Date(); // fallback to current date
+    }
+  })();
+  const endTime = (() => {
+    try {
+      return new Date(booking.end_time);
+    } catch {
+      return new Date(); // fallback to current date
+    }
+  })();
   const services =
-    booking.booking_services?.map((bs) => bs.services).filter(Boolean) || [];
+    booking.booking_services?.map((bs) => bs.service).filter(Boolean) || [];
   const hasChat = booking.chats && booking.chats.id;
-  
+
   // Check if there's an existing review for this booking
   const { data: reviewResponse } = useQuery({
-    queryKey: ['review', booking.id],
+    queryKey: ["review", booking.id],
     queryFn: () => getReviewByBookingId(booking.id),
-    enabled: booking.status === 'completed' && userRole === 'customer',
+    enabled: booking.status === "completed" && userRole === "customer",
   });
-  
+
   const existingReview = reviewResponse?.data;
 
   // Status styling
@@ -132,16 +112,17 @@ export function TrialSessionCard({
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow border-purple-200 bg-purple-50/30">
+    <Card className="hover:shadow-md transition-shadow border-purple-200 bg-purple-50/30 dark:border-purple-800 dark:bg-purple-900/30">
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header */}
           <div className="flex justify-between items-start">
             <div className="space-y-1">
               <div className="flex items-center gap-2">
-                <Star className="w-5 h-5 text-purple-600" />
-                <h3 className="font-semibold text-lg text-purple-800">
-                  Prøveseksjon: {services.length > 0 ? services[0]?.title : "Booking"}
+                <Star className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                <h3 className="font-semibold text-lg text-purple-800 dark:text-purple-200">
+                  Prøvetime:{" "}
+                  {services.length > 0 ? services[0]?.title : "Booking"}
                   {services.length > 1 && ` +${services.length - 1} til`}
                 </h3>
                 {hasChat && (
@@ -156,8 +137,11 @@ export function TrialSessionCard({
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-purple-600 border-purple-200">
-                Prøveseksjon
+              <Badge
+                variant="outline"
+                className="text-purple-600 border-purple-200 dark:text-purple-400 dark:border-purple-800"
+              >
+                Prøvetime
               </Badge>
               {getStatusBadge(booking.status)}
             </div>
@@ -168,13 +152,25 @@ export function TrialSessionCard({
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <span>
-                {format(startTime, "EEEE d. MMMM yyyy", { locale: nb })}
+                {(() => {
+                  try {
+                    return format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
+                  } catch (error) {
+                    return "Ugyldig dato";
+                  }
+                })()}
               </span>
             </div>
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-muted-foreground" />
               <span>
-                {format(startTime, "HH:mm")} - {format(endTime, "HH:mm")}
+                {(() => {
+                  try {
+                    return `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+                  } catch (error) {
+                    return "Ugyldig tid";
+                  }
+                })()}
                 <span className="text-muted-foreground ml-1">
                   ({booking.total_duration_minutes} min)
                 </span>
@@ -183,18 +179,28 @@ export function TrialSessionCard({
           </div>
 
           {/* Main Booking Link */}
-          {booking.main_booking && (
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 text-sm text-blue-800 font-medium mb-1">
+          {booking.main_booking && Array.isArray(booking.main_booking) && booking.main_booking.length > 0 && (
+            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 dark:bg-blue-900/30 dark:border-blue-800">
+              <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">
                 <Calendar className="w-4 h-4" />
                 <span>Hovedseksjon planlagt</span>
               </div>
-              <div className="text-sm text-blue-700">
-                {format(new Date(booking.main_booking.start_time), "EEEE d. MMMM yyyy 'kl.' HH:mm", { locale: nb })}
+              <div className="text-sm text-blue-700 dark:text-blue-300">
+                {(() => {
+                  try {
+                    return format(
+                      new Date(booking.main_booking[0].start_time),
+                      "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                      { locale: nb }
+                    );
+                  } catch (error) {
+                    return "Ugyldig dato";
+                  }
+                })()}
               </div>
               <Link
-                href={`/bookinger/${booking.main_booking.id}`}
-                className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 inline-flex items-center gap-1"
+                href={`/bookinger/${booking.main_booking[0].id}`}
+                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 underline mt-1 inline-flex items-center gap-1"
               >
                 Se hovedseksjon detaljer
                 <ArrowRight className="w-3 h-3" />
@@ -252,29 +258,22 @@ export function TrialSessionCard({
             </div>
           )}
 
-          {/* Discount Applied */}
-          {booking.discount_id && booking.discount_applied > 0 && (
-            <div className="flex items-center gap-2 text-sm text-green-600">
-              <CreditCard className="w-4 h-4" />
-              <span>
-                Rabatt anvendt: -{booking.discount_applied.toFixed(2)} NOK
-              </span>
-            </div>
-          )}
+          {/* Discount Applied - Not applicable for trial sessions */}
 
           {/* Footer */}
           <div className="flex justify-between items-center pt-2 border-t">
             <div className="text-lg font-semibold">
-              {booking.discount_applied > 0 ? (
-                <div className="flex flex-col">
-                  <span className="text-sm text-muted-foreground line-through">
-                    {(booking.total_price + booking.discount_applied).toFixed(2)} NOK
-                  </span>
-                  <span>{booking.total_price.toFixed(2)} NOK</span>
-                </div>
-              ) : (
-                <span>{booking.total_price.toFixed(2)} NOK</span>
-              )}
+              {/* Trial sessions typically have lower or zero price */}
+              <span className="text-purple-700 dark:text-purple-300">
+                {booking.total_price > 0 ? (
+                  <>
+                    {booking.total_price.toFixed(2)} NOK
+                    <span className="text-xs ml-1">(prøvepris)</span>
+                  </>
+                ) : (
+                  <span className="text-green-600">Gratis prøvetime</span>
+                )}
+              </span>
             </div>
             <div className="flex gap-2">
               {/* Actions dropdown for both customers and stylists */}
@@ -341,7 +340,7 @@ export function TrialSessionCard({
           onOpenChange={setIsStatusDialogOpen}
         />
       )}
-      
+
       {/* Review Dialog for Customers */}
       {userRole === "customer" && booking.status === "completed" && (
         <ReviewDialog
@@ -349,7 +348,7 @@ export function TrialSessionCard({
           onOpenChange={setIsReviewDialogOpen}
           bookingId={booking.id}
           stylistName={booking.stylist?.full_name || "Stylisten"}
-          serviceTitles={services.map(s => s?.title || "Tjeneste")}
+          serviceTitles={services.map((s) => s?.title || "Tjeneste")}
           existingReview={existingReview}
         />
       )}

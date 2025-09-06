@@ -153,6 +153,8 @@ Add new step after time selection:
 - ✅ Link between main and trial bookings
 - ✅ Fixed pricing display to show correct original and discounted amounts
 
+**TODO**: Show the correct price (original, discount and final) in the booking card and booking page.
+
 #### ✅ 4.2 New Trial Session Card
 
 **File**: `/components/my-bookings/trial-session-card.tsx`

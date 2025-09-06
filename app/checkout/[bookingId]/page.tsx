@@ -1,17 +1,16 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { useRouter } from "next/navigation";
-
-// TODO: This page will handle Stripe checkout
-// 1. Load the booking details from the database
-// 2. Initialize Stripe Elements or redirect to Stripe Checkout
-// 3. Handle payment confirmation
-// 4. Update booking status to 'confirmed' after successful payment
-// 5. Show success message and redirect to booking details page
 
 export default function CheckoutPage() {
   const params = useParams();
@@ -35,9 +34,7 @@ export default function CheckoutPage() {
               <CreditCard className="w-5 h-5" />
               Fullfør betaling
             </CardTitle>
-            <CardDescription>
-              Booking ID: {bookingId}
-            </CardDescription>
+            <CardDescription>Booking ID: {bookingId}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="bg-muted/50 rounded-lg p-4">

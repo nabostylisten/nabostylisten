@@ -1,9 +1,10 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { getUserBookings } from "@/server/booking.actions";
 import { BookingCard } from "./booking-card";
+import { TrialSessionCard } from "./trial-session-card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { CalendarX, Search } from "lucide-react";
@@ -22,12 +23,15 @@ import { searchParamsToBookingFilters } from "@/types";
 interface MyBookingsListProps {
   userId: string;
   status: "pending" | "confirmed" | "cancelled" | "completed";
-  userRole?: 'customer' | 'stylist';
+  userRole?: "customer" | "stylist";
 }
 
-export function MyBookingsList({ userId, status, userRole = 'customer' }: MyBookingsListProps) {
+export function MyBookingsList({
+  userId,
+  status,
+  userRole = "customer",
+}: MyBookingsListProps) {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
 
   const filters = searchParamsToBookingFilters(
@@ -39,7 +43,7 @@ export function MyBookingsList({ userId, status, userRole = 'customer' }: MyBook
     currentPage,
     4
   );
-  
+
   // Add the status to filters
   const filtersWithStatus = { ...filters, status };
 
@@ -106,6 +110,9 @@ export function MyBookingsList({ userId, status, userRole = 'customer' }: MyBook
   const total = bookingsResponse?.total || 0;
   const totalPages = bookingsResponse?.totalPages || 0;
   const hasSearch = filters.search?.trim();
+
+  console.log(bookings);
+  console.log(bookingsResponse);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -294,10 +301,14 @@ export function MyBookingsList({ userId, status, userRole = 'customer' }: MyBook
                 {status === "completed" && "Ingen fullførte bookinger"}
               </h3>
               <p className="text-muted-foreground">
-                {status === "pending" && "Du har ingen bookinger som venter på godkjenning."}
-                {status === "confirmed" && "Du har ingen bookinger som er bekreftet."}
-                {status === "cancelled" && "Du har ingen bookinger som er avlyst."}
-                {status === "completed" && "Du har ingen bookinger som er fullført."}
+                {status === "pending" &&
+                  "Du har ingen bookinger som venter på godkjenning."}
+                {status === "confirmed" &&
+                  "Du har ingen bookinger som er bekreftet."}
+                {status === "cancelled" &&
+                  "Du har ingen bookinger som er avlyst."}
+                {status === "completed" &&
+                  "Du har ingen bookinger som er fullført."}
               </p>
             </div>
           )}
@@ -310,14 +321,28 @@ export function MyBookingsList({ userId, status, userRole = 'customer' }: MyBook
     <div className="space-y-6">
       {/* Bookings List */}
       <div className="space-y-4">
-        {bookings.map((booking) => (
-          <BookingCard 
-            key={booking.id} 
-            booking={booking} 
-            userRole={userRole} 
-            currentUserId={userId}
-          />
-        ))}
+        {bookings.map((booking) => {
+          // Use TrialSessionCard for trial sessions
+          if (booking.is_trial_session) {
+            return (
+              <TrialSessionCard
+                key={booking.id}
+                booking={booking}
+                userRole={userRole}
+                currentUserId={userId}
+              />
+            );
+          }
+          // Use regular BookingCard for standard bookings
+          return (
+            <BookingCard
+              key={booking.id}
+              booking={booking}
+              userRole={userRole}
+              currentUserId={userId}
+            />
+          );
+        })}
       </div>
 
       {/* Pagination - only show if more than 4 bookings total */}

@@ -157,12 +157,26 @@ export async function getUserBookings(
             ),
             payments(
                 id,
+                original_amount,
+                discount_amount,
                 final_amount,
                 platform_fee,
                 stylist_payout,
                 currency,
                 status,
                 succeeded_at
+            ),
+            trial_booking:bookings!trial_booking_id(
+                id,
+                start_time,
+                end_time,
+                status
+            ),
+            main_booking:bookings!main_booking_id(
+                id,
+                start_time,
+                end_time,
+                status
             )
         `);
 
@@ -367,7 +381,7 @@ export async function getBookingDetails(bookingId: string) {
     const stylist = stylistProfile
         ? {
             ...stylistProfile,
-            stylist_details: stylistDetails || null
+            stylist_details: stylistDetails || null,
         }
         : null;
 
@@ -476,7 +490,7 @@ export async function getBookingDetails(bookingId: string) {
 
             chats.push({
                 ...chat,
-                chat_messages: messages || []
+                chat_messages: messages || [],
             });
         }
     }
@@ -520,7 +534,7 @@ export async function getBookingDetails(bookingId: string) {
         booking_services,
         trial_booking,
         chats,
-        payments: payments || []
+        payments: payments || [],
     };
 
     return { data, error: null };
@@ -841,12 +855,36 @@ export async function createBookingWithServices(
             input.includeTrialSession && input.trialSessionStartTime &&
             input.trialSessionEndTime
         ) {
+            // Get service names to construct meaningful message
+            const { data: services, error: servicesError } = await supabase
+                .from("services")
+                .select("title")
+                .in("id", input.serviceIds);
+
+            if (servicesError) {
+                console.error("Failed to get services:", servicesError);
+            }
+
+            let trialMessage = `Prøvetime for hovedbooking ${booking.id}`;
+            if (services && services.length > 0) {
+                const firstService = services[0].title;
+                if (services.length === 1) {
+                    trialMessage =
+                        `Prøvetime for hovedbooking "${firstService}"`;
+                } else {
+                    trialMessage =
+                        `Prøvetime for hovedbooking "${firstService}" og ${
+                            services.length - 1
+                        } til`;
+                }
+            }
+
             const trialBookingData: DatabaseTables["bookings"]["Insert"] = {
                 customer_id: user.id,
                 stylist_id: input.stylistId,
                 start_time: input.trialSessionStartTime.toISOString(),
                 end_time: input.trialSessionEndTime.toISOString(),
-                message_to_stylist: `Prøvetime for hovedbooking ${booking.id}`,
+                message_to_stylist: trialMessage,
                 status: "pending",
                 address_id: addressId, // Same location as main booking
                 total_price: input.trialSessionPrice || 0,

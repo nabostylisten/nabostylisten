@@ -32,6 +32,9 @@ interface CancelBookingDialogProps {
     start_time: string;
     total_price: number;
     status: BookingStatus;
+    is_trial_session?: boolean;
+    main_booking_id?: string | null;
+    trial_booking_id?: string | null;
   };
   currentUserId: string;
   userRole: Database["public"]["Enums"]["user_role"];
@@ -68,39 +71,81 @@ export function CancelBookingDialog({
     warning: "",
   };
 
-  if (cancelledBy === "stylist") {
-    // Stylist cancellation = always 100% refund
-    refundInfo = {
-      percentage: 100,
-      amount: booking.total_price,
-      message: "Kunden vil motta full refusjon.",
-      warning:
-        "Ved å avlyse denne bookingen vil kunden automatisk få tilbake hele beløpet.",
-    };
-  } else {
-    // Customer cancellation - check timing
-    if (hoursUntilAppointment >= config.fullRefundHours) {
+  // For trial sessions, apply special rules
+  if (booking.is_trial_session) {
+    if (cancelledBy === "stylist") {
+      // Stylist cancels trial session = always 100% refund
       refundInfo = {
         percentage: 100,
         amount: booking.total_price,
-        message: `Du vil motta full refusjon på ${booking.total_price.toFixed(2)} NOK.`,
-        warning: "",
-      };
-    } else if (hoursUntilAppointment >= config.partialRefundHours) {
-      const refundAmount = booking.total_price * config.partialRefundPercentage;
-      refundInfo = {
-        percentage: 50,
-        amount: refundAmount,
-        message: `Du vil motta 50% refusjon (${refundAmount.toFixed(2)} NOK).`,
-        warning: `Siden du avlyser mellom ${config.partialRefundHours}-${config.fullRefundHours} timer før avtalen, vil stylisten motta den resterende 50% som kompensasjon.`,
+        message: "Kunden vil motta full refusjon.",
+        warning:
+          "Ved å avlyse denne prøvetimen vil kunden automatisk få tilbake hele beløpet.",
       };
     } else {
+      // Customer cancels trial session - standard rules apply
+      if (hoursUntilAppointment >= config.fullRefundHours) {
+        refundInfo = {
+          percentage: 100,
+          amount: booking.total_price,
+          message: `Du vil motta full refusjon på ${booking.total_price.toFixed(2)} NOK.`,
+          warning: "",
+        };
+      } else if (hoursUntilAppointment >= config.partialRefundHours) {
+        const refundAmount =
+          booking.total_price * config.partialRefundPercentage;
+        refundInfo = {
+          percentage: 50,
+          amount: refundAmount,
+          message: `Du vil motta 50% refusjon (${refundAmount.toFixed(2)} NOK).`,
+          warning: `Siden du avlyser mellom ${config.partialRefundHours}-${config.fullRefundHours} timer før prøvessjonen, vil stylisten motta den resterende 50% som kompensasjon.`,
+        };
+      } else {
+        refundInfo = {
+          percentage: 0,
+          amount: 0,
+          message: "Ingen refusjon tilgjengelig.",
+          warning: `Siden du avlyser mindre enn ${config.partialRefundHours} timer før prøvetimen, er det ikke mulig å få refusjon. Betalingen er allerede behandlet.`,
+        };
+      }
+    }
+  } else {
+    // Regular booking refund logic
+    if (cancelledBy === "stylist") {
+      // Stylist cancellation = always 100% refund
       refundInfo = {
-        percentage: 0,
-        amount: 0,
-        message: "Ingen refusjon tilgjengelig.",
-        warning: `Siden du avlyser mindre enn ${config.partialRefundHours} timer før avtalen, er det ikke mulig å få refusjon. Betalingen er allerede behandlet.`,
+        percentage: 100,
+        amount: booking.total_price,
+        message: "Kunden vil motta full refusjon.",
+        warning:
+          "Ved å avlyse denne bookingen vil kunden automatisk få tilbake hele beløpet.",
       };
+    } else {
+      // Customer cancellation - check timing
+      if (hoursUntilAppointment >= config.fullRefundHours) {
+        refundInfo = {
+          percentage: 100,
+          amount: booking.total_price,
+          message: `Du vil motta full refusjon på ${booking.total_price.toFixed(2)} NOK.`,
+          warning: "",
+        };
+      } else if (hoursUntilAppointment >= config.partialRefundHours) {
+        const refundAmount =
+          booking.total_price * config.partialRefundPercentage;
+        refundInfo = {
+          percentage: 50,
+          amount: refundAmount,
+          message: `Du vil motta 50% refusjon (${refundAmount.toFixed(2)} NOK).`,
+          warning: `Siden du avlyser mellom ${config.partialRefundHours}-${config.fullRefundHours} timer før avtalen, vil stylisten motta den resterende 50% som kompensasjon.`,
+        };
+      } else {
+        refundInfo = {
+          percentage: 0,
+          amount: 0,
+          message: "Ingen refusjon tilgjengelig.",
+          warning: `Siden du avlyser mindre enn ${config.partialRefundHours} timer før avtalen, er det ikke mulig å få refusjon. Betalingen er allerede behandlet.`,
+        };
+      }
     }
   }
 
@@ -118,9 +163,11 @@ export function CancelBookingDialog({
       queryClient.invalidateQueries({ queryKey: ["booking", booking.id] });
 
       // Show success toast with refund info
+      const entityName = booking.is_trial_session ? "Prøvetimen" : "Booking";
+
       if (data?.refundAmount && data.refundAmount > 0) {
         toast.success(
-          `Booking avlyst. ${
+          `${entityName} avlyst. ${
             cancelledBy === "customer"
               ? `Refusjon på ${data.refundAmount.toFixed(2)} NOK vil bli behandlet.`
               : "Kunden vil motta full refusjon."
@@ -128,10 +175,10 @@ export function CancelBookingDialog({
         );
       } else if (cancelledBy === "customer" && data?.refundAmount === 0) {
         toast.success(
-          "Booking avlyst. Ingen refusjon tilgjengelig på grunn av sen avlysning."
+          `${entityName} avlyst. Ingen refusjon tilgjengelig på grunn av sen avlysning.`
         );
       } else {
-        toast.success("Booking avlyst");
+        toast.success(`${entityName} avlyst`);
       }
 
       onOpenChange(false);
@@ -151,7 +198,13 @@ export function CancelBookingDialog({
       <AlertDialogContent className="max-w-md">
         <AlertDialogHeader>
           <AlertDialogTitle>
-            {cancelledBy === "stylist" ? "Avlys booking" : "Avlys din booking"}
+            {booking.is_trial_session
+              ? cancelledBy === "stylist"
+                ? "Avlys prøvetimen"
+                : "Avlys din prøvetimen"
+              : cancelledBy === "stylist"
+                ? "Avlys booking"
+                : "Avlys din booking"}
           </AlertDialogTitle>
           <AlertDialogDescription className="space-y-3">
             <div>
@@ -183,8 +236,9 @@ export function CancelBookingDialog({
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Er du sikker på at du vil avlyse denne bookingen? Denne handlingen
-              kan ikke angres.
+              Er du sikker på at du vil avlyse denne{" "}
+              {booking.is_trial_session ? "prøvessjonen" : "bookingen"}? Denne
+              handlingen kan ikke angres.
             </p>
           </AlertDialogDescription>
         </AlertDialogHeader>
@@ -200,7 +254,11 @@ export function CancelBookingDialog({
             disabled={cancelMutation.isPending}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {cancelMutation.isPending ? "Avlyser..." : "Avlys booking"}
+            {cancelMutation.isPending
+              ? "Avlyser..."
+              : booking.is_trial_session
+                ? "Avlys prøvetimen"
+                : "Avlys booking"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

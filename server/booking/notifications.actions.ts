@@ -38,11 +38,18 @@ export async function sendBookingAwaitingPaymentEmails({
                 stylist:profiles!bookings_stylist_id_fkey(
                     id,
                     full_name,
-                    email
+                    email,
+                    addresses!addresses_user_id_fkey(
+                        street_address,
+                        city,
+                        postal_code,
+                        is_primary
+                    )
                 ),
                 address:addresses(
                     street_address,
-                    city
+                    city,
+                    postal_code
                 ),
                 booking_services(
                     service:services(
@@ -55,12 +62,17 @@ export async function sendBookingAwaitingPaymentEmails({
             .single();
 
         if (bookingError || !booking) {
-            console.error("Failed to get booking for awaiting payment emails:", bookingError);
+            console.error(
+                "Failed to get booking for awaiting payment emails:",
+                bookingError,
+            );
             return { error: "Booking not found", data: null };
         }
 
         // Prepare email data
-        const services = booking.booking_services?.map((bs) => bs.service).filter(Boolean) || [];
+        const services = booking.booking_services?.map((bs) =>
+            bs.service
+        ).filter(Boolean) || [];
         const serviceName = services.length > 0
             ? services[0]?.title || "Booking"
             : "Booking";
@@ -70,13 +82,29 @@ export async function sendBookingAwaitingPaymentEmails({
 
         const startTime = new Date(booking.start_time);
         const endTime = new Date(booking.end_time);
-        const bookingDate = format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
-        const bookingTime = `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+        const bookingDate = format(startTime, "EEEE d. MMMM yyyy", {
+            locale: nb,
+        });
+        const bookingTime = `${format(startTime, "HH:mm")} - ${
+            format(endTime, "HH:mm")
+        }`;
 
-        // Determine location
-        let location = "Hos stylisten";
+        // Determine location - get actual address if available
+        let location = "";
         if (booking.address_id && booking.address) {
-            location = `${booking.address.street_address}, ${booking.address.city}`;
+            // Show booking address details
+            location = `${booking.address.street_address}, ${booking.address.postal_code} ${booking.address.city}`;
+        } else if (
+            booking.stylist?.addresses &&
+            Array.isArray(booking.stylist.addresses)
+        ) {
+            // Show stylist address if no booking address
+            const stylistPrimaryAddress = booking.stylist.addresses.find((
+                addr,
+            ) => addr.is_primary);
+            if (stylistPrimaryAddress) {
+                location = `${stylistPrimaryAddress.street_address}, ${stylistPrimaryAddress.postal_code} ${stylistPrimaryAddress.city}`;
+            }
         }
 
         const logoUrl = getNabostylistenLogoUrl("png");
@@ -99,7 +127,10 @@ export async function sendBookingAwaitingPaymentEmails({
         });
 
         if (emailResult.error) {
-            console.error("Failed to send booking awaiting payment email:", emailResult.error);
+            console.error(
+                "Failed to send booking awaiting payment email:",
+                emailResult.error,
+            );
             return { error: "Failed to send email", data: null };
         }
 
@@ -257,7 +288,7 @@ export async function sendPostPaymentEmails(bookingId: string) {
     const supabase = await createClient();
 
     try {
-        // Get comprehensive booking details
+        // Get comprehensive booking details with stylist address
         const { data: booking, error: bookingError } = await supabase
             .from("bookings")
             .select(`
@@ -270,7 +301,14 @@ export async function sendPostPaymentEmails(bookingId: string) {
                 stylist:profiles!bookings_stylist_id_fkey(
                     id,
                     full_name,
-                    email
+                    email,
+                    addresses!addresses_user_id_fkey(
+                        id,
+                        street_address,
+                        city,
+                        postal_code,
+                        is_primary
+                    )
                 ),
                 address:addresses(
                     id,
@@ -393,17 +431,22 @@ export async function sendPostPaymentEmails(bookingId: string) {
             format(endTime, "HH:mm")
         }`;
 
-        // Determine location type and details
-        let locationType: "stylist" | "customer" = "stylist";
-        let locationDetails = null;
+        // Determine location - get actual address if available
+        let location = "";
         if (booking.address_id && booking.address) {
-            locationType = "customer";
-            locationDetails = {
-                street: booking.address.street_address,
-                city: booking.address.city,
-                postalCode: booking.address.postal_code,
-                entryInstructions: booking.address.entry_instructions,
-            };
+            // Show booking address details
+            location = `${booking.address.street_address}, ${booking.address.postal_code} ${booking.address.city}`;
+        } else if (
+            booking.stylist?.addresses &&
+            Array.isArray(booking.stylist.addresses)
+        ) {
+            // Show stylist address if no booking address
+            const stylistPrimaryAddress = booking.stylist.addresses.find((addr) =>
+                addr.is_primary
+            );
+            if (stylistPrimaryAddress) {
+                location = `${stylistPrimaryAddress.street_address}, ${stylistPrimaryAddress.postal_code} ${stylistPrimaryAddress.city}`;
+            }
         }
 
         const logoUrl = getNabostylistenLogoUrl("png");
@@ -436,22 +479,12 @@ export async function sendPostPaymentEmails(bookingId: string) {
                         serviceName: serviceNameWithCount,
                         bookingDate,
                         bookingTime,
-                        location: locationType,
-                        customerAddress: locationType === "customer" 
-                            ? `${locationDetails?.street}, ${locationDetails?.city}` 
-                            : undefined,
-                        totalAmount: payment.final_amount,
-                        originalAmount: payment.original_amount,
-                        discountAmount: payment.discount_amount || 0,
-                        discountCode: booking.discount?.code,
+                        location,
+                        messageFromCustomer: booking.message_to_stylist ||
+                            undefined,
+                        totalPrice: payment.final_amount,
                         currency: payment.currency || "NOK",
-                        services: services.map((service) => ({
-                            title: service.title,
-                            price: service.price,
-                            duration: service.duration_minutes,
-                        })),
-                        isTrialSession: booking.is_trial_session || false,
-                        messageToStylist: booking.message_to_stylist,
+                        estimatedDuration: booking.total_duration_minutes,
                     }),
                 }),
             );
@@ -476,22 +509,14 @@ export async function sendPostPaymentEmails(bookingId: string) {
                         stylistProfileId: booking.stylist_id,
                         bookingId: bookingId,
                         serviceName: serviceNameWithCount,
-                        bookingDate,
-                        bookingTime,
-                        location: locationType,
-                        customerAddress: locationType === "customer" 
-                            ? `${locationDetails?.street}, ${locationDetails?.city}` 
-                            : undefined,
-                        totalAmount: payment.final_amount,
+                        requestedDate: bookingDate,
+                        requestedTime: bookingTime,
+                        location,
+                        messageFromCustomer: booking.message_to_stylist ||
+                            undefined,
+                        totalPrice: payment.final_amount,
                         currency: payment.currency || "NOK",
-                        services: services.map((service) => ({
-                            title: service.title,
-                            price: service.price,
-                            duration: service.duration_minutes,
-                        })),
-                        isTrialSession: booking.is_trial_session || false,
-                        messageToStylist: booking.message_to_stylist,
-                        customerEmail: booking.customer?.email || "",
+                        estimatedDuration: booking.total_duration_minutes,
                     }),
                 }),
             );
@@ -530,13 +555,16 @@ export async function sendPostPaymentEmails(bookingId: string) {
         }
 
         // Update database with timestamps for successfully sent emails
-        const updateData: Database["public"]["Tables"]["bookings"]["Row"] = {};
+        const updateData: Partial<
+            Database["public"]["Tables"]["bookings"]["Update"]
+        > = {};
         if (customerEmailSent) {
             updateData.customer_receipt_email_sent_at = new Date()
                 .toISOString();
         }
         if (stylistEmailSent) {
-            updateData.stylist_notification_email_sent_at = new Date().toISOString();
+            updateData.stylist_notification_email_sent_at = new Date()
+                .toISOString();
         }
 
         // Update booking record if any emails were sent

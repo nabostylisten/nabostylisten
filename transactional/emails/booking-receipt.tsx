@@ -31,8 +31,7 @@ interface BookingReceiptEmailProps {
   serviceName: string;
   bookingDate: string;
   bookingTime: string;
-  location: "stylist" | "customer";
-  customerAddress?: string;
+  location: string;
   messageFromCustomer?: string;
   totalPrice: number;
   currency: string;
@@ -48,15 +47,12 @@ export const BookingReceiptEmail = ({
   serviceName = "Hårklipp og styling",
   bookingDate = "15. januar 2024",
   bookingTime = "14:00 - 15:30",
-  location = "stylist",
-  customerAddress = "Storgata 1, 0001 Oslo",
+  location = "Stylistgata 5, 0123 Oslo",
   messageFromCustomer,
   totalPrice = 650,
   currency = "NOK",
   estimatedDuration = 90,
 }: BookingReceiptEmailProps) => {
-  const locationText =
-    location === "stylist" ? "Hos stylisten" : "Hjemme hos deg";
   const previewText = `Betalingsbekreftelse: ${serviceName} hos ${stylistName}`;
 
   return (
@@ -130,15 +126,10 @@ export const BookingReceiptEmail = ({
               </Text>
             </div>
 
-            <div style={layoutStyles.detailRow}>
-              <Text style={textStyles.detailLabel}>Sted:</Text>
-              <Text style={textStyles.detailValue}>{locationText}</Text>
-            </div>
-
-            {location === "customer" && customerAddress && (
+            {location && (
               <div style={layoutStyles.detailRow}>
-                <Text style={textStyles.detailLabel}>Adresse:</Text>
-                <Text style={textStyles.detailValue}>{customerAddress}</Text>
+                <Text style={textStyles.detailLabel}>Sted:</Text>
+                <Text style={textStyles.detailValue}>{location}</Text>
               </div>
             )}
 
@@ -235,8 +226,7 @@ BookingReceiptEmail.PreviewProps = {
   serviceName: "Hårklipp og styling",
   bookingDate: "15. januar 2024",
   bookingTime: "14:00 - 15:30",
-  location: "customer" as const,
-  customerAddress: "Storgata 1, 0001 Oslo",
+  location: "Storgata 1, 0001 Oslo",
   messageFromCustomer:
     "Jeg ønsker en moderne frisyre som er lett å style. Har langt hår nå.",
   totalPrice: 650,

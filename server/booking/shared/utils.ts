@@ -8,33 +8,25 @@ import { nb } from "date-fns/locale";
 export function formatBookingDateTime(startTime: string, endTime: string) {
     const start = new Date(startTime);
     const end = new Date(endTime);
-    
+
     const bookingDate = format(start, "EEEE d. MMMM yyyy", {
         locale: nb,
     });
     const bookingTime = `${format(start, "HH:mm")} - ${format(end, "HH:mm")}`;
-    
-    return { bookingDate, bookingTime };
-}
 
-/**
- * Determine location text for booking display
- */
-export function getLocationText(addressId: string | null, addresses: any) {
-    if (addressId && addresses) {
-        return "Hjemme hos deg";
-    }
-    return "Hos stylisten";
+    return { bookingDate, bookingTime };
 }
 
 /**
  * Create service name with count for email display
  */
 export function formatServiceName(services: { title?: string }[]) {
-    const serviceName = services.length > 0 ? services[0]?.title || "Booking" : "Booking";
+    const serviceName = services.length > 0
+        ? services[0]?.title || "Booking"
+        : "Booking";
     const serviceNameWithCount = services.length > 1
         ? `${serviceName} +${services.length - 1} til`
         : serviceName;
-    
+
     return { serviceName, serviceNameWithCount };
 }

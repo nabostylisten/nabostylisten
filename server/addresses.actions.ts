@@ -6,7 +6,11 @@ import {
   addressesUpdateSchema,
 } from "@/schemas/database.schema";
 import type { Database } from "@/types/database.types";
-import { updateStripeCustomerAction, deleteStripeCustomerAddressAction } from "./stripe.actions";
+import {
+  deleteStripeCustomerAddressAction,
+  updateStripeCustomerAction,
+} from "./stripe.actions";
+import { createServiceClient } from "@/lib/supabase/service";
 
 type AddressInsert = Database["public"]["Tables"]["addresses"]["Insert"];
 type AddressUpdate = Database["public"]["Tables"]["addresses"]["Update"];
@@ -41,13 +45,14 @@ export async function getUserAddresses() {
  */
 export async function getAddress(id: string) {
   const supabase = await createClient();
+  const supabaseServiceClient = await createServiceClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return { error: "Not authenticated", data: null };
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseServiceClient
     .from("addresses")
     .select("*")
     .eq("id", id)

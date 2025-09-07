@@ -109,13 +109,14 @@ function PaymentForm({
 
   // Transform booking data for OrderSummary
   const orderSummaryItems =
-    booking?.data?.booking_services?.map((bookingService: any) => ({
+    booking?.data?.booking_services?.map((bookingService) => ({
       service: {
         id: bookingService.service.id,
         title: bookingService.service.title,
         price: bookingService.service.price,
         currency: bookingService.service.currency,
       },
+      // @ts-expect-error - quantity is not specified
       quantity: bookingService.quantity || 1, // Default to 1 if quantity not specified
     })) || [];
 

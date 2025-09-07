@@ -9,11 +9,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { AddressCombobox } from "./address-combobox";
 import { useQuery } from "@tanstack/react-query";
 import { getAddress } from "@/server/addresses.actions";
+import { getStylistProfileWithServices } from "@/server/profile.actions";
 import type { Database } from "@/types/database.types";
 
 type Address = Database["public"]["Tables"]["addresses"]["Row"];
 
 interface BookingAddressSelectorProps {
+  stylistId: string;
   stylistCanTravel: boolean;
   stylistHasOwnPlace: boolean;
   location: "stylist" | "customer";
@@ -25,6 +27,7 @@ interface BookingAddressSelectorProps {
 }
 
 export function BookingAddressSelector({
+  stylistId,
   stylistCanTravel,
   stylistHasOwnPlace,
   location,
@@ -40,11 +43,22 @@ export function BookingAddressSelector({
   // Fetch selected address details
   const { data: addressData } = useQuery({
     queryKey: ["address", selectedAddressId],
-    queryFn: () => selectedAddressId ? getAddress(selectedAddressId) : null,
+    queryFn: () => (selectedAddressId ? getAddress(selectedAddressId) : null),
     enabled: !!selectedAddressId,
   });
 
+  // Fetch stylist profile with addresses
+  const { data: stylistData } = useQuery({
+    queryKey: ["stylist", stylistId],
+    queryFn: () => getStylistProfileWithServices(stylistId),
+    enabled: !!stylistId,
+  });
+
   const selectedAddress = addressData?.data;
+  const stylistProfile = stylistData?.data?.profile;
+  const stylistPrimaryAddress = stylistProfile?.addresses?.find(
+    (addr) => addr.is_primary
+  );
 
   const handleAddressSelect = async (addressId: string) => {
     if (addressId) {
@@ -73,9 +87,23 @@ export function BookingAddressSelector({
           }
         >
           {stylistHasOwnPlace && (
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="stylist" id="stylist" />
-              <Label htmlFor="stylist">Hos stylisten</Label>
+            <div className="flex items-start space-x-2">
+              <RadioGroupItem value="stylist" id="stylist" className="mt-0.5" />
+              <div className="flex flex-col space-y-1">
+                <Label htmlFor="stylist">Hos stylisten</Label>
+                {stylistPrimaryAddress && (
+                  <div className="text-sm text-muted-foreground">
+                    {stylistPrimaryAddress.street_address},{" "}
+                    {stylistPrimaryAddress.postal_code}{" "}
+                    {stylistPrimaryAddress.city}
+                  </div>
+                )}
+                {!stylistPrimaryAddress && stylistProfile && (
+                  <p className="text-sm text-muted-foreground">
+                    Adresse ikke oppgitt
+                  </p>
+                )}
+              </div>
             </div>
           )}
           {stylistCanTravel && (

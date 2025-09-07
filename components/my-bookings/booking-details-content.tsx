@@ -2,6 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getBookingDetails } from "@/server/booking/crud.actions";
+import { getAddress } from "@/server/addresses.actions";
 import {
   Card,
   CardContent,
@@ -12,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   Calendar,
@@ -22,8 +24,6 @@ import {
   Mail,
   MessageSquare,
   CreditCard,
-  Home,
-  Building2,
   Star,
   Receipt,
   AlertCircle,
@@ -103,6 +103,13 @@ export function BookingDetailsContent({
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
+  // Fetch address details if booking has an address_id
+  const { data: addressData, isLoading: addressLoading } = useQuery({
+    queryKey: ["address", bookingResponse?.data?.address_id],
+    queryFn: () => bookingResponse?.data?.address_id ? getAddress(bookingResponse.data.address_id) : null,
+    enabled: !!bookingResponse?.data?.address_id,
+  });
+
   if (isLoading) {
     return <BookingDetailsSkeleton />;
   }
@@ -130,6 +137,7 @@ export function BookingDetailsContent({
   }
 
   const booking = bookingResponse.data;
+  const address = addressData?.data;
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
   const services =
@@ -338,29 +346,29 @@ export function BookingDetailsContent({
                 </div>
 
                 {/* Location */}
-                <div className="space-y-4">
-                  <div className="flex items-start gap-3">
-                    <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
-                    <div>
-                      {booking.address_id ? (
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Home className="w-4 h-4" />
-                            <span className="font-medium">Hjemme hos deg</span>
+                {booking.address_id && (
+                  <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                      <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
+                      <div className="space-y-1">
+                        {addressLoading ? (
+                          <div className="space-y-1">
+                            <Skeleton className="h-4 w-32" />
+                            <Skeleton className="h-3 w-24" />
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            Adresse angitt for booking
+                        ) : address ? (
+                          <div>
+                            <div className="font-medium">Adresse</div>
+                            <div className="text-sm text-muted-foreground">
+                              <p>{address.street_address}</p>
+                              <p>{address.postal_code} {address.city}</p>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4" />
-                          <span className="font-medium">Hos stylisten</span>
-                        </div>
-                      )}
+                        ) : null}
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>

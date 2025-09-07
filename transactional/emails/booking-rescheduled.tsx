@@ -131,10 +131,12 @@ export const BookingRescheduledEmail = ({
               <Text style={newDetailValue}>{newBookingTime}</Text>
             </div>
 
-            <div style={detailRow}>
-              <Text style={detailLabel}>Sted:</Text>
-              <Text style={newDetailValue}>{location}</Text>
-            </div>
+            {location && (
+              <div style={detailRow}>
+                <Text style={detailLabel}>Sted:</Text>
+                <Text style={newDetailValue}>{location}</Text>
+              </div>
+            )}
 
             <div style={detailRow}>
               <Text style={detailLabel}>

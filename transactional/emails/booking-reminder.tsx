@@ -30,7 +30,6 @@ interface BookingReminderEmailProps {
   serviceName: string;
   bookingDate: string;
   bookingTime: string;
-  location: string;
   address?: string;
   entryInstructions?: string;
   stylistPhone?: string;
@@ -47,7 +46,6 @@ export const BookingReminderEmail = ({
   serviceName = "Hårklipp og styling",
   bookingDate = "15. januar 2024",
   bookingTime = "14:00 - 15:30",
-  location = "Hjemme hos deg",
   address = "Storgata 1, 0001 Oslo",
   entryInstructions,
   stylistPhone = "+47 123 45 678",
@@ -77,7 +75,9 @@ export const BookingReminderEmail = ({
             <Text style={reminderText}>Påminnelse</Text>
           </Section>
 
-          <Heading style={heading}>Din {isTrialSession ? "prøvetime" : "time"} er i morgen!</Heading>
+          <Heading style={heading}>
+            Din {isTrialSession ? "prøvetime" : "time"} er i morgen!
+          </Heading>
 
           <Text style={paragraph}>
             Hei {customerName}! Dette er en vennlig påminnelse om din kommende
@@ -86,7 +86,9 @@ export const BookingReminderEmail = ({
 
           {/* Booking Details */}
           <Section style={bookingDetailsSection}>
-            <Text style={sectionHeader}>Detaljer for din {isTrialSession ? "prøvetime" : "booking"}:</Text>
+            <Text style={sectionHeader}>
+              Detaljer for din {isTrialSession ? "prøvetime" : "booking"}:
+            </Text>
 
             <div style={detailRow}>
               <Text style={detailLabel}>Tjeneste:</Text>
@@ -106,11 +108,6 @@ export const BookingReminderEmail = ({
             <div style={detailRow}>
               <Text style={detailLabel}>Stylist:</Text>
               <Text style={detailValue}>{stylistName}</Text>
-            </div>
-
-            <div style={detailRow}>
-              <Text style={detailLabel}>Sted:</Text>
-              <Text style={detailValue}>{location}</Text>
             </div>
 
             {address && (
@@ -189,7 +186,9 @@ export const BookingReminderEmail = ({
             </Link>
           </Text>
 
-          <Text style={footer}>{isTrialSession ? "Prøvetime" : "Booking"} ID: {bookingId}</Text>
+          <Text style={footer}>
+            {isTrialSession ? "Prøvetime" : "Booking"} ID: {bookingId}
+          </Text>
         </Container>
       </Body>
     </Html>

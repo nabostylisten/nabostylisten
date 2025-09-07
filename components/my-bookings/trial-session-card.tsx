@@ -3,14 +3,13 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Calendar,
   Clock,
   MapPin,
   User,
   MessageSquare,
-  Home,
-  Building2,
   ChevronRight,
   Star,
   Edit,
@@ -22,6 +21,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getReviewByBookingId } from "@/server/review.actions";
+import { getAddress } from "@/server/addresses.actions";
 import type { getUserBookings } from "@/server/booking/crud.actions";
 import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingActionsDropdown } from "./booking-actions-dropdown";
@@ -75,7 +75,15 @@ export function TrialSessionCard({
     enabled: booking.status === "completed" && userRole === "customer",
   });
 
+  // Fetch address details if booking has an address_id
+  const { data: addressData, isLoading: addressLoading } = useQuery({
+    queryKey: ["address", booking.address_id],
+    queryFn: () => booking.address_id ? getAddress(booking.address_id) : null,
+    enabled: !!booking.address_id,
+  });
+
   const existingReview = reviewResponse?.data;
+  const address = addressData?.data;
 
   // Status styling
   const getStatusBadge = (status: string) => {
@@ -210,24 +218,24 @@ export function TrialSessionCard({
           )}
 
           {/* Location */}
-          <div className="flex items-start gap-2 text-sm">
-            <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
-            <div>
-              {booking.address_id ? (
-                <div className="space-y-1">
-                  <div className="flex items-center gap-1">
-                    <Home className="w-3 h-3" />
-                    <span className="font-medium">Hjemme hos deg</span>
+          {booking.address_id && (
+            <div className="flex items-start gap-2 text-sm">
+              <MapPin className="w-4 h-4 text-muted-foreground mt-0.5" />
+              <div className="space-y-1">
+                {addressLoading ? (
+                  <div className="space-y-1">
+                    <Skeleton className="h-3 w-32" />
+                    <Skeleton className="h-3 w-24" />
                   </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-1">
-                  <Building2 className="w-3 h-3" />
-                  <span className="font-medium">Hos stylisten</span>
-                </div>
-              )}
+                ) : address ? (
+                  <div className="text-muted-foreground text-xs">
+                    <p>{address.street_address}</p>
+                    <p>{address.postal_code} {address.city}</p>
+                  </div>
+                ) : null}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Services List (if multiple) */}
           {services.length > 1 && (

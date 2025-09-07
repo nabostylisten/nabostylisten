@@ -90,19 +90,8 @@ export default function BookingPage() {
 
     // Only check affiliate discounts
     if (currentDiscount?.type === "affiliate") {
-      console.log("🔍 CHECKING EXISTING AFFILIATE DISCOUNT VALIDITY:", {
-        currentDiscount,
-        nonApplicableReason,
-        cartItems: items.map((item) => ({
-          serviceId: item.service.id,
-          stylistId: item.service.stylist_id,
-          title: item.service.title,
-        })),
-      });
-
       // Clear discount if there's a reason it can't be applied (e.g., already used)
       if (nonApplicableReason) {
-        console.log("🔍 CLEARING DISCOUNT DUE TO NON-APPLICABLE REASON:", nonApplicableReason);
         updateBookingData({ appliedDiscount: undefined });
         return;
       }
@@ -114,30 +103,24 @@ export default function BookingPage() {
       );
 
       if (!allCartServicesFromDiscountStylist && items.length > 0) {
-        console.log("🔍 CLEARING DISCOUNT DUE TO CART STYLIST MISMATCH");
         updateBookingData({ appliedDiscount: undefined });
       }
     }
-  }, [items, bookingData.appliedDiscount, nonApplicableReason, updateBookingData]);
+  }, [
+    items,
+    bookingData.appliedDiscount,
+    nonApplicableReason,
+    updateBookingData,
+  ]);
 
   // Automatically apply affiliate discount when available and applicable
   useEffect(() => {
-    console.log("🔍 AUTO-APPLY EFFECT TRIGGERED:", {
-      canAutoApply,
-      affiliateCode,
-      affiliateDiscountAmount,
-      nonApplicableReason,
-      conditions: {
-        hasCanAutoApply: !!canAutoApply,
-        hasAffiliateCode: !!affiliateCode,
-        hasPositiveDiscount: affiliateDiscountAmount > 0,
-        noBlockingReason: !nonApplicableReason,
-        allConditionsMet:
-          canAutoApply && affiliateCode && affiliateDiscountAmount > 0 && !nonApplicableReason,
-      },
-    });
-
-    if (canAutoApply && affiliateCode && affiliateDiscountAmount > 0 && !nonApplicableReason) {
+    if (
+      canAutoApply &&
+      affiliateCode &&
+      affiliateDiscountAmount > 0 &&
+      !nonApplicableReason
+    ) {
       // CRITICAL FIX: Check that ALL cart services are from the same stylist as the affiliate code
       // We cannot auto-apply affiliate discounts when cart contains services from multiple stylists
       const affiliateStylistId = applicableServices?.[0]?.stylist_id;
@@ -145,23 +128,8 @@ export default function BookingPage() {
         (item) => item.service.stylist_id === affiliateStylistId
       );
 
-      console.log("🔍 STYLIST VALIDATION CHECK:", {
-        affiliateStylistId,
-        cartStylistIds: items.map((item) => ({
-          serviceId: item.service.id,
-          stylistId: item.service.stylist_id,
-          title: item.service.title,
-        })),
-        allCartServicesFromSameStylist,
-        totalCartItems: items.length,
-        applicableServiceCount: applicableServices?.length || 0,
-      });
-
       // Only auto-apply if ALL services in cart are from the affiliate stylist
       if (!allCartServicesFromSameStylist) {
-        console.log(
-          "⚠️ CANNOT AUTO-APPLY: Cart contains services from multiple stylists. Affiliate code can only be applied to services from the same stylist."
-        );
         return;
       }
 
@@ -169,17 +137,7 @@ export default function BookingPage() {
       const currentDiscount = bookingData.appliedDiscount;
       const isAlreadyApplied = currentDiscount?.code === affiliateCode;
 
-      console.log("🔍 DISCOUNT APPLICATION CHECK:", {
-        currentDiscount,
-        isAlreadyApplied,
-        willApply: !isAlreadyApplied,
-      });
-
       if (!isAlreadyApplied) {
-        console.log(
-          `🎉 Auto-applying affiliate discount: ${affiliateCode} (-${affiliateDiscountAmount} NOK)`
-        );
-
         // Create affiliate discount data matching the expected AppliedDiscount structure
         const affiliateDiscount = {
           type: "affiliate" as const,
@@ -311,7 +269,9 @@ export default function BookingPage() {
         messageToStylist: bookingData.messageToStylist,
         discountCode: bookingData.appliedDiscount?.code,
         affiliateCode:
-          canAutoApply && affiliateCode && !nonApplicableReason ? affiliateCode : undefined,
+          canAutoApply && affiliateCode && !nonApplicableReason
+            ? affiliateCode
+            : undefined,
         totalPrice: totalPriceWithTrial,
         originalTotalPrice: originalTotalPrice,
         totalDurationMinutes,
@@ -373,7 +333,7 @@ export default function BookingPage() {
         router.replace(`/checkout?${searchParams.toString()}`);
       }
     } catch (error) {
-      console.error("Error creating booking:", error);
+      console.error(error);
       toast.error("En feil oppstod ved opprettelse av booking");
     } finally {
       setProcessingState(false);

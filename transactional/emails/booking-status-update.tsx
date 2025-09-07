@@ -146,10 +146,12 @@ export const BookingStatusUpdateEmail = ({
               <Text style={detailValue}>{bookingTime}</Text>
             </div>
 
-            <div style={detailRow}>
-              <Text style={detailLabel}>Sted:</Text>
-              <Text style={detailValue}>{location}</Text>
-            </div>
+            {location && (
+              <div style={detailRow}>
+                <Text style={detailLabel}>Sted:</Text>
+                <Text style={detailValue}>{location}</Text>
+              </div>
+            )}
 
             <div style={detailRow}>
               <Text style={detailLabel}>

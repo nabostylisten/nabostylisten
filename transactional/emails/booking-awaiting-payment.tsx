@@ -61,9 +61,9 @@ export const BookingAwaitingPayment = ({
           <Section>
             <Heading style={heading}>Hei {customerName}!</Heading>
             <Text style={paragraph}>
-              Din booking med <strong>{stylistName}</strong> er opprettet! 
+              Din booking med <strong>{stylistName}</strong> er opprettet!
             </Text>
-            
+
             <Section style={detailsSection}>
               <Text style={detailsTitle}>Bookingdetaljer:</Text>
               <Text style={detailsText}>
@@ -81,20 +81,20 @@ export const BookingAwaitingPayment = ({
 
             <Section style={infoSection}>
               <Text style={infoText}>
-                <strong>Betalingsstatus:</strong> Din booking venter på at stylisten 
-                fullfører sitt betalingsoppsett. Stylisten har blitt varslet og vil 
-                fullføre dette så snart som mulig.
+                <strong>Betalingsstatus:</strong> Din booking venter på at
+                stylisten fullfører sitt betalingsoppsett. Stylisten har blitt
+                varslet og vil fullføre dette så snart som mulig.
               </Text>
               <Text style={infoText}>
-                Du vil motta en bekreftelse så snart betalingen er behandlet. 
-                Hvis du har spørsmål, kan du kontakte stylisten direkte via 
+                Du vil motta en bekreftelse så snart betalingen er behandlet.
+                Hvis du har spørsmål, kan du kontakte stylisten direkte via
                 plattformen eller kontakte vår kundeservice.
               </Text>
             </Section>
 
             <Section style={buttonSection}>
-              <Button 
-                style={button} 
+              <Button
+                style={button}
                 href={`${baseUrl}/protected/bookings?booking_id=${bookingId}`}
               >
                 Se bookingdetaljer
@@ -131,7 +131,7 @@ BookingAwaitingPayment.PreviewProps = {
   serviceName: "Hårklipp",
   bookingDate: "Mandag 15. januar 2025",
   bookingTime: "14:00 - 15:00",
-  location: "Hos stylisten",
+  location: "Osloveien 1, 0101 Oslo",
 } as BookingAwaitingPaymentProps;
 
 export default BookingAwaitingPayment;

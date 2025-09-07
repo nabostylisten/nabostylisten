@@ -33,8 +33,7 @@ interface NewBookingRequestEmailProps {
   serviceName: string;
   requestedDate: string;
   requestedTime: string;
-  location: "stylist" | "customer";
-  customerAddress?: string;
+  location: string;
   messageFromCustomer?: string;
   totalPrice: number;
   currency: string;
@@ -51,15 +50,13 @@ export const NewBookingRequestEmail = ({
   serviceName = "Hårklipp og styling",
   requestedDate = "15. januar 2024",
   requestedTime = "14:00 - 15:30",
-  location = "stylist",
-  customerAddress = "Storgata 1, 0001 Oslo",
+  location = "Stylistgata 5, 0123 Oslo",
   messageFromCustomer,
   totalPrice = 650,
   currency = "NOK",
   estimatedDuration = 90,
   urgency = "medium",
 }: NewBookingRequestEmailProps) => {
-  const locationText = location === "stylist" ? "Hos deg" : "Hjemme hos kunden";
   const previewText = `Ny bookingforespørsel fra ${customerName} for ${serviceName}`;
 
   const urgencyColors = {
@@ -127,15 +124,10 @@ export const NewBookingRequestEmail = ({
               <Text style={detailValue}>~{estimatedDuration} minutter</Text>
             </div>
 
-            <div style={detailRow}>
-              <Text style={detailLabel}>Sted:</Text>
-              <Text style={detailValue}>{locationText}</Text>
-            </div>
-
-            {location === "customer" && customerAddress && (
+            {location && (
               <div style={detailRow}>
-                <Text style={detailLabel}>Adresse:</Text>
-                <Text style={detailValue}>{customerAddress}</Text>
+                <Text style={detailLabel}>Sted:</Text>
+                <Text style={detailValue}>{location}</Text>
               </div>
             )}
 
@@ -210,8 +202,7 @@ NewBookingRequestEmail.PreviewProps = {
   serviceName: "Hårklipp og styling",
   requestedDate: "15. januar 2024",
   requestedTime: "14:00 - 15:30",
-  location: "customer" as const,
-  customerAddress: "Storgata 1, 0001 Oslo",
+  location: "Storgata 1, 0001 Oslo",
   messageFromCustomer:
     "Jeg ønsker en moderne frisyre som er lett å style. Har langt hår nå.",
   totalPrice: 650,

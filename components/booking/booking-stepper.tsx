@@ -24,6 +24,8 @@ import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { useBookingStore } from "@/stores/booking.store";
 import { formatCurrency, getBookingBreakdown } from "@/lib/booking-calculations";
+import { getStylistProfileWithServices } from "@/server/profile.actions";
+import { useQuery } from "@tanstack/react-query";
 
 // Create stepper steps dynamically based on trial session availability
 function createStepperSteps(hasTrialSession: boolean) {
@@ -110,6 +112,16 @@ export function BookingStepper({
     getTotalAmount,
     getTrialSessionAmount,
   } = useBookingStore();
+
+  // Fetch stylist profile with addresses for payment summary
+  const { data: stylistData } = useQuery({
+    queryKey: ["stylist", stylistId],
+    queryFn: () => getStylistProfileWithServices(stylistId),
+    enabled: !!stylistId,
+  });
+
+  const stylistProfile = stylistData?.data?.profile;
+  const stylistPrimaryAddress = stylistProfile?.addresses?.find((addr: any) => addr.is_primary);
 
   // Create stepper dynamically based on trial session availability
   const { Stepper } = React.useMemo(() => {
@@ -322,6 +334,7 @@ export function BookingStepper({
         return (
           <Stepper.Panel>
             <BookingAddressSelector
+              stylistId={stylistId}
               stylistCanTravel={stylistCanTravel}
               stylistHasOwnPlace={stylistHasOwnPlace}
               location={bookingData.location}
@@ -453,9 +466,25 @@ export function BookingStepper({
                       )}
                     <p className="text-sm">
                       <strong>Lokasjon:</strong>{" "}
-                      {bookingData.location === "stylist"
-                        ? "Hos stylisten"
-                        : "Hjemme hos deg"}
+                      {bookingData.location === "stylist" ? (
+                        <span>
+                          Hos stylisten
+                          {stylistPrimaryAddress && (
+                            <span className="block text-muted-foreground">
+                              {stylistPrimaryAddress.street_address}, {stylistPrimaryAddress.postal_code} {stylistPrimaryAddress.city}
+                            </span>
+                          )}
+                        </span>
+                      ) : (
+                        <span>
+                          Hjemme hos deg
+                          {bookingData.customerAddressDetails && (
+                            <span className="block text-muted-foreground">
+                              {bookingData.customerAddressDetails.street_address}, {bookingData.customerAddressDetails.postal_code} {bookingData.customerAddressDetails.city}
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </p>
                     {bookingData.messageToStylist && (
                       <p className="text-sm">

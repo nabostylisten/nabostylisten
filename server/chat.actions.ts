@@ -552,7 +552,13 @@ export async function getPreviousBookingsBetweenUsers(
         id,
         full_name,
         email,
-        role
+        role,
+        addresses!addresses_user_id_fkey(
+          street_address,
+          postal_code,
+          city,
+          is_primary
+        )
       ),
       addresses (
         street_address,

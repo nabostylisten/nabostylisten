@@ -110,20 +110,16 @@ export async function POST(request: NextRequest) {
 
         const baseServiceName = serviceNames[0] || "Din time";
         const isTrialSession = booking.is_trial_session === true;
-        
+
         // Create appropriate service display name and subject
-        const displayServiceName = isTrialSession 
+        const displayServiceName = isTrialSession
           ? `Prøvetime: ${baseServiceName}`
           : baseServiceName;
-          
-        const subjectServiceName = isTrialSession 
-          ? "Din prøvetime" 
+
+        const subjectServiceName = isTrialSession
+          ? "Din prøvetime"
           : baseServiceName;
 
-        // Determine location and address
-        const location = booking.address_id
-          ? "Hjemme hos deg"
-          : "Hos stylisten";
         const address = booking.address_id && booking.addresses
           ? `${booking.addresses.street_address}, ${booking.addresses.postal_code} ${booking.addresses.city}`
           : undefined;
@@ -140,7 +136,6 @@ export async function POST(request: NextRequest) {
             serviceName: displayServiceName,
             bookingDate: bookingDate,
             bookingTime: bookingTime,
-            location: location,
             address: address,
             entryInstructions: booking.addresses?.entry_instructions ||
               undefined,

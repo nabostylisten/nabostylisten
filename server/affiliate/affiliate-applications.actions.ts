@@ -295,6 +295,7 @@ export async function approveAffiliateApplicationByAdmin(
       const emailResult = await sendAffiliateWelcomeEmail(
         application.stylist_id,
         applicationId,
+        notes,
       );
 
       if (emailResult.error) {
@@ -352,6 +353,22 @@ export async function rejectAffiliateApplicationByAdmin(
     },
     reviewerId,
   );
+
+  // Deactivate affiliate code if it exists
+  if (result.error === null) {
+    try {
+      const { deactivateAffiliateCodeByApplication } = await import("./affiliate-codes.actions");
+      const deactivateResult = await deactivateAffiliateCodeByApplication(applicationId);
+      
+      if (deactivateResult.error) {
+        console.error("Failed to deactivate affiliate code:", deactivateResult.error);
+        // Don't fail the rejection, just log the error
+      }
+    } catch (error) {
+      console.error("Error deactivating affiliate code on rejection:", error);
+      // Don't fail the rejection for code deactivation issues
+    }
+  }
 
   // Send rejection email
   if (result.error === null && application?.stylist_id) {

@@ -25,6 +25,7 @@ interface AffiliateApplicationApprovedProps {
   affiliateCode: string;
   commissionPercentage: number;
   dashboardUrl: string;
+  reviewNotes?: string;
 }
 
 export const AffiliateApplicationApproved = ({
@@ -33,8 +34,9 @@ export const AffiliateApplicationApproved = ({
   affiliateCode = "ANNA-2024-ABC123",
   commissionPercentage = 20,
   dashboardUrl = "https://nabostylisten.no/profiler/123/partner",
+  reviewNotes,
 }: AffiliateApplicationApprovedProps) => {
-  const previewText = `Din partnersøknad har blitt godkjent! 🎉`;
+  const previewText = `Din partnersøknad har blitt godkjent!`;
 
   return (
     <Html>
@@ -53,7 +55,7 @@ export const AffiliateApplicationApproved = ({
           </Section>
 
           <Heading style={heading}>
-            Gratulerer! Du er nå partner hos Nabostylisten 🎉
+            Gratulerer! Du er nå partner hos Nabostylisten
           </Heading>
 
           <Text style={paragraph}>Kjære {stylistName},</Text>
@@ -62,6 +64,13 @@ export const AffiliateApplicationApproved = ({
             Vi er glade for å informere deg om at din søknad om å bli partner
             har blitt godkjent! Velkommen til Nabostylisten Partner Program.
           </Text>
+
+          {reviewNotes && (
+            <Section style={reviewNotesSection}>
+              <Text style={reviewNotesHeader}>Melding fra Nabostylisten:</Text>
+              <Text style={reviewNotesText}>{reviewNotes}</Text>
+            </Section>
+          )}
 
           <Section style={codeSection}>
             <Text style={codeLabel}>Din unike partnerkode:</Text>
@@ -237,4 +246,30 @@ const instructionStep = {
   fontSize: "15px",
   lineHeight: "1.6",
   margin: "16px 0",
+};
+
+const reviewNotesSection = {
+  backgroundColor: colors.accent,
+  padding: "20px",
+  borderRadius: "12px",
+  margin: "24px 0",
+  border: `2px solid ${colors.primary}`,
+  borderLeft: `6px solid ${colors.primary}`,
+};
+
+const reviewNotesHeader = {
+  color: colors.primary,
+  fontSize: "14px",
+  fontWeight: "600",
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.5px",
+  margin: "0 0 12px 0",
+};
+
+const reviewNotesText = {
+  color: colors.accentForeground,
+  fontSize: "15px",
+  lineHeight: "1.6",
+  margin: "0",
+  fontStyle: "italic" as const,
 };

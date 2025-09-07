@@ -93,6 +93,25 @@ export function AffiliateStatusChangeDialog({
   const currentStatusDetails = getStatusDetails(currentStatus || "");
   const newStatusDetails = getStatusDetails(watchedStatus);
 
+  const getPredefinedMessages = () => {
+    if (watchedStatus === "approved") {
+      return [
+        "Etter å ha vurdert søknaden på nytt, har vi besluttet å godkjenne den. Vi ser frem til et godt samarbeid og forventer at du representerer våre verdier på en profesjonell måte. Du vil motta din partnerkode og videre instruksjoner.",
+        "Vi har endret vår beslutning og er glade for å velkommen deg til vårt partnerprogram. Din profil og erfaring passer godt med våre verdier, og vi tror du vil være en verdifull partner.",
+      ];
+    } else {
+      return [
+        "Etter ytterligere vurdering har vi besluttet å endre statusen på din partnersøknad. Vi oppfordrer deg til å søke igjen i fremtiden når forholdene har endret seg.",
+        "Vi har måttet revurdere din søknad og kan dessverre ikke opprettholde godkjenningen. Dette er ikke en permanent beslutning, og du er velkommen til å søke igjen senere.",
+        "Etter intern gjennomgang har vi besluttet å endre statusen på din søknad. Vi setter pris på din forståelse og oppfordrer deg til å fortsette å utvikle din profil.",
+      ];
+    }
+  };
+
+  const handlePredefinedMessage = (message: string) => {
+    form.setValue("notes", message);
+  };
+
   const handleSubmit = async (data: StatusChangeForm) => {
     if (!applicationId) return;
     
@@ -183,6 +202,28 @@ export function AffiliateStatusChangeDialog({
                   <FormLabel>
                     Merknad til {watchedStatus === "approved" ? "godkjenning" : "avvisning"} (valgfritt)
                   </FormLabel>
+                  
+                  <div className="space-y-2">
+                    <div className="text-sm text-muted-foreground">
+                      Forhåndsdefinerte meldinger:
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {getPredefinedMessages().map((message, index) => (
+                        <Button
+                          key={index}
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="text-xs h-8"
+                          onClick={() => handlePredefinedMessage(message)}
+                          disabled={loading}
+                        >
+                          Mal {index + 1}
+                        </Button>
+                      ))}
+                    </div>
+                  </div>
+
                   <FormControl>
                     <Textarea
                       {...field}

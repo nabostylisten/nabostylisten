@@ -40,16 +40,49 @@ export async function createAffiliateCode(
     return { error: "Kunne ikke finne stylist", data: null };
   }
 
-  // Check if stylist already has an active affiliate code
-  const { data: existingCode } = await supabase
+  // Check if an affiliate code already exists for this application
+  const { data: existingCodeForApp } = await supabase
+    .from("affiliate_links")
+    .select("*")
+    .eq("application_id", applicationId)
+    .single();
+
+  if (existingCodeForApp) {
+    // If code exists but is inactive, reactivate it
+    if (!existingCodeForApp.is_active) {
+      const { data: reactivatedCode, error: reactivateError } = await supabase
+        .from("affiliate_links")
+        .update({ 
+          is_active: true,
+          commission_percentage: commissionPercentage || existingCodeForApp.commission_percentage || 0.20
+        })
+        .eq("id", existingCodeForApp.id)
+        .select()
+        .single();
+
+      if (reactivateError) {
+        console.error("Error reactivating affiliate code:", reactivateError);
+        return { error: "Kunne ikke reaktivere eksisterende partnerkode", data: null };
+      }
+
+      return { error: null, data: reactivatedCode };
+    } else {
+      // Code already exists and is active
+      return { error: null, data: existingCodeForApp };
+    }
+  }
+
+  // Check if stylist has any other active affiliate codes (different applications)
+  const { data: otherActiveCode } = await supabase
     .from("affiliate_links")
     .select("id, is_active")
     .eq("stylist_id", stylistId)
     .eq("is_active", true)
+    .neq("application_id", applicationId)
     .single();
 
-  if (existingCode) {
-    return { error: "Stylist har allerede en aktiv partnerkode", data: null };
+  if (otherActiveCode) {
+    return { error: "Stylist har allerede en aktiv partnerkode for en annen søknad", data: null };
   }
 
   // Generate unique code
@@ -273,6 +306,27 @@ export async function incrementAffiliateConversion(
   }
 
   return { error: null };
+}
+
+/**
+ * Deactivate affiliate code by application ID (when application is rejected)
+ */
+export async function deactivateAffiliateCodeByApplication(applicationId: string) {
+  const supabase = await createClient();
+
+  const { data: affiliateCode, error } = await supabase
+    .from("affiliate_links")
+    .update({ is_active: false })
+    .eq("application_id", applicationId)
+    .select()
+    .single();
+
+  if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
+    console.error("Error deactivating affiliate code by application:", error);
+    return { error: "Kunne ikke deaktivere partnerkode", data: null };
+  }
+
+  return { error: null, data: affiliateCode };
 }
 
 /**

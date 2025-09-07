@@ -66,10 +66,9 @@ export const AffiliateApplicationRejected = ({
           </Text>
 
           {rejectionReason && (
-            <Section style={reasonSection}>
-              <Text style={reasonText}>
-                <strong>Årsak:</strong> {rejectionReason}
-              </Text>
+            <Section style={reviewNotesSection}>
+              <Text style={reviewNotesHeader}>Melding fra Nabostylisten:</Text>
+              <Text style={reviewNotesText}>{rejectionReason}</Text>
             </Section>
           )}
 
@@ -149,20 +148,31 @@ const hr = baseStyles.hr;
 const footer = baseStyles.footer;
 const link = baseStyles.link;
 
-// Specific styles for rejection email
-const reasonSection = {
-  backgroundColor: colors.warning,
-  padding: "16px 20px",
-  borderRadius: "8px",
-  borderLeft: `4px solid ${colors.warningBorder}`,
+// Specific styles for rejection email - using secondary colors for professional appearance
+const reviewNotesSection = {
+  backgroundColor: colors.secondary,
+  padding: "20px",
+  borderRadius: "12px",
   margin: "24px 0",
+  border: `2px solid ${colors.secondaryForeground}`,
+  borderLeft: `6px solid ${colors.secondaryForeground}`,
 };
 
-const reasonText = {
-  color: colors.warningText,
+const reviewNotesHeader = {
+  color: colors.secondaryForeground,
   fontSize: "14px",
-  lineHeight: "1.5",
+  fontWeight: "600",
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.5px",
+  margin: "0 0 12px 0",
+};
+
+const reviewNotesText = {
+  color: colors.secondaryForeground,
+  fontSize: "15px",
+  lineHeight: "1.6",
   margin: "0",
+  fontStyle: "italic" as const,
 };
 
 const encouragementSection = {

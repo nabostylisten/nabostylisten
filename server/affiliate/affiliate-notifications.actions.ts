@@ -147,6 +147,7 @@ export async function sendAffiliateApplicationReceivedNotification(
 export async function sendAffiliateApplicationApprovedEmail(
   stylistId: string,
   affiliateCode: string,
+  reviewNotes?: string,
 ) {
   const supabase = await createClient();
 
@@ -187,13 +188,14 @@ export async function sendAffiliateApplicationApprovedEmail(
     // Send email
     const { error } = await sendEmail({
       to: [stylist.email],
-      subject: "🎉 Din partnersøknad har blitt godkjent!",
+      subject: "Din partnersøknad har blitt godkjent!",
       react: AffiliateApplicationApproved({
         logoUrl,
         stylistName: stylist.full_name || "Partner",
         affiliateCode,
         commissionPercentage,
         dashboardUrl,
+        reviewNotes,
       }),
     });
 
@@ -338,6 +340,7 @@ export async function sendAffiliateMonthlyPayoutEmail(
 export async function sendAffiliateWelcomeEmail(
   stylistId: string,
   applicationId: string,
+  reviewNotes?: string,
 ) {
   const supabase = await createClient();
 
@@ -380,6 +383,7 @@ export async function sendAffiliateWelcomeEmail(
     return await sendAffiliateApplicationApprovedEmail(
       stylistId,
       affiliateLink.link_code,
+      reviewNotes,
     );
   } catch (error) {
     console.error("Error in sendAffiliateWelcomeEmail:", error);
@@ -408,7 +412,10 @@ export async function sendAffiliateApplicationConfirmationEmail(
       .single();
 
     if (stylistError || !stylist || !stylist.email) {
-      console.error("Error fetching stylist for confirmation email:", stylistError);
+      console.error(
+        "Error fetching stylist for confirmation email:",
+        stylistError,
+      );
       return { error: "Kunne ikke finne stylist", data: null };
     }
 
@@ -420,7 +427,10 @@ export async function sendAffiliateApplicationConfirmationEmail(
       .single();
 
     if (appError || !application) {
-      console.error("Error fetching application for confirmation email:", appError);
+      console.error(
+        "Error fetching application for confirmation email:",
+        appError,
+      );
       return { error: "Kunne ikke finne søknadsinformasjon", data: null };
     }
 

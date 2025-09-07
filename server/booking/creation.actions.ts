@@ -72,69 +72,56 @@ export async function createBookingWithServices(
             discountAmount: number;
         } | null = null;
 
-        if (input.discountCode) {
-            // Use discount validation server action
-            const { validateDiscountCode, trackDiscountUsage } = await import(
+        // Handle both discount codes and affiliate codes
+        if (input.discountCode || input.affiliateCode) {
+            // Use enhanced validation that handles both discount and affiliate codes
+            const { validateDiscountOrAffiliateCode, trackDiscountUsage } = await import(
                 "../discounts.actions"
             );
 
-            const validationResult = await validateDiscountCode({
-                code: input.discountCode,
+            // Prepare cart items for validation
+            const cartItems = input.serviceIds.map(serviceId => ({
+                serviceId,
+                quantity: 1 // Each service in booking is treated as quantity 1
+            }));
+
+            const validationResult = await validateDiscountOrAffiliateCode({
+                code: input.discountCode || input.affiliateCode!,
                 orderAmountNOK: input.originalTotalPrice,
+                cartItems,
                 profileId: user.id,
             });
 
             if (!validationResult.isValid || validationResult.error) {
                 return {
-                    error: validationResult.error || "Invalid discount code",
+                    error: validationResult.error || "Invalid discount or affiliate code",
                     data: null,
                 };
             }
 
-            const discount = validationResult.discount!;
+            if (validationResult.type === 'discount' && validationResult.discount) {
+                // Traditional discount code - track usage
+                const trackingResult = await trackDiscountUsage({
+                    discountId: validationResult.discount.id,
+                    profileId: user.id,
+                    bookingId: undefined, // Will be set later after booking creation
+                });
 
-            // Track usage (this will increment the usage counter)
-            const trackingResult = await trackDiscountUsage({
-                discountId: discount.id,
-                profileId: user.id,
-                bookingId: undefined, // Will be set later after booking creation
-            });
+                if (trackingResult.error) {
+                    return { error: trackingResult.error, data: null };
+                }
 
-            if (trackingResult.error) {
-                return { error: trackingResult.error, data: null };
-            }
-
-            validatedDiscount = {
-                id: discount.id,
-                discountPercentage: discount.discount_percentage || undefined,
-                discountAmountNOK: validationResult.discountAmount || undefined,
-            };
-        }
-        
-        // Handle affiliate code validation and commission calculation
-        if (input.affiliateCode) {
-            // Import affiliate checkout actions
-            const { checkAffiliateDiscount } = await import(
-                "../affiliate/affiliate-checkout.actions"
-            );
-            
-            // Prepare cart items format for affiliate validation
-            const cartItems = input.serviceIds.map(serviceId => ({
-                serviceId,
-                quantity: 1 // Each service in booking is treated as quantity 1
-            }));
-            
-            const affiliateResult = await checkAffiliateDiscount(cartItems, user.id);
-            
-            if (affiliateResult.data?.hasAffiliateAttribution && 
-                affiliateResult.data?.isAutoApplicable && 
-                affiliateResult.data?.affiliateCode?.toUpperCase() === input.affiliateCode.toUpperCase()) {
-                
+                validatedDiscount = {
+                    id: validationResult.discount.id,
+                    discountPercentage: validationResult.discount.discount_percentage || undefined,
+                    discountAmountNOK: validationResult.discountAmount || undefined,
+                };
+            } else if (validationResult.type === 'affiliate' && validationResult.affiliateInfo) {
+                // Affiliate code - set up commission tracking (no immediate usage tracking)
                 affiliateData = {
-                    id: affiliateResult.data.stylistId!,
-                    commissionPercentage: affiliateResult.data.commissionAmount > 0 ? 
-                        (affiliateResult.data.commissionAmount / input.totalPrice) * 100 : 5, // Default 5%
-                    discountAmount: affiliateResult.data.discountAmount || 0
+                    id: validationResult.affiliateInfo.stylistId,
+                    commissionPercentage: validationResult.affiliateInfo.commissionPercentage,
+                    discountAmount: validationResult.discountAmount
                 };
             }
         }

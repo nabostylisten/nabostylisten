@@ -454,8 +454,9 @@ export async function getAffiliateCommissionByBooking(
 
 /**
  * Calculate commission amount based on service total and percentage
+ * This is a utility function, not a Server Action
  */
-export function calculateCommission(
+function calculateCommission(
   serviceTotal: number,
   commissionPercentage: number,
 ): number {

@@ -128,14 +128,14 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Test Order:**
 
-1. [ ] **Code Display & Sharing**
+1. [x] **Code Display & Sharing**
 
    - Approved stylist can view code in `/profiler/[profileId]/partner`
    - Copy code functionality works
    - Social media link generation (`app.no?code=XYZ`)
    - QR code generation for offline sharing
 
-2. [ ] **Performance Metrics**
+2. [x] **Performance Metrics**
    - View click count and conversion metrics
    - Earnings summary display
    - Historical performance charts
@@ -149,7 +149,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Test Order:**
 
-1. [ ] **Social Media Link Flow**
+1. [x] **Social Media Link Flow**
 
    - Click social media link with `?code=XYZ` parameter
    - Verify cookie is set with correct attribution data
@@ -157,7 +157,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Test attribution persists across page navigation
    - Verify attribution expires after 30 days
 
-2. [ ] **Direct Code Entry**
+2. [x] **Direct Code Entry**
 
    - Add service to cart from any stylist
    - Enter affiliate code manually at checkout

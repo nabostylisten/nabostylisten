@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { cookies } from "next/headers";
 import {
   AffiliateAttribution,
@@ -20,7 +21,9 @@ export async function validateAffiliateCode(
     return { success: false, error: "Empty affiliate code" };
   }
 
-  const supabase = await createClient();
+  // Use service client to bypass RLS for affiliate code validation
+  // This is safe because we're only reading affiliate link data for validation
+  const supabase = createServiceClient();
 
   // Join with profiles to get stylist information and ensure they're active
   const { data: affiliateLink, error } = await supabase
@@ -42,6 +45,7 @@ export async function validateAffiliateCode(
     .single();
 
   if (error || !affiliateLink) {
+    console.error(error);
     return { success: false, error: "Invalid affiliate code" };
   }
 
@@ -119,7 +123,6 @@ export async function getAffiliateAttribution(
       .limit(1)
       .single();
 
-
     if (dbAttribution && dbAttribution.affiliate_links) {
       const affiliateLink = Array.isArray(dbAttribution.affiliate_links)
         ? dbAttribution.affiliate_links[0]
@@ -166,29 +169,59 @@ export async function getAffiliateAttribution(
   const attributionCookie = cookieStore.get("affiliate_attribution");
 
   if (!attributionCookie?.value) {
+    console.log("📪 getAffiliateAttribution: No attribution cookie found");
     return null;
   }
 
+  console.log("🍪 getAffiliateAttribution: Found cookie, parsing...");
   const parsed = parseAffiliateAttributionCookie(attributionCookie.value);
   if (!parsed.success || !parsed.data) {
     // Clear invalid cookie
+    console.log(
+      "❌ getAffiliateAttribution: Cookie parsing failed, deleting cookie:",
+      parsed,
+    );
     cookieStore.delete("affiliate_attribution");
     return null;
   }
+
+  console.log("✅ getAffiliateAttribution: Cookie parsed successfully:", {
+    code: parsed.data.code,
+    attributed_at: parsed.data.attributed_at,
+    expires_at: parsed.data.expires_at,
+  });
 
   // Check if cookie has expired
   const expiresAt = new Date(parsed.data.expires_at);
   if (expiresAt < new Date()) {
+    console.log(
+      "❌ getAffiliateAttribution: Cookie expired, deleting cookie. Expires:",
+      expiresAt,
+      "Now:",
+      new Date(),
+    );
     cookieStore.delete("affiliate_attribution");
     return null;
   }
 
+  console.log(
+    "✅ getAffiliateAttribution: Cookie not expired, validating code...",
+  );
+
   // Validate the code is still valid
   const validation = await validateAffiliateCode(parsed.data.code);
   if (!validation.success) {
+    console.log(
+      "❌ getAffiliateAttribution: Code validation failed, deleting cookie:",
+      validation,
+    );
     cookieStore.delete("affiliate_attribution");
     return null;
   }
+
+  console.log(
+    "✅ getAffiliateAttribution: Code validation passed, returning attribution",
+  );
 
   return {
     code: parsed.data.code,
@@ -206,41 +239,63 @@ export async function getAffiliateAttribution(
 export async function transferCookieToDatabase(
   userId: string,
 ): Promise<{ success: boolean; shouldDeleteCookie: boolean }> {
+  console.log(`🔄 Starting cookie transfer for user: ${userId}`);
+
   const cookieStore = await cookies();
   const attributionCookie = cookieStore.get("affiliate_attribution");
 
   if (!attributionCookie?.value) {
+    console.log("⚠️  No affiliate attribution cookie found");
     return { success: true, shouldDeleteCookie: false };
   }
+
+  console.log(`📝 Found cookie value: ${attributionCookie.value}`);
 
   const parsed = parseAffiliateAttributionCookie(attributionCookie.value);
 
   if (!parsed.success || !parsed.data) {
+    console.log("❌ Failed to parse cookie data:", parsed);
     return { success: false, shouldDeleteCookie: true };
   }
+
+  console.log(`✅ Parsed cookie data:`, {
+    code: parsed.data.code,
+    attributed_at: parsed.data.attributed_at,
+    expires_at: parsed.data.expires_at,
+  });
 
   // Validate the code is still active
   const validation = await validateAffiliateCode(parsed.data.code);
 
   if (!validation.success || !validation.stylist_id) {
+    console.log("❌ Code validation failed:", validation);
     return { success: false, shouldDeleteCookie: true };
   }
 
-  const supabase = await createClient();
+  console.log(
+    `✅ Code validation passed for stylist: ${validation.stylist_id}`,
+  );
+
+  // Use service client to bypass any potential RLS issues during cookie transfer
+  // This is safe because we've already validated the user and the code above
+  const supabase = createServiceClient();
 
   // Get the affiliate_link_id from the link_code
-  const { data: affiliateLink } = await supabase
+  const { data: affiliateLink, error: linkError } = await supabase
     .from("affiliate_links")
     .select("id")
     .eq("link_code", parsed.data.code.toUpperCase())
     .single();
 
-  if (!affiliateLink) {
+  if (linkError || !affiliateLink) {
+    console.log("❌ Failed to find affiliate link:", linkError);
     return { success: false, shouldDeleteCookie: true };
   }
 
+  console.log(`✅ Found affiliate link: ${affiliateLink.id}`);
+
   // Check if user already has an attribution for this affiliate link
-  const { data: existing } = await supabase
+  const { data: existing, error: existingError } = await supabase
     .from("affiliate_clicks")
     .select("id")
     .eq("user_id", userId)
@@ -248,27 +303,43 @@ export async function transferCookieToDatabase(
     .eq("converted", false)
     .single();
 
-  if (!existing) {
-    const insertData = {
-      affiliate_link_id: affiliateLink.id,
-      stylist_id: validation.stylist_id,
-      user_id: userId,
-      visitor_id: parsed.data.visitor_session || null,
-      converted: false,
-      // Technical tracking data can be added here if needed
-    };
-
-    const { error: insertError } = await supabase
-      .from("affiliate_clicks")
-      .insert(insertData)
-      .select("id")
-      .single();
-
-    if (insertError) {
-      return { success: false, shouldDeleteCookie: false }; // Don't delete cookie if insert failed
-    }
+  if (existingError && existingError.code !== "PGRST116") { // PGRST116 = no rows found
+    console.log("❌ Error checking existing attribution:", existingError);
+    return { success: false, shouldDeleteCookie: false };
   }
 
+  if (existing) {
+    console.log(`ℹ️  Attribution already exists: ${existing.id}`);
+    return { success: true, shouldDeleteCookie: true };
+  }
+
+  console.log("📝 Creating new affiliate click record...");
+
+  const insertData = {
+    affiliate_link_id: affiliateLink.id,
+    stylist_id: validation.stylist_id,
+    user_id: userId,
+    visitor_id: parsed.data.visitor_session || null,
+    converted: false,
+    // Technical tracking data can be added here if needed
+  };
+
+  console.log("📤 Insert data:", insertData);
+
+  const { data: insertResult, error: insertError } = await supabase
+    .from("affiliate_clicks")
+    .insert(insertData)
+    .select("id")
+    .single();
+
+  if (insertError) {
+    console.log("❌ Insert failed:", insertError);
+    return { success: false, shouldDeleteCookie: false }; // Don't delete cookie if insert failed
+  }
+
+  console.log(
+    `✅ Successfully created affiliate click record: ${insertResult?.id}`,
+  );
   return { success: true, shouldDeleteCookie: true };
 }
 

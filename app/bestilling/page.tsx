@@ -23,7 +23,7 @@ import {
 } from "@/lib/booking-calculations";
 import { useAffiliateAttribution } from "@/hooks/use-affiliate-attribution";
 import { createClient } from "@/lib/supabase/client";
-import type { User } from "@supabase/supabase-js";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function BookingPage() {
   const router = useRouter();
@@ -36,7 +36,7 @@ export default function BookingPage() {
     show: boolean;
     stylistName?: string;
   }>({ show: false });
-  const [user, setUser] = useState<User | null>(null);
+  const { user } = useAuth();
 
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
@@ -60,44 +60,26 @@ export default function BookingPage() {
       .trial_session_description || undefined;
   const trialSession =
     items.find((item) => item.service.has_trial_session) || undefined;
-  
+
   // Prepare cart items for affiliate hook
-  const cartItems = items.map(item => ({
+  const cartItems = items.map((item) => ({
     serviceId: item.service.id,
-    quantity: item.quantity
+    quantity: item.quantity,
   }));
-  
+
   // Use affiliate attribution hook
   const {
     discountAmount: affiliateDiscountAmount,
     affiliateCode,
     stylistName: affiliateStylistName,
     applicableServices,
-    canAutoApply
+    canAutoApply,
   } = useAffiliateAttribution({
     cartItems,
     userId: user?.id,
-    enabled: cartItems.length > 0
+    enabled: cartItems.length > 0,
   });
 
-  // Check authentication
-  useEffect(() => {
-    const checkAuth = async () => {
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
-    };
-
-    checkAuth();
-
-    const supabase = createClient();
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
-  
   // Initialize booking context when component mounts or cart changes
   useEffect(() => {
     if (currentStylist && totalPrice && totalDurationMinutes) {
@@ -189,7 +171,8 @@ export default function BookingPage() {
         customerAddressId: addressId,
         messageToStylist: bookingData.messageToStylist,
         discountCode: bookingData.appliedDiscount?.code,
-        affiliateCode: canAutoApply && affiliateCode ? affiliateCode : undefined,
+        affiliateCode:
+          canAutoApply && affiliateCode ? affiliateCode : undefined,
         totalPrice: totalPriceWithTrial,
         originalTotalPrice: originalTotalPrice,
         totalDurationMinutes,
@@ -387,6 +370,7 @@ export default function BookingPage() {
                     trialSessionPrice={trialSessionPrice}
                     trialSessionDurationMinutes={trialSessionDurationMinutes}
                     trialSessionDescription={trialSessionDescription}
+                    cartItems={cartItems}
                     onComplete={handleBookingComplete}
                   />
                 )}

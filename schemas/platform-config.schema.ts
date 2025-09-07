@@ -23,6 +23,11 @@ export const PlatformFeesConfigSchema = z.object({
             .describe(
                 "Affiliate commission as percentage of platform fee (0.20 = 20%)",
             ),
+        customerDiscountPercentage: z
+            .number()
+            .min(0)
+            .max(1)
+            .describe("Discount given to customer when using affiliate code (0.10 = 10%)"),
     }),
 });
 
@@ -184,6 +189,7 @@ export const DEFAULT_PLATFORM_CONFIG: CompletePlatformConfig = {
         defaultPlatformFeePercentage: 0.20,
         affiliate: {
             defaultCommissionPercentage: 0.10,
+            customerDiscountPercentage: 0.10,
         },
     },
     payment: {

@@ -23,7 +23,14 @@ interface CartItem {
 }
 
 interface AppliedDiscount {
-  discount: DatabaseTables["discounts"]["Row"];
+  type: 'discount' | 'affiliate';
+  discount?: DatabaseTables["discounts"]["Row"];
+  affiliateInfo?: {
+    stylistId: string;
+    stylistName: string;
+    affiliateCode: string;
+    commissionPercentage: number;
+  };
   discountAmount: number;
   code: string;
   wasLimitedByMaxOrderAmount?: boolean;
@@ -110,11 +117,18 @@ export function OrderSummary({
               <div className="flex items-center gap-2">
                 <Tag className="w-3 h-3 text-green-600" />
                 <span className="text-green-600">
-                  Rabattkode: {appliedDiscount.code}
+                  {appliedDiscount.type === 'affiliate' 
+                    ? `Partnerkode: ${appliedDiscount.code}` 
+                    : `Rabattkode: ${appliedDiscount.code}`
+                  }
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                {appliedDiscount.discount.discount_percentage !== null ? (
+                {appliedDiscount.type === 'affiliate' ? (
+                  <Badge variant="outline" className="text-xs">
+                    10%
+                  </Badge>
+                ) : appliedDiscount.discount?.discount_percentage !== null ? (
                   <Badge variant="outline" className="text-xs">
                     {formatPercentage(
                       appliedDiscount.discount.discount_percentage
@@ -126,11 +140,15 @@ export function OrderSummary({
                 </span>
               </div>
             </div>
-            {appliedDiscount.discount.description && (
+            {appliedDiscount.type === 'affiliate' ? (
+              <p className="text-xs text-muted-foreground pl-5">
+                10% rabatt på tjenester fra {appliedDiscount.affiliateInfo?.stylistName}
+              </p>
+            ) : appliedDiscount.discount?.description ? (
               <p className="text-xs text-muted-foreground pl-5">
                 {appliedDiscount.discount.description}
               </p>
-            )}
+            ) : null}
             {/* Maximum order amount feedback */}
             {appliedDiscount.wasLimitedByMaxOrderAmount && appliedDiscount.maxOrderAmountNOK && (
               <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-xs border border-blue-200 dark:border-blue-800">

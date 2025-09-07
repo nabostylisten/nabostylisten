@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Info, Percent, X } from "lucide-react";
-import { validateDiscountCode } from "@/server/discounts.actions";
+import { validateDiscountOrAffiliateCode } from "@/server/discounts.actions";
 import type { DatabaseTables } from "@/types";
 
 const applyDiscountSchema = z.object({
@@ -31,7 +31,14 @@ const applyDiscountSchema = z.object({
 type ApplyDiscountFormData = z.infer<typeof applyDiscountSchema>;
 
 interface AppliedDiscount {
-  discount: DatabaseTables["discounts"]["Row"];
+  type: 'discount' | 'affiliate';
+  discount?: DatabaseTables["discounts"]["Row"];
+  affiliateInfo?: {
+    stylistId: string;
+    stylistName: string;
+    affiliateCode: string;
+    commissionPercentage: number;
+  };
   discountAmount: number;
   code: string;
   wasLimitedByMaxOrderAmount?: boolean;
@@ -41,6 +48,7 @@ interface AppliedDiscount {
 
 interface ApplyDiscountFormProps {
   orderAmountNOK: number;
+  cartItems: { serviceId: string; quantity: number }[];
   onDiscountApplied: (discount: AppliedDiscount | null) => void;
   initialDiscountCode?: string;
   className?: string;
@@ -48,6 +56,7 @@ interface ApplyDiscountFormProps {
 
 export function ApplyDiscountForm({
   orderAmountNOK,
+  cartItems,
   onDiscountApplied,
   initialDiscountCode,
   className,
@@ -67,7 +76,7 @@ export function ApplyDiscountForm({
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground">
-            Rabattkoder er ikke tilgjengelige for øyeblikket.
+            Rabatt- og partnerkoder er ikke tilgjengelige for øyeblikket.
           </p>
         </CardContent>
       </Card>
@@ -87,32 +96,42 @@ export function ApplyDiscountForm({
         throw new Error(`Invalid order amount: ${orderAmountNOK}`);
       }
       
-      const result = await validateDiscountCode({
+      const result = await validateDiscountOrAffiliateCode({
         code: data.code.trim(),
         orderAmountNOK,
+        cartItems,
       });
       return result;
     },
     onSuccess: (result) => {
-      if (result.isValid && result.discount && result.discountAmount !== undefined) {
-        const discountData = {
+      if (result.isValid && result.discountAmount > 0) {
+        const discountData: AppliedDiscount = {
+          type: result.type,
           discount: result.discount,
-          discountAmount: result.discountAmount, // Already in NOK
-          code: result.discount.code,
+          affiliateInfo: result.affiliateInfo,
+          discountAmount: result.discountAmount,
+          code: result.type === 'discount' && result.discount 
+            ? result.discount.code 
+            : result.affiliateInfo?.affiliateCode || '',
           wasLimitedByMaxOrderAmount: result.wasLimitedByMaxOrderAmount,
           maxOrderAmountNOK: result.maxOrderAmountNOK,
           originalOrderAmountNOK: result.originalOrderAmountNOK,
         };
         setAppliedDiscount(discountData);
         onDiscountApplied(discountData);
-        toast.success("Rabattkode aktivert!");
+        
+        if (result.type === 'affiliate') {
+          toast.success(`Partnerkode aktivert! Du får 10% rabatt fra ${result.affiliateInfo?.stylistName}`);
+        } else {
+          toast.success("Rabattkode aktivert!");
+        }
       } else {
-        toast.error(result.error || "Ugyldig rabattkode");
+        toast.error(result.error || "Ugyldig rabatt- eller partnerkode");
       }
     },
     onError: (error) => {
       console.error("Error validating discount:", error);
-      toast.error("Kunne ikke validere rabattkode");
+      toast.error("Kunne ikke validere koden");
     },
   });
 
@@ -147,7 +166,7 @@ export function ApplyDiscountForm({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Percent className="w-5 h-5" />
-          Rabattkode
+          Rabatt- eller partnerkode
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -159,10 +178,16 @@ export function ApplyDiscountForm({
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <div>
                   <p className="font-medium text-green-800 dark:text-green-200">
-                    Rabattkode aktivert: {appliedDiscount.code}
+                    {appliedDiscount.type === 'affiliate' 
+                      ? `Partnerkode aktivert: ${appliedDiscount.code}`
+                      : `Rabattkode aktivert: ${appliedDiscount.code}`
+                    }
                   </p>
                   <p className="text-sm text-green-600 dark:text-green-300">
-                    {appliedDiscount.discount.description}
+                    {appliedDiscount.type === 'affiliate' 
+                      ? `10% rabatt på tjenester fra ${appliedDiscount.affiliateInfo?.stylistName}`
+                      : appliedDiscount.discount?.description
+                    }
                   </p>
                 </div>
               </div>
@@ -179,13 +204,17 @@ export function ApplyDiscountForm({
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Rabatt:</span>
               <div className="flex items-center gap-2">
-                {appliedDiscount.discount.discount_percentage !== null ? (
+                {appliedDiscount.type === 'affiliate' ? (
+                  <Badge variant="secondary">
+                    10%
+                  </Badge>
+                ) : appliedDiscount.discount?.discount_percentage !== null ? (
                   <Badge variant="secondary">
                     {formatPercentage(appliedDiscount.discount.discount_percentage)}
                   </Badge>
                 ) : (
                   <Badge variant="secondary">
-                    {formatCurrency(appliedDiscount.discount.discount_amount || 0)}
+                    {formatCurrency(appliedDiscount.discount?.discount_amount || 0)}
                   </Badge>
                 )}
                 <span className="font-medium text-green-600 dark:text-green-400">
@@ -218,12 +247,12 @@ export function ApplyDiscountForm({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Har du en rabattkode? (valgfritt)
+                      Har du en rabatt- eller partnerkode? (valgfritt)
                     </FormLabel>
                     <div className="flex gap-2">
                       <FormControl>
                         <Input
-                          placeholder="Skriv inn rabattkode..."
+                          placeholder="Skriv inn rabatt- eller partnerkode..."
                           {...field}
                           value={field.value.toUpperCase()}
                           onChange={(e) => field.onChange(e.target.value.toUpperCase())}

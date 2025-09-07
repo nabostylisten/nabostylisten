@@ -1,10 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   discountsInsertSchema,
   discountsUpdateSchema,
 } from "@/schemas/database.schema";
+import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
 import type { DatabaseTables, UserSearchFilters } from "@/types";
 
 // Types for discount operations
@@ -18,6 +20,24 @@ interface DiscountValidationResult {
   error?: string;
   discount?: Discount;
   discountAmount?: number;
+  wasLimitedByMaxOrderAmount?: boolean;
+  maxOrderAmountNOK?: number;
+  originalOrderAmountNOK?: number;
+}
+
+// Enhanced validation result for affiliate codes
+interface EnhancedDiscountValidationResult {
+  isValid: boolean;
+  error?: string;
+  type: 'discount' | 'affiliate';
+  discount?: Discount;
+  affiliateInfo?: {
+    stylistId: string;
+    stylistName: string;
+    affiliateCode: string;
+    commissionPercentage: number;
+  };
+  discountAmount: number;
   wasLimitedByMaxOrderAmount?: boolean;
   maxOrderAmountNOK?: number;
   originalOrderAmountNOK?: number;
@@ -194,6 +214,158 @@ export async function validateDiscountCode({
   } catch (error) {
     console.error("Error validating discount code:", error);
     return { isValid: false, error: "Kunne ikke validere rabattkode" };
+  }
+}
+
+/**
+ * Enhanced validation that checks both discount codes and affiliate codes
+ * Used by the apply-discount-form component
+ */
+export async function validateDiscountOrAffiliateCode({
+  code,
+  orderAmountNOK,
+  cartItems,
+  profileId,
+}: {
+  code: string;
+  orderAmountNOK: number;
+  cartItems: { serviceId: string; quantity: number }[];
+  profileId?: string;
+}): Promise<EnhancedDiscountValidationResult> {
+
+  const supabase = await createClient();
+
+  try {
+    // Get current user if not provided
+    let userId = profileId;
+    if (!userId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return {
+          isValid: false,
+          error: "Du må være logget inn for å bruke rabattkoder",
+          type: 'discount',
+          discountAmount: 0,
+        };
+      }
+      userId = user.id;
+    }
+
+    // First, try to validate as a regular discount code
+    const discountValidation = await validateDiscountCode({
+      code,
+      orderAmountNOK,
+      profileId: userId,
+    });
+
+    if (discountValidation.isValid && discountValidation.discount) {
+      return {
+        isValid: true,
+        type: 'discount',
+        discount: discountValidation.discount,
+        discountAmount: discountValidation.discountAmount || 0,
+        wasLimitedByMaxOrderAmount: discountValidation.wasLimitedByMaxOrderAmount,
+        maxOrderAmountNOK: discountValidation.maxOrderAmountNOK,
+        originalOrderAmountNOK: discountValidation.originalOrderAmountNOK,
+      };
+    }
+
+    // If not a valid discount code, check if it's an affiliate code
+    if (!cartItems || cartItems.length === 0) {
+      return {
+        isValid: false,
+        error: "Handlekurven er tom",
+        type: 'affiliate',
+        discountAmount: 0,
+      };
+    }
+
+    // Get unique stylist IDs from cart services
+    const serviceIds = cartItems.map(item => item.serviceId);
+    
+    const { data: services, error: servicesError } = await supabase
+      .from('services')
+      .select('stylist_id')
+      .in('id', serviceIds);
+
+    if (servicesError || !services || services.length === 0) {
+      return {
+        isValid: false,
+        error: "Ingen tjenester funnet",
+        type: 'affiliate',
+        discountAmount: 0,
+      };
+    }
+
+    const stylistIds = [...new Set(services.map(service => service.stylist_id))];
+
+    // Check if any of these stylists have the affiliate code
+    // Use the first (and only) stylist ID since business rule is one stylist per cart
+    const stylistId = stylistIds[0];
+    
+    // Use service client to bypass RLS for affiliate validation
+    const serviceSupabase = createServiceClient();
+    const { data: affiliateLinks, error: affiliateError } = await serviceSupabase
+      .from('affiliate_links')
+      .select('*')
+      .eq('link_code', code.toUpperCase())
+      .eq('is_active', true)
+      .eq('stylist_id', stylistId);
+
+    if (affiliateError || !affiliateLinks || affiliateLinks.length === 0) {
+      return {
+        isValid: false,
+        error: "Ugyldig rabatt- eller partnerkode",
+        type: 'affiliate',
+        discountAmount: 0,
+      };
+    }
+
+    // Use the first matching affiliate link
+    const affiliateLink = affiliateLinks[0];
+
+    // Check if affiliate code is expired
+    if (affiliateLink.expires_at && new Date(affiliateLink.expires_at) < new Date()) {
+      return {
+        isValid: false,
+        error: "Partnerkoden er utløpt",
+        type: 'affiliate',
+        discountAmount: 0,
+      };
+    }
+
+    // Get stylist name for display
+    const { data: stylistProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', affiliateLink.stylist_id)
+      .single();
+
+    // Calculate 10% discount for customer
+    const customerDiscountPercentage = DEFAULT_PLATFORM_CONFIG.fees.affiliate.customerDiscountPercentage;
+    const discountAmount = orderAmountNOK * customerDiscountPercentage;
+
+    return {
+      isValid: true,
+      type: 'affiliate' as const,
+      affiliateInfo: {
+        stylistId: affiliateLink.stylist_id,
+        stylistName: stylistProfile?.full_name || 'Ukjent stylist',
+        affiliateCode: affiliateLink.link_code,
+        commissionPercentage: affiliateLink.commission_percentage,
+      },
+      discountAmount,
+      originalOrderAmountNOK: orderAmountNOK,
+    };
+
+  } catch (error) {
+    console.error('Error validating discount or affiliate code:', error);
+    return {
+      isValid: false,
+      error: "En feil oppstod ved validering av koden",
+      type: 'discount',
+      discountAmount: 0,
+    };
   }
 }
 

@@ -80,6 +80,7 @@ interface BookingStepperProps {
   trialSessionPrice?: number;
   trialSessionDurationMinutes?: number;
   trialSessionDescription?: string;
+  cartItems: { serviceId: string; quantity: number }[];
   onComplete: () => void;
 }
 
@@ -93,6 +94,7 @@ export function BookingStepper({
   trialSessionPrice,
   trialSessionDurationMinutes,
   trialSessionDescription,
+  cartItems,
   onComplete,
 }: BookingStepperProps) {
   const isMobile = useMediaQuery("(max-width: 768px)");
@@ -237,9 +239,9 @@ export function BookingStepper({
                         "message-discount",
                         "payment",
                       ] as const);
-                  const currentIndex = steps.indexOf(currentStep);
+                  const currentIndex = steps.indexOf(currentStep as any);
                   if (currentIndex > 0) {
-                    setCurrentStep(steps[currentIndex - 1]);
+                    setCurrentStep(steps[currentIndex - 1] as any);
                   }
                 }}
                 disabled={methods.isFirst || isProcessingBooking}
@@ -267,9 +269,9 @@ export function BookingStepper({
                           "message-discount",
                           "payment",
                         ] as const);
-                    const currentIndex = steps.indexOf(currentStep);
+                    const currentIndex = steps.indexOf(currentStep as any);
                     if (currentIndex < steps.length - 1) {
-                      setCurrentStep(steps[currentIndex + 1]);
+                      setCurrentStep(steps[currentIndex + 1] as any);
                     }
                   }
                 }}
@@ -376,6 +378,7 @@ export function BookingStepper({
 
               <ApplyDiscountForm
                 orderAmountNOK={serviceAmountNOK + getTrialSessionAmount()}
+                cartItems={cartItems}
                 onDiscountApplied={(discount) => {
                   handleUpdateBookingData({
                     appliedDiscount: discount || undefined,

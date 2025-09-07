@@ -6,7 +6,14 @@ import type { DatabaseTables } from "@/types";
 type Address = Database["public"]["Tables"]["addresses"]["Row"];
 
 export interface AppliedDiscount {
-  discount: DatabaseTables["discounts"]["Row"];
+  type: 'discount' | 'affiliate';
+  discount?: DatabaseTables["discounts"]["Row"];
+  affiliateInfo?: {
+    stylistId: string;
+    stylistName: string;
+    affiliateCode: string;
+    commissionPercentage: number;
+  };
   discountAmount: number;
   code: string;
   wasLimitedByMaxOrderAmount?: boolean;

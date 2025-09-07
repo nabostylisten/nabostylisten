@@ -42,6 +42,11 @@ export async function updateSession(
   request: NextRequest,
   response?: NextResponse,
 ) {
+  // Debug: Log incoming cookies
+  const incomingCookies = request.cookies.getAll();
+  const hasIncomingAffiliate = incomingCookies.some(c => c.name === 'affiliate_attribution');
+  console.log(`🔍 Middleware: Incoming request to ${request.nextUrl.pathname}, has affiliate cookie: ${hasIncomingAffiliate}`);
+  
   // Handle affiliate code tracking first
   const url = request.nextUrl.clone();
   const affiliateCode = url.searchParams.get("code");
@@ -49,6 +54,25 @@ export async function updateSession(
   let supabaseResponse = response || NextResponse.next({
     request,
   });
+
+  // Preserve affiliate cookie in initial response
+  if (hasIncomingAffiliate && !affiliateCode) {
+    const affiliateCookie = incomingCookies.find(c => c.name === 'affiliate_attribution');
+    if (affiliateCookie) {
+      console.log(`🔄 Middleware: Preserving existing affiliate cookie on ${request.nextUrl.pathname}`);
+      supabaseResponse.cookies.set(
+        "affiliate_attribution",
+        affiliateCookie.value,
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+          path: "/",
+        }
+      );
+    }
+  }
 
   if (affiliateCode && !response) {
     // Import here to avoid circular dependencies
@@ -60,6 +84,7 @@ export async function updateSession(
     // Create typed affiliate attribution cookie
     const attribution = createAffiliateAttributionCookie(affiliateCode);
 
+    console.log(`🆕 Middleware: Setting new affiliate cookie for code: ${affiliateCode}`);
     supabaseResponse.cookies.set(
       "affiliate_attribution",
       JSON.stringify(attribution),
@@ -87,9 +112,25 @@ export async function updateSession(
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
+          
+          // Preserve existing cookies from previous supabaseResponse (like affiliate_attribution)
+          const existingCookies = supabaseResponse.cookies.getAll();
+          const hasAffiliateAttribution = existingCookies.some(c => c.name === 'affiliate_attribution');
+          
+          if (hasAffiliateAttribution) {
+            console.log(`🍪 Middleware: Preserving affiliate_attribution cookie during Supabase setAll`);
+          }
+          
           supabaseResponse = NextResponse.next({
             request,
           });
+          
+          // First, restore existing cookies
+          existingCookies.forEach(({ name, value, ...options }) => {
+            supabaseResponse.cookies.set(name, value, options);
+          });
+          
+          // Then set the new cookies from Supabase
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           );
@@ -110,17 +151,36 @@ export async function updateSession(
   // Transfer affiliate attribution from cookie to database for logged-in users
   if (user?.sub) {
     try {
+      // Log the current cookies to see what's available
+      const allCookies = request.cookies.getAll();
+      console.log(`🔄 Middleware: User ${user.sub} authenticated, checking cookies:`, 
+        allCookies.filter(c => c.name === "affiliate_attribution").map(c => ({ name: c.name, value: c.value.substring(0, 50) + "..." }))
+      );
+      
+      console.log(`🔄 Middleware: Attempting to transfer attribution for user: ${user.sub}`);
       const { transferCookieToDatabase } = await import(
         "@/server/affiliate/affiliate-attribution.actions"
       );
       const result = await transferCookieToDatabase(user.sub);
       
+      console.log(`📊 Middleware: Transfer result:`, result);
+      
       if (result.shouldDeleteCookie) {
+        console.log(`🍪 Middleware: Deleting affiliate attribution cookie`);
         supabaseResponse.cookies.delete("affiliate_attribution");
+      } else {
+        console.log(`🍪 Middleware: Keeping affiliate attribution cookie`);
       }
     } catch (error) {
       console.warn("Failed to transfer affiliate attribution:", error);
       // Don't block the request if affiliate transfer fails
+    }
+  } else {
+    // Log cookies for unauthenticated users too
+    const allCookies = request.cookies.getAll();
+    const affiliateCookie = allCookies.find(c => c.name === "affiliate_attribution");
+    if (affiliateCookie) {
+      console.log(`🔄 Middleware: Unauthenticated user has affiliate cookie: ${affiliateCookie.value.substring(0, 50)}...`);
     }
   }
 

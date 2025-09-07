@@ -70,26 +70,26 @@ export function BookingCard({
         return (
           <Badge
             variant="outline"
-            className="text-yellow-600 border-yellow-200"
+            className="text-yellow-600 border-yellow-200 dark:text-yellow-400 dark:border-yellow-800"
           >
             Venter
           </Badge>
         );
       case "confirmed":
         return (
-          <Badge variant="outline" className="text-green-600 border-green-200">
+          <Badge variant="outline" className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-800">
             Bekreftet
           </Badge>
         );
       case "cancelled":
         return (
-          <Badge variant="outline" className="text-red-600 border-red-200">
+          <Badge variant="outline" className="text-red-600 border-red-200 dark:text-red-400 dark:border-red-800">
             Avlyst
           </Badge>
         );
       case "completed":
         return (
-          <Badge variant="outline" className="text-blue-600 border-blue-200">
+          <Badge variant="outline" className="text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800">
             Fullført
           </Badge>
         );

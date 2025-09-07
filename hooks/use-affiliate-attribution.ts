@@ -29,6 +29,7 @@ interface AffiliateDiscountInfo {
   discountAmount: number;
   commissionAmount: number;
   isAutoApplicable: boolean;
+  nonApplicableReason?: string;
 }
 
 interface UseAffiliateAttributionProps {
@@ -238,6 +239,7 @@ export function useAffiliateAttribution({
     stylistName: discount?.stylistName,
     affiliateCode: discount?.affiliateCode,
     applicableServices: discount?.applicableServices || [],
+    nonApplicableReason: discount?.nonApplicableReason,
   };
 }
 

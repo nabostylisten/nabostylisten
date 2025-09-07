@@ -334,6 +334,34 @@ export async function validateDiscountOrAffiliateCode({
       };
     }
 
+    // Check if user has already used an affiliate code for this stylist (one-time-use policy)
+    const { data: existingConversions, error: conversionError } = await serviceSupabase
+      .from("affiliate_clicks")
+      .select("id, booking_id, created_at")
+      .eq("user_id", userId)
+      .eq("stylist_id", affiliateLink.stylist_id)
+      .eq("converted", true);
+
+    if (conversionError) {
+      console.error("Error checking affiliate code usage:", conversionError);
+      return {
+        isValid: false,
+        error: "Kunne ikke validere partnerkode",
+        type: 'affiliate',
+        discountAmount: 0,
+      };
+    }
+
+    // If user has already used an affiliate code for this stylist, deny the request
+    if ((existingConversions?.length || 0) > 0) {
+      return {
+        isValid: false,
+        error: "Du har allerede brukt en partnerkode for denne stylisten tidligere.",
+        type: 'affiliate',
+        discountAmount: 0,
+      };
+    }
+
     // Get stylist name for display
     const { data: stylistProfile } = await supabase
       .from('profiles')

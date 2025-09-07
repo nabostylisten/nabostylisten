@@ -291,16 +291,43 @@ export async function getBookingDetails(bookingId: string) {
         return { error: "User not authenticated", data: null };
     }
 
-    // 1. Get main booking data first
+    // 1. Get main booking data first with discount and affiliate information
     const { data: booking, error: bookingError } = await supabase
         .from("bookings")
-        .select("*")
+        .select(`
+            *,
+            discounts:discount_id (
+                id,
+                code,
+                description,
+                discount_percentage,
+                discount_amount
+            )
+        `)
         .eq("id", bookingId)
         .single();
 
     if (bookingError) {
         return { error: bookingError.message, data: null };
     }
+
+    if (!booking) {
+        return { error: "Booking not found", data: null };
+    }
+
+    // Get affiliate information if available
+    const { data: affiliateClick } = await supabase
+        .from("affiliate_clicks")
+        .select(`
+            id,
+            affiliate_links:affiliate_link_id (
+                link_code,
+                commission_percentage
+            )
+        `)
+        .eq("booking_id", bookingId)
+        .eq("converted", true)
+        .single();
 
     if (!booking) {
         return { error: "Booking not found", data: null };
@@ -548,6 +575,16 @@ export async function getBookingDetails(bookingId: string) {
         main_booking,
         chats,
         payments: payments || [],
+        // Add affiliate information if available
+        affiliate_code: affiliateClick?.affiliate_links?.link_code || null,
+        affiliate_commission_percentage:
+            affiliateClick?.affiliate_links?.commission_percentage || null,
+        // Add discount code if available
+        discount_code: booking.discounts?.code || null,
+        // Calculate original total price if there's a discount
+        original_total_price: booking.discount_applied > 0
+            ? booking.total_price + booking.discount_applied
+            : booking.total_price,
     };
 
     return { data, error: null };

@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/stores/cart.store";
 import {
@@ -39,6 +38,8 @@ import {
   ManualAffiliateCodeEntry,
 } from "@/components/affiliate/affiliate-discount-banner";
 import { useAffiliateAttribution } from "@/hooks/use-affiliate-attribution";
+import { OrderSummary } from "@/components/booking/order-summary";
+import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
 
 export default function CartPage() {
   const router = useRouter();
@@ -78,6 +79,7 @@ export default function CartPage() {
     stylistName,
     affiliateCode,
     applicableServices,
+    nonApplicableReason,
     submitManualCode,
     isValidatingCode,
     manualCodeError,
@@ -92,6 +94,30 @@ export default function CartPage() {
   const savings = getSavingsSummary();
   const attributionStatus = getAttributionStatus();
   const finalTotal = totalPrice - discountAmount;
+
+  // Transform cart items to OrderSummary format
+  const orderSummaryItems = items.map((item) => ({
+    service: {
+      id: item.service.id,
+      title: item.service.title,
+      price: item.service.price,
+      currency: item.service.currency,
+    },
+    quantity: item.quantity,
+  }));
+
+  // Create applied discount object when affiliate discount is applicable AND there's no blocking reason
+  const appliedDiscount = canAutoApply && discountAmount > 0 && affiliateCode && stylistName && !nonApplicableReason ? {
+    type: "affiliate" as const,
+    code: affiliateCode,
+    discountAmount: discountAmount,
+    affiliateInfo: {
+      stylistId: applicableServices?.[0]?.stylist_id || "",
+      stylistName: stylistName,
+      affiliateCode: affiliateCode,
+      commissionPercentage: DEFAULT_PLATFORM_CONFIG.fees.affiliate.defaultCommissionPercentage,
+    },
+  } : null;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -112,7 +138,6 @@ export default function CartPage() {
       setUser(session?.user ?? null);
       if (event === "SIGNED_IN" && session?.user) {
         setShowAuthDialog(false);
-        router.push("/bestilling");
       }
     });
 
@@ -407,8 +432,8 @@ export default function CartPage() {
             {/* Affiliate Discount Section */}
             <BlurFade delay={0.12} duration={0.5} inView>
               <div className="space-y-4 mt-4">
-                {/* Auto-applicable discount banner */}
-                {canAutoApply && stylistName && affiliateCode && (
+                {/* Show affiliate banner when applicable OR when there's a reason it can't be applied */}
+                {((canAutoApply || nonApplicableReason) && stylistName && affiliateCode) && (
                   <AffiliateDiscountBanner
                     stylistName={stylistName}
                     affiliateCode={affiliateCode}
@@ -416,7 +441,8 @@ export default function CartPage() {
                     applicableServices={
                       applicableServices?.map((s) => s.title) || []
                     }
-                    isAutoApplied={true}
+                    isAutoApplied={canAutoApply}
+                    nonApplicableReason={nonApplicableReason}
                   />
                 )}
               </div>
@@ -426,64 +452,19 @@ export default function CartPage() {
           {/* Order Summary */}
           <div>
             <BlurFade delay={0.15} duration={0.5} inView>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Sammendrag</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    {items.map((item) => (
-                      <div
-                        key={item.service.id}
-                        className="flex justify-between text-sm"
-                      >
-                        <span>
-                          {item.service.title}
-                          {item.quantity > 1 && ` x${item.quantity}`}
-                        </span>
-                        <span>
-                          {(item.service.price * item.quantity).toFixed(2)}{" "}
-                          {item.service.currency}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-
-                  <Separator />
-
-                  {/* Show discount breakdown when applicable */}
-                  {discountAmount > 0 && (
-                    <>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span>Subtotal</span>
-                          <span>{totalPrice.toFixed(2)} NOK</span>
-                        </div>
-                        <div className="flex justify-between text-sm text-green-600">
-                          <span>Partnerrabatt ({affiliateCode})</span>
-                          <span>-{discountAmount.toFixed(2)} NOK</span>
-                        </div>
-                      </div>
-                      <Separator />
-                    </>
-                  )}
-
-                  <div className="flex justify-between font-semibold text-lg">
-                    <span>Total</span>
-                    <span>{finalTotal.toFixed(2)} NOK</span>
-                  </div>
-
-                  <div className="space-y-2 pt-4">
-                    <Button
-                      className="w-full"
-                      disabled={isCheckingAuth}
-                      onClick={handleProceedToBooking}
-                    >
-                      {isCheckingAuth ? "Laster..." : "Fortsett til booking"}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <OrderSummary
+                items={orderSummaryItems}
+                appliedDiscount={appliedDiscount}
+              />
+              <div className="mt-4">
+                <Button
+                  className="w-full"
+                  disabled={isCheckingAuth}
+                  onClick={handleProceedToBooking}
+                >
+                  {isCheckingAuth ? "Laster..." : "Fortsett til booking"}
+                </Button>
+              </div>
             </BlurFade>
           </div>
         </div>

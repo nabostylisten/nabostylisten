@@ -74,6 +74,7 @@ export default function BookingPage() {
     stylistName: affiliateStylistName,
     applicableServices,
     canAutoApply,
+    nonApplicableReason,
     isLoading: affiliateLoading,
     error: affiliateError,
     affiliateInfo,
@@ -83,7 +84,7 @@ export default function BookingPage() {
     enabled: cartItems.length > 0,
   });
 
-  // Clear invalid affiliate discounts when cart composition changes
+  // Clear invalid affiliate discounts when cart composition changes or when nonApplicableReason exists
   useEffect(() => {
     const currentDiscount = bookingData.appliedDiscount;
 
@@ -91,12 +92,20 @@ export default function BookingPage() {
     if (currentDiscount?.type === "affiliate") {
       console.log("🔍 CHECKING EXISTING AFFILIATE DISCOUNT VALIDITY:", {
         currentDiscount,
+        nonApplicableReason,
         cartItems: items.map((item) => ({
           serviceId: item.service.id,
           stylistId: item.service.stylist_id,
           title: item.service.title,
         })),
       });
+
+      // Clear discount if there's a reason it can't be applied (e.g., already used)
+      if (nonApplicableReason) {
+        console.log("🔍 CLEARING DISCOUNT DUE TO NON-APPLICABLE REASON:", nonApplicableReason);
+        updateBookingData({ appliedDiscount: undefined });
+        return;
+      }
 
       // Check if the applied affiliate discount is still valid for current cart
       const discountStylistId = currentDiscount.affiliateInfo?.stylistId;
@@ -105,10 +114,11 @@ export default function BookingPage() {
       );
 
       if (!allCartServicesFromDiscountStylist && items.length > 0) {
+        console.log("🔍 CLEARING DISCOUNT DUE TO CART STYLIST MISMATCH");
         updateBookingData({ appliedDiscount: undefined });
       }
     }
-  }, [items, bookingData.appliedDiscount, updateBookingData]);
+  }, [items, bookingData.appliedDiscount, nonApplicableReason, updateBookingData]);
 
   // Automatically apply affiliate discount when available and applicable
   useEffect(() => {
@@ -116,16 +126,18 @@ export default function BookingPage() {
       canAutoApply,
       affiliateCode,
       affiliateDiscountAmount,
+      nonApplicableReason,
       conditions: {
         hasCanAutoApply: !!canAutoApply,
         hasAffiliateCode: !!affiliateCode,
         hasPositiveDiscount: affiliateDiscountAmount > 0,
+        noBlockingReason: !nonApplicableReason,
         allConditionsMet:
-          canAutoApply && affiliateCode && affiliateDiscountAmount > 0,
+          canAutoApply && affiliateCode && affiliateDiscountAmount > 0 && !nonApplicableReason,
       },
     });
 
-    if (canAutoApply && affiliateCode && affiliateDiscountAmount > 0) {
+    if (canAutoApply && affiliateCode && affiliateDiscountAmount > 0 && !nonApplicableReason) {
       // CRITICAL FIX: Check that ALL cart services are from the same stylist as the affiliate code
       // We cannot auto-apply affiliate discounts when cart contains services from multiple stylists
       const affiliateStylistId = applicableServices?.[0]?.stylist_id;
@@ -198,6 +210,7 @@ export default function BookingPage() {
     canAutoApply,
     affiliateCode,
     affiliateDiscountAmount,
+    nonApplicableReason,
     applicableServices,
     affiliateStylistName,
     bookingData.appliedDiscount,
@@ -298,7 +311,7 @@ export default function BookingPage() {
         messageToStylist: bookingData.messageToStylist,
         discountCode: bookingData.appliedDiscount?.code,
         affiliateCode:
-          canAutoApply && affiliateCode ? affiliateCode : undefined,
+          canAutoApply && affiliateCode && !nonApplicableReason ? affiliateCode : undefined,
         totalPrice: totalPriceWithTrial,
         originalTotalPrice: originalTotalPrice,
         totalDurationMinutes,

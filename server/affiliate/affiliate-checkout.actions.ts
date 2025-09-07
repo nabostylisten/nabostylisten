@@ -23,6 +23,50 @@ export interface AffiliateCheckoutInfo {
   discountAmount: number;
   commissionAmount: number;
   isAutoApplicable: boolean;
+  nonApplicableReason?: string; // Reason why discount cannot be applied
+}
+
+/**
+ * Check if user has already used an affiliate code for a specific stylist
+ * Users can only use affiliate codes once per stylist for their first purchase
+ */
+async function hasUserAlreadyUsedAffiliateForStylist(
+  userId: string,
+  stylistId: string,
+): Promise<boolean> {
+  console.log(`🔍 Checking if user ${userId} has already used affiliate for stylist ${stylistId}`);
+  
+  // Use service client to bypass RLS for checking affiliate usage history
+  // This is necessary because we need to check across all affiliate clicks for the user
+  const supabase = createServiceClient();
+
+  const { data: existingConversions, error } = await supabase
+    .from("affiliate_clicks")
+    .select("id, booking_id, created_at")
+    .eq("user_id", userId)
+    .eq("stylist_id", stylistId)
+    .eq("converted", true); // Only check completed bookings
+
+  if (error) {
+    console.error("Error checking affiliate usage history:", error);
+    // On error, be conservative and allow the discount (don't block user)
+    return false;
+  }
+
+  const hasUsedBefore = (existingConversions?.length || 0) > 0;
+  
+  console.log(`🔍 Affiliate usage check result:`, {
+    userId,
+    stylistId,
+    existingConversions: existingConversions?.map(c => ({
+      id: c.id,
+      booking_id: c.booking_id,
+      created_at: c.created_at
+    })),
+    hasUsedBefore
+  });
+
+  return hasUsedBefore;
 }
 
 /**
@@ -164,6 +208,23 @@ export async function checkAffiliateDiscount(
     breakdown,
   });
 
+  // Check if user has already used an affiliate code for this stylist (one-time-use policy)
+  let isAutoApplicable = true;
+  let nonApplicableReason: string | undefined;
+
+  if (userId) {
+    const hasAlreadyUsed = await hasUserAlreadyUsedAffiliateForStylist(
+      userId,
+      attribution.stylist_id
+    );
+
+    if (hasAlreadyUsed) {
+      isAutoApplicable = false;
+      nonApplicableReason = "Du har allerede brukt en partnerkode for denne stylisten tidligere.";
+      console.log(`🚫 User ${userId} has already used affiliate code for stylist ${attribution.stylist_id}. Blocking reuse.`);
+    }
+  }
+
   const finalResult = {
     error: null,
     data: {
@@ -174,7 +235,8 @@ export async function checkAffiliateDiscount(
       applicableServices,
       discountAmount: breakdown.discountAmountNOK,
       commissionAmount: breakdown.affiliateCommissionNOK,
-      isAutoApplicable: true,
+      isAutoApplicable,
+      nonApplicableReason,
     },
   };
 

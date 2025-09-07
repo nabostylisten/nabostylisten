@@ -5,11 +5,11 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Info, Percent, Tag } from "lucide-react";
 import type { DatabaseTables } from "@/types";
-import { 
-  cartItemsToBookingItems, 
-  getBookingBreakdown, 
-  formatCurrency, 
-  formatPercentage 
+import {
+  cartItemsToBookingItems,
+  getBookingBreakdown,
+  formatCurrency,
+  formatPercentage,
 } from "@/lib/booking-calculations";
 
 interface CartItem {
@@ -22,9 +22,12 @@ interface CartItem {
   quantity: number;
 }
 
-interface AppliedDiscount {
-  type: 'discount' | 'affiliate';
-  discount?: DatabaseTables["discounts"]["Row"];
+export interface AppliedDiscount {
+  type: "discount" | "affiliate";
+  discount?: Pick<
+    DatabaseTables["discounts"]["Row"],
+    "discount_percentage" | "description"
+  >;
   affiliateInfo?: {
     stylistId: string;
     stylistName: string;
@@ -60,12 +63,14 @@ export function OrderSummary({
   // Convert cart items to booking items format and get calculated breakdown
   const bookingItems = cartItemsToBookingItems(items);
   const trialSessionData = trialSession ? { price: trialSession.price } : null;
-  const appliedDiscountData = appliedDiscount ? {
-    discountAmount: appliedDiscount.discountAmount,
-    code: appliedDiscount.code,
-    wasLimitedByMaxOrderAmount: appliedDiscount.wasLimitedByMaxOrderAmount,
-    maxOrderAmountNOK: appliedDiscount.maxOrderAmountNOK,
-  } : null;
+  const appliedDiscountData = appliedDiscount
+    ? {
+        discountAmount: appliedDiscount.discountAmount,
+        code: appliedDiscount.code,
+        wasLimitedByMaxOrderAmount: appliedDiscount.wasLimitedByMaxOrderAmount,
+        maxOrderAmountNOK: appliedDiscount.maxOrderAmountNOK,
+      }
+    : null;
 
   const breakdown = getBookingBreakdown({
     items: bookingItems,
@@ -117,18 +122,19 @@ export function OrderSummary({
               <div className="flex items-center gap-2">
                 <Tag className="w-3 h-3 text-green-600" />
                 <span className="text-green-600">
-                  {appliedDiscount.type === 'affiliate' 
-                    ? `Partnerkode: ${appliedDiscount.code}` 
-                    : `Rabattkode: ${appliedDiscount.code}`
-                  }
+                  {appliedDiscount.type === "affiliate"
+                    ? `Partnerkode: ${appliedDiscount.code}`
+                    : `Rabattkode: ${appliedDiscount.code}`}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                {appliedDiscount.type === 'affiliate' ? (
+                {appliedDiscount.type === "affiliate" ? (
                   <Badge variant="outline" className="text-xs">
                     10%
                   </Badge>
-                ) : appliedDiscount.discount?.discount_percentage !== null ? (
+                ) : appliedDiscount.discount?.discount_percentage !== null &&
+                  appliedDiscount.discount?.discount_percentage !==
+                    undefined ? (
                   <Badge variant="outline" className="text-xs">
                     {formatPercentage(
                       appliedDiscount.discount.discount_percentage
@@ -140,9 +146,10 @@ export function OrderSummary({
                 </span>
               </div>
             </div>
-            {appliedDiscount.type === 'affiliate' ? (
+            {appliedDiscount.type === "affiliate" ? (
               <p className="text-xs text-muted-foreground pl-5">
-                10% rabatt på tjenester fra {appliedDiscount.affiliateInfo?.stylistName}
+                10% rabatt på tjenester fra{" "}
+                {appliedDiscount.affiliateInfo?.stylistName}
               </p>
             ) : appliedDiscount.discount?.description ? (
               <p className="text-xs text-muted-foreground pl-5">
@@ -150,14 +157,17 @@ export function OrderSummary({
               </p>
             ) : null}
             {/* Maximum order amount feedback */}
-            {appliedDiscount.wasLimitedByMaxOrderAmount && appliedDiscount.maxOrderAmountNOK && (
-              <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-xs border border-blue-200 dark:border-blue-800">
-                <Info className="w-3 h-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <p className="text-blue-800 dark:text-blue-200">
-                  <span className="font-medium">Rabattgrense:</span> Denne rabatten gjelder kun for bestillinger opp til {formatCurrency(appliedDiscount.maxOrderAmountNOK)}.
-                </p>
-              </div>
-            )}
+            {appliedDiscount.wasLimitedByMaxOrderAmount &&
+              appliedDiscount.maxOrderAmountNOK && (
+                <div className="flex items-start gap-2 p-2 bg-blue-50 dark:bg-blue-950/20 rounded text-xs border border-blue-200 dark:border-blue-800">
+                  <Info className="w-3 h-3 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <p className="text-blue-800 dark:text-blue-200">
+                    <span className="font-medium">Rabattgrense:</span> Denne
+                    rabatten gjelder kun for bestillinger opp til{" "}
+                    {formatCurrency(appliedDiscount.maxOrderAmountNOK)}.
+                  </p>
+                </div>
+              )}
           </div>
         )}
 

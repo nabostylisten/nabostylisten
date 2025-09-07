@@ -18,6 +18,7 @@ interface AffiliateDiscountBannerProps {
   discountAmount: number;
   applicableServices: string[];
   isAutoApplied: boolean;
+  nonApplicableReason?: string;
   onDismiss?: () => void;
 }
 
@@ -27,6 +28,7 @@ export function AffiliateDiscountBanner({
   discountAmount,
   applicableServices,
   isAutoApplied,
+  nonApplicableReason,
   onDismiss,
 }: AffiliateDiscountBannerProps) {
   const [isExpanded, setIsExpanded] = useState(false);
@@ -40,6 +42,34 @@ export function AffiliateDiscountBanner({
     setIsDismissed(true);
     onDismiss?.();
   };
+
+  // Show informational banner when code exists but cannot be applied
+  if (nonApplicableReason) {
+    return (
+      <Card className="border-muted bg-muted/50">
+        <CardContent className="p-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <p className="text-sm text-muted-foreground">
+                Partnerkoden til {stylistName} har allerede blitt brukt.
+              </p>
+            </div>
+
+            {onDismiss && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDismiss}
+                className="h-8 w-8 p-0 hover:bg-muted"
+              >
+                <X className="w-4 h-4 text-muted-foreground" />
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/30">
@@ -166,7 +196,9 @@ export function AffiliateAttributionInfo({
           <p className="font-medium">Du har en partnerkode aktiv</p>
           <p>
             Koden{" "}
-            <code className="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">{affiliateCode}</code>{" "}
+            <code className="bg-blue-100 dark:bg-blue-900/50 px-1 rounded">
+              {affiliateCode}
+            </code>{" "}
             fra <span className="font-semibold">{stylistName}</span> er aktiv i{" "}
             {daysRemaining} dager til. Book tjenester fra {stylistName} for å få
             rabatt automatisk!

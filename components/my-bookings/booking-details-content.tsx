@@ -144,7 +144,7 @@ export function BookingDetailsContent({
           badge: (
             <Badge
               variant="outline"
-              className="text-yellow-600 border-yellow-200 w-fit"
+              className="text-yellow-600 border-yellow-400 dark:text-yellow-400 dark:border-yellow-800 w-fit"
             >
               Venter på bekreftelse
             </Badge>
@@ -157,7 +157,7 @@ export function BookingDetailsContent({
           badge: (
             <Badge
               variant="outline"
-              className="text-green-600 border-green-200 w-fit"
+              className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-800 w-fit"
             >
               Bekreftet
             </Badge>
@@ -170,7 +170,7 @@ export function BookingDetailsContent({
           badge: (
             <Badge
               variant="outline"
-              className="text-red-600 border-red-200 w-fit"
+              className="text-red-600 border-red-200 dark:text-red-400 dark:border-red-800 w-fit"
             >
               Avlyst
             </Badge>
@@ -181,7 +181,10 @@ export function BookingDetailsContent({
       case "completed":
         return {
           badge: (
-            <Badge variant="outline" className="text-blue-600 border-blue-200">
+            <Badge
+              variant="outline"
+              className="text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800"
+            >
               Fullført
             </Badge>
           ),
@@ -408,12 +411,12 @@ export function BookingDetailsContent({
                         variant="outline"
                         className={
                           booking.trial_booking.status === "completed"
-                            ? "text-blue-600 border-blue-200"
+                            ? "text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800"
                             : booking.trial_booking.status === "confirmed"
-                              ? "text-green-600 border-green-200"
+                              ? "text-green-600 border-green-200 dark:text-green-400 dark:border-green-800"
                               : booking.trial_booking.status === "pending"
-                                ? "text-yellow-600 border-yellow-200"
-                                : "text-red-600 border-red-200"
+                                ? "text-yellow-600 border-yellow-200 dark:text-yellow-400 dark:border-yellow-800"
+                                : "text-red-600 border-red-200 dark:text-red-400 dark:border-red-800"
                         }
                       >
                         {booking.trial_booking.status === "pending" && "Venter"}
@@ -506,12 +509,12 @@ export function BookingDetailsContent({
                         variant="outline"
                         className={
                           booking.main_booking.status === "completed"
-                            ? "text-blue-600 border-blue-200"
+                            ? "text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800"
                             : booking.main_booking.status === "confirmed"
-                              ? "text-green-600 border-green-200"
+                              ? "text-green-600 border-green-200 dark:text-green-400 dark:border-green-800"
                               : booking.main_booking.status === "pending"
-                                ? "text-yellow-600 border-yellow-200"
-                                : "text-red-600 border-red-200"
+                                ? "text-yellow-600 border-yellow-200 dark:text-yellow-400 dark:border-yellow-800"
+                                : "text-red-600 border-red-200 dark:text-red-400 dark:border-red-800"
                         }
                       >
                         {booking.main_booking.status === "pending" && "Venter"}

@@ -183,7 +183,7 @@ export const DEFAULT_PLATFORM_CONFIG: CompletePlatformConfig = {
     fees: {
         defaultPlatformFeePercentage: 0.20,
         affiliate: {
-            defaultCommissionPercentage: 0.20,
+            defaultCommissionPercentage: 0.10,
         },
     },
     payment: {
@@ -264,7 +264,8 @@ export function mergeWithDefaults(
         fees: partial.fees || DEFAULT_PLATFORM_CONFIG.fees,
         payment: partial.payment || DEFAULT_PLATFORM_CONFIG.payment,
         discounts: partial.discounts || DEFAULT_PLATFORM_CONFIG.discounts,
-        bookingRules: partial.bookingRules || DEFAULT_PLATFORM_CONFIG.bookingRules,
+        bookingRules: partial.bookingRules ||
+            DEFAULT_PLATFORM_CONFIG.bookingRules,
     };
 }
 
@@ -324,12 +325,14 @@ export const calculatePlatformFee = ({
         platformFeeNOK: finalPlatformFeeNOK,
         stylistPayoutNOK,
         affiliateCommissionNOK,
-        
+
         // Discount breakdown
         originalTotalAmountNOK: totalAmountNOK,
         discountAmountNOK: discountNOK,
-        discountPercentageApplied: totalAmountNOK > 0 ? (discountNOK / totalAmountNOK) : 0,
-        
+        discountPercentageApplied: totalAmountNOK > 0
+            ? (discountNOK / totalAmountNOK)
+            : 0,
+
         // Fee comparison (for transparency)
         originalPlatformFeeNOK,
         originalStylistPayoutNOK,
@@ -351,8 +354,10 @@ export const calculateDiscountAmount = ({
     discountAmountNOK?: number;
 }) => {
     if (discountPercentage !== undefined) {
-        const calculatedDiscountNOK = (totalAmountNOK * discountPercentage) / 100;
-        const maxAllowed = totalAmountNOK * DEFAULT_PLATFORM_CONFIG.discounts.maxPercentageDiscount;
+        const calculatedDiscountNOK = (totalAmountNOK * discountPercentage) /
+            100;
+        const maxAllowed = totalAmountNOK *
+            DEFAULT_PLATFORM_CONFIG.discounts.maxPercentageDiscount;
         return Math.min(calculatedDiscountNOK, maxAllowed);
     }
 

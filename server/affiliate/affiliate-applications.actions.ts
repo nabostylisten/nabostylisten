@@ -225,7 +225,7 @@ export async function updateAffiliateApplication(
 }
 
 // Simplified approve function for admin tab
-export async function approveAffiliateApplication(applicationId: string) {
+export async function approveAffiliateApplication(applicationId: string, notes?: string) {
   const supabase = await createClient();
 
   // Get current user as reviewer
@@ -237,7 +237,7 @@ export async function approveAffiliateApplication(applicationId: string) {
     };
   }
 
-  return await approveAffiliateApplicationByAdmin(applicationId, user.id);
+  return await approveAffiliateApplicationByAdmin(applicationId, user.id, notes);
 }
 
 export async function approveAffiliateApplicationByAdmin(
@@ -314,7 +314,7 @@ export async function approveAffiliateApplicationByAdmin(
 }
 
 // Simplified reject function for admin tab
-export async function rejectAffiliateApplication(applicationId: string) {
+export async function rejectAffiliateApplication(applicationId: string, notes?: string) {
   const supabase = await createClient();
 
   // Get current user as reviewer
@@ -326,7 +326,7 @@ export async function rejectAffiliateApplication(applicationId: string) {
   return await rejectAffiliateApplicationByAdmin(
     applicationId,
     user.id,
-    "Avvist fra admin panel",
+    notes || "Avvist fra admin panel",
   );
 }
 

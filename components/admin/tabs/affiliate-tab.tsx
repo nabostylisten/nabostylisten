@@ -43,6 +43,8 @@ import {
 } from "@/server/affiliate/affiliate-codes.actions";
 
 import { AffiliateApplicationDetailsDialog } from "@/components/admin/affiliate-application-details-dialog";
+import { AffiliateApplicationActionDialog } from "@/components/admin/affiliate-application-action-dialog";
+import { AffiliateStatusChangeDialog } from "@/components/admin/affiliate-status-change-dialog";
 
 interface AffiliateApplication {
   id: string;
@@ -85,9 +87,27 @@ function ApplicationsSubTab() {
   const [statusFilter, setStatusFilter] = useState<
     "all" | "pending" | "approved" | "rejected"
   >("all");
-  const [selectedApplicationId, setSelectedApplicationId] = useState<string | null>(null);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<
+    string | null
+  >(null);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
+
+  // Action dialog state
+  const [actionDialogOpen, setActionDialogOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{
+    type: "approve" | "reject";
+    applicationId: string;
+    stylistName: string;
+  } | null>(null);
+
+  // Status change dialog state
+  const [statusChangeDialogOpen, setStatusChangeDialogOpen] = useState(false);
+  const [pendingStatusChange, setPendingStatusChange] = useState<{
+    applicationId: string;
+    stylistName: string;
+    currentStatus: string;
+  } | null>(null);
 
   const {
     data: applications,
@@ -98,49 +118,109 @@ function ApplicationsSubTab() {
     queryFn: getAllAffiliateApplications,
   });
 
-  const handleApprove = async (applicationId: string) => {
-    const actionKey = `approve-${applicationId}`;
-    setLoadingActions(prev => new Set(prev).add(actionKey));
-    
+  const handleApprove = (applicationId: string, stylistName: string) => {
+    setPendingAction({
+      type: "approve",
+      applicationId,
+      stylistName,
+    });
+    setActionDialogOpen(true);
+  };
+
+  const handleReject = (applicationId: string, stylistName: string) => {
+    setPendingAction({
+      type: "reject",
+      applicationId,
+      stylistName,
+    });
+    setActionDialogOpen(true);
+  };
+
+  const handleStatusChange = (
+    applicationId: string,
+    stylistName: string,
+    currentStatus: string
+  ) => {
+    setPendingStatusChange({
+      applicationId,
+      stylistName,
+      currentStatus,
+    });
+    setStatusChangeDialogOpen(true);
+  };
+
+  const handleActionConfirm = async (applicationId: string, notes?: string) => {
+    if (!pendingAction) return;
+
+    const actionKey = `${pendingAction.type}-${applicationId}`;
+    setLoadingActions((prev) => new Set(prev).add(actionKey));
+
     try {
-      const result = await approveAffiliateApplication(applicationId);
+      let result;
+      if (pendingAction.type === "approve") {
+        result = await approveAffiliateApplication(applicationId, notes);
+      } else {
+        result = await rejectAffiliateApplication(applicationId, notes);
+      }
+
       if (result.error) {
         toast.error(result.error);
       } else {
-        toast.success("Partner søknad godkjent!");
+        toast.success(
+          pendingAction.type === "approve"
+            ? "Partner søknad godkjent!"
+            : "Partner søknad avvist"
+        );
         refetch();
       }
     } catch (error) {
       toast.error("En uventet feil oppstod");
     } finally {
-      setLoadingActions(prev => {
+      setLoadingActions((prev) => {
         const next = new Set(prev);
         next.delete(actionKey);
         return next;
       });
+      setPendingAction(null);
     }
   };
 
-  const handleReject = async (applicationId: string) => {
-    const actionKey = `reject-${applicationId}`;
-    setLoadingActions(prev => new Set(prev).add(actionKey));
-    
+  const handleStatusChangeConfirm = async (
+    applicationId: string,
+    newStatus: string,
+    notes?: string
+  ) => {
+    if (!pendingStatusChange) return;
+
+    const actionKey = `change-${applicationId}`;
+    setLoadingActions((prev) => new Set(prev).add(actionKey));
+
     try {
-      const result = await rejectAffiliateApplication(applicationId);
-      if (result.error) {
+      let result;
+      if (newStatus === "approved") {
+        result = await approveAffiliateApplication(applicationId, notes);
+      } else if (newStatus === "rejected") {
+        result = await rejectAffiliateApplication(applicationId, notes);
+      }
+
+      if (result?.error) {
         toast.error(result.error);
       } else {
-        toast.success("Partner søknad avvist");
+        toast.success(
+          `Status endret til ${newStatus === "approved" ? "godkjent" : "avvist"}`
+        );
         refetch();
       }
     } catch (error) {
       toast.error("En uventet feil oppstod");
     } finally {
-      setLoadingActions(prev => {
+      setLoadingActions((prev) => {
         const next = new Set(prev);
         next.delete(actionKey);
         return next;
       });
+      setPendingStatusChange(null);
+      setStatusChangeDialogOpen(false);
     }
   };
 
@@ -160,7 +240,7 @@ function ApplicationsSubTab() {
         return (
           <Badge
             variant="outline"
-            className="text-yellow-600 border-yellow-200"
+            className="text-yellow-600 border-yellow-200 dark:text-yellow-400 dark:border-yellow-400"
           >
             <AlertCircle className="w-3 h-3 mr-1" />
             Venter
@@ -168,16 +248,32 @@ function ApplicationsSubTab() {
         );
       case "approved":
         return (
-          <Badge variant="outline" className="text-green-600 border-green-200">
+          <Badge
+            variant="outline"
+            className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-400"
+          >
             <CheckCircle className="w-3 h-3 mr-1" />
             Godkjent
           </Badge>
         );
       case "rejected":
         return (
-          <Badge variant="outline" className="text-red-600 border-red-200">
+          <Badge
+            variant="outline"
+            className="text-red-600 border-red-200 dark:text-red-400 dark:border-red-400"
+          >
             <XCircle className="w-3 h-3 mr-1" />
             Avvist
+          </Badge>
+        );
+      case "suspended":
+        return (
+          <Badge
+            variant="outline"
+            className="text-orange-600 border-orange-200 dark:text-orange-400 dark:border-orange-400"
+          >
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Suspendert
           </Badge>
         );
       default:
@@ -211,7 +307,11 @@ function ApplicationsSubTab() {
           </div>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as any)}
+            onChange={(e) =>
+              setStatusFilter(
+                e.target.value as "all" | "pending" | "approved" | "rejected"
+              )
+            }
             className="px-3 py-2 border border-input rounded-md text-sm bg-background"
           >
             <option value="all">Alle statuser</option>
@@ -267,35 +367,63 @@ function ApplicationsSubTab() {
                       <Eye className="w-4 h-4 mr-1" />
                       Detaljer
                     </Button>
-                    {app.status === "pending" && (
+                    {app.status === "pending" ? (
                       <>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleApprove(app.id)}
-                          disabled={loadingActions.has(`approve-${app.id}`) || loadingActions.has(`reject-${app.id}`)}
+                          onClick={() => handleApprove(app.id, app.full_name)}
+                          disabled={
+                            loadingActions.has(`approve-${app.id}`) ||
+                            loadingActions.has(`reject-${app.id}`)
+                          }
                         >
                           {loadingActions.has(`approve-${app.id}`) ? (
                             <Loader className="w-4 h-4 mr-1 animate-spin" />
                           ) : (
                             <CheckCircle className="w-4 h-4 mr-1" />
                           )}
-                          {loadingActions.has(`approve-${app.id}`) ? "Godkjenner..." : "Godkjenn"}
+                          {loadingActions.has(`approve-${app.id}`)
+                            ? "Godkjenner..."
+                            : "Godkjenn"}
                         </Button>
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleReject(app.id)}
-                          disabled={loadingActions.has(`approve-${app.id}`) || loadingActions.has(`reject-${app.id}`)}
+                          onClick={() => handleReject(app.id, app.full_name)}
+                          disabled={
+                            loadingActions.has(`approve-${app.id}`) ||
+                            loadingActions.has(`reject-${app.id}`)
+                          }
                         >
                           {loadingActions.has(`reject-${app.id}`) ? (
                             <Loader className="w-4 h-4 mr-1 animate-spin" />
                           ) : (
                             <XCircle className="w-4 h-4 mr-1" />
                           )}
-                          {loadingActions.has(`reject-${app.id}`) ? "Avviser..." : "Avvis"}
+                          {loadingActions.has(`reject-${app.id}`)
+                            ? "Avviser..."
+                            : "Avvis"}
                         </Button>
                       </>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() =>
+                          handleStatusChange(app.id, app.full_name, app.status)
+                        }
+                        disabled={loadingActions.has(`change-${app.id}`)}
+                      >
+                        {loadingActions.has(`change-${app.id}`) ? (
+                          <Loader className="w-4 h-4 mr-1 animate-spin" />
+                        ) : (
+                          <AlertCircle className="w-4 h-4 mr-1" />
+                        )}
+                        {loadingActions.has(`change-${app.id}`)
+                          ? "Endrer..."
+                          : "Endre status"}
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -309,6 +437,36 @@ function ApplicationsSubTab() {
         applicationId={selectedApplicationId}
         open={isDetailsDialogOpen}
         onOpenChange={setIsDetailsDialogOpen}
+      />
+
+      <AffiliateApplicationActionDialog
+        open={actionDialogOpen}
+        onOpenChange={setActionDialogOpen}
+        action={pendingAction?.type || null}
+        applicationId={pendingAction?.applicationId || null}
+        stylistName={pendingAction?.stylistName}
+        onConfirm={handleActionConfirm}
+        loading={
+          pendingAction
+            ? loadingActions.has(
+                `${pendingAction.type}-${pendingAction.applicationId}`
+              )
+            : false
+        }
+      />
+
+      <AffiliateStatusChangeDialog
+        open={statusChangeDialogOpen}
+        onOpenChange={setStatusChangeDialogOpen}
+        applicationId={pendingStatusChange?.applicationId || null}
+        stylistName={pendingStatusChange?.stylistName}
+        currentStatus={pendingStatusChange?.currentStatus}
+        onConfirm={handleStatusChangeConfirm}
+        loading={
+          pendingStatusChange
+            ? loadingActions.has(`change-${pendingStatusChange.applicationId}`)
+            : false
+        }
       />
     </div>
   );

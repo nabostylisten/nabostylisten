@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 import { shouldReceiveNotificationServerSide } from "@/server/preferences.actions";
+import { Database } from "@/types/database.types";
 
 /**
  * Handle Stripe onboarding notification emails
@@ -210,14 +211,17 @@ export async function sendPostPaymentEmails(bookingId: string) {
             .single();
 
         if (bookingError || !booking) {
-            console.error("Failed to get booking for post-payment emails:", bookingError);
+            console.error(
+                "Failed to get booking for post-payment emails:",
+                bookingError,
+            );
             return { error: "Booking not found", data: null };
         }
 
         // Check if emails have already been sent to prevent duplicates
         if (
             booking.customer_receipt_email_sent_at &&
-            booking.stylist_request_email_sent_at
+            booking.stylist_notification_email_sent_at
         ) {
             console.log("Both emails already sent for booking:", bookingId);
             return {
@@ -235,11 +239,11 @@ export async function sendPostPaymentEmails(bookingId: string) {
             await Promise.all([
                 shouldReceiveNotificationServerSide(
                     booking.customer_id,
-                    "booking_receipts",
+                    "booking_confirmations",
                 ),
                 shouldReceiveNotificationServerSide(
                     booking.stylist_id,
-                    "booking_requests",
+                    "booking_status_updates",
                 ),
             ]);
 
@@ -259,13 +263,17 @@ export async function sendPostPaymentEmails(bookingId: string) {
         }
 
         // Prepare common email data
-        const services = booking.booking_services?.map((bs) => bs.service).filter(Boolean) || [];
-        const serviceName = services.length > 0 ? services[0]?.title || "Booking" : "Booking";
+        const services = booking.booking_services?.map((bs) =>
+            bs.service
+        ).filter(Boolean) || [];
+        const serviceName = services.length > 0
+            ? services[0]?.title || "Booking"
+            : "Booking";
         const serviceNameWithCount = services.length > 1
             ? `${serviceName} +${services.length - 1} til`
             : serviceName;
 
-        const payment = booking.payments?.[0];
+        const payment = booking.payments;
         if (!payment) {
             console.error("No payment found for booking:", bookingId);
             return { error: "No payment found for booking", data: null };
@@ -295,7 +303,7 @@ export async function sendPostPaymentEmails(bookingId: string) {
 
         const logoUrl = getNabostylistenLogoUrl("png");
 
-        const emailPromises: Promise<any>[] = [];
+        const emailPromises = [];
         const emailTracking = {
             customerEmailAttempted: false,
             stylistEmailAttempted: false,
@@ -312,7 +320,8 @@ export async function sendPostPaymentEmails(bookingId: string) {
             emailPromises.push(
                 sendEmail({
                     to: [booking.customer.email],
-                    subject: `Betalingskvittering: ${serviceName} - Nabostylisten`,
+                    subject:
+                        `Betalingskvittering: ${serviceName} - Nabostylisten`,
                     react: BookingReceiptEmail({
                         logoUrl,
                         customerName: booking.customer.full_name || "Kunde",
@@ -344,7 +353,7 @@ export async function sendPostPaymentEmails(bookingId: string) {
         if (
             canSendRequestToStylist &&
             booking.stylist?.email &&
-            !booking.stylist_request_email_sent_at
+            !booking.stylist_notification_email_sent_at
         ) {
             emailTracking.stylistEmailAttempted = true;
 
@@ -394,7 +403,10 @@ export async function sendPostPaymentEmails(bookingId: string) {
         let customerEmailSent = false;
         let stylistEmailSent = false;
 
-        if (emailTracking.customerEmailAttempted && emailTracking.stylistEmailAttempted) {
+        if (
+            emailTracking.customerEmailAttempted &&
+            emailTracking.stylistEmailAttempted
+        ) {
             // Both emails attempted
             customerEmailSent = emailResults[0]?.status === "fulfilled";
             stylistEmailSent = emailResults[1]?.status === "fulfilled";
@@ -407,12 +419,13 @@ export async function sendPostPaymentEmails(bookingId: string) {
         }
 
         // Update database with timestamps for successfully sent emails
-        const updateData: any = {};
+        const updateData: Database["public"]["Tables"]["bookings"]["Row"] = {};
         if (customerEmailSent) {
-            updateData.customer_receipt_email_sent_at = new Date().toISOString();
+            updateData.customer_receipt_email_sent_at = new Date()
+                .toISOString();
         }
         if (stylistEmailSent) {
-            updateData.stylist_request_email_sent_at = new Date().toISOString();
+            updateData.stylist_notification_email_sent_at = new Date().toISOString();
         }
 
         // Update booking record if any emails were sent
@@ -429,6 +442,36 @@ export async function sendPostPaymentEmails(bookingId: string) {
                 );
                 // Don't fail the entire operation for timestamp update failure
             }
+        }
+
+        // Track affiliate commission if payment has affiliate data (backup/redundant tracking)
+        try {
+            const { trackAffiliateCommission } = await import(
+                "../affiliate/affiliate-commission.actions"
+            );
+            const commissionResult = await trackAffiliateCommission(bookingId);
+
+            if (
+                commissionResult.error &&
+                !commissionResult.error.includes("already")
+            ) {
+                console.log(
+                    "Note: Affiliate commission tracking attempt:",
+                    commissionResult.error,
+                );
+                // This is expected if commission was already tracked in payment capture
+            } else if (commissionResult.data) {
+                console.log(
+                    "✅ Affiliate commission tracked via post-payment:",
+                    commissionResult.data.id,
+                );
+            }
+        } catch (commissionError) {
+            console.log(
+                "Note: Commission tracking attempt failed:",
+                commissionError,
+            );
+            // Don't fail the entire operation - this is a backup tracking attempt
         }
 
         return {

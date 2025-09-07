@@ -225,6 +225,30 @@ export async function capturePaymentBeforeAppointment(bookingId: string) {
       // Don't return error here since payment was successfully captured
     }
 
+    // Track affiliate commission if payment has affiliate data
+    try {
+      const { trackAffiliateCommission } = await import(
+        "@/server/affiliate/affiliate-commission.actions"
+      );
+      const commissionResult = await trackAffiliateCommission(bookingId);
+
+      if (commissionResult.error) {
+        console.error(
+          "Failed to track affiliate commission:",
+          commissionResult.error,
+        );
+        // Don't fail the entire operation - commission tracking is supplementary
+      } else if (commissionResult.data) {
+        console.log(
+          "✅ Affiliate commission tracked successfully:",
+          commissionResult.data.id,
+        );
+      }
+    } catch (commissionError) {
+      console.error("Error tracking affiliate commission:", commissionError);
+      // Don't fail the entire operation - commission tracking is supplementary
+    }
+
     return {
       data: {
         bookingId,
@@ -810,7 +834,10 @@ export async function createIdentityVerificationForCurrentUser() {
             .eq("profile_id", user.id);
 
           if (updateError) {
-            console.error("Failed to update verification completion:", updateError);
+            console.error(
+              "Failed to update verification completion:",
+              updateError,
+            );
           }
         }
 
@@ -825,7 +852,8 @@ export async function createIdentityVerificationForCurrentUser() {
         // User needs to wait or create a new session
         return {
           data: null,
-          error: "Identitetsverifisering behandles. Vennligst vent på at prosessen fullføres.",
+          error:
+            "Identitetsverifisering behandles. Vennligst vent på at prosessen fullføres.",
         };
       }
 

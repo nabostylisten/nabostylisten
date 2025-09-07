@@ -1,10 +1,12 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
 
 type AffiliatePayout = Database["public"]["Tables"]["affiliate_payouts"]["Row"];
-type AffiliatePayoutInsert = Database["public"]["Tables"]["affiliate_payouts"]["Insert"];
+type AffiliatePayoutInsert =
+  Database["public"]["Tables"]["affiliate_payouts"]["Insert"];
 
 /**
  * Calculate commission for a booking
@@ -12,10 +14,10 @@ type AffiliatePayoutInsert = Database["public"]["Tables"]["affiliate_payouts"]["
 export async function calculateCommission(
   bookingId: string,
   serviceAmountNOK: number,
-  affiliateCode: string
+  affiliateCode: string,
 ) {
   const supabase = await createClient();
-  
+
   // Get affiliate commission percentage
   const { data: affiliate, error } = await supabase
     .from("affiliate_links")
@@ -30,10 +32,10 @@ export async function calculateCommission(
   // Get platform fee percentage from config (default 20%)
   const platformFeePercentage = 0.20;
   const platformFeeAmount = serviceAmountNOK * platformFeePercentage;
-  
+
   // Commission is percentage of platform fee
   const commissionAmount = platformFeeAmount * affiliate.commission_percentage;
-  
+
   return {
     error: null,
     data: {
@@ -41,8 +43,8 @@ export async function calculateCommission(
       commissionPercentage: affiliate.commission_percentage,
       stylistId: affiliate.stylist_id,
       platformFeeAmount,
-      serviceAmount: serviceAmountNOK
-    }
+      serviceAmount: serviceAmountNOK,
+    },
   };
 }
 
@@ -52,10 +54,10 @@ export async function calculateCommission(
 export async function getAffiliateEarnings(stylistId: string, options?: {
   startDate?: string;
   endDate?: string;
-  status?: 'pending' | 'processing' | 'paid' | 'failed';
+  status?: "pending" | "processing" | "paid" | "failed";
 }) {
   const supabase = await createClient();
-  
+
   let query = supabase
     .from("affiliate_clicks")
     .select(`
@@ -77,7 +79,7 @@ export async function getAffiliateEarnings(stylistId: string, options?: {
   if (options?.startDate) {
     query = query.gte("converted_at", options.startDate);
   }
-  
+
   if (options?.endDate) {
     query = query.lte("converted_at", options.endDate);
   }
@@ -90,9 +92,10 @@ export async function getAffiliateEarnings(stylistId: string, options?: {
   }
 
   // Calculate totals
-  const totalEarnings = earnings?.reduce((sum, earning) => sum + earning.commission_amount, 0) || 0;
+  const totalEarnings =
+    earnings?.reduce((sum, earning) => sum + earning.commission_amount, 0) || 0;
   const totalBookings = earnings?.length || 0;
-  
+
   // Get payout status information
   const { data: payouts } = await supabase
     .from("affiliate_payouts")
@@ -100,9 +103,12 @@ export async function getAffiliateEarnings(stylistId: string, options?: {
     .eq("stylist_id", stylistId)
     .order("created_at", { ascending: false });
 
-  const totalPaidOut = payouts?.reduce((sum, payout) => 
-    payout.status === 'paid' ? sum + Number(payout.payout_amount) : sum, 0) || 0;
-    
+  const totalPaidOut = payouts?.reduce(
+    (sum, payout) =>
+      payout.status === "paid" ? sum + Number(payout.payout_amount) : sum,
+    0,
+  ) || 0;
+
   const pendingAmount = totalEarnings - totalPaidOut;
 
   return {
@@ -114,10 +120,12 @@ export async function getAffiliateEarnings(stylistId: string, options?: {
         totalBookings,
         totalPaidOut,
         pendingAmount,
-        averageCommission: totalBookings > 0 ? totalEarnings / totalBookings : 0
+        averageCommission: totalBookings > 0
+          ? totalEarnings / totalBookings
+          : 0,
       },
-      payouts: payouts || []
-    }
+      payouts: payouts || [],
+    },
   };
 }
 
@@ -128,10 +136,10 @@ export async function generateAffiliatePayout(
   stylistId: string,
   periodStart: string,
   periodEnd: string,
-  processedBy: string
+  processedBy: string,
 ) {
   const supabase = await createClient();
-  
+
   // Get unpaid affiliate commissions for the period
   const { data: unpaidCommissions, error: commissionsError } = await supabase
     .from("affiliate_clicks")
@@ -154,11 +162,17 @@ export async function generateAffiliatePayout(
   }
 
   if (!unpaidCommissions || unpaidCommissions.length === 0) {
-    return { error: "Ingen ubetalte provisjoner funnet for perioden", data: null };
+    return {
+      error: "Ingen ubetalte provisjoner funnet for perioden",
+      data: null,
+    };
   }
 
   // Calculate payout totals
-  const totalCommission = unpaidCommissions.reduce((sum, comm) => sum + comm.commission_amount, 0);
+  const totalCommission = unpaidCommissions.reduce(
+    (sum, comm) => sum + comm.commission_amount,
+    0,
+  );
   const totalBookings = unpaidCommissions.length;
 
   // Get affiliate link for this stylist
@@ -186,7 +200,7 @@ export async function generateAffiliatePayout(
       total_bookings: totalBookings,
       total_commission_earned: totalCommission,
       status: "pending",
-      processed_by: processedBy
+      processed_by: processedBy,
     })
     .select()
     .single();
@@ -199,10 +213,10 @@ export async function generateAffiliatePayout(
   // Mark commissions as being processed
   const { error: updateError } = await supabase
     .from("affiliate_clicks")
-    .update({ 
-      payout_processed_at: new Date().toISOString() 
+    .update({
+      payout_processed_at: new Date().toISOString(),
     })
-    .in("id", unpaidCommissions.map(c => c.id));
+    .in("id", unpaidCommissions.map((c) => c.id));
 
   if (updateError) {
     console.error("Error marking commissions as processed:", updateError);
@@ -215,7 +229,7 @@ export async function generateAffiliatePayout(
  */
 export async function processAffiliatePayout(payoutId: string) {
   const supabase = await createClient();
-  
+
   // Get payout details with stylist information
   const { data: payout, error: payoutError } = await supabase
     .from("affiliate_payouts")
@@ -249,7 +263,7 @@ export async function processAffiliatePayout(payoutId: string) {
   try {
     // Here you would integrate with Stripe to create the transfer
     // For now, we'll simulate the process
-    
+
     // Update payout status to processing
     const { data: updatedPayout, error: updateError } = await supabase
       .from("affiliate_payouts")
@@ -276,11 +290,10 @@ export async function processAffiliatePayout(payoutId: string) {
     //   description: `Affiliate commission payout for ${payout.period_start} to ${payout.period_end}`,
     // });
 
-    revalidatePath("/admin/partner");
     return { error: null, data: updatedPayout };
   } catch (error) {
     console.error("Error processing affiliate payout:", error);
-    
+
     // Update payout status to failed
     await supabase
       .from("affiliate_payouts")
@@ -295,13 +308,13 @@ export async function processAffiliatePayout(payoutId: string) {
  * Get affiliate payout history for admin
  */
 export async function getAffiliatePayouts(options?: {
-  status?: string;
+  status?: Database["public"]["Enums"]["affiliate_payout_status"];
   stylistId?: string;
   limit?: number;
   offset?: number;
 }) {
   const supabase = await createClient();
-  
+
   let query = supabase
     .from("affiliate_payouts")
     .select(`
@@ -321,7 +334,7 @@ export async function getAffiliatePayouts(options?: {
   if (options?.status) {
     query = query.eq("status", options.status);
   }
-  
+
   if (options?.stylistId) {
     query = query.eq("stylist_id", options.stylistId);
   }
@@ -350,7 +363,7 @@ export async function getAffiliateCommissionAnalytics(options?: {
   stylistId?: string;
 }) {
   const supabase = await createClient();
-  
+
   let query = supabase
     .from("affiliate_clicks")
     .select(`
@@ -367,11 +380,11 @@ export async function getAffiliateCommissionAnalytics(options?: {
   if (options?.startDate) {
     query = query.gte("converted_at", options.startDate);
   }
-  
+
   if (options?.endDate) {
     query = query.lte("converted_at", options.endDate);
   }
-  
+
   if (options?.stylistId) {
     query = query.eq("stylist_id", options.stylistId);
   }
@@ -391,13 +404,16 @@ export async function getAffiliateCommissionAnalytics(options?: {
         totalConversions: 0,
         averageCommission: 0,
         topPerformers: [],
-        monthlyBreakdown: []
-      }
+        monthlyBreakdown: [],
+      },
     };
   }
 
   // Calculate analytics
-  const totalCommissions = conversions.reduce((sum, c) => sum + c.commission_amount, 0);
+  const totalCommissions = conversions.reduce(
+    (sum, c) => sum + c.commission_amount,
+    0,
+  );
   const totalConversions = conversions.length;
   const averageCommission = totalCommissions / totalConversions;
 
@@ -407,15 +423,20 @@ export async function getAffiliateCommissionAnalytics(options?: {
     if (!acc[stylistId]) {
       acc[stylistId] = {
         stylist_id: stylistId,
-        stylist_name: c.affiliate_link?.stylist?.full_name || 'Unknown',
+        stylist_name: c.affiliate_link?.stylist?.full_name || "Unknown",
         total_commission: 0,
-        conversion_count: 0
+        conversion_count: 0,
       };
     }
     acc[stylistId].total_commission += c.commission_amount;
     acc[stylistId].conversion_count += 1;
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, {
+    stylist_id: string;
+    stylist_name: string;
+    total_commission: number;
+    conversion_count: number;
+  }>);
 
   const topPerformers = Object.values(stylistCommissions)
     .sort((a, b) => b.total_commission - a.total_commission)
@@ -430,7 +451,11 @@ export async function getAffiliateCommissionAnalytics(options?: {
     acc[month].commission += c.commission_amount;
     acc[month].conversions += 1;
     return acc;
-  }, {} as Record<string, any>);
+  }, {} as Record<string, {
+    month: string;
+    commission: number;
+    conversions: number;
+  }>);
 
   const monthlyBreakdown = Object.values(monthlyData)
     .sort((a, b) => a.month.localeCompare(b.month));
@@ -442,8 +467,8 @@ export async function getAffiliateCommissionAnalytics(options?: {
       totalConversions,
       averageCommission,
       topPerformers,
-      monthlyBreakdown
-    }
+      monthlyBreakdown,
+    },
   };
 }
 
@@ -452,7 +477,7 @@ export async function getAffiliateCommissionAnalytics(options?: {
  */
 export async function getAllAffiliateCommissions() {
   const supabase = await createClient();
-  
+
   const { data: commissions, error } = await supabase
     .from("affiliate_commissions")
     .select(`
@@ -474,9 +499,9 @@ export async function getAllAffiliateCommissions() {
   }
 
   // Flatten the data
-  const flattenedData = commissions?.map(commission => ({
+  const flattenedData = commissions?.map((commission) => ({
     ...commission,
-    stylist_name: commission.affiliate?.full_name || "Unknown"
+    stylist_name: commission.affiliate?.full_name || "Unknown",
   }));
 
   return { data: flattenedData, error: null };
@@ -487,26 +512,29 @@ export async function getAllAffiliateCommissions() {
  */
 export async function getCommissionMetrics() {
   const supabase = await createClient();
-  
+
   try {
     // Get all commissions for calculations
     const { data: commissions } = await supabase
       .from("affiliate_commissions")
       .select("amount, status");
 
-    const totalCommissions = commissions?.reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
-    const pendingCommissions = commissions?.filter(c => c.status === "pending")
+    const totalCommissions = commissions?.reduce((sum, c) =>
+      sum + (c.amount || 0), 0) || 0;
+    const pendingCommissions = commissions?.filter((c) =>
+      c.status === "pending"
+    )
       .reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
-    const paidCommissions = commissions?.filter(c => c.status === "paid")
+    const paidCommissions = commissions?.filter((c) => c.status === "paid")
       .reduce((sum, c) => sum + (c.amount || 0), 0) || 0;
 
     return {
       data: {
         totalCommissions,
         pendingCommissions,
-        paidCommissions
+        paidCommissions,
       },
-      error: null
+      error: null,
     };
   } catch (error) {
     console.error("Error fetching commission metrics:", error);
@@ -518,18 +546,32 @@ export async function getCommissionMetrics() {
  * Track affiliate commission for a booking (called after successful payment)
  */
 export async function trackAffiliateCommission(bookingId: string) {
-  const supabase = await createClient();
-  
+  const supabase = createServiceClient(); // Use service client to bypass RLS
+
   try {
+    // Check if commission already exists for this booking to prevent duplicates
+    const { data: existingCommission } = await supabase
+      .from("affiliate_commissions")
+      .select("id")
+      .eq("booking_id", bookingId)
+      .single();
+
+    if (existingCommission) {
+      console.log("Commission already exists for booking:", bookingId);
+      return { error: "Commission already tracked for this booking", data: null };
+    }
+
     // Get booking details with payment information
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .select(`
         id,
+        customer_id,
         total_price,
         payments!inner(
           affiliate_id,
           affiliate_commission,
+          affiliate_commission_percentage,
           status
         )
       `)
@@ -541,7 +583,7 @@ export async function trackAffiliateCommission(bookingId: string) {
       return { error: null, data: null }; // Not an error, just no affiliate to track
     }
 
-    const payment = booking.payments[0];
+    const payment = booking.payments;
     if (!payment?.affiliate_id || !payment?.affiliate_commission) {
       console.log("No affiliate data in payment for booking:", bookingId);
       return { error: null, data: null }; // Not an error, just no affiliate
@@ -554,7 +596,8 @@ export async function trackAffiliateCommission(bookingId: string) {
         booking_id: bookingId,
         affiliate_id: payment.affiliate_id,
         amount: payment.affiliate_commission,
-        status: payment.status === "completed" ? "pending" : "pending"
+        commission_percentage: payment.affiliate_commission_percentage || 0.20,
+        status: payment.status === "succeeded" ? "pending" : "pending",
       })
       .select()
       .single();
@@ -562,6 +605,24 @@ export async function trackAffiliateCommission(bookingId: string) {
     if (commissionError) {
       console.error("Error creating commission record:", commissionError);
       return { error: "Failed to track commission", data: null };
+    }
+
+    // Also update affiliate_clicks to mark as converted and link to booking
+    const { error: clickUpdateError } = await supabase
+      .from("affiliate_clicks")
+      .update({
+        converted: true,
+        converted_at: new Date().toISOString(),
+        booking_id: bookingId,
+        commission_amount: payment.affiliate_commission,
+      })
+      .eq("user_id", booking.customer_id) // User who made the booking
+      .eq("stylist_id", payment.affiliate_id) // Stylist who gets the commission
+      .is("booking_id", null); // Only update clicks that haven't been converted yet
+
+    if (clickUpdateError) {
+      console.error("Error updating affiliate clicks:", clickUpdateError);
+      // Don't fail the commission creation for this
     }
 
     return { error: null, data: commission };

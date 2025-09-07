@@ -194,7 +194,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Test Order:**
 
-1. [ ] **Same-Stylist Booking Flow**
+1. [x] **Same-Stylist Booking Flow**
 
    - Customer has attribution for Stylist A's code
    - Add Stylist A's service to cart
@@ -203,7 +203,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Confirm discount amount is correct
    - Complete booking and verify commission recorded
 
-2. [ ] **Cross-Stylist Prevention**
+2. [x] **Cross-Stylist Prevention**
 
    - Customer has attribution for Stylist A's code
    - Add Stylist B's service to cart

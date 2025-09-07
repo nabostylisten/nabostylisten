@@ -224,7 +224,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Confirm commission percentage calculation
    - Test commission status workflow (pending → confirmed → paid)
 
-2. [ ] **Aggregate Statistics Update**
+2. [x] **Aggregate Statistics Update**
 
    - Verify `click_count` increments on attribution
    - Verify `conversion_count` increments on booking

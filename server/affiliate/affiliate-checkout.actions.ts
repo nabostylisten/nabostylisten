@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
   convertAttribution,
   getAffiliateAttribution,
@@ -421,7 +422,10 @@ export async function reverseAffiliateCommission({
 }: {
   bookingId: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const supabase = await createClient();
+  // Use service client to bypass RLS for commission reversal operations
+  // This is necessary because refunds are administrative operations that may
+  // need to update commission records across different user contexts
+  const supabase = createServiceClient();
 
   try {
     // Find and reverse the commission

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 
 /**
  * Generate a unique affiliate code for a stylist
@@ -239,7 +240,10 @@ export async function getAllAffiliateCodes(limit = 50, offset = 0) {
  * Update affiliate code click count
  */
 export async function incrementAffiliateClick(code: string) {
-  const supabase = await createClient();
+  // Use service client to bypass RLS for updating aggregate statistics
+  // This is necessary because click tracking happens during middleware/attribution
+  // where user sessions may not have direct write access to affiliate_links
+  const supabase = createServiceClient();
 
   // First get current click count
   const { data: currentData, error: fetchError } = await supabase
@@ -276,7 +280,10 @@ export async function incrementAffiliateConversion(
   code: string,
   commissionAmount: number,
 ) {
-  const supabase = await createClient();
+  // Use service client to bypass RLS for updating aggregate statistics
+  // This is necessary because conversion tracking happens during booking completion
+  // where user sessions may not have direct write access to affiliate_links
+  const supabase = createServiceClient();
 
   // First get current metrics
   const { data: currentData, error: fetchError } = await supabase

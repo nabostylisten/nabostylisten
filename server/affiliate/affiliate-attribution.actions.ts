@@ -448,7 +448,10 @@ export async function convertAttribution(
     return { error: "No user or visitor session provided" };
   }
 
-  const supabase = await createClient();
+  // Use service client to bypass RLS for updating affiliate_clicks table
+  // This is necessary because conversion can happen in booking completion context
+  // where the user session may not have direct write access to affiliate_clicks
+  const supabase = createServiceClient();
 
   try {
     // Update the affiliate click to mark as converted

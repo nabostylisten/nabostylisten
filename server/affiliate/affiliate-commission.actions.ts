@@ -228,7 +228,10 @@ export async function generateAffiliatePayout(
  * Process affiliate payout via Stripe
  */
 export async function processAffiliatePayout(payoutId: string) {
-  const supabase = await createClient();
+  // Use service client to bypass RLS for admin payout processing
+  // This is necessary because payout processing is an administrative operation
+  // that needs to update records across different user contexts
+  const supabase = createServiceClient();
 
   // Get payout details with stylist information
   const { data: payout, error: payoutError } = await supabase

@@ -19,24 +19,24 @@ export async function getPlatformStats() {
         .from("profiles")
         .select("*", { count: "exact", head: true })
         .eq("role", "stylist"),
-      
+
       // Count published services
       supabase
         .from("services")
         .select("*", { count: "exact", head: true })
         .eq("is_published", true),
-      
+
       // Count service categories
       supabase
         .from("service_categories")
         .select("*", { count: "exact", head: true }),
-      
+
       // Count confirmed bookings
       supabase
         .from("bookings")
         .select("*", { count: "exact", head: true })
         .eq("status", "confirmed"),
-      
+
       // Get average rating from reviews
       supabase
         .from("reviews")
@@ -46,7 +46,10 @@ export async function getPlatformStats() {
     // Calculate average rating
     let averageRating = 0;
     if (ratingsResult.data && ratingsResult.data.length > 0) {
-      const totalRating = ratingsResult.data.reduce((sum, review) => sum + review.rating, 0);
+      const totalRating = ratingsResult.data.reduce(
+        (sum, review) => sum + review.rating,
+        0,
+      );
       averageRating = totalRating / ratingsResult.data.length;
     }
 
@@ -69,7 +72,9 @@ export async function getPlatformStats() {
   }
 }
 
-export type PopularService = Awaited<ReturnType<typeof getPopularServices>>['data'] extends (infer T)[] | null ? T : never;
+export type PopularService =
+  Awaited<ReturnType<typeof getPopularServices>>["data"] extends
+    (infer T)[] | null ? T : never;
 
 export async function getPopularServices(limit: number = 10) {
   const supabase = await createClient();
@@ -102,8 +107,8 @@ export async function getPopularServices(limit: number = 10) {
     if (error) throw error;
 
     // Fetch reviews for these services
-    const serviceIds = services?.map(s => s.id) || [];
-    
+    const serviceIds = services?.map((s) => s.id) || [];
+
     if (serviceIds.length === 0) {
       return { data: [], error: null };
     }
@@ -124,9 +129,9 @@ export async function getPopularServices(limit: number = 10) {
 
     // Calculate average ratings and review counts for each service
     const serviceRatings = new Map();
-    
+
     if (reviewData) {
-      reviewData.forEach(booking => {
+      reviewData.forEach((booking) => {
         if (booking.reviews && booking.booking_services) {
           booking.booking_services.forEach((bs) => {
             const serviceId = bs.service_id;
@@ -142,11 +147,14 @@ export async function getPopularServices(limit: number = 10) {
     }
 
     // Combine services with their ratings
-    const servicesWithRatings = services?.map(service => {
-      const ratingStats = serviceRatings.get(service.id) || { total: 0, count: 0 };
+    const servicesWithRatings = services?.map((service) => {
+      const ratingStats = serviceRatings.get(service.id) ||
+        { total: 0, count: 0 };
       return {
         ...service,
-        average_rating: ratingStats.count > 0 ? ratingStats.total / ratingStats.count : 0,
+        average_rating: ratingStats.count > 0
+          ? ratingStats.total / ratingStats.count
+          : 0,
         total_reviews: ratingStats.count,
       };
     }) || [];

@@ -583,6 +583,7 @@ export function parseAffiliateAttributionCookie(
 
 export function createAffiliateAttributionCookie(
   code: string,
+  stylistId: string,
   originalUserId?: string,
 ): AffiliateAttributionCookie {
   const now = new Date();
@@ -593,5 +594,6 @@ export function createAffiliateAttributionCookie(
     attributed_at: now.toISOString(),
     expires_at: expiresAt.toISOString(),
     original_user_id: originalUserId,
+    stylist_id: stylistId,
   };
 }

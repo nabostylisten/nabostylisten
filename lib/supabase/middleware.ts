@@ -77,25 +77,48 @@ export async function updateSession(
   if (affiliateCode && !response) {
     // Import here to avoid circular dependencies
     const { createAffiliateAttributionCookie } = await import("@/types");
+    const { validateAffiliateCode } = await import("@/server/affiliate/affiliate-attribution.actions");
 
-    // Create response to redirect and remove the code parameter from URL
-    supabaseResponse = NextResponse.redirect(url.origin + url.pathname);
+    // Validate the affiliate code to get the stylist_id
+    const validation = await validateAffiliateCode(affiliateCode);
+    
+    if (validation.success && validation.stylist_id) {
+      // Create typed affiliate attribution cookie with stylist_id
+      const attribution = createAffiliateAttributionCookie(affiliateCode, validation.stylist_id);
 
-    // Create typed affiliate attribution cookie
-    const attribution = createAffiliateAttributionCookie(affiliateCode);
+      console.log(`🆕 Middleware: Setting new affiliate cookie for code: ${affiliateCode}, stylist: ${validation.stylist_id}`);
+      
+      // Determine redirect URL based on current path
+      let redirectUrl: string;
+      if (request.nextUrl.pathname === "/") {
+        // If on landing page, redirect to services page with stylist filter
+        redirectUrl = `${url.origin}/tjenester?stylists=${validation.stylist_id}`;
+        console.log(`🎯 Middleware: Redirecting to services page with stylist filter: ${redirectUrl}`);
+      } else {
+        // For other pages, just clean the URL
+        redirectUrl = url.origin + url.pathname;
+        console.log(`🧹 Middleware: Cleaning URL for non-landing page: ${redirectUrl}`);
+      }
 
-    console.log(`🆕 Middleware: Setting new affiliate cookie for code: ${affiliateCode}`);
-    supabaseResponse.cookies.set(
-      "affiliate_attribution",
-      JSON.stringify(attribution),
-      {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
-        maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
-        path: "/",
-      },
-    );
+      // Create response to redirect
+      supabaseResponse = NextResponse.redirect(redirectUrl);
+
+      supabaseResponse.cookies.set(
+        "affiliate_attribution",
+        JSON.stringify(attribution),
+        {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+          path: "/",
+        },
+      );
+    } else {
+      console.log(`❌ Middleware: Invalid affiliate code: ${affiliateCode}, validation:`, validation);
+      // Still redirect to clean URL even if code is invalid
+      supabaseResponse = NextResponse.redirect(url.origin + url.pathname);
+    }
   }
 
   // With Fluid compute, don't put this client in a global environment
@@ -151,25 +174,31 @@ export async function updateSession(
   // Transfer affiliate attribution from cookie to database for logged-in users
   if (user?.sub) {
     try {
-      // Log the current cookies to see what's available
+      // Get affiliate attribution cookie from request cookies (middleware API)
       const allCookies = request.cookies.getAll();
-      console.log(`🔄 Middleware: User ${user.sub} authenticated, checking cookies:`, 
-        allCookies.filter(c => c.name === "affiliate_attribution").map(c => ({ name: c.name, value: c.value.substring(0, 50) + "..." }))
-      );
+      const affiliateCookie = allCookies.find(c => c.name === "affiliate_attribution");
       
-      console.log(`🔄 Middleware: Attempting to transfer attribution for user: ${user.sub}`);
-      const { transferCookieToDatabase } = await import(
-        "@/server/affiliate/affiliate-attribution.actions"
-      );
-      const result = await transferCookieToDatabase(user.sub);
+      console.log(`🔄 Middleware: User ${user.sub} authenticated, has affiliate cookie: ${!!affiliateCookie}`);
       
-      console.log(`📊 Middleware: Transfer result:`, result);
-      
-      if (result.shouldDeleteCookie) {
-        console.log(`🍪 Middleware: Deleting affiliate attribution cookie`);
-        supabaseResponse.cookies.delete("affiliate_attribution");
+      if (affiliateCookie) {
+        console.log(`🔄 Middleware: Attempting to transfer attribution for user: ${user.sub}`);
+        const { transferCookieToDatabase } = await import(
+          "@/server/affiliate/affiliate-attribution.actions"
+        );
+        
+        // Pass the cookie value directly from middleware cookies to avoid sync issues
+        const result = await transferCookieToDatabase(user.sub, affiliateCookie.value);
+        
+        console.log(`📊 Middleware: Transfer result:`, result);
+        
+        if (result.shouldDeleteCookie) {
+          console.log(`🍪 Middleware: Deleting affiliate attribution cookie`);
+          supabaseResponse.cookies.delete("affiliate_attribution");
+        } else {
+          console.log(`🍪 Middleware: Keeping affiliate attribution cookie`);
+        }
       } else {
-        console.log(`🍪 Middleware: Keeping affiliate attribution cookie`);
+        console.log(`🔄 Middleware: No affiliate attribution cookie found for user: ${user.sub}`);
       }
     } catch (error) {
       console.warn("Failed to transfer affiliate attribution:", error);

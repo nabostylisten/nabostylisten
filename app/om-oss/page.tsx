@@ -16,11 +16,19 @@ import { AboutFounder } from "@/components/landing/about-founder";
 const OmOssPage = async () => {
   const statsResult = await getPlatformStats();
   const stats = statsResult.error ? null : statsResult.data;
+  const minValue = 10;
+
+  console.log(stats);
 
   // Calculate rounded stats
-  const roundedStylists = stats ? Math.floor(stats.stylists / 10) * 10 : 500;
-  const roundedCustomers = stats ? Math.floor(stats.bookings / 10) * 10 : 10000;
+  const roundedStylists = stats
+    ? Math.max(Math.floor(stats.stylists / 10) * 10, minValue)
+    : 500;
+  const roundedCustomers = stats
+    ? Math.max(Math.floor(stats.bookings / 10) * 10, minValue)
+    : 10000;
   const avgRating = stats?.averageRating || 4.8;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Hero Section */}

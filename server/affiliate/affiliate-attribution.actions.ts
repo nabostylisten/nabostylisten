@@ -262,27 +262,34 @@ export async function getAffiliateAttribution(
  */
 export async function transferCookieToDatabase(
   userId: string,
+  attributionPayload?: string,
 ): Promise<{ success: boolean; shouldDeleteCookie: boolean }> {
   console.log(`🔄 Starting cookie transfer for user: ${userId}`);
 
-  const cookieStore = await cookies();
-  const attributionCookie = cookieStore.get("affiliate_attribution");
+  // Try using the provided payload first, then fallback to reading cookie
+  let cookieValue: string | undefined = attributionPayload;
+  
+  if (!cookieValue) {
+    const cookieStore = await cookies();
+    const attributionCookie = cookieStore.get("affiliate_attribution");
+    cookieValue = attributionCookie?.value;
+  }
 
-  if (!attributionCookie?.value) {
-    console.log("⚠️  No affiliate attribution cookie found");
+  if (!cookieValue) {
+    console.log("⚠️  No affiliate attribution data found (payload or cookie)");
     return { success: true, shouldDeleteCookie: false };
   }
 
-  console.log(`📝 Found cookie value: ${attributionCookie.value}`);
+  console.log(`📝 Processing attribution data: ${cookieValue.substring(0, 50)}...`);
 
-  const parsed = parseAffiliateAttributionCookie(attributionCookie.value);
+  const parsed = parseAffiliateAttributionCookie(cookieValue);
 
   if (!parsed.success || !parsed.data) {
-    console.log("❌ Failed to parse cookie data:", parsed);
+    console.log("❌ Failed to parse attribution data:", parsed);
     return { success: false, shouldDeleteCookie: true };
   }
 
-  console.log(`✅ Parsed cookie data:`, {
+  console.log(`✅ Parsed attribution data:`, {
     code: parsed.data.code,
     attributed_at: parsed.data.attributed_at,
     expires_at: parsed.data.expires_at,

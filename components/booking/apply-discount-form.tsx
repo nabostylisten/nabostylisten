@@ -25,13 +25,16 @@ import { validateDiscountOrAffiliateCode } from "@/server/discounts.actions";
 import type { DatabaseTables } from "@/types";
 
 const applyDiscountSchema = z.object({
-  code: z.string().min(1, "Rabattkode er påkrevd").max(50, "Rabattkode kan ikke være lengre enn 50 tegn"),
+  code: z
+    .string()
+    .min(1, "Rabattkode er påkrevd")
+    .max(50, "Rabattkode kan ikke være lengre enn 50 tegn"),
 });
 
 type ApplyDiscountFormData = z.infer<typeof applyDiscountSchema>;
 
 interface AppliedDiscount {
-  type: 'discount' | 'affiliate';
+  type: "discount" | "affiliate";
   discount?: DatabaseTables["discounts"]["Row"];
   affiliateInfo?: {
     stylistId: string;
@@ -61,11 +64,15 @@ export function ApplyDiscountForm({
   initialDiscountCode,
   className,
 }: ApplyDiscountFormProps) {
-  const [appliedDiscount, setAppliedDiscount] = useState<AppliedDiscount | null>(null);
+  const [appliedDiscount, setAppliedDiscount] =
+    useState<AppliedDiscount | null>(null);
 
   // Validate orderAmountNOK
   if (!orderAmountNOK || isNaN(orderAmountNOK) || orderAmountNOK <= 0) {
-    console.error("Invalid orderAmountNOK passed to ApplyDiscountForm:", orderAmountNOK);
+    console.error(
+      "Invalid orderAmountNOK passed to ApplyDiscountForm:",
+      orderAmountNOK
+    );
     return (
       <Card className={className}>
         <CardHeader>
@@ -95,7 +102,7 @@ export function ApplyDiscountForm({
       if (!orderAmountNOK || isNaN(orderAmountNOK)) {
         throw new Error(`Invalid order amount: ${orderAmountNOK}`);
       }
-      
+
       const result = await validateDiscountOrAffiliateCode({
         code: data.code.trim(),
         orderAmountNOK,
@@ -110,18 +117,21 @@ export function ApplyDiscountForm({
           discount: result.discount,
           affiliateInfo: result.affiliateInfo,
           discountAmount: result.discountAmount,
-          code: result.type === 'discount' && result.discount 
-            ? result.discount.code 
-            : result.affiliateInfo?.affiliateCode || '',
+          code:
+            result.type === "discount" && result.discount
+              ? result.discount.code
+              : result.affiliateInfo?.affiliateCode || "",
           wasLimitedByMaxOrderAmount: result.wasLimitedByMaxOrderAmount,
           maxOrderAmountNOK: result.maxOrderAmountNOK,
           originalOrderAmountNOK: result.originalOrderAmountNOK,
         };
         setAppliedDiscount(discountData);
         onDiscountApplied(discountData);
-        
-        if (result.type === 'affiliate') {
-          toast.success(`Partnerkode aktivert! Du får 10% rabatt fra ${result.affiliateInfo?.stylistName}`);
+
+        if (result.type === "affiliate") {
+          toast.success(
+            `Partnerkode aktivert! Du får 10% rabatt fra ${result.affiliateInfo?.stylistName}`
+          );
         } else {
           toast.success("Rabattkode aktivert!");
         }
@@ -152,13 +162,20 @@ export function ApplyDiscountForm({
       console.warn("Invalid amount in formatCurrency:", amountNOK);
       return "0 kr";
     }
-    return amountNOK.toLocaleString('no-NO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " kr";
+    return (
+      amountNOK.toLocaleString("no-NO", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }) + " kr"
+    );
   };
 
   const formatPercentage = (percentage: number) => {
-    return percentage.toLocaleString('no-NO', { 
-      maximumFractionDigits: 1 
-    }) + "%";
+    return (
+      percentage.toLocaleString("no-NO", {
+        maximumFractionDigits: 1,
+      }) + "%"
+    );
   };
 
   return (
@@ -178,16 +195,14 @@ export function ApplyDiscountForm({
                 <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
                 <div>
                   <p className="font-medium text-green-800 dark:text-green-200">
-                    {appliedDiscount.type === 'affiliate' 
+                    {appliedDiscount.type === "affiliate"
                       ? `Partnerkode aktivert: ${appliedDiscount.code}`
-                      : `Rabattkode aktivert: ${appliedDiscount.code}`
-                    }
+                      : `Rabattkode aktivert: ${appliedDiscount.code}`}
                   </p>
                   <p className="text-sm text-green-600 dark:text-green-300">
-                    {appliedDiscount.type === 'affiliate' 
+                    {appliedDiscount.type === "affiliate"
                       ? `10% rabatt på tjenester fra ${appliedDiscount.affiliateInfo?.stylistName}`
-                      : appliedDiscount.discount?.description
-                    }
+                      : appliedDiscount.discount?.description}
                   </p>
                 </div>
               </div>
@@ -204,17 +219,19 @@ export function ApplyDiscountForm({
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Rabatt:</span>
               <div className="flex items-center gap-2">
-                {appliedDiscount.type === 'affiliate' ? (
-                  <Badge variant="secondary">
-                    10%
-                  </Badge>
+                {appliedDiscount.type === "affiliate" ? (
+                  <Badge variant="secondary">10%</Badge>
                 ) : appliedDiscount.discount?.discount_percentage !== null ? (
                   <Badge variant="secondary">
-                    {formatPercentage(appliedDiscount.discount.discount_percentage)}
+                    {formatPercentage(
+                      appliedDiscount.discount?.discount_percentage || 0
+                    )}
                   </Badge>
                 ) : (
                   <Badge variant="secondary">
-                    {formatCurrency(appliedDiscount.discount?.discount_amount || 0)}
+                    {formatCurrency(
+                      appliedDiscount.discount?.discount_amount || 0
+                    )}
                   </Badge>
                 )}
                 <span className="font-medium text-green-600 dark:text-green-400">
@@ -224,23 +241,30 @@ export function ApplyDiscountForm({
             </div>
 
             {/* Maximum order amount feedback */}
-            {appliedDiscount.wasLimitedByMaxOrderAmount && appliedDiscount.maxOrderAmountNOK && (
-              <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div className="text-sm text-blue-800 dark:text-blue-200">
-                  <p className="font-medium">Rabattgrense nådd</p>
-                  <p>
-                    Denne rabattkoden gjelder kun for bestillinger opp til {formatCurrency(appliedDiscount.maxOrderAmountNOK)}.
-                    Rabatten beregnes derfor kun på {formatCurrency(appliedDiscount.maxOrderAmountNOK)} av den totale ordresummen.
-                  </p>
+            {appliedDiscount.wasLimitedByMaxOrderAmount &&
+              appliedDiscount.maxOrderAmountNOK && (
+                <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-blue-800 dark:text-blue-200">
+                    <p className="font-medium">Rabattgrense nådd</p>
+                    <p>
+                      Denne rabattkoden gjelder kun for bestillinger opp til{" "}
+                      {formatCurrency(appliedDiscount.maxOrderAmountNOK)}.
+                      Rabatten beregnes derfor kun på{" "}
+                      {formatCurrency(appliedDiscount.maxOrderAmountNOK)} av den
+                      totale ordresummen.
+                    </p>
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         ) : (
           // Show discount form
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+            <form
+              onSubmit={form.handleSubmit(handleSubmit)}
+              className="space-y-4"
+            >
               <FormField
                 control={form.control}
                 name="code"
@@ -255,12 +279,16 @@ export function ApplyDiscountForm({
                           placeholder="Skriv inn rabatt- eller partnerkode..."
                           {...field}
                           value={field.value.toUpperCase()}
-                          onChange={(e) => field.onChange(e.target.value.toUpperCase())}
+                          onChange={(e) =>
+                            field.onChange(e.target.value.toUpperCase())
+                          }
                         />
                       </FormControl>
                       <Button
                         type="submit"
-                        disabled={validateMutation.isPending || !field.value.trim()}
+                        disabled={
+                          validateMutation.isPending || !field.value.trim()
+                        }
                       >
                         {validateMutation.isPending && (
                           <Spinner className="w-4 h-4 mr-2" />
@@ -290,7 +318,11 @@ export function ApplyDiscountForm({
               </div>
               <div className="flex justify-between font-medium text-base text-foreground border-t pt-2 mt-2">
                 <span>Totalt:</span>
-                <span>{formatCurrency(orderAmountNOK - appliedDiscount.discountAmount)}</span>
+                <span>
+                  {formatCurrency(
+                    orderAmountNOK - appliedDiscount.discountAmount
+                  )}
+                </span>
               </div>
             </>
           )}

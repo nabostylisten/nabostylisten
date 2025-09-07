@@ -188,7 +188,7 @@ export async function applyAffiliateDiscount(
   bookingId: string,
   userId?: string,
   visitorSession?: string,
-): Promise<{ error: string | null; data: any }> {
+) {
   const supabase = await createClient();
 
   // Get booking details
@@ -476,7 +476,7 @@ export async function reverseAffiliateCommission({
  */
 export async function getAffiliateCommissionByBooking(
   bookingId: string,
-): Promise<{ success: boolean; data?: any; error?: string }> {
+) {
   const supabase = await createClient();
 
   try {
@@ -522,9 +522,7 @@ export async function getStylistAffiliateCommissions({
   status?: "pending" | "processing" | "paid" | "failed";
   limit?: number;
   offset?: number;
-}): Promise<
-  { success: boolean; data?: any[]; count?: number; error?: string }
-> {
+}) {
   const supabase = await createClient();
 
   try {

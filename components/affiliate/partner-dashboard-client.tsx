@@ -193,20 +193,6 @@ export function PartnerDashboardClient({
                     en e-post når søknaden din er behandlet.
                   </p>
                 </div>
-
-                <div className="text-sm text-muted-foreground">
-                  <p>
-                    Forventede henvisninger per måned:{" "}
-                    <strong>{application.expected_referrals}</strong>
-                  </p>
-                  <p>
-                    Total rekkevidde:{" "}
-                    <strong>
-                      {application.social_media_reach?.toLocaleString("no-NO")}{" "}
-                      følgere
-                    </strong>
-                  </p>
-                </div>
               </CardContent>
             </Card>
           </div>

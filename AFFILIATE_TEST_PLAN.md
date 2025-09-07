@@ -85,7 +85,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
 - [x] **Test**: Clean URL redirect functionality
 - [x] **Test**: Cookie to database transfer for logged-in users
 - [x] **Test**: Cookie persistence across browser sessions
-- [ ] **Test**: Cookie behavior in incognito/private mode
+- [x] **Test**: Cookie behavior in incognito/private mode
 
 ### Phase 2: Stylist Affiliate Journey
 

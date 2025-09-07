@@ -38,11 +38,11 @@ import type { Database } from "@/types/database.types";
 const affiliateApplicationSchema = z.object({
   reason: z
     .string()
-    .min(50, "Vennligst beskriv hvorfor du vil bli partner (minimum 50 tegn)")
+    .min(20, "Vennligst beskriv hvorfor du vil bli partner (minimum 20 tegn)")
     .max(1000, "Maksimum 1000 tegn"),
   marketing_strategy: z
     .string()
-    .min(50, "Vennligst beskriv din markedsføringsstrategi (minimum 50 tegn)")
+    .min(20, "Vennligst beskriv din markedsføringsstrategi (minimum 20 tegn)")
     .max(1000, "Maksimum 1000 tegn"),
   expected_referrals: z
     .number()
@@ -58,6 +58,28 @@ const affiliateApplicationSchema = z.object({
 });
 
 type AffiliateApplicationForm = z.infer<typeof affiliateApplicationSchema>;
+
+const getDefaultValues = (): AffiliateApplicationForm => {
+  if (process.env.NODE_ENV === "development") {
+    return {
+      reason:
+        "Jeg vil bli partner fordi jeg vil hjelpe Nabostylisten å vokse og nå flere kunder.",
+      marketing_strategy:
+        "Jeg vil markedsføre Nabostylisten gjennom min egen profesjonelle nettverk og på min personlige sosiale medier.",
+      expected_referrals: 10,
+      social_media_reach: 1000,
+      terms_accepted: false,
+    };
+  }
+
+  return {
+    expected_referrals: 5,
+    social_media_reach: 1000,
+    terms_accepted: false,
+    reason: "",
+    marketing_strategy: "",
+  };
+};
 
 interface AffiliateApplicationFormProps {
   stylistId: string;
@@ -102,13 +124,7 @@ export function AffiliateApplicationForm({
 
   const form = useForm<AffiliateApplicationForm>({
     resolver: zodResolver(affiliateApplicationSchema),
-    defaultValues: {
-      reason: "",
-      marketing_strategy: "",
-      expected_referrals: 5,
-      social_media_reach: 1000,
-      terms_accepted: false,
-    },
+    defaultValues: getDefaultValues(),
   });
 
   const mutation = useMutation({
@@ -483,27 +499,29 @@ export function AffiliateApplicationForm({
                   </div>
                 </div>
 
-                <FormField
-                  control={form.control}
-                  name="terms_accepted"
-                  render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
-                        <Checkbox
-                          key="terms-accepted-checkbox"
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="cursor-pointer">
-                          Jeg aksepterer partnerbetingelsene *
-                        </FormLabel>
-                        <FormMessage />
-                      </div>
-                    </FormItem>
-                  )}
-                />
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                  <FormField
+                    control={form.control}
+                    name="terms_accepted"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            key="terms-accepted-checkbox"
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
+                        <div className="space-y-1 leading-none">
+                          <FormLabel className="cursor-pointer text-red-800 dark:text-red-200">
+                            Jeg aksepterer partnerbetingelsene *
+                          </FormLabel>
+                          <FormMessage />
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </CardContent>
             </Card>
           </Stepper.Panel>

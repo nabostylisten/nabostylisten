@@ -97,15 +97,12 @@ export async function validateAffiliateCode(
 export async function getAffiliateAttribution(
   userId?: string,
 ): Promise<AffiliateAttribution | null> {
-  console.log("🔍 getAffiliateAttribution called for user:", userId);
-
   const supabase = await createClient();
 
   // If user is logged in, check database first
   if (userId) {
-    console.log("💾 Checking database for affiliate attribution...");
     // Join affiliate_clicks with affiliate_links to get the code
-    const { data: dbAttribution, error: dbError } = await supabase
+    const { data: dbAttribution } = await supabase
       .from("affiliate_clicks")
       .select(`
         *,
@@ -122,7 +119,6 @@ export async function getAffiliateAttribution(
       .limit(1)
       .single();
 
-    console.log("💾 Database attribution result:", { data: dbAttribution, error: dbError });
 
     if (dbAttribution && dbAttribution.affiliate_links) {
       const affiliateLink = Array.isArray(dbAttribution.affiliate_links)
@@ -166,14 +162,10 @@ export async function getAffiliateAttribution(
   }
 
   // Fallback to cookie for anonymous users or if no DB attribution
-  console.log("🍪 Falling back to cookie for attribution...");
   const cookieStore = await cookies();
   const attributionCookie = cookieStore.get("affiliate_attribution");
 
-  console.log("🍪 Cookie value:", !!attributionCookie?.value, attributionCookie?.value);
-
   if (!attributionCookie?.value) {
-    console.log("❌ No attribution cookie found in fallback");
     return null;
   }
 
@@ -214,73 +206,41 @@ export async function getAffiliateAttribution(
 export async function transferCookieToDatabase(
   userId: string,
 ): Promise<{ success: boolean; shouldDeleteCookie: boolean }> {
-  console.log("🔄 transferCookieToDatabase called for user:", userId);
-
   const cookieStore = await cookies();
   const attributionCookie = cookieStore.get("affiliate_attribution");
 
-  console.log(
-    "🍪 Found cookie:",
-    !!attributionCookie?.value,
-    attributionCookie?.value,
-  );
-
   if (!attributionCookie?.value) {
-    console.log("❌ No attribution cookie found");
     return { success: true, shouldDeleteCookie: false };
   }
 
   const parsed = parseAffiliateAttributionCookie(attributionCookie.value);
-  console.log("📜 Parsed cookie:", {
-    success: parsed.success,
-    data: parsed.data,
-  });
 
   if (!parsed.success || !parsed.data) {
-    console.error("❌ Invalid affiliate attribution cookie");
-    console.error(parsed.error);
     return { success: false, shouldDeleteCookie: true };
   }
 
-  console.log("🔍 Validating affiliate code:", parsed.data.code);
-
   // Validate the code is still active
   const validation = await validateAffiliateCode(parsed.data.code);
-  console.log("✅ Code validation result:", validation);
 
   if (!validation.success || !validation.stylist_id) {
-    console.log("❌ Code validation failed, should delete cookie");
     return { success: false, shouldDeleteCookie: true };
   }
 
   const supabase = await createClient();
 
-  console.log(
-    "🔗 Looking up affiliate link for code:",
-    parsed.data.code.toUpperCase(),
-  );
-
   // Get the affiliate_link_id from the link_code
-  const { data: affiliateLink, error: linkError } = await supabase
+  const { data: affiliateLink } = await supabase
     .from("affiliate_links")
     .select("id")
     .eq("link_code", parsed.data.code.toUpperCase())
     .single();
 
-  console.log("🔗 Affiliate link lookup result:", {
-    data: affiliateLink,
-    error: linkError,
-  });
-
   if (!affiliateLink) {
-    console.log("❌ No affiliate link found, should delete cookie");
     return { success: false, shouldDeleteCookie: true };
   }
 
-  console.log("🔍 Checking for existing attribution...");
-
   // Check if user already has an attribution for this affiliate link
-  const { data: existing, error: existingError } = await supabase
+  const { data: existing } = await supabase
     .from("affiliate_clicks")
     .select("id")
     .eq("user_id", userId)
@@ -288,14 +248,7 @@ export async function transferCookieToDatabase(
     .eq("converted", false)
     .single();
 
-  console.log("👤 Existing attribution check:", {
-    data: existing,
-    error: existingError,
-  });
-
   if (!existing) {
-    console.log("➕ Creating new affiliate click record...");
-
     const insertData = {
       affiliate_link_id: affiliateLink.id,
       stylist_id: validation.stylist_id,
@@ -305,31 +258,17 @@ export async function transferCookieToDatabase(
       // Technical tracking data can be added here if needed
     };
 
-    console.log("📝 Insert data:", insertData);
-
-    const { data: insertResult, error: insertError } = await supabase
+    const { error: insertError } = await supabase
       .from("affiliate_clicks")
       .insert(insertData)
       .select("id")
       .single();
 
-    console.log("💾 Insert result:", {
-      data: insertResult,
-      error: insertError,
-    });
-
     if (insertError) {
-      console.error("❌ Failed to insert affiliate click:", insertError);
       return { success: false, shouldDeleteCookie: false }; // Don't delete cookie if insert failed
-    } else {
-      console.log("✅ Successfully created affiliate click record");
     }
-  } else {
-    console.log("ℹ️ Attribution already exists, skipping insert");
   }
 
-  // Don't delete cookie here - let middleware handle it
-  console.log("✅ transferCookieToDatabase completed successfully");
   return { success: true, shouldDeleteCookie: true };
 }
 

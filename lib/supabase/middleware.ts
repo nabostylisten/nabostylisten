@@ -84,7 +84,6 @@ export async function updateSession(
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          console.log("🍪 Supabase setting cookies:", cookiesToSet.map(c => c.name));
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -110,26 +109,19 @@ export async function updateSession(
 
   // Transfer affiliate attribution from cookie to database for logged-in users
   if (user?.sub) {
-    console.log("🔐 User authenticated, attempting to transfer affiliate attribution:", user.sub);
     try {
       const { transferCookieToDatabase } = await import(
         "@/server/affiliate/affiliate-attribution.actions"
       );
       const result = await transferCookieToDatabase(user.sub);
-      console.log("🔄 Transfer result:", result);
       
       if (result.shouldDeleteCookie) {
-        console.log("🗑️ Deleting affiliate attribution cookie from middleware");
         supabaseResponse.cookies.delete("affiliate_attribution");
       }
-      
-      console.log("✅ Affiliate attribution transfer completed");
     } catch (error) {
-      console.warn("❌ Failed to transfer affiliate attribution:", error);
+      console.warn("Failed to transfer affiliate attribution:", error);
       // Don't block the request if affiliate transfer fails
     }
-  } else {
-    console.log("👤 No authenticated user found");
   }
 
   // Check if the current route is public

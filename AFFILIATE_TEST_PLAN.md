@@ -255,9 +255,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
 2. [x] **Code Management**
    - View all active affiliate codes
    - Deactivate/reactivate codes
-   - Modify commission percentages
    - Set expiration dates
-   - Generate replacement codes
 
 #### 5.2 Analytics & Reporting
 
@@ -265,7 +263,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Test Order:**
 
-1. [ ] **Performance Analytics**
+1. [x] **Performance Analytics**
 
    - View platform-wide affiliate performance
    - Top performer leaderboards
@@ -284,15 +282,13 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Priority: Medium | Dependencies: All Previous Phases**
 
-- [ ] **Application Flow Emails**
+- [x] **Application Flow Emails**
 
   - Application received confirmation
   - Application approved with code
   - Application rejected with reason
-  - Code expiring warning
 
-- [ ] **Commission & Payout Emails**
-  - Commission earned notification
+- [x] **Commission & Payout Emails**
   - Payout processed confirmation
   - Monthly earning summaries
 

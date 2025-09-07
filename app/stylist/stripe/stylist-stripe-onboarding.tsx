@@ -112,8 +112,8 @@ export function StylistStripeOnboarding({
             </CardHeader>
 
             <CardContent className="space-y-6">
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <p className="text-green-800 font-medium">
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                <p className="text-green-800 dark:text-green-200 font-medium">
                   Du har nå tilgang til alle stylistfunksjonene på plattformen
                 </p>
               </div>
@@ -203,8 +203,8 @@ export function StylistStripeOnboarding({
             {/* Current Status */}
             {stripeAccountStatus && (
               <BlurFade delay={0.15} duration={0.5} inView>
-                <div className="p-4 bg-muted rounded-lg">
-                  <h3 className="font-medium mb-3">Nåværende status:</h3>
+                <div className="p-4 bg-muted/50 dark:bg-muted/30 rounded-lg border border-muted dark:border-muted">
+                  <h3 className="font-medium mb-3 text-foreground">Nåværende status:</h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="flex items-center gap-2">
                       {stripeAccountStatus.details_submitted ? (
@@ -270,14 +270,14 @@ export function StylistStripeOnboarding({
 
             {/* Time estimate and security */}
             <BlurFade delay={0.25} duration={0.5} inView>
-              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-2 text-blue-800 mb-2">
+              <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
                   <Clock className="h-4 w-4" />
                   <span className="font-medium text-sm">
                     Estimert tid: 3 minutter
                   </span>
                 </div>
-                <p className="text-blue-700 text-sm">
+                <p className="text-blue-700 dark:text-blue-300 text-sm">
                   All informasjon behandles sikkert i henhold til GDPR og norsk
                   personvernlovgivning.
                 </p>

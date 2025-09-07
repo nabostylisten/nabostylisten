@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Spinner } from "@/components/ui/kibo-ui/spinner";
 import { UserCheck, Download, Edit } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -37,6 +38,7 @@ export function AffiliateCodesSubTab() {
   const [selectedAffiliate, setSelectedAffiliate] =
     useState<AffiliateLink | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [loadingActions, setLoadingActions] = useState<Set<string>>(new Set());
   const queryClient = useQueryClient();
 
   const { data: codes, isLoading } = useQuery({
@@ -45,24 +47,50 @@ export function AffiliateCodesSubTab() {
   });
 
   const handleDeactivateCode = async (codeId: string) => {
-    const result = await deactivateAffiliateCode(codeId);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Partnerkode deaktivert");
-      // Invalidate queries instead of refetch
-      queryClient.invalidateQueries({ queryKey: ["affiliate-codes"] });
+    const actionKey = `deactivate-${codeId}`;
+    setLoadingActions(prev => new Set(prev).add(actionKey));
+    
+    try {
+      const result = await deactivateAffiliateCode(codeId);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Partnerkode deaktivert");
+        // Invalidate queries instead of refetch
+        queryClient.invalidateQueries({ queryKey: ["affiliate-codes"] });
+      }
+    } catch (error) {
+      toast.error("En uventet feil oppstod");
+    } finally {
+      setLoadingActions(prev => {
+        const next = new Set(prev);
+        next.delete(actionKey);
+        return next;
+      });
     }
   };
 
   const handleActivateCode = async (codeId: string) => {
-    const result = await reactivateAffiliateCode(codeId);
-    if (result.error) {
-      toast.error(result.error);
-    } else {
-      toast.success("Partnerkode aktivert");
-      // Invalidate queries instead of refetch
-      queryClient.invalidateQueries({ queryKey: ["affiliate-codes"] });
+    const actionKey = `activate-${codeId}`;
+    setLoadingActions(prev => new Set(prev).add(actionKey));
+    
+    try {
+      const result = await reactivateAffiliateCode(codeId);
+      if (result.error) {
+        toast.error(result.error);
+      } else {
+        toast.success("Partnerkode aktivert");
+        // Invalidate queries instead of refetch
+        queryClient.invalidateQueries({ queryKey: ["affiliate-codes"] });
+      }
+    } catch (error) {
+      toast.error("En uventet feil oppstod");
+    } finally {
+      setLoadingActions(prev => {
+        const next = new Set(prev);
+        next.delete(actionKey);
+        return next;
+      });
     }
   };
 
@@ -229,8 +257,12 @@ export function AffiliateCodesSubTab() {
                           size="sm"
                           className="flex-1"
                           onClick={() => handleDeactivateCode(code.id)}
+                          disabled={loadingActions.has(`deactivate-${code.id}`) || loadingActions.has(`activate-${code.id}`)}
                         >
-                          Deaktiver
+                          {loadingActions.has(`deactivate-${code.id}`) && (
+                            <Spinner className="w-4 h-4 mr-2" variant="default" />
+                          )}
+                          {loadingActions.has(`deactivate-${code.id}`) ? "Deaktiverer..." : "Deaktiver"}
                         </Button>
                       ) : (
                         <Button
@@ -238,8 +270,12 @@ export function AffiliateCodesSubTab() {
                           size="sm"
                           className="flex-1"
                           onClick={() => handleActivateCode(code.id)}
+                          disabled={loadingActions.has(`deactivate-${code.id}`) || loadingActions.has(`activate-${code.id}`)}
                         >
-                          Aktiver
+                          {loadingActions.has(`activate-${code.id}`) && (
+                            <Spinner className="w-4 h-4 mr-2" variant="default" />
+                          )}
+                          {loadingActions.has(`activate-${code.id}`) ? "Aktiverer..." : "Aktiver"}
                         </Button>
                       )}
                     </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Copy,
   Check,
@@ -8,8 +8,12 @@ import {
   Share2,
   Eye,
   TrendingUp,
+  QrCode,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useQRCode } from "@/hooks/use-qrcode";
+import { QRCodeInfo } from "@/components/affiliate/qr-code-info";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +45,8 @@ export function AffiliateCodeCard({
 }: AffiliateCodeCardProps) {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState<string | null>(null);
+  const { generateQRCode, downloadQRCode, isGenerating } = useQRCode();
 
   const baseUrl =
     typeof window !== "undefined"
@@ -50,6 +56,27 @@ export function AffiliateCodeCard({
 
   const conversionRate =
     clickCount > 0 ? (conversionCount / clickCount) * 100 : 0;
+
+  // Generate QR code on mount
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        const dataUrl = await generateQRCode(partnerLink, {
+          errorCorrectionLevel: "M",
+          margin: 1,
+          color: {
+            dark: "#000000",
+            light: "#FFFFFF",
+          },
+        });
+        setQrCodeDataUrl(dataUrl);
+      } catch (error) {
+        console.error("Failed to generate QR code:", error);
+      }
+    };
+
+    generateQR();
+  }, [partnerLink, generateQRCode]);
 
   const copyCode = async () => {
     try {
@@ -91,6 +118,26 @@ export function AffiliateCodeCard({
         navigator.clipboard.writeText(message);
         toast.success("Tekst kopiert! Lim inn i TikTok-beskrivelse");
         return;
+    }
+  };
+
+  const handleDownloadQRCode = async () => {
+    try {
+      await downloadQRCode(
+        partnerLink,
+        `partner-qr-${affiliateCode.link_code}`,
+        {
+          errorCorrectionLevel: "M",
+          margin: 2,
+          color: {
+            dark: "#000000",
+            light: "#FFFFFF",
+          },
+        }
+      );
+      toast.success("QR-kode lastet ned!");
+    } catch (error) {
+      toast.error("Kunne ikke laste ned QR-kode");
     }
   };
 
@@ -172,6 +219,42 @@ export function AffiliateCodeCard({
               )}
               <span>{copiedLink ? "Kopiert!" : "Kopier"}</span>
             </Button>
+          </div>
+        </div>
+
+        {/* QR Code */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <QrCode className="w-4 h-4" />
+              QR-kode for partnerlenke
+            </label>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleDownloadQRCode}
+              disabled={isGenerating || !qrCodeDataUrl}
+              className="flex items-center space-x-1"
+            >
+              <Download className="w-4 h-4" />
+              <span>Last ned</span>
+            </Button>
+          </div>
+          
+          <QRCodeInfo />
+          
+          <div className="flex justify-center p-4 bg-muted/30 rounded-lg">
+            {qrCodeDataUrl ? (
+              <img
+                src={qrCodeDataUrl}
+                alt="QR-kode for partnerlenke"
+                className="w-32 h-32 border border-border rounded"
+              />
+            ) : (
+              <div className="w-32 h-32 border border-border rounded bg-muted animate-pulse flex items-center justify-center">
+                <QrCode className="w-8 h-8 text-muted-foreground" />
+              </div>
+            )}
           </div>
         </div>
 

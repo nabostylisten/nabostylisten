@@ -109,14 +109,14 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Verify status shows as "pending"
    - Test email notification sent to stylist (application received)
 
-3. [ ] **Admin Review Process**
+3. [x] **Admin Review Process**
 
    - Admin can view pending applications in `/admin/partner`
    - Admin can approve application
    - Admin can reject application with reason
    - Test status updates in real-time
 
-4. [ ] **Post-Approval Code Generation**
+4. [x] **Post-Approval Code Generation**
    - Approved application triggers code generation
    - Code appears in `affiliate_links` table
    - Code follows naming convention (e.g., "ANNA-HAIR-2024")

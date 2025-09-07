@@ -1,7 +1,10 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
-import { getAffiliateAttribution, convertAttribution } from "./affiliate-attribution.actions";
+import {
+  convertAttribution,
+  getAffiliateAttribution,
+} from "./affiliate-attribution.actions";
 import { calculateBookingPaymentBreakdown } from "@/schemas/platform-config.schema";
 import type { Database } from "@/types/database.types";
 
@@ -24,13 +27,13 @@ export interface AffiliateCheckoutInfo {
 export async function checkAffiliateDiscount(
   cartItems: { serviceId: string; quantity: number }[],
   userId?: string,
-  visitorSession?: string
+  visitorSession?: string,
 ): Promise<{ error: string | null; data: AffiliateCheckoutInfo | null }> {
   const supabase = await createClient();
-  
+
   // Get affiliate attribution
-  const { data: attribution } = await getAffiliateAttribution(userId);
-  
+  const attribution = await getAffiliateAttribution(userId);
+
   if (!attribution) {
     return {
       error: null,
@@ -39,13 +42,13 @@ export async function checkAffiliateDiscount(
         applicableServices: [],
         discountAmount: 0,
         commissionAmount: 0,
-        isAutoApplicable: false
-      }
+        isAutoApplicable: false,
+      },
     };
   }
 
   // Get services in cart with stylist information
-  const serviceIds = cartItems.map(item => item.serviceId);
+  const serviceIds = cartItems.map((item) => item.serviceId);
   const { data: services, error: servicesError } = await supabase
     .from("services")
     .select(`
@@ -64,7 +67,7 @@ export async function checkAffiliateDiscount(
 
   // Check which services are from the attributed stylist
   const applicableServices = services.filter(
-    service => service.stylist_id === attribution.stylist_id
+    (service) => service.stylist_id === attribution.stylist_id,
   );
 
   if (applicableServices.length === 0) {
@@ -77,15 +80,15 @@ export async function checkAffiliateDiscount(
         applicableServices: [],
         discountAmount: 0,
         commissionAmount: 0,
-        isAutoApplicable: false
-      }
+        isAutoApplicable: false,
+      },
     };
   }
 
   // Calculate total amount for applicable services
   let totalApplicableAmount = 0;
-  applicableServices.forEach(service => {
-    const cartItem = cartItems.find(item => item.serviceId === service.id);
+  applicableServices.forEach((service) => {
+    const cartItem = cartItems.find((item) => item.serviceId === service.id);
     if (cartItem) {
       totalApplicableAmount += Number(service.price) * cartItem.quantity;
     }
@@ -104,7 +107,7 @@ export async function checkAffiliateDiscount(
   const breakdown = calculateBookingPaymentBreakdown({
     serviceAmountNOK: totalApplicableAmount,
     hasAffiliate: true,
-    affiliateCommissionPercentage: commissionPercentage
+    affiliateCommissionPercentage: commissionPercentage,
   });
 
   return {
@@ -117,8 +120,8 @@ export async function checkAffiliateDiscount(
       applicableServices,
       discountAmount: breakdown.discountAmountNOK,
       commissionAmount: breakdown.affiliateCommissionNOK,
-      isAutoApplicable: true
-    }
+      isAutoApplicable: true,
+    },
   };
 }
 
@@ -128,10 +131,10 @@ export async function checkAffiliateDiscount(
 export async function applyAffiliateDiscount(
   bookingId: string,
   userId?: string,
-  visitorSession?: string
+  visitorSession?: string,
 ): Promise<{ error: string | null; data: any }> {
   const supabase = await createClient();
-  
+
   // Get booking details
   const { data: booking, error: bookingError } = await supabase
     .from("bookings")
@@ -151,14 +154,14 @@ export async function applyAffiliateDiscount(
 
   // Get affiliate attribution
   const { data: attribution } = await getAffiliateAttribution(userId);
-  
+
   if (!attribution) {
     return { error: "Ingen partner attribution funnet", data: null };
   }
 
   // Check if any services in the booking are from the attributed stylist
   const applicableServices = booking.booking_services?.filter(
-    bs => bs.service?.stylist_id === attribution.stylist_id
+    (bs) => bs.service?.stylist_id === attribution.stylist_id,
   ) || [];
 
   if (applicableServices.length === 0) {
@@ -179,7 +182,7 @@ export async function applyAffiliateDiscount(
   const breakdown = calculateBookingPaymentBreakdown({
     serviceAmountNOK: totalApplicableAmount,
     hasAffiliate: true,
-    affiliateCommissionPercentage: commissionPercentage
+    affiliateCommissionPercentage: commissionPercentage,
   });
 
   // Update booking with affiliate information
@@ -187,14 +190,17 @@ export async function applyAffiliateDiscount(
     .from("bookings")
     .update({
       discount_applied: breakdown.discountAmountNOK,
-      total_price: breakdown.totalAmountNOK // Updated total after discount
+      total_price: breakdown.totalAmountNOK, // Updated total after discount
     })
     .eq("id", bookingId)
     .select()
     .single();
 
   if (updateError) {
-    console.error("Error updating booking with affiliate discount:", updateError);
+    console.error(
+      "Error updating booking with affiliate discount:",
+      updateError,
+    );
     return { error: "Kunne ikke oppdatere booking", data: null };
   }
 
@@ -203,7 +209,7 @@ export async function applyAffiliateDiscount(
     userId,
     bookingId,
     breakdown.affiliateCommissionNOK,
-    visitorSession
+    visitorSession,
   );
 
   if (conversionError) {
@@ -218,9 +224,9 @@ export async function applyAffiliateDiscount(
       discount: {
         amount: breakdown.discountAmountNOK,
         code: attribution.code,
-        stylistCommission: breakdown.affiliateCommissionNOK
-      }
-    }
+        stylistCommission: breakdown.affiliateCommissionNOK,
+      },
+    },
   };
 }
 
@@ -229,10 +235,10 @@ export async function applyAffiliateDiscount(
  */
 export async function validateManualAffiliateCode(
   code: string,
-  cartItems: { serviceId: string; quantity: number }[]
+  cartItems: { serviceId: string; quantity: number }[],
 ): Promise<{ error: string | null; data: AffiliateCheckoutInfo | null }> {
   const supabase = await createClient();
-  
+
   // Get affiliate code details
   const { data: affiliateCode, error: codeError } = await supabase
     .from("affiliate_links")
@@ -252,12 +258,14 @@ export async function validateManualAffiliateCode(
   }
 
   // Check if code is expired
-  if (affiliateCode.expires_at && new Date(affiliateCode.expires_at) < new Date()) {
+  if (
+    affiliateCode.expires_at && new Date(affiliateCode.expires_at) < new Date()
+  ) {
     return { error: "Partnerkoden er utløpt", data: null };
   }
 
   // Get services in cart
-  const serviceIds = cartItems.map(item => item.serviceId);
+  const serviceIds = cartItems.map((item) => item.serviceId);
   const { data: services, error: servicesError } = await supabase
     .from("services")
     .select("*")
@@ -269,20 +277,21 @@ export async function validateManualAffiliateCode(
 
   // Check which services are from this stylist
   const applicableServices = services.filter(
-    service => service.stylist_id === affiliateCode.stylist_id
+    (service) => service.stylist_id === affiliateCode.stylist_id,
   );
 
   if (applicableServices.length === 0) {
-    return { 
-      error: `Denne partnerkoden kan kun brukes for tjenester fra ${affiliateCode.stylist?.full_name}`,
-      data: null 
+    return {
+      error:
+        `Denne partnerkoden kan kun brukes for tjenester fra ${affiliateCode.stylist?.full_name}`,
+      data: null,
     };
   }
 
   // Calculate discount
   let totalApplicableAmount = 0;
-  applicableServices.forEach(service => {
-    const cartItem = cartItems.find(item => item.serviceId === service.id);
+  applicableServices.forEach((service) => {
+    const cartItem = cartItems.find((item) => item.serviceId === service.id);
     if (cartItem) {
       totalApplicableAmount += Number(service.price) * cartItem.quantity;
     }
@@ -291,7 +300,7 @@ export async function validateManualAffiliateCode(
   const breakdown = calculateBookingPaymentBreakdown({
     serviceAmountNOK: totalApplicableAmount,
     hasAffiliate: true,
-    affiliateCommissionPercentage: affiliateCode.commission_percentage
+    affiliateCommissionPercentage: affiliateCode.commission_percentage,
   });
 
   return {
@@ -304,8 +313,8 @@ export async function validateManualAffiliateCode(
       applicableServices,
       discountAmount: breakdown.discountAmountNOK,
       commissionAmount: breakdown.affiliateCommissionNOK,
-      isAutoApplicable: false // Manual entry, not auto-applied
-    }
+      isAutoApplicable: false, // Manual entry, not auto-applied
+    },
   };
 }
 
@@ -314,7 +323,7 @@ export async function validateManualAffiliateCode(
  */
 export async function getBookingAffiliateInfo(bookingId: string) {
   const supabase = await createClient();
-  
+
   const { data: attribution, error } = await supabase
     .from("affiliate_clicks")
     .select(`
@@ -341,7 +350,172 @@ export async function getBookingAffiliateInfo(bookingId: string) {
       code: attribution.affiliate_link?.link_code,
       stylistName: attribution.affiliate_link?.stylist?.full_name,
       commissionAmount: attribution.commission_amount,
-      discountAmount: attribution.commission_amount // Commission given to customer as discount
-    }
+      discountAmount: attribution.commission_amount, // Commission given to customer as discount
+    },
   };
+}
+
+/**
+ * Reverse affiliate commission when booking is cancelled/refunded
+ * Called when a booking with affiliate discount is cancelled
+ */
+export async function reverseAffiliateCommission({
+  bookingId,
+}: {
+  bookingId: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createClient();
+
+  try {
+    // Find and reverse the commission
+    const { data: commission, error: findError } = await supabase
+      .from("affiliate_commissions")
+      .select("id, status")
+      .eq("booking_id", bookingId)
+      .single();
+
+    if (findError || !commission) {
+      // No commission found - this is okay, not all bookings have affiliates
+      return { success: true };
+    }
+
+    if (commission.status === "failed") {
+      // Already reversed/failed
+      return { success: true };
+    }
+
+    // Reverse the commission by setting status to failed
+    const { error: updateError } = await supabase
+      .from("affiliate_commissions")
+      .update({ status: "failed" })
+      .eq("id", commission.id);
+
+    if (updateError) {
+      console.error("Failed to reverse commission:", updateError);
+      return { success: false, error: "Failed to reverse commission" };
+    }
+
+    // Also mark the affiliate click as unconverted
+    await supabase
+      .from("affiliate_clicks")
+      .update({
+        converted: false,
+        converted_at: null,
+        booking_id: null,
+        commission_amount: 0,
+      })
+      .eq("booking_id", bookingId);
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error reversing affiliate commission:", error);
+    return { success: false, error: "Failed to reverse commission" };
+  }
+}
+
+/**
+ * Get affiliate commission by booking ID
+ * Useful for displaying commission info and handling refunds
+ */
+export async function getAffiliateCommissionByBooking(
+  bookingId: string,
+): Promise<{ success: boolean; data?: any; error?: string }> {
+  const supabase = await createClient();
+
+  try {
+    const { data: commission, error } = await supabase
+      .from("affiliate_commissions")
+      .select(`
+        *,
+        affiliate:profiles!affiliate_commissions_affiliate_id_fkey(
+          id,
+          full_name,
+          email
+        )
+      `)
+      .eq("booking_id", bookingId)
+      .single();
+
+    if (error) {
+      if (error.code === "PGRST116") {
+        // No commission found
+        return { success: true, data: null };
+      }
+      console.error("Error fetching affiliate commission:", error);
+      return { success: false, error: "Failed to fetch commission" };
+    }
+
+    return { success: true, data: commission };
+  } catch (error) {
+    console.error("Unexpected error fetching commission:", error);
+    return { success: false, error: "Unexpected error occurred" };
+  }
+}
+
+/**
+ * Calculate commission amount based on service total and percentage
+ */
+export function calculateCommission(
+  serviceTotal: number,
+  commissionPercentage: number,
+): number {
+  return Math.round(serviceTotal * commissionPercentage * 100) / 100; // Round to 2 decimal places
+}
+
+/**
+ * Get stylist's affiliate commissions with pagination and filtering
+ */
+export async function getStylistAffiliateCommissions({
+  stylistId,
+  status,
+  limit = 50,
+  offset = 0,
+}: {
+  stylistId: string;
+  status?: "pending" | "processing" | "paid" | "failed";
+  limit?: number;
+  offset?: number;
+}): Promise<
+  { success: boolean; data?: any[]; count?: number; error?: string }
+> {
+  const supabase = await createClient();
+
+  try {
+    let query = supabase
+      .from("affiliate_commissions")
+      .select(
+        `
+        *,
+        booking:bookings!affiliate_commissions_booking_id_fkey(
+          id,
+          start_time,
+          total_price,
+          customer:profiles!bookings_customer_id_fkey(
+            full_name,
+            email
+          )
+        )
+      `,
+        { count: "exact" },
+      )
+      .eq("affiliate_id", stylistId)
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (status) {
+      query = query.eq("status", status);
+    }
+
+    const { data: commissions, error, count } = await query;
+
+    if (error) {
+      console.error("Error fetching stylist commissions:", error);
+      return { success: false, error: "Failed to fetch commissions" };
+    }
+
+    return { success: true, data: commissions, count: count || 0 };
+  } catch (error) {
+    console.error("Unexpected error fetching commissions:", error);
+    return { success: false, error: "Unexpected error occurred" };
+  }
 }

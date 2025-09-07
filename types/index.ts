@@ -502,11 +502,11 @@ export type AffiliateAttributionCookie = z.infer<
 
 // Database attribution (for logged-in users)
 export const affiliateAttributionDbSchema = affiliateAttributionSchema.extend({
-  id: z.string().uuid(),
-  user_id: z.string().uuid("Invalid user ID"),
-  converted_booking_id: z.string().uuid("Invalid booking ID").optional(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+  id: z.uuid(),
+  user_id: z.uuid("Invalid user ID"),
+  converted_booking_id: z.uuid("Invalid booking ID").optional(),
+  created_at: z.iso.datetime(),
+  updated_at: z.iso.datetime(),
 });
 
 export type AffiliateAttributionDb = z.infer<
@@ -544,7 +544,7 @@ export type AffiliateDiscount = z.infer<typeof affiliateDiscountSchema>;
 
 // Commission tracking
 export const affiliateCommissionSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   booking_id: z.string().uuid(),
   stylist_id: z.string().uuid(),
   affiliate_code: z.string(),
@@ -552,9 +552,9 @@ export const affiliateCommissionSchema = z.object({
   commission_percentage: z.number().min(0).max(100),
   status: z.enum(["pending", "paid", "reversed"]),
   attributed_user_id: z.string().uuid().optional(), // Who originally clicked the code
-  created_at: z.string().datetime(),
-  paid_at: z.string().datetime().optional(),
-  reversed_at: z.string().datetime().optional(),
+  created_at: z.iso.datetime(),
+  paid_at: z.iso.datetime().optional(),
+  reversed_at: z.iso.datetime().optional(),
 });
 
 export type AffiliateCommission = z.infer<typeof affiliateCommissionSchema>;

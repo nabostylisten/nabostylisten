@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
-import { hasEnvVars } from "../utils";
 import { isAdmin } from "../permissions";
 import { Database } from "@/types/database.types";
 
@@ -41,39 +40,37 @@ function isPublicRoute(pathname: string): boolean {
 
 export async function updateSession(
   request: NextRequest,
-  response?: NextResponse
+  response?: NextResponse,
 ) {
   // Handle affiliate code tracking first
   const url = request.nextUrl.clone();
-  const affiliateCode = url.searchParams.get('code');
-  
+  const affiliateCode = url.searchParams.get("code");
+
   let supabaseResponse = response || NextResponse.next({
     request,
   });
-  
+
   if (affiliateCode && !response) {
     // Import here to avoid circular dependencies
     const { createAffiliateAttributionCookie } = await import("@/types");
-    
+
     // Create response to redirect and remove the code parameter from URL
     supabaseResponse = NextResponse.redirect(url.origin + url.pathname);
-    
+
     // Create typed affiliate attribution cookie
     const attribution = createAffiliateAttributionCookie(affiliateCode);
-    
-    supabaseResponse.cookies.set('affiliate_attribution', JSON.stringify(attribution), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
-      path: '/'
-    });
-  }
 
-  // If the env vars are not set, skip middleware check. You can remove this
-  // once you setup the project.
-  if (!hasEnvVars) {
-    return supabaseResponse;
+    supabaseResponse.cookies.set(
+      "affiliate_attribution",
+      JSON.stringify(attribution),
+      {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 30 * 24 * 60 * 60, // 30 days in seconds
+        path: "/",
+      },
+    );
   }
 
   // With Fluid compute, don't put this client in a global environment
@@ -87,6 +84,7 @@ export async function updateSession(
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
+          console.log("🍪 Supabase setting cookies:", cookiesToSet.map(c => c.name));
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
@@ -112,13 +110,26 @@ export async function updateSession(
 
   // Transfer affiliate attribution from cookie to database for logged-in users
   if (user?.sub) {
+    console.log("🔐 User authenticated, attempting to transfer affiliate attribution:", user.sub);
     try {
-      const { transferCookieToDatabase } = await import("@/server/affiliate/attribution.actions");
-      await transferCookieToDatabase(user.sub);
+      const { transferCookieToDatabase } = await import(
+        "@/server/affiliate/affiliate-attribution.actions"
+      );
+      const result = await transferCookieToDatabase(user.sub);
+      console.log("🔄 Transfer result:", result);
+      
+      if (result.shouldDeleteCookie) {
+        console.log("🗑️ Deleting affiliate attribution cookie from middleware");
+        supabaseResponse.cookies.delete("affiliate_attribution");
+      }
+      
+      console.log("✅ Affiliate attribution transfer completed");
     } catch (error) {
-      console.warn("Failed to transfer affiliate attribution:", error);
+      console.warn("❌ Failed to transfer affiliate attribution:", error);
       // Don't block the request if affiliate transfer fails
     }
+  } else {
+    console.log("👤 No authenticated user found");
   }
 
   // Check if the current route is public
@@ -128,7 +139,7 @@ export async function updateSession(
   if (!isPublic && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
-    url.searchParams.set('redirectTo', request.nextUrl.pathname);
+    url.searchParams.set("redirectTo", request.nextUrl.pathname);
     return NextResponse.redirect(url);
   }
 

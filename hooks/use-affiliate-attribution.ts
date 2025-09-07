@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { checkAffiliateDiscount } from "@/server/affiliate/checkout.actions";
-import { validateAffiliateCode, transferCookieToDatabase } from "@/server/affiliate/attribution.actions";
+import { checkAffiliateDiscount } from "@/server/affiliate/affiliate-checkout.actions";
+import { validateAffiliateCode, transferCookieToDatabase } from "@/server/affiliate/affiliate-attribution.actions";
 
 interface CartItem {
   serviceId: string;

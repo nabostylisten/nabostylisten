@@ -5,7 +5,9 @@ import {
   // Affiliate system
   createAffiliateApplications,
   createAffiliateClickTracking,
+  createAffiliateCommissions,
   createAffiliateLinksAndTracking,
+  createAffiliatePayouts,
   // Chat system
   createBookingChats,
   // Booking system
@@ -149,6 +151,19 @@ async function main() {
     customerUsers,
     bookings,
   );
+  const affiliate_commissions = await createAffiliateCommissions(
+    seed,
+    affiliate_links,
+    stylistUsers,
+    bookings,
+  );
+  await createAffiliatePayouts(
+    seed,
+    affiliate_links,
+    affiliate_commissions,
+    stylistUsers,
+    allUsers,
+  );
 
   // 11. Create payment records
   console.log("-- Phase 11: Payment System");
@@ -186,6 +201,12 @@ async function main() {
   );
   console.log(
     `--   > Applications: ${applications.length} stylist applications`,
+  );
+  console.log(
+    `--   🤝 Affiliates: ${affiliate_applications.length} applications, ${affiliate_links.length} codes (active, expired, suspended)`,
+  );
+  console.log(
+    `--   💰 Commissions: ${affiliate_commissions.length} commission records with payouts`,
   );
   console.log("-- ");
   console.log("-- >� Test Accounts:");

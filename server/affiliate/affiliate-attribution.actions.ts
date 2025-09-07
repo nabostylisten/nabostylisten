@@ -2,398 +2,443 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
-import type { Database } from "@/types/database.types";
-
-type AffiliateAttribution = Database["public"]["Tables"]["affiliate_clicks"]["Row"];
-type AffiliateAttributionInsert = Database["public"]["Tables"]["affiliate_clicks"]["Insert"];
-
-const ATTRIBUTION_COOKIE_NAME = "affiliate_attribution";
-const ATTRIBUTION_DAYS = 30;
-
-export interface AffiliateAttributionData {
-  code: string;
-  attributed_at: string;
-  expires_at: string;
-  stylist_id: string;
-}
+import {
+  AffiliateAttribution,
+  AffiliateCodeValidation,
+  affiliateCodeValidationSchema,
+  parseAffiliateAttributionCookie,
+} from "@/types";
 
 /**
- * Set affiliate attribution cookie
+ * Validates an affiliate code and returns detailed information
+ * Critical security: Validates code ownership and active status
  */
-export async function setAffiliateAttribution(code: string) {
-  const cookieStore = await cookies();
+export async function validateAffiliateCode(
+  code: string,
+): Promise<AffiliateCodeValidation> {
+  if (!code || code.trim().length === 0) {
+    return { success: false, error: "Empty affiliate code" };
+  }
+
   const supabase = await createClient();
-  
-  // Validate that the code exists and is active
-  const { data: affiliateCode, error } = await supabase
+
+  // Join with profiles to get stylist information and ensure they're active
+  const { data: affiliateLink, error } = await supabase
     .from("affiliate_links")
-    .select("id, stylist_id, is_active, expires_at")
-    .eq("link_code", code)
+    .select(`
+      id,
+      link_code,
+      stylist_id,
+      commission_percentage,
+      is_active,
+      expires_at,
+      profiles!affiliate_links_stylist_id_fkey(
+        id,
+        full_name,
+        role
+      )
+    `)
+    .eq("link_code", code.toUpperCase())
     .single();
 
-  if (error || !affiliateCode || !affiliateCode.is_active) {
-    return { error: "Ugyldig eller inaktiv partnerkode", data: null };
+  if (error || !affiliateLink) {
+    return { success: false, error: "Invalid affiliate code" };
+  }
+
+  const profile = affiliateLink.profiles;
+
+  // Security check: Ensure the stylist is still active and has correct role
+  if (!profile || profile.role !== "stylist") {
+    return {
+      success: false,
+      error: "Code owner is not an active stylist",
+    };
+  }
+
+  // Check if code is active
+  if (!affiliateLink.is_active) {
+    return {
+      success: false,
+      error: "Affiliate code is deactivated",
+      is_active: false,
+    };
   }
 
   // Check if code is expired
-  if (affiliateCode.expires_at && new Date(affiliateCode.expires_at) < new Date()) {
-    return { error: "Partnerkoden er utløpt", data: null };
-  }
-
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + (ATTRIBUTION_DAYS * 24 * 60 * 60 * 1000));
-  
-  const attribution: AffiliateAttributionData = {
-    code,
-    attributed_at: now.toISOString(),
-    expires_at: expiresAt.toISOString(),
-    stylist_id: affiliateCode.stylist_id
-  };
+  const expiresAt = affiliateLink.expires_at
+    ? new Date(affiliateLink.expires_at)
+    : null;
+  const isExpired = expiresAt && expiresAt < now;
 
-  // Set cookie with 30-day expiration
-  cookieStore.set({
-    name: ATTRIBUTION_COOKIE_NAME,
-    value: JSON.stringify(attribution),
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    maxAge: ATTRIBUTION_DAYS * 24 * 60 * 60, // 30 days in seconds
-    path: "/"
-  });
-
-  // Increment click count
-  const { error: clickError } = await supabase
-    .from("affiliate_links")
-    .update({
-      click_count: supabase.rpc('increment_by_one', { 
-        table_name: 'affiliate_links',
-        column_name: 'click_count',
-        id: affiliateCode.id
-      })
-    })
-    .eq("id", affiliateCode.id);
-
-  if (clickError) {
-    console.error("Error incrementing click count:", clickError);
+  if (isExpired) {
+    return {
+      success: false,
+      error: "Affiliate code has expired",
+      is_expired: true,
+    };
   }
 
-  return { error: null, data: attribution };
+  return affiliateCodeValidationSchema.parse({
+    success: true,
+    code: affiliateLink.link_code,
+    stylist_id: affiliateLink.stylist_id,
+    stylist_name: profile.full_name,
+    commission_percentage: affiliateLink.commission_percentage,
+    is_active: affiliateLink.is_active,
+    is_expired: false,
+  });
 }
 
 /**
- * Get affiliate attribution from cookie or database
+ * Gets affiliate attribution for a user (database first, then cookie fallback)
+ * Critical security: Returns null if attribution is invalid or expired
  */
-export async function getAffiliateAttribution(userId?: string) {
-  const cookieStore = await cookies();
+export async function getAffiliateAttribution(
+  userId?: string,
+): Promise<AffiliateAttribution | null> {
+  console.log("🔍 getAffiliateAttribution called for user:", userId);
+
   const supabase = await createClient();
-  
-  // First, try to get attribution from database if user is logged in
+
+  // If user is logged in, check database first
   if (userId) {
-    const { data: dbAttribution, error } = await supabase
+    console.log("💾 Checking database for affiliate attribution...");
+    // Join affiliate_clicks with affiliate_links to get the code
+    const { data: dbAttribution, error: dbError } = await supabase
       .from("affiliate_clicks")
       .select(`
         *,
-        affiliate_link:affiliate_links!affiliate_clicks_affiliate_link_id_fkey(
+        affiliate_links!inner(
+          id,
           link_code,
-          stylist_id,
           is_active,
           expires_at
         )
       `)
       .eq("user_id", userId)
-      .eq("converted", false)
+      .eq("converted", false) // Only get unconverted attributions
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
-    if (!error && dbAttribution?.affiliate_link) {
-      // Check if attribution is still valid (within 30 days)
-      const attributedAt = new Date(dbAttribution.created_at);
-      const expiresAt = new Date(attributedAt.getTime() + (ATTRIBUTION_DAYS * 24 * 60 * 60 * 1000));
-      
-      if (new Date() < expiresAt && dbAttribution.affiliate_link.is_active) {
+    console.log("💾 Database attribution result:", { data: dbAttribution, error: dbError });
+
+    if (dbAttribution && dbAttribution.affiliate_links) {
+      const affiliateLink = Array.isArray(dbAttribution.affiliate_links)
+        ? dbAttribution.affiliate_links[0]
+        : dbAttribution.affiliate_links;
+
+      // Validate the code is still valid
+      const validation = await validateAffiliateCode(affiliateLink.link_code);
+      if (validation.success) {
+        // Calculate expiration (30 days from creation)
+        const createdAt = new Date(dbAttribution.created_at);
+        const expiresAt = new Date(
+          createdAt.getTime() + 30 * 24 * 60 * 60 * 1000,
+        );
+
+        // Check if the attribution has expired
+        if (expiresAt < new Date()) {
+          // Clean up expired attribution
+          await supabase
+            .from("affiliate_clicks")
+            .delete()
+            .eq("id", dbAttribution.id);
+          return null;
+        }
+
         return {
-          error: null,
-          data: {
-            code: dbAttribution.affiliate_link.link_code,
-            attributed_at: dbAttribution.created_at,
-            expires_at: expiresAt.toISOString(),
-            stylist_id: dbAttribution.affiliate_link.stylist_id,
-            attribution_id: dbAttribution.id
-          }
+          code: affiliateLink.link_code,
+          attributed_at: dbAttribution.created_at,
+          expires_at: expiresAt.toISOString(),
+          original_user_id: undefined,
         };
+      } else {
+        // Clean up invalid attribution
+        await supabase
+          .from("affiliate_clicks")
+          .delete()
+          .eq("id", dbAttribution.id);
+        return null;
       }
     }
   }
 
-  // Fall back to cookie
-  const attributionCookie = cookieStore.get(ATTRIBUTION_COOKIE_NAME);
-  
+  // Fallback to cookie for anonymous users or if no DB attribution
+  console.log("🍪 Falling back to cookie for attribution...");
+  const cookieStore = await cookies();
+  const attributionCookie = cookieStore.get("affiliate_attribution");
+
+  console.log("🍪 Cookie value:", !!attributionCookie?.value, attributionCookie?.value);
+
   if (!attributionCookie?.value) {
-    return { error: null, data: null };
+    console.log("❌ No attribution cookie found in fallback");
+    return null;
   }
 
-  try {
-    const attribution: AffiliateAttributionData = JSON.parse(attributionCookie.value);
-    
-    // Check if attribution has expired
-    if (new Date() > new Date(attribution.expires_at)) {
-      // Clean up expired cookie
-      cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
-      return { error: null, data: null };
-    }
-
-    // Validate that the code is still active
-    const { data: affiliateCode } = await supabase
-      .from("affiliate_links")
-      .select("is_active, expires_at")
-      .eq("link_code", attribution.code)
-      .single();
-
-    if (!affiliateCode?.is_active) {
-      cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
-      return { error: null, data: null };
-    }
-
-    return { error: null, data: attribution };
-  } catch (error) {
-    console.error("Error parsing attribution cookie:", error);
-    cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
-    return { error: null, data: null };
+  const parsed = parseAffiliateAttributionCookie(attributionCookie.value);
+  if (!parsed.success || !parsed.data) {
+    // Clear invalid cookie
+    cookieStore.delete("affiliate_attribution");
+    return null;
   }
+
+  // Check if cookie has expired
+  const expiresAt = new Date(parsed.data.expires_at);
+  if (expiresAt < new Date()) {
+    cookieStore.delete("affiliate_attribution");
+    return null;
+  }
+
+  // Validate the code is still valid
+  const validation = await validateAffiliateCode(parsed.data.code);
+  if (!validation.success) {
+    cookieStore.delete("affiliate_attribution");
+    return null;
+  }
+
+  return {
+    code: parsed.data.code,
+    attributed_at: parsed.data.attributed_at,
+    expires_at: parsed.data.expires_at,
+    original_user_id: parsed.data.original_user_id,
+  };
 }
 
 /**
- * Store attribution in database for logged-in user
+ * Transfers cookie attribution to database when user logs in
+ * Critical security: Only transfers valid, non-expired attributions
+ * Returns boolean indicating if cookie should be deleted
  */
-export async function storeUserAttribution(userId: string, visitorSession?: string) {
-  const supabase = await createClient();
-  
-  // Get attribution from cookie
-  const { data: attribution } = await getAffiliateAttribution();
-  
-  if (!attribution) {
-    return { error: null, data: null };
+export async function transferCookieToDatabase(
+  userId: string,
+): Promise<{ success: boolean; shouldDeleteCookie: boolean }> {
+  console.log("🔄 transferCookieToDatabase called for user:", userId);
+
+  const cookieStore = await cookies();
+  const attributionCookie = cookieStore.get("affiliate_attribution");
+
+  console.log(
+    "🍪 Found cookie:",
+    !!attributionCookie?.value,
+    attributionCookie?.value,
+  );
+
+  if (!attributionCookie?.value) {
+    console.log("❌ No attribution cookie found");
+    return { success: true, shouldDeleteCookie: false };
   }
 
-  // Get affiliate link ID
-  const { data: affiliateCode } = await supabase
+  const parsed = parseAffiliateAttributionCookie(attributionCookie.value);
+  console.log("📜 Parsed cookie:", {
+    success: parsed.success,
+    data: parsed.data,
+  });
+
+  if (!parsed.success || !parsed.data) {
+    console.error("❌ Invalid affiliate attribution cookie");
+    console.error(parsed.error);
+    return { success: false, shouldDeleteCookie: true };
+  }
+
+  console.log("🔍 Validating affiliate code:", parsed.data.code);
+
+  // Validate the code is still active
+  const validation = await validateAffiliateCode(parsed.data.code);
+  console.log("✅ Code validation result:", validation);
+
+  if (!validation.success || !validation.stylist_id) {
+    console.log("❌ Code validation failed, should delete cookie");
+    return { success: false, shouldDeleteCookie: true };
+  }
+
+  const supabase = await createClient();
+
+  console.log(
+    "🔗 Looking up affiliate link for code:",
+    parsed.data.code.toUpperCase(),
+  );
+
+  // Get the affiliate_link_id from the link_code
+  const { data: affiliateLink, error: linkError } = await supabase
     .from("affiliate_links")
     .select("id")
-    .eq("link_code", attribution.code)
+    .eq("link_code", parsed.data.code.toUpperCase())
     .single();
 
-  if (!affiliateCode) {
-    return { error: "Kunne ikke finne partnerkode", data: null };
+  console.log("🔗 Affiliate link lookup result:", {
+    data: affiliateLink,
+    error: linkError,
+  });
+
+  if (!affiliateLink) {
+    console.log("❌ No affiliate link found, should delete cookie");
+    return { success: false, shouldDeleteCookie: true };
   }
 
-  // Check if attribution already exists for this user and code
-  const { data: existingAttribution } = await supabase
+  console.log("🔍 Checking for existing attribution...");
+
+  // Check if user already has an attribution for this affiliate link
+  const { data: existing, error: existingError } = await supabase
     .from("affiliate_clicks")
     .select("id")
     .eq("user_id", userId)
-    .eq("affiliate_link_id", affiliateCode.id)
+    .eq("affiliate_link_id", affiliateLink.id)
     .eq("converted", false)
     .single();
 
-  if (existingAttribution) {
-    // Attribution already stored
-    return { error: null, data: existingAttribution };
-  }
+  console.log("👤 Existing attribution check:", {
+    data: existing,
+    error: existingError,
+  });
 
-  // Store new attribution
-  const { data: newAttribution, error } = await supabase
-    .from("affiliate_clicks")
-    .insert({
-      affiliate_link_id: affiliateCode.id,
-      stylist_id: attribution.stylist_id,
+  if (!existing) {
+    console.log("➕ Creating new affiliate click record...");
+
+    const insertData = {
+      affiliate_link_id: affiliateLink.id,
+      stylist_id: validation.stylist_id,
       user_id: userId,
-      visitor_id: visitorSession,
+      visitor_id: parsed.data.visitor_session || null,
       converted: false,
-      commission_amount: 0,
-      created_at: attribution.attributed_at
-    })
-    .select()
-    .single();
+      // Technical tracking data can be added here if needed
+    };
 
-  if (error) {
-    console.error("Error storing user attribution:", error);
-    return { error: "Kunne ikke lagre attribution", data: null };
-  }
+    console.log("📝 Insert data:", insertData);
 
-  // Clean up cookie since it's now stored in database
-  const cookieStore = await cookies();
-  cookieStore.delete(ATTRIBUTION_COOKIE_NAME);
-
-  return { error: null, data: newAttribution };
-}
-
-/**
- * Mark attribution as converted and record commission
- */
-export async function convertAttribution(
-  userId: string | null,
-  bookingId: string,
-  commissionAmount: number,
-  visitorSession?: string
-) {
-  const supabase = await createClient();
-  
-  let attributionId: string | null = null;
-
-  if (userId) {
-    // Find attribution by user ID
-    const { data: attribution } = await supabase
+    const { data: insertResult, error: insertError } = await supabase
       .from("affiliate_clicks")
-      .select("id, affiliate_link_id")
-      .eq("user_id", userId)
-      .eq("converted", false)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .insert(insertData)
+      .select("id")
       .single();
 
-    if (attribution) {
-      attributionId = attribution.id;
+    console.log("💾 Insert result:", {
+      data: insertResult,
+      error: insertError,
+    });
+
+    if (insertError) {
+      console.error("❌ Failed to insert affiliate click:", insertError);
+      return { success: false, shouldDeleteCookie: false }; // Don't delete cookie if insert failed
+    } else {
+      console.log("✅ Successfully created affiliate click record");
     }
   } else {
-    // Find attribution by visitor session
-    const { data: attribution } = await supabase
-      .from("affiliate_clicks")
-      .select("id, affiliate_link_id")
-      .eq("visitor_id", visitorSession)
-      .eq("converted", false)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (attribution) {
-      attributionId = attribution.id;
-    }
+    console.log("ℹ️ Attribution already exists, skipping insert");
   }
 
-  if (!attributionId) {
-    return { error: null, data: null }; // No attribution found
-  }
-
-  // Update attribution as converted
-  const { data: convertedAttribution, error } = await supabase
-    .from("affiliate_clicks")
-    .update({
-      converted: true,
-      converted_at: new Date().toISOString(),
-      booking_id: bookingId,
-      commission_amount: commissionAmount
-    })
-    .eq("id", attributionId)
-    .select(`
-      *,
-      affiliate_link:affiliate_links!affiliate_clicks_affiliate_link_id_fkey(*)
-    `)
-    .single();
-
-  if (error) {
-    console.error("Error converting attribution:", error);
-    return { error: "Kunne ikke konvertere attribution", data: null };
-  }
-
-  // Update affiliate link conversion metrics
-  if (convertedAttribution.affiliate_link) {
-    const { error: updateError } = await supabase
-      .from("affiliate_links")
-      .update({
-        conversion_count: convertedAttribution.affiliate_link.conversion_count + 1,
-        total_commission_earned: 
-          convertedAttribution.affiliate_link.total_commission_earned + commissionAmount
-      })
-      .eq("id", convertedAttribution.affiliate_link_id);
-
-    if (updateError) {
-      console.error("Error updating affiliate link metrics:", updateError);
-    }
-  }
-
-  return { error: null, data: convertedAttribution };
+  // Don't delete cookie here - let middleware handle it
+  console.log("✅ transferCookieToDatabase completed successfully");
+  return { success: true, shouldDeleteCookie: true };
 }
 
 /**
- * Reverse attribution conversion (for refunds/cancellations)
+ * Clean up expired attributions from database
+ * Called periodically to maintain data hygiene
+ * Removes clicks older than 30 days that haven't converted
  */
-export async function reverseAttribution(bookingId: string) {
+export async function cleanupExpiredAttributions(): Promise<void> {
   const supabase = await createClient();
-  
-  // Find converted attribution for this booking
-  const { data: attribution, error } = await supabase
-    .from("affiliate_clicks")
-    .select(`
-      *,
-      affiliate_link:affiliate_links!affiliate_clicks_affiliate_link_id_fkey(*)
-    `)
-    .eq("booking_id", bookingId)
-    .eq("converted", true)
-    .single();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  if (error || !attribution) {
-    return { error: null, data: null }; // No attribution found
-  }
-
-  const commissionAmount = attribution.commission_amount;
-
-  // Reverse the conversion
-  const { data: reversedAttribution, error: reverseError } = await supabase
-    .from("affiliate_clicks")
-    .update({
-      converted: false,
-      converted_at: null,
-      booking_id: null,
-      commission_amount: 0
-    })
-    .eq("id", attribution.id)
-    .select()
-    .single();
-
-  if (reverseError) {
-    console.error("Error reversing attribution:", reverseError);
-    return { error: "Kunne ikke reversere attribution", data: null };
-  }
-
-  // Update affiliate link metrics
-  if (attribution.affiliate_link) {
-    const { error: updateError } = await supabase
-      .from("affiliate_links")
-      .update({
-        conversion_count: Math.max(0, attribution.affiliate_link.conversion_count - 1),
-        total_commission_earned: 
-          Math.max(0, attribution.affiliate_link.total_commission_earned - commissionAmount)
-      })
-      .eq("id", attribution.affiliate_link_id);
-
-    if (updateError) {
-      console.error("Error updating affiliate link metrics after reversal:", updateError);
-    }
-  }
-
-  return { error: null, data: reversedAttribution };
-}
-
-/**
- * Clean up expired attributions (for maintenance)
- */
-export async function cleanupExpiredAttributions() {
-  const supabase = await createClient();
-  
-  const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - ATTRIBUTION_DAYS);
-
-  const { error } = await supabase
+  // Delete unconverted clicks older than 30 days
+  await supabase
     .from("affiliate_clicks")
     .delete()
     .eq("converted", false)
-    .lt("created_at", cutoffDate.toISOString());
+    .lt("created_at", thirtyDaysAgo.toISOString());
+}
 
-  if (error) {
-    console.error("Error cleaning up expired attributions:", error);
-    return { error: "Kunne ikke rydde opp i utløpte attributions" };
+/**
+ * CRITICAL SECURITY: Ensures the person using the code is the original clicker
+ * Prevents admins from using codes intended for customers
+ */
+export async function validateAffiliateUsageRights(
+  userId: string,
+  attribution: AffiliateAttribution,
+): Promise<{ canUse: boolean; reason?: string }> {
+  // If there's an original_user_id, the person using must be the same
+  if (attribution.original_user_id && attribution.original_user_id !== userId) {
+    return {
+      canUse: false,
+      reason: "Affiliate code can only be used by the original recipient",
+    };
   }
 
-  return { error: null };
+  const supabase = await createClient();
+
+  // Get stylist profile to prevent self-referral
+  const validation = await validateAffiliateCode(attribution.code);
+  if (!validation.success || !validation.stylist_id) {
+    return { canUse: false, reason: "Invalid affiliate code" };
+  }
+
+  const { data: stylistProfile } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("id", validation.stylist_id)
+    .single();
+
+  // Prevent stylists from using their own codes
+  if (stylistProfile && stylistProfile.id === userId) {
+    return {
+      canUse: false,
+      reason: "Cannot use your own affiliate code",
+    };
+  }
+
+  // If original_user_id is not set, anyone can use it (but not the stylist themselves)
+  return { canUse: true };
+}
+
+/**
+ * Convert attribution to a successful booking (mark as converted)
+ * Called when a booking with affiliate discount is completed
+ */
+export async function convertAttribution(
+  userId?: string,
+  bookingId?: string,
+  commissionAmount?: number,
+  visitorSession?: string,
+): Promise<{ error: string | null }> {
+  if (!userId && !visitorSession) {
+    return { error: "No user or visitor session provided" };
+  }
+
+  const supabase = await createClient();
+
+  try {
+    // Update the affiliate click to mark as converted
+    const updateData = {
+      converted: true,
+      converted_at: new Date().toISOString(),
+      ...(bookingId && { booking_id: bookingId }),
+      ...(commissionAmount && { commission_amount: commissionAmount }),
+    };
+
+    let query = supabase
+      .from("affiliate_clicks")
+      .update(updateData)
+      .eq("converted", false);
+
+    if (userId) {
+      query = query.eq("user_id", userId);
+    } else if (visitorSession) {
+      query = query.eq("visitor_id", visitorSession);
+    }
+
+    const { error } = await query;
+
+    if (error) {
+      console.error("Error converting attribution:", error);
+      return { error: "Failed to convert attribution" };
+    }
+
+    return { error: null };
+  } catch (error) {
+    console.error("Unexpected error converting attribution:", error);
+    return { error: "Unexpected error occurred" };
+  }
 }

@@ -140,6 +140,7 @@ export function createDiscountColumns(
 
         const percentage = (current / max) * 100;
         const isNearLimit = percentage >= 90;
+        const isAtOrOverLimit = percentage >= 100;
 
         return (
           <div className="flex items-center gap-2">
@@ -152,12 +153,20 @@ export function createDiscountColumns(
             >
               {current} / {max}
             </span>
-            {isNearLimit && (
+            {isNearLimit && !isAtOrOverLimit && (
               <Badge
                 variant="outline"
                 className="text-xs border-orange-200 text-orange-700"
               >
                 Snart oppbrukt
+              </Badge>
+            )}
+            {isAtOrOverLimit && (
+              <Badge
+                variant="outline"
+                className="text-xs border-red-200 text-red-700"
+              >
+                Oppbrukt
               </Badge>
             )}
           </div>

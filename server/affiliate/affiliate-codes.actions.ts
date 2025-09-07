@@ -2,7 +2,6 @@
 
 import { createClient } from "@/lib/supabase/server";
 
-
 /**
  * Generate a unique affiliate code for a stylist
  */
@@ -10,14 +9,13 @@ function generateAffiliateCode(stylistName: string): string {
   // Remove special characters and spaces, take first part of name
   const cleanName = stylistName
     .toLowerCase()
-    .replace(/[^a-z0-9]/g, '')
+    .replace(/[^a-z0-9]/g, "")
     .substring(0, 10);
-  
+
   // Add random suffix for uniqueness
-  const randomSuffix = Math.random().toString(36).substring(2, 8);
   const year = new Date().getFullYear();
-  
-  return `${cleanName}-${year}-${randomSuffix}`.toUpperCase();
+
+  return `${cleanName}-${year}`.toUpperCase();
 }
 
 /**
@@ -26,10 +24,10 @@ function generateAffiliateCode(stylistName: string): string {
 export async function createAffiliateCode(
   stylistId: string,
   applicationId: string,
-  commissionPercentage?: number
+  commissionPercentage?: number,
 ) {
   const supabase = await createClient();
-  
+
   // Get stylist information
   const { data: stylist, error: stylistError } = await supabase
     .from("profiles")
@@ -95,7 +93,7 @@ export async function createAffiliateCode(
       expires_at: null, // No expiration for now
       click_count: 0,
       conversion_count: 0,
-      total_commission_earned: 0
+      total_commission_earned: 0,
     })
     .select()
     .single();
@@ -113,7 +111,7 @@ export async function createAffiliateCode(
  */
 export async function getAffiliateCodeByCode(code: string) {
   const supabase = await createClient();
-  
+
   const { data: affiliateCode, error } = await supabase
     .from("affiliate_links")
     .select(`
@@ -128,13 +126,15 @@ export async function getAffiliateCodeByCode(code: string) {
     .eq("is_active", true)
     .single();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error && error.code !== "PGRST116") {
     console.error("Error fetching affiliate code:", error);
     return { error: "Kunne ikke hente partnerkode", data: null };
   }
 
   // Check if code is expired
-  if (affiliateCode?.expires_at && new Date(affiliateCode.expires_at) < new Date()) {
+  if (
+    affiliateCode?.expires_at && new Date(affiliateCode.expires_at) < new Date()
+  ) {
     return { error: "Partnerkoden er utløpt", data: null };
   }
 
@@ -146,7 +146,7 @@ export async function getAffiliateCodeByCode(code: string) {
  */
 export async function getAffiliateCodeByStylist(stylistId: string) {
   const supabase = await createClient();
-  
+
   const { data: affiliateCode, error } = await supabase
     .from("affiliate_links")
     .select("*")
@@ -154,7 +154,7 @@ export async function getAffiliateCodeByStylist(stylistId: string) {
     .eq("is_active", true)
     .single();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error && error.code !== "PGRST116") {
     console.error("Error fetching affiliate code for stylist:", error);
     return { error: "Kunne ikke hente partnerkode", data: null };
   }
@@ -167,7 +167,7 @@ export async function getAffiliateCodeByStylist(stylistId: string) {
  */
 export async function getAllAffiliateCodes(limit = 50, offset = 0) {
   const supabase = await createClient();
-  
+
   const { data: affiliateCodes, error } = await supabase
     .from("affiliate_links")
     .select(`
@@ -187,7 +187,7 @@ export async function getAllAffiliateCodes(limit = 50, offset = 0) {
   }
 
   // Transform data to match admin interface expectations
-  const transformedData = affiliateCodes?.map(code => ({
+  const transformedData = affiliateCodes?.map((code) => ({
     id: code.id,
     profile_id: code.stylist_id,
     stylist_name: code.stylist?.full_name || "Unknown",
@@ -196,7 +196,7 @@ export async function getAllAffiliateCodes(limit = 50, offset = 0) {
     created_at: code.created_at,
     clicks: code.click_count || 0,
     conversions: code.conversion_count || 0,
-    commission_earned: code.total_commission_earned || 0
+    commission_earned: code.total_commission_earned || 0,
   }));
 
   return { error: null, data: transformedData || [] };
@@ -207,7 +207,7 @@ export async function getAllAffiliateCodes(limit = 50, offset = 0) {
  */
 export async function incrementAffiliateClick(code: string) {
   const supabase = await createClient();
-  
+
   // First get current click count
   const { data: currentData, error: fetchError } = await supabase
     .from("affiliate_links")
@@ -224,7 +224,7 @@ export async function incrementAffiliateClick(code: string) {
   const { error } = await supabase
     .from("affiliate_links")
     .update({
-      click_count: (currentData.click_count || 0) + 1
+      click_count: (currentData.click_count || 0) + 1,
     })
     .eq("link_code", code);
 
@@ -240,11 +240,11 @@ export async function incrementAffiliateClick(code: string) {
  * Update affiliate code conversion metrics
  */
 export async function incrementAffiliateConversion(
-  code: string, 
-  commissionAmount: number
+  code: string,
+  commissionAmount: number,
 ) {
   const supabase = await createClient();
-  
+
   // First get current metrics
   const { data: currentData, error: fetchError } = await supabase
     .from("affiliate_links")
@@ -262,7 +262,8 @@ export async function incrementAffiliateConversion(
     .from("affiliate_links")
     .update({
       conversion_count: (currentData.conversion_count || 0) + 1,
-      total_commission_earned: (currentData.total_commission_earned || 0) + commissionAmount
+      total_commission_earned: (currentData.total_commission_earned || 0) +
+        commissionAmount,
     })
     .eq("link_code", code);
 
@@ -279,7 +280,7 @@ export async function incrementAffiliateConversion(
  */
 export async function deactivateAffiliateCode(codeId: string) {
   const supabase = await createClient();
-  
+
   const { data: affiliateCode, error } = await supabase
     .from("affiliate_links")
     .update({ is_active: false })
@@ -300,7 +301,7 @@ export async function deactivateAffiliateCode(codeId: string) {
  */
 export async function reactivateAffiliateCode(codeId: string) {
   const supabase = await createClient();
-  
+
   const { data: affiliateCode, error } = await supabase
     .from("affiliate_links")
     .update({ is_active: true })
@@ -320,11 +321,11 @@ export async function reactivateAffiliateCode(codeId: string) {
  * Update affiliate code expiration
  */
 export async function updateAffiliateCodeExpiration(
-  codeId: string, 
-  expiresAt: string | null
+  codeId: string,
+  expiresAt: string | null,
 ) {
   const supabase = await createClient();
-  
+
   const { data: affiliateCode, error } = await supabase
     .from("affiliate_links")
     .update({ expires_at: expiresAt })
@@ -343,7 +344,10 @@ export async function updateAffiliateCodeExpiration(
 /**
  * Generate social media sharing link
  */
-export async function generateSharingLink(code: string, baseUrl = "https://nabostylisten.no") {
+export async function generateSharingLink(
+  code: string,
+  baseUrl = "https://nabostylisten.no",
+) {
   return `${baseUrl}?code=${code}`;
 }
 
@@ -352,7 +356,7 @@ export async function generateSharingLink(code: string, baseUrl = "https://nabos
  */
 export async function getAffiliateCodeAnalytics(codeId: string) {
   const supabase = await createClient();
-  
+
   // Get basic code info and metrics
   const { data: codeData, error: codeError } = await supabase
     .from("affiliate_links")
@@ -382,9 +386,11 @@ export async function getAffiliateCodeAnalytics(codeId: string) {
     data: {
       code: codeData,
       attributions: attributions || [],
-      conversionRate: codeData.click_count > 0 
-        ? (codeData.conversion_count / codeData.click_count) * 100 
-        : 0
-    }
+      conversionRate: codeData.click_count > 0
+        ? parseFloat(
+          ((codeData.conversion_count / codeData.click_count) * 100).toFixed(1),
+        )
+        : 0,
+    },
   };
 }

@@ -16,6 +16,7 @@ import { MediaMentions } from "@/components/landing/media-mentions";
 import { FAQPreview } from "@/components/landing/faq-preview";
 import { StylistCTA } from "@/components/landing/stylist-cta";
 import { brandColors } from "@/lib/brand";
+import { cookies } from "next/headers";
 
 async function ServiceFilterSection() {
   const [categoriesResult, stylistsResult] = await Promise.all([

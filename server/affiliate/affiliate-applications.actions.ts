@@ -8,8 +8,6 @@ import {
 import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
 import type { Database } from "@/types/database.types";
 
-type AffiliateApplication =
-  Database["public"]["Tables"]["affiliate_applications"]["Row"];
 type AffiliateApplicationInsert =
   Database["public"]["Tables"]["affiliate_applications"]["Insert"];
 type AffiliateApplicationUpdate =
@@ -58,11 +56,17 @@ export async function createAffiliateApplication(
 
   // Send notification to administrators
   try {
-    const { sendAffiliateApplicationReceivedNotification } = await import("./affiliate-notifications.actions");
-    const notificationResult = await sendAffiliateApplicationReceivedNotification(application.id);
-    
+    const { sendAffiliateApplicationReceivedNotification } = await import(
+      "./affiliate-notifications.actions"
+    );
+    const notificationResult =
+      await sendAffiliateApplicationReceivedNotification(application.id);
+
     if (notificationResult.error) {
-      console.error("Failed to send admin notification:", notificationResult.error);
+      console.error(
+        "Failed to send admin notification:",
+        notificationResult.error,
+      );
       // Don't fail the application creation, just log the error
     }
   } catch (error) {

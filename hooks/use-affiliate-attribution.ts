@@ -56,9 +56,18 @@ export function useAffiliateAttribution({
   } = useQuery({
     queryKey: ["affiliate-discount", cartItems, userId],
     queryFn: async () => {
-      if (cartItems.length === 0) return null;
+      console.log("🔍 AFFILIATE HOOK - Starting query:", { cartItems, userId, enabled });
+      
+      if (cartItems.length === 0) {
+        console.log("🔍 AFFILIATE HOOK - No cart items, returning null");
+        return null;
+      }
 
+      console.log("🔍 AFFILIATE HOOK - Calling checkAffiliateDiscount");
       const result = await checkAffiliateDiscount(cartItems, userId);
+      
+      console.log("🔍 AFFILIATE HOOK - checkAffiliateDiscount result:", result);
+      
       return result.data;
     },
     enabled: enabled && cartItems.length > 0,

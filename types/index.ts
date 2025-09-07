@@ -486,6 +486,7 @@ export const affiliateAttributionSchema = z.object({
   attributed_at: z.iso.datetime("Invalid attribution timestamp"),
   expires_at: z.iso.datetime("Invalid expiration timestamp"),
   original_user_id: z.uuid("Invalid user ID").optional(), // Track who originally clicked
+  stylist_id: z.uuid("Invalid stylist ID"), // Critical field for matching services
 });
 
 export type AffiliateAttribution = z.infer<typeof affiliateAttributionSchema>;

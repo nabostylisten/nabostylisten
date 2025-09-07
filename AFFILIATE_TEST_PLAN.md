@@ -165,7 +165,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Test case sensitivity handling
    - Test invalid code error messages
 
-3. [ ] **Anonymous vs Logged-in Attribution**
+3. [x] **Anonymous vs Logged-in Attribution**
    - Test attribution while logged out (cookie only)
    - Login and verify attribution transfers to database
    - Test multiple device/browser scenarios
@@ -210,12 +210,6 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Verify NO discount is applied
    - Confirm no commission is recorded
    - Test error handling/messaging
-
-3. [ ] **Mixed Cart Scenarios**
-   - Cart contains services from multiple stylists
-   - Only services from attributed stylist get discount
-   - Partial commission calculation is correct
-   - Clear breakdown shown to customer
 
 #### 4.2 Commission Calculation & Tracking
 

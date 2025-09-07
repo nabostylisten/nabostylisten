@@ -5,7 +5,10 @@ import {
   convertAttribution,
   getAffiliateAttribution,
 } from "./affiliate-attribution.actions";
-import { calculateBookingPaymentBreakdown } from "@/schemas/platform-config.schema";
+import {
+  calculateBookingPaymentBreakdown,
+  DEFAULT_PLATFORM_CONFIG,
+} from "@/schemas/platform-config.schema";
 import type { Database } from "@/types/database.types";
 
 type Service = Database["public"]["Tables"]["services"]["Row"];
@@ -29,12 +32,21 @@ export async function checkAffiliateDiscount(
   userId?: string,
   visitorSession?: string,
 ): Promise<{ error: string | null; data: AffiliateCheckoutInfo | null }> {
+  console.log("🔍 SERVER - checkAffiliateDiscount called:", {
+    cartItems,
+    userId,
+    visitorSession,
+  });
+
   const supabase = await createClient();
 
   // Get affiliate attribution
+  console.log("🔍 SERVER - Getting affiliate attribution for userId:", userId);
   const attribution = await getAffiliateAttribution(userId);
+  console.log("🔍 SERVER - Affiliate attribution result:", attribution);
 
   if (!attribution) {
+    console.log("🔍 SERVER - No attribution found, returning empty data");
     return {
       error: null,
       data: {
@@ -49,6 +61,8 @@ export async function checkAffiliateDiscount(
 
   // Get services in cart with stylist information
   const serviceIds = cartItems.map((item) => item.serviceId);
+  console.log("🔍 SERVER - Fetching services for IDs:", serviceIds);
+
   const { data: services, error: servicesError } = await supabase
     .from("services")
     .select(`
@@ -61,16 +75,43 @@ export async function checkAffiliateDiscount(
     .in("id", serviceIds);
 
   if (servicesError || !services) {
-    console.error("Error fetching services:", servicesError);
+    console.error("🔍 SERVER - Error fetching services:", servicesError);
     return { error: "Kunne ikke hente tjenester", data: null };
   }
 
+  console.log(
+    "🔍 SERVER - Fetched services:",
+    services.map((s) => ({
+      id: s.id,
+      title: s.title,
+      stylist_id: s.stylist_id,
+      stylist_name: s.stylist?.full_name,
+    })),
+  );
+
   // Check which services are from the attributed stylist
+  console.log("🔍 SERVER - Comparing stylist_id:", {
+    attributionStylistId: attribution.stylist_id,
+    servicesStylistIds: services.map((s) => s.stylist_id),
+  });
+
   const applicableServices = services.filter(
     (service) => service.stylist_id === attribution.stylist_id,
   );
 
+  console.log(
+    "🔍 SERVER - Applicable services:",
+    applicableServices.map((s) => ({
+      id: s.id,
+      title: s.title,
+      stylist_id: s.stylist_id,
+    })),
+  );
+
   if (applicableServices.length === 0) {
+    console.log(
+      "🔍 SERVER - No applicable services found, returning no discount",
+    );
     return {
       error: null,
       data: {
@@ -104,18 +145,29 @@ export async function checkAffiliateDiscount(
   const commissionPercentage = affiliateCode?.commission_percentage || 0.20;
 
   // Calculate payment breakdown with affiliate commission as customer discount
+  const customerDiscountPercentage = DEFAULT_PLATFORM_CONFIG.fees.affiliate.customerDiscountPercentage;
   const breakdown = calculateBookingPaymentBreakdown({
     serviceAmountNOK: totalApplicableAmount,
     hasAffiliate: true,
     affiliateCommissionPercentage: commissionPercentage,
+    appliedDiscount: {
+      discountPercentage: customerDiscountPercentage * 100, // Convert 0.10 to 10
+    },
   });
 
-  return {
+  console.log("🔍 SERVER - Breakdown calculation:", {
+    totalApplicableAmount,
+    commissionPercentage,
+    customerDiscountPercentage,
+    breakdown,
+  });
+
+  const finalResult = {
     error: null,
     data: {
       hasAffiliateAttribution: true,
       affiliateCode: attribution.code,
-      stylistName: applicableServices[0]?.stylist?.full_name,
+      stylistName: applicableServices[0]?.stylist?.full_name || undefined,
       stylistId: attribution.stylist_id,
       applicableServices,
       discountAmount: breakdown.discountAmountNOK,
@@ -123,6 +175,9 @@ export async function checkAffiliateDiscount(
       isAutoApplicable: true,
     },
   };
+
+  console.log("🔍 SERVER - Final result:", finalResult);
+  return finalResult;
 }
 
 /**
@@ -153,7 +208,7 @@ export async function applyAffiliateDiscount(
   }
 
   // Get affiliate attribution
-  const { data: attribution } = await getAffiliateAttribution(userId);
+  const attribution = await getAffiliateAttribution(userId);
 
   if (!attribution) {
     return { error: "Ingen partner attribution funnet", data: null };
@@ -175,7 +230,8 @@ export async function applyAffiliateDiscount(
     .eq("link_code", attribution.code)
     .single();
 
-  const commissionPercentage = affiliateCode?.commission_percentage || 0.20;
+  const commissionPercentage = affiliateCode?.commission_percentage ||
+    DEFAULT_PLATFORM_CONFIG.fees.affiliate.defaultCommissionPercentage;
 
   // Calculate commission amount
   const totalApplicableAmount = Number(booking.total_price);
@@ -297,10 +353,14 @@ export async function validateManualAffiliateCode(
     }
   });
 
+  const customerDiscountPercentage = DEFAULT_PLATFORM_CONFIG.fees.affiliate.customerDiscountPercentage;
   const breakdown = calculateBookingPaymentBreakdown({
     serviceAmountNOK: totalApplicableAmount,
     hasAffiliate: true,
     affiliateCommissionPercentage: affiliateCode.commission_percentage,
+    appliedDiscount: {
+      discountPercentage: customerDiscountPercentage * 100, // Convert 0.10 to 10
+    },
   });
 
   return {
@@ -308,7 +368,7 @@ export async function validateManualAffiliateCode(
     data: {
       hasAffiliateAttribution: true,
       affiliateCode: code,
-      stylistName: affiliateCode.stylist?.full_name,
+      stylistName: affiliateCode.stylist?.full_name || undefined,
       stylistId: affiliateCode.stylist_id,
       applicableServices,
       discountAmount: breakdown.discountAmountNOK,
@@ -450,17 +510,6 @@ export async function getAffiliateCommissionByBooking(
     console.error("Unexpected error fetching commission:", error);
     return { success: false, error: "Unexpected error occurred" };
   }
-}
-
-/**
- * Calculate commission amount based on service total and percentage
- * This is a utility function, not a Server Action
- */
-function calculateCommission(
-  serviceTotal: number,
-  commissionPercentage: number,
-): number {
-  return Math.round(serviceTotal * commissionPercentage * 100) / 100; // Round to 2 decimal places
 }
 
 /**

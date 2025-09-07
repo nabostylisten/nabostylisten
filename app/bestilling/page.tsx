@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCartStore } from "@/stores/cart.store";
 import { useBookingStore } from "@/stores/booking.store";
@@ -22,15 +21,20 @@ import {
   formatCurrency,
 } from "@/lib/booking-calculations";
 import { useAffiliateAttribution } from "@/hooks/use-affiliate-attribution";
-import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
 
 export default function BookingPage() {
   const router = useRouter();
   const { items, getTotalItems, getTotalPrice, getCurrentStylist, clearCart } =
     useCartStore();
-  const { bookingData, setBookingContext, setProcessingState, clearBooking } =
-    useBookingStore();
+  const {
+    bookingData,
+    setBookingContext,
+    setProcessingState,
+    clearBooking,
+    updateBookingData,
+  } = useBookingStore();
   const [isRedirectingToCheckout, setIsRedirectingToCheckout] = useState(false);
   const [stripeOnboardingError, setStripeOnboardingError] = useState<{
     show: boolean;
@@ -74,11 +78,96 @@ export default function BookingPage() {
     stylistName: affiliateStylistName,
     applicableServices,
     canAutoApply,
+    isLoading: affiliateLoading,
+    error: affiliateError,
+    affiliateInfo,
   } = useAffiliateAttribution({
     cartItems,
     userId: user?.id,
     enabled: cartItems.length > 0,
   });
+
+  // Debug logging for affiliate attribution
+  console.log("🔍 AFFILIATE DEBUG - Booking Page:", {
+    user: user?.id ? { id: user.id, email: user.email, full_name: user.full_name } : null,
+    cartItems,
+    affiliateLoading,
+    affiliateError,
+    affiliateInfo,
+    affiliateDiscountAmount,
+    affiliateCode,
+    affiliateStylistName,
+    applicableServices: applicableServices?.map(s => ({ id: s.id, title: s.title, stylist_id: s.stylist_id })),
+    canAutoApply,
+    currentStylist: currentStylist ? { id: currentStylist.id, full_name: currentStylist.full_name } : null,
+  });
+
+  // Automatically apply affiliate discount when available and applicable
+  useEffect(() => {
+    console.log("🔍 AUTO-APPLY EFFECT TRIGGERED:", {
+      canAutoApply,
+      affiliateCode,
+      affiliateDiscountAmount,
+      conditions: {
+        hasCanAutoApply: !!canAutoApply,
+        hasAffiliateCode: !!affiliateCode,
+        hasPositiveDiscount: affiliateDiscountAmount > 0,
+        allConditionsMet: canAutoApply && affiliateCode && affiliateDiscountAmount > 0
+      }
+    });
+
+    if (canAutoApply && affiliateCode && affiliateDiscountAmount > 0) {
+      // Check if we haven't already applied this affiliate code
+      const currentDiscount = bookingData.appliedDiscount;
+      const isAlreadyApplied = currentDiscount?.code === affiliateCode;
+
+      console.log("🔍 DISCOUNT APPLICATION CHECK:", {
+        currentDiscount,
+        isAlreadyApplied,
+        willApply: !isAlreadyApplied
+      });
+
+      if (!isAlreadyApplied) {
+        console.log(
+          `🎉 Auto-applying affiliate discount: ${affiliateCode} (-${affiliateDiscountAmount} NOK)`
+        );
+
+        // Create affiliate discount data matching the expected AppliedDiscount structure
+        const affiliateDiscount = {
+          type: "affiliate" as const,
+          code: affiliateCode,
+          discountAmount: affiliateDiscountAmount,
+          affiliateInfo: {
+            stylistId:
+              applicableServices?.[0]?.stylist_id || currentStylist?.id || "",
+            stylistName: affiliateStylistName || "",
+            affiliateCode: affiliateCode,
+            commissionPercentage:
+              DEFAULT_PLATFORM_CONFIG.fees.affiliate
+                .defaultCommissionPercentage,
+          },
+          isAutoApplied: true,
+        };
+
+        // Apply the discount to booking state
+        updateBookingData({ appliedDiscount: affiliateDiscount });
+
+        // Show success message
+        toast.success(
+          `Partnerkode ${affiliateCode} er automatisk anvendt! Du sparer ${affiliateDiscountAmount} NOK.`
+        );
+      }
+    }
+  }, [
+    canAutoApply,
+    affiliateCode,
+    affiliateDiscountAmount,
+    applicableServices,
+    affiliateStylistName,
+    bookingData.appliedDiscount,
+    updateBookingData,
+    currentStylist?.id,
+  ]);
 
   // Initialize booking context when component mounts or cart changes
   useEffect(() => {
@@ -238,8 +327,6 @@ export default function BookingPage() {
   if (totalItems === 0 && !isRedirectingToCheckout) {
     return null;
   }
-
-  console.log(stylistDetails?.data);
 
   return (
     <div className="min-h-screen pt-20 px-6 lg:px-12">

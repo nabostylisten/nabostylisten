@@ -101,12 +101,19 @@ export async function validateAffiliateCode(
 export async function getAffiliateAttribution(
   userId?: string,
 ): Promise<AffiliateAttribution | null> {
-  const supabase = await createClient();
-
+  console.log("🔍 ATTRIBUTION - getAffiliateAttribution called with userId:", userId);
+  
   // If user is logged in, check database first
   if (userId) {
+    console.log("🔍 ATTRIBUTION - User logged in, checking database first");
+    
+    // Use service client to bypass RLS for reading affiliate_clicks
+    // This is safe because we're only reading attribution data for the specific user
+    const supabase = createServiceClient();
+    
     // Join affiliate_clicks with affiliate_links to get the code
-    const { data: dbAttribution } = await supabase
+    console.log("🔍 ATTRIBUTION - Querying affiliate_clicks for user with service client:", userId);
+    const { data: dbAttribution, error: dbError } = await supabase
       .from("affiliate_clicks")
       .select(`
         *,
@@ -123,13 +130,25 @@ export async function getAffiliateAttribution(
       .limit(1)
       .single();
 
+    console.log("🔍 ATTRIBUTION - Database query result:", { dbAttribution, dbError });
+
     if (dbAttribution && dbAttribution.affiliate_links) {
       const affiliateLink = Array.isArray(dbAttribution.affiliate_links)
         ? dbAttribution.affiliate_links[0]
         : dbAttribution.affiliate_links;
 
+      console.log("🔍 ATTRIBUTION - Found dbAttribution:", {
+        id: dbAttribution.id,
+        stylist_id: dbAttribution.stylist_id,
+        affiliate_link_id: dbAttribution.affiliate_link_id,
+        link_code: affiliateLink.link_code,
+        created_at: dbAttribution.created_at
+      });
+
       // Validate the code is still valid
       const validation = await validateAffiliateCode(affiliateLink.link_code);
+      console.log("🔍 ATTRIBUTION - Code validation result:", validation);
+      
       if (validation.success) {
         // Calculate expiration (30 days from creation)
         const createdAt = new Date(dbAttribution.created_at);
@@ -147,12 +166,15 @@ export async function getAffiliateAttribution(
           return null;
         }
 
-        return {
+        const result = {
           code: affiliateLink.link_code,
           attributed_at: dbAttribution.created_at,
           expires_at: expiresAt.toISOString(),
           original_user_id: undefined,
+          stylist_id: dbAttribution.stylist_id, // Add this critical field!
         };
+        console.log("🔍 ATTRIBUTION - Returning database attribution:", result);
+        return result;
       } else {
         // Clean up invalid attribution
         await supabase
@@ -223,11 +245,13 @@ export async function getAffiliateAttribution(
     "✅ getAffiliateAttribution: Code validation passed, returning attribution",
   );
 
+  // For cookie attribution, we need to get the stylist_id from the code validation
   return {
     code: parsed.data.code,
     attributed_at: parsed.data.attributed_at,
     expires_at: parsed.data.expires_at,
     original_user_id: parsed.data.original_user_id,
+    stylist_id: validation.stylist_id!, // Get from validation result
   };
 }
 

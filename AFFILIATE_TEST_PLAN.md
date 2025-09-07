@@ -252,7 +252,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Approve applications in bulk or individually
    - Reject with custom reasons
 
-2. [ ] **Code Management**
+2. [x] **Code Management**
    - View all active affiliate codes
    - Deactivate/reactivate codes
    - Modify commission percentages

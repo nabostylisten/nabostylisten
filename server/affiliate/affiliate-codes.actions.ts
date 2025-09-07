@@ -53,9 +53,10 @@ export async function createAffiliateCode(
     if (!existingCodeForApp.is_active) {
       const { data: reactivatedCode, error: reactivateError } = await supabase
         .from("affiliate_links")
-        .update({ 
+        .update({
           is_active: true,
-          commission_percentage: commissionPercentage || existingCodeForApp.commission_percentage || 0.20
+          commission_percentage: commissionPercentage ||
+            existingCodeForApp.commission_percentage || 0.20,
         })
         .eq("id", existingCodeForApp.id)
         .select()
@@ -63,7 +64,10 @@ export async function createAffiliateCode(
 
       if (reactivateError) {
         console.error("Error reactivating affiliate code:", reactivateError);
-        return { error: "Kunne ikke reaktivere eksisterende partnerkode", data: null };
+        return {
+          error: "Kunne ikke reaktivere eksisterende partnerkode",
+          data: null,
+        };
       }
 
       return { error: null, data: reactivatedCode };
@@ -83,7 +87,10 @@ export async function createAffiliateCode(
     .single();
 
   if (otherActiveCode) {
-    return { error: "Stylist har allerede en aktiv partnerkode for en annen søknad", data: null };
+    return {
+      error: "Stylist har allerede en aktiv partnerkode for en annen søknad",
+      data: null,
+    };
   }
 
   // Generate unique code
@@ -228,6 +235,7 @@ export async function getAllAffiliateCodes(limit = 50, offset = 0) {
     code: code.link_code,
     is_active: code.is_active,
     created_at: code.created_at,
+    expires_at: code.expires_at,
     clicks: code.click_count || 0,
     conversions: code.conversion_count || 0,
     commission_earned: code.total_commission_earned || 0,
@@ -318,7 +326,9 @@ export async function incrementAffiliateConversion(
 /**
  * Deactivate affiliate code by application ID (when application is rejected)
  */
-export async function deactivateAffiliateCodeByApplication(applicationId: string) {
+export async function deactivateAffiliateCodeByApplication(
+  applicationId: string,
+) {
   const supabase = await createClient();
 
   const { data: affiliateCode, error } = await supabase
@@ -331,6 +341,29 @@ export async function deactivateAffiliateCodeByApplication(applicationId: string
   if (error && error.code !== "PGRST116") { // PGRST116 = no rows found
     console.error("Error deactivating affiliate code by application:", error);
     return { error: "Kunne ikke deaktivere partnerkode", data: null };
+  }
+
+  return { error: null, data: affiliateCode };
+}
+
+/**
+ * Activate affiliate code
+ * @param codeId
+ * @returns
+ */
+export async function activateAffiliateCode(codeId: string) {
+  const supabase = await createClient();
+
+  const { data: affiliateCode, error } = await supabase
+    .from("affiliate_links")
+    .update({ is_active: true })
+    .eq("id", codeId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error activating affiliate code:", error);
+    return { error: "Kunne ikke aktivere partnerkode", data: null };
   }
 
   return { error: null, data: affiliateCode };
@@ -397,6 +430,34 @@ export async function updateAffiliateCodeExpiration(
   if (error) {
     console.error("Error updating affiliate code expiration:", error);
     return { error: "Kunne ikke oppdatere utløpsdato", data: null };
+  }
+
+  return { error: null, data: affiliateCode };
+}
+
+/**
+ * Update affiliate link details (general update function)
+ */
+export async function updateAffiliateLink(
+  codeId: string,
+  updates: {
+    expires_at?: string | null;
+    notes?: string | null;
+    commission_percentage?: number;
+  },
+) {
+  const supabase = await createClient();
+
+  const { data: affiliateCode, error } = await supabase
+    .from("affiliate_links")
+    .update(updates)
+    .eq("id", codeId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating affiliate link:", error);
+    return { error: "Kunne ikke oppdatere partnerkode", data: null };
   }
 
   return { error: null, data: affiliateCode };

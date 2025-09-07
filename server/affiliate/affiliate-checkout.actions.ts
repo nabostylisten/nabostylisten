@@ -145,7 +145,8 @@ export async function checkAffiliateDiscount(
   const commissionPercentage = affiliateCode?.commission_percentage || 0.20;
 
   // Calculate payment breakdown with affiliate commission as customer discount
-  const customerDiscountPercentage = DEFAULT_PLATFORM_CONFIG.fees.affiliate.customerDiscountPercentage;
+  const customerDiscountPercentage =
+    DEFAULT_PLATFORM_CONFIG.fees.affiliate.customerDiscountPercentage;
   const breakdown = calculateBookingPaymentBreakdown({
     serviceAmountNOK: totalApplicableAmount,
     hasAffiliate: true,
@@ -353,14 +354,10 @@ export async function validateManualAffiliateCode(
     }
   });
 
-  const customerDiscountPercentage = DEFAULT_PLATFORM_CONFIG.fees.affiliate.customerDiscountPercentage;
   const breakdown = calculateBookingPaymentBreakdown({
     serviceAmountNOK: totalApplicableAmount,
     hasAffiliate: true,
     affiliateCommissionPercentage: affiliateCode.commission_percentage,
-    appliedDiscount: {
-      discountPercentage: customerDiscountPercentage * 100, // Convert 0.10 to 10
-    },
   });
 
   return {

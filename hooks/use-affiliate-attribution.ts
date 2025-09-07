@@ -170,9 +170,21 @@ export function useAffiliateAttribution({
 
   // Helper function to check if discount can be applied
   const canApplyDiscount = useCallback(() => {
-    return discount && discount.applicableServices &&
-      discount.applicableServices.length > 0;
-  }, [discount]);
+    if (!discount || !discount.applicableServices || discount.applicableServices.length === 0) {
+      return false;
+    }
+    
+    // CRITICAL FIX: For auto-apply to be enabled, ALL cart services must be from the affiliate stylist
+    // We cannot auto-apply when cart contains services from multiple stylists
+    const allCartServicesFromAffiliateStylist = cartItems.every(cartItem => {
+      const applicableService = discount.applicableServices.find(
+        service => service.id === cartItem.serviceId
+      );
+      return !!applicableService;
+    });
+    
+    return allCartServicesFromAffiliateStylist;
+  }, [discount, cartItems]);
 
   // Helper function to get attribution status
   const getAttributionStatus = useCallback(() => {

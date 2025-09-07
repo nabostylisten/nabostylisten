@@ -87,20 +87,32 @@ export default function BookingPage() {
     enabled: cartItems.length > 0,
   });
 
-  // Debug logging for affiliate attribution
-  console.log("🔍 AFFILIATE DEBUG - Booking Page:", {
-    user: user?.id ? { id: user.id, email: user.email, full_name: user.full_name } : null,
-    cartItems,
-    affiliateLoading,
-    affiliateError,
-    affiliateInfo,
-    affiliateDiscountAmount,
-    affiliateCode,
-    affiliateStylistName,
-    applicableServices: applicableServices?.map(s => ({ id: s.id, title: s.title, stylist_id: s.stylist_id })),
-    canAutoApply,
-    currentStylist: currentStylist ? { id: currentStylist.id, full_name: currentStylist.full_name } : null,
-  });
+  // Clear invalid affiliate discounts when cart composition changes
+  useEffect(() => {
+    const currentDiscount = bookingData.appliedDiscount;
+
+    // Only check affiliate discounts
+    if (currentDiscount?.type === "affiliate") {
+      console.log("🔍 CHECKING EXISTING AFFILIATE DISCOUNT VALIDITY:", {
+        currentDiscount,
+        cartItems: items.map((item) => ({
+          serviceId: item.service.id,
+          stylistId: item.service.stylist_id,
+          title: item.service.title,
+        })),
+      });
+
+      // Check if the applied affiliate discount is still valid for current cart
+      const discountStylistId = currentDiscount.affiliateInfo?.stylistId;
+      const allCartServicesFromDiscountStylist = items.every(
+        (item) => item.service.stylist_id === discountStylistId
+      );
+
+      if (!allCartServicesFromDiscountStylist && items.length > 0) {
+        updateBookingData({ appliedDiscount: undefined });
+      }
+    }
+  }, [items, bookingData.appliedDiscount, updateBookingData]);
 
   // Automatically apply affiliate discount when available and applicable
   useEffect(() => {
@@ -112,11 +124,39 @@ export default function BookingPage() {
         hasCanAutoApply: !!canAutoApply,
         hasAffiliateCode: !!affiliateCode,
         hasPositiveDiscount: affiliateDiscountAmount > 0,
-        allConditionsMet: canAutoApply && affiliateCode && affiliateDiscountAmount > 0
-      }
+        allConditionsMet:
+          canAutoApply && affiliateCode && affiliateDiscountAmount > 0,
+      },
     });
 
     if (canAutoApply && affiliateCode && affiliateDiscountAmount > 0) {
+      // CRITICAL FIX: Check that ALL cart services are from the same stylist as the affiliate code
+      // We cannot auto-apply affiliate discounts when cart contains services from multiple stylists
+      const affiliateStylistId = applicableServices?.[0]?.stylist_id;
+      const allCartServicesFromSameStylist = items.every(
+        (item) => item.service.stylist_id === affiliateStylistId
+      );
+
+      console.log("🔍 STYLIST VALIDATION CHECK:", {
+        affiliateStylistId,
+        cartStylistIds: items.map((item) => ({
+          serviceId: item.service.id,
+          stylistId: item.service.stylist_id,
+          title: item.service.title,
+        })),
+        allCartServicesFromSameStylist,
+        totalCartItems: items.length,
+        applicableServiceCount: applicableServices?.length || 0,
+      });
+
+      // Only auto-apply if ALL services in cart are from the affiliate stylist
+      if (!allCartServicesFromSameStylist) {
+        console.log(
+          "⚠️ CANNOT AUTO-APPLY: Cart contains services from multiple stylists. Affiliate code can only be applied to services from the same stylist."
+        );
+        return;
+      }
+
       // Check if we haven't already applied this affiliate code
       const currentDiscount = bookingData.appliedDiscount;
       const isAlreadyApplied = currentDiscount?.code === affiliateCode;
@@ -124,7 +164,7 @@ export default function BookingPage() {
       console.log("🔍 DISCOUNT APPLICATION CHECK:", {
         currentDiscount,
         isAlreadyApplied,
-        willApply: !isAlreadyApplied
+        willApply: !isAlreadyApplied,
       });
 
       if (!isAlreadyApplied) {
@@ -167,6 +207,7 @@ export default function BookingPage() {
     bookingData.appliedDiscount,
     updateBookingData,
     currentStylist?.id,
+    items, // Add items to dependency array to re-check when cart changes
   ]);
 
   // Initialize booking context when component mounts or cart changes

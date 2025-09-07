@@ -54,11 +54,14 @@ export async function createAffiliateApplication(
     return { error: "Kunne ikke opprette partnersøknad", data: null };
   }
 
-  // Send notification to administrators
+  // Send notification to administrators and confirmation to stylist
   try {
-    const { sendAffiliateApplicationReceivedNotification } = await import(
-      "./affiliate-notifications.actions"
-    );
+    const {
+      sendAffiliateApplicationReceivedNotification,
+      sendAffiliateApplicationConfirmationEmail,
+    } = await import("./affiliate-notifications.actions");
+
+    // Send admin notification
     const notificationResult =
       await sendAffiliateApplicationReceivedNotification(application.id);
 
@@ -69,8 +72,22 @@ export async function createAffiliateApplication(
       );
       // Don't fail the application creation, just log the error
     }
+
+    // Send confirmation email to stylist
+    const confirmationResult = await sendAffiliateApplicationConfirmationEmail(
+      application.stylist_id,
+      application.id,
+    );
+
+    if (confirmationResult.error) {
+      console.error(
+        "Failed to send confirmation email:",
+        confirmationResult.error,
+      );
+      // Don't fail the application creation, just log the error
+    }
   } catch (error) {
-    console.error("Error sending admin notification:", error);
+    console.error("Error sending notifications:", error);
     // Don't fail the application creation, just log the error
   }
 

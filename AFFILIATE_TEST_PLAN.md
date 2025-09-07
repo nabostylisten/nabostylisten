@@ -95,7 +95,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Test Order:**
 
-1. [ ] **Application Form Submission**
+1. [x] **Application Form Submission**
 
    - Navigate to `/profiler/[profileId]/partner/soknad`
    - Fill out complete application form
@@ -103,7 +103,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
    - Submit application successfully
    - Verify data saved to `affiliate_applications` table
 
-2. [ ] **Application Status Tracking**
+2. [x] **Application Status Tracking**
 
    - Check application appears in stylist's partner dashboard
    - Verify status shows as "pending"

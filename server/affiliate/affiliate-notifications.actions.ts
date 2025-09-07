@@ -6,6 +6,7 @@ import { AffiliateApplicationApproved } from "@/transactional/emails/affiliate-a
 import { AffiliateApplicationRejected } from "@/transactional/emails/affiliate-application-rejected";
 import { AffiliateMonthlyPayout } from "@/transactional/emails/affiliate-monthly-payout";
 import { AffiliateApplicationReceivedEmail } from "@/transactional/emails/affiliate-application-received";
+import { AffiliateApplicationConfirmation } from "@/transactional/emails/affiliate-application-confirmation";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
 
 /**
@@ -236,11 +237,14 @@ export async function sendAffiliateApplicationRejectedEmail(
     const reapplyUrl =
       `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${stylistId}/partner/soknad`;
 
+    const logoUrl = getNabostylistenLogoUrl("png");
+
     // Send email
     const { error } = await sendEmail({
       to: [stylist.email],
       subject: "Svar på din partnersøknad",
       react: AffiliateApplicationRejected({
+        logoUrl,
         stylistName: stylist.full_name || "Partner",
         rejectionReason,
         reapplyUrl,
@@ -293,11 +297,14 @@ export async function sendAffiliateMonthlyPayoutEmail(
     const dashboardUrl =
       `${process.env.NEXT_PUBLIC_SITE_URL}/profiler/${payout.stylist.id}/partner/utbetalinger`;
 
+    const logoUrl = getNabostylistenLogoUrl("png");
+
     // Send email
     const { error } = await sendEmail({
       to: [payout.stylist.email],
-      subject: "💰 Din månedlige partnerutbetaling er på vei!",
+      subject: "Din månedlige partnerutbetaling er på vei!",
       react: AffiliateMonthlyPayout({
+        logoUrl,
         stylistName: payout.stylist.full_name || "Partner",
         payoutAmount: Number(payout.payout_amount),
         currency: payout.currency || "NOK",
@@ -378,6 +385,69 @@ export async function sendAffiliateWelcomeEmail(
     console.error("Error in sendAffiliateWelcomeEmail:", error);
     return {
       error: "En uventet feil oppstod ved sending av velkomst-e-post",
+      data: null,
+    };
+  }
+}
+
+/**
+ * Send confirmation email to stylist when affiliate application is received
+ */
+export async function sendAffiliateApplicationConfirmationEmail(
+  stylistId: string,
+  applicationId: string,
+) {
+  const supabase = await createClient();
+
+  try {
+    // Get stylist information
+    const { data: stylist, error: stylistError } = await supabase
+      .from("profiles")
+      .select("full_name, email")
+      .eq("id", stylistId)
+      .single();
+
+    if (stylistError || !stylist || !stylist.email) {
+      console.error("Error fetching stylist for confirmation email:", stylistError);
+      return { error: "Kunne ikke finne stylist", data: null };
+    }
+
+    // Get application information
+    const { data: application, error: appError } = await supabase
+      .from("affiliate_applications")
+      .select("created_at")
+      .eq("id", applicationId)
+      .single();
+
+    if (appError || !application) {
+      console.error("Error fetching application for confirmation email:", appError);
+      return { error: "Kunne ikke finne søknadsinformasjon", data: null };
+    }
+
+    const logoUrl = getNabostylistenLogoUrl("png");
+
+    // Send confirmation email
+    const { error } = await sendEmail({
+      to: [stylist.email],
+      subject: "Partnersøknaden din er mottatt - Nabostylisten",
+      react: AffiliateApplicationConfirmation({
+        logoUrl,
+        stylistName: stylist.full_name || "Partner",
+        applicationId,
+        submittedAt: new Date(application.created_at),
+      }),
+    });
+
+    if (error) {
+      console.error("Error sending affiliate confirmation email:", error);
+      return { error: "Kunne ikke sende bekreftelse-e-post", data: null };
+    }
+
+    return { error: null, data: null };
+  } catch (error) {
+    console.error("Error in sendAffiliateApplicationConfirmationEmail:", error);
+    return {
+      error: "En uventet feil oppstod ved sending av bekreftelse-e-post",
       data: null,
     };
   }

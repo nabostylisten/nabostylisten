@@ -34,7 +34,7 @@ CREATE TYPE public.payment_status AS ENUM ('pending', 'requires_payment_method',
 CREATE TYPE public.affiliate_application_status AS ENUM ('pending', 'approved', 'rejected', 'suspended');
 
 -- Enum for affiliate payout statuses
-CREATE TYPE public.affiliate_payout_status AS ENUM ('pending', 'processing', 'paid', 'failed');
+CREATE TYPE public.affiliate_payout_status AS ENUM ('pending', 'processing', 'paid', 'failed', 'refunded', 'cancelled');
 
 
 -- ================== TABLES ==================

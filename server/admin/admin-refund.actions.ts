@@ -105,6 +105,24 @@ export async function processAdminRefund({
       };
     }
 
+    // Reverse affiliate commission if one exists for this booking
+    try {
+      const { reverseAffiliateCommission } = await import(
+        "@/server/affiliate/affiliate-commission.actions"
+      );
+      const commissionReversalResult = await reverseAffiliateCommission(payment.booking.id);
+      
+      if (commissionReversalResult.error) {
+        console.error("Failed to reverse affiliate commission:", commissionReversalResult.error);
+        // Don't fail the admin refund if commission reversal fails - log and continue
+      } else if (commissionReversalResult.data) {
+        console.log("✅ Affiliate commission reversed successfully during admin refund:", commissionReversalResult.data.id);
+      }
+    } catch (commissionError) {
+      console.error("Error reversing affiliate commission during admin refund:", commissionError);
+      // Don't fail the admin refund if commission reversal fails
+    }
+
     // TODO: Update payment record with admin refund metadata when schema is updated
     // For now, we'll log this information and rely on existing refund_reason field
     // const { error: updateError } = await serviceSupabase

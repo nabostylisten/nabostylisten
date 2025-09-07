@@ -147,6 +147,24 @@ export async function cancelBooking(bookingId: string, reason?: string) {
         return { error: "Failed to cancel booking", data: null };
     }
 
+    // Reverse affiliate commission if one exists for this booking
+    try {
+        const { reverseAffiliateCommission } = await import(
+            "@/server/affiliate/affiliate-commission.actions"
+        );
+        const commissionReversalResult = await reverseAffiliateCommission(bookingId);
+        
+        if (commissionReversalResult.error) {
+            console.error("Failed to reverse affiliate commission:", commissionReversalResult.error);
+            // Don't fail the cancellation if commission reversal fails - log and continue
+        } else if (commissionReversalResult.data) {
+            console.log("✅ Affiliate commission reversed successfully:", commissionReversalResult.data.id);
+        }
+    } catch (commissionError) {
+        console.error("Error reversing affiliate commission:", commissionError);
+        // Don't fail the cancellation if commission reversal fails
+    }
+
     // Send cancellation emails to both parties (respecting preferences)
     try {
         // Get full booking details with user information for email

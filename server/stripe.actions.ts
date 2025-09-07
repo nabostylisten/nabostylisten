@@ -336,6 +336,24 @@ export async function processRefund({
           .eq("id", payment.id);
       }
 
+      // Reverse affiliate commission if one exists for this booking (for cancelled payments)
+      try {
+        const { reverseAffiliateCommission } = await import(
+          "@/server/affiliate/affiliate-commission.actions"
+        );
+        const commissionReversalResult = await reverseAffiliateCommission(bookingId);
+        
+        if (commissionReversalResult.error) {
+          console.error("Failed to reverse affiliate commission:", commissionReversalResult.error);
+          // Don't fail the cancellation if commission reversal fails - log and continue
+        } else if (commissionReversalResult.data) {
+          console.log("✅ Affiliate commission reversed successfully for cancelled payment:", commissionReversalResult.data.id);
+        }
+      } catch (commissionError) {
+        console.error("Error reversing affiliate commission:", commissionError);
+        // Don't fail the cancellation if commission reversal fails
+      }
+
       return {
         data: {
           refundId: null,
@@ -416,6 +434,24 @@ export async function processRefund({
               // Don't fail the refund if compensation transfer fails
             }
           }
+        }
+
+        // Reverse affiliate commission if one exists for this booking
+        try {
+          const { reverseAffiliateCommission } = await import(
+            "@/server/affiliate/affiliate-commission.actions"
+          );
+          const commissionReversalResult = await reverseAffiliateCommission(bookingId);
+          
+          if (commissionReversalResult.error) {
+            console.error("Failed to reverse affiliate commission:", commissionReversalResult.error);
+            // Don't fail the refund if commission reversal fails - log and continue
+          } else if (commissionReversalResult.data) {
+            console.log("✅ Affiliate commission reversed successfully:", commissionReversalResult.data.id);
+          }
+        } catch (commissionError) {
+          console.error("Error reversing affiliate commission:", commissionError);
+          // Don't fail the refund if commission reversal fails
         }
 
         return {

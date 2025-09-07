@@ -552,7 +552,14 @@ export async function trackAffiliateCommission(bookingId: string) {
   const supabase = createServiceClient(); // Use service client to bypass RLS
 
   try {
-    // First check if commission already exists for this booking
+    // First check if commission should be prevented (e.g., for cancelled/refunded bookings)
+    const shouldPrevent = await shouldPreventAffiliateCommission(bookingId);
+    if (shouldPrevent) {
+      console.log(`Preventing affiliate commission tracking for booking ${bookingId} due to cancellation/refund`);
+      return { error: null, data: null };
+    }
+
+    // Check if commission already exists for this booking
     // This is a quick check to avoid unnecessary work
     const { data: existingCommission } = await supabase
       .from("affiliate_commissions")
@@ -652,5 +659,130 @@ export async function trackAffiliateCommission(bookingId: string) {
   } catch (error) {
     console.error("Error tracking affiliate commission:", error);
     return { error: "Failed to track commission", data: null };
+  }
+}
+
+/**
+ * Reverse affiliate commission for a refunded booking
+ * This function marks the commission as cancelled/refunded
+ */
+export async function reverseAffiliateCommission(bookingId: string) {
+  const supabase = createServiceClient(); // Use service client to bypass RLS
+
+  try {
+    // Find existing commission for this booking
+    const { data: existingCommission, error: fetchError } = await supabase
+      .from("affiliate_commissions")
+      .select("*")
+      .eq("booking_id", bookingId)
+      .single();
+
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        // No commission found - this is not an error case
+        console.log(`No affiliate commission found for booking ${bookingId} to reverse`);
+        return { error: null, data: null };
+      }
+      console.error("Error finding commission to reverse:", fetchError);
+      return { error: "Failed to find commission to reverse", data: null };
+    }
+
+    if (!existingCommission) {
+      console.log(`No affiliate commission found for booking ${bookingId} to reverse`);
+      return { error: null, data: null };
+    }
+
+    // Check if commission is already cancelled/refunded
+    if (existingCommission.status === "cancelled" || existingCommission.status === "refunded") {
+      console.log(`Commission for booking ${bookingId} is already ${existingCommission.status}`);
+      return { error: null, data: existingCommission };
+    }
+
+    // Update commission status to refunded
+    const { data: updatedCommission, error: updateError } = await supabase
+      .from("affiliate_commissions")
+      .update({
+        status: "refunded",
+        notes: existingCommission.notes 
+          ? `${existingCommission.notes}\nCommission refunded due to booking cancellation/refund at ${new Date().toISOString()}`
+          : `Commission refunded due to booking cancellation/refund at ${new Date().toISOString()}`
+      })
+      .eq("id", existingCommission.id)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error("Error updating commission status:", updateError);
+      return { error: "Failed to reverse commission", data: null };
+    }
+
+    // Also update affiliate_clicks to mark as not converted since commission was reversed
+    const { error: clickUpdateError } = await supabase
+      .from("affiliate_clicks")
+      .update({
+        converted: false,
+        converted_at: null,
+        commission_amount: 0,
+        notes: "Commission reversed due to booking cancellation/refund"
+      })
+      .eq("booking_id", bookingId);
+
+    if (clickUpdateError) {
+      console.error("Error updating affiliate clicks:", clickUpdateError);
+      // Don't fail the commission reversal for this
+    }
+
+    console.log(`✅ Affiliate commission reversed successfully for booking ${bookingId}:`, {
+      commissionId: updatedCommission.id,
+      affiliateId: updatedCommission.affiliate_id,
+      amount: updatedCommission.amount,
+      status: updatedCommission.status
+    });
+
+    return { error: null, data: updatedCommission };
+  } catch (error) {
+    console.error("Error reversing affiliate commission:", error);
+    return { error: "Failed to reverse commission", data: null };
+  }
+}
+
+/**
+ * Check if a booking has an affiliate commission that should be prevented
+ * This is used during booking creation/payment to prevent commissions for refunded bookings
+ */
+export async function shouldPreventAffiliateCommission(bookingId: string): Promise<boolean> {
+  const supabase = createServiceClient();
+
+  try {
+    // Check if booking is cancelled or has been refunded
+    const { data: booking, error: bookingError } = await supabase
+      .from("bookings")
+      .select("status, payments(refunded_amount, final_amount)")
+      .eq("id", bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      console.log(`Could not find booking ${bookingId}, allowing commission tracking`);
+      return false;
+    }
+
+    // If booking is cancelled, prevent commission
+    if (booking.status === "cancelled") {
+      console.log(`Booking ${bookingId} is cancelled, preventing affiliate commission`);
+      return true;
+    }
+
+    // If booking has been refunded (full or partial), prevent commission
+    const payment = booking.payments;
+    if (payment && payment.refunded_amount && payment.refunded_amount > 0) {
+      console.log(`Booking ${bookingId} has been refunded (${payment.refunded_amount} of ${payment.final_amount}), preventing affiliate commission`);
+      return true;
+    }
+
+    return false;
+  } catch (error) {
+    console.error("Error checking if commission should be prevented:", error);
+    // In case of error, allow commission tracking to proceed
+    return false;
   }
 }

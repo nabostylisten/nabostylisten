@@ -444,35 +444,9 @@ export async function sendPostPaymentEmails(bookingId: string) {
             }
         }
 
-        // Track affiliate commission if payment has affiliate data (backup/redundant tracking)
-        try {
-            const { trackAffiliateCommission } = await import(
-                "../affiliate/affiliate-commission.actions"
-            );
-            const commissionResult = await trackAffiliateCommission(bookingId);
-
-            if (
-                commissionResult.error &&
-                !commissionResult.error.includes("already")
-            ) {
-                console.log(
-                    "Note: Affiliate commission tracking attempt:",
-                    commissionResult.error,
-                );
-                // This is expected if commission was already tracked in payment capture
-            } else if (commissionResult.data) {
-                console.log(
-                    "✅ Affiliate commission tracked via post-payment:",
-                    commissionResult.data.id,
-                );
-            }
-        } catch (commissionError) {
-            console.log(
-                "Note: Commission tracking attempt failed:",
-                commissionError,
-            );
-            // Don't fail the entire operation - this is a backup tracking attempt
-        }
+        // Note: Affiliate commission tracking is handled in checkout/success page
+        // to avoid duplicate tracking. The capturePaymentIntent function also
+        // handles commission tracking as a backup when payment is captured.
 
         return {
             data: {

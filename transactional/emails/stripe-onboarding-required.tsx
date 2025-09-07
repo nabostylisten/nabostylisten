@@ -58,9 +58,9 @@ export const StripeOnboardingRequired = ({
               <>
                 <Heading style={heading}>Hei {stylistName}!</Heading>
                 <Text style={paragraph}>
-                  Du har mottatt en bookingforespørsel fra{" "}
-                  <strong>{customerName}</strong>, men vi kan ikke behandle
-                  betalingen fordi du ikke har fullført betalingsoppsettet ditt
+                  Du har mottatt en booking fra{" "}
+                  <strong>{customerName}</strong>! Bookingen er opprettet, men 
+                  betalingen venter på at du fullfører betalingsoppsettet ditt
                   hos Stripe.
                 </Text>
                 <Text style={paragraph}>
@@ -86,9 +86,9 @@ export const StripeOnboardingRequired = ({
 
                 <Section style={infoSection}>
                   <Text style={infoText}>
-                    <strong>Viktig:</strong> Kunden {customerName} har blitt
-                    informert om at du vil fullføre oppsettet, og de kan prøve å
-                    booke igjen senere.
+                    <strong>Viktig:</strong> Bookingen er allerede opprettet og 
+                    kunden {customerName} har blitt informert. Betalingen vil bli 
+                    behandlet så snart du fullfører Stripe-oppsettet.
                   </Text>
                 </Section>
 
@@ -100,11 +100,11 @@ export const StripeOnboardingRequired = ({
             ) : (
               <>
                 <Heading style={heading}>
-                  Stylist mangler Stripe-onboarding
+                  Booking opprettet - Venter på Stripe-oppsett
                 </Heading>
                 <Text style={paragraph}>
-                  En kunde forsøkte å booke tjenester, men betalingen kunne ikke
-                  behandles.
+                  En booking er opprettet, men betalingen venter på at stylisten
+                  fullfører sitt Stripe-oppsett.
                 </Text>
                 <Section style={detailsSection}>
                   <Text style={detailsTitle}>Detaljer:</Text>

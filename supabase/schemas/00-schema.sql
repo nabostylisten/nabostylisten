@@ -264,6 +264,7 @@ CREATE TABLE IF NOT EXISTS public.bookings (
 
     -- Stripe Integration
     stripe_payment_intent_id text,
+    awaiting_payment_setup boolean DEFAULT false NOT NULL, -- Booking is waiting for stylist to complete Stripe onboarding
     
     -- Payment capture tracking
     payment_captured_at timestamp with time zone, -- When payment was captured

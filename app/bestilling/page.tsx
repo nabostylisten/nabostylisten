@@ -36,11 +36,7 @@ export default function BookingPage() {
     updateBookingData,
   } = useBookingStore();
   const [isRedirectingToCheckout, setIsRedirectingToCheckout] = useState(false);
-  const [stripeOnboardingError, setStripeOnboardingError] = useState<{
-    show: boolean;
-    stylistName?: string;
-  }>({ show: false });
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
@@ -315,23 +311,35 @@ export default function BookingPage() {
       });
 
       if (result.error) {
-        // Check if this is a Stripe onboarding error
-        if (result.error === "stripe_onboarding_required") {
-          setStripeOnboardingError({
-            show: true,
-            stylistName: currentStylist?.full_name ?? undefined,
-          });
-          // Scroll to top to show the alert
-          window.scrollTo({ top: 0, behavior: "smooth" });
-          return;
-        }
-
         toast.error(result.error);
         return;
       }
 
       if (result.data) {
-        // Redirect to payment page with client secret
+        // Check if booking is awaiting payment setup
+        if (result.data.awaitingPaymentSetup) {
+          // Booking created successfully but payment is pending
+          toast.success(
+            "Booking opprettet! Stylisten må fullføre betalingsoppsett før betalingen kan behandles."
+          );
+
+          // Clear cart and booking
+          clearCart();
+          clearBooking();
+
+          if (profile?.id) {
+            // Redirect to a success page showing booking details
+            // Since there's no payment to process, go directly to bookings page
+            router.replace(`/profiler/${profile?.id}/mine-bookinger`);
+          } else if (user?.id) {
+            router.replace(`/profiler/${user?.id}/mine-bookinger`);
+          } else {
+            router.replace(`/tjenester`);
+          }
+          return;
+        }
+
+        // Normal flow - redirect to payment page with client secret
         toast.success("Videresender til betaling...");
 
         if (!result.data.paymentIntentClientSecret) {
@@ -340,8 +348,8 @@ export default function BookingPage() {
         }
 
         const searchParams = new URLSearchParams({
-          payment_intent: result.data.stripePaymentIntentId,
-          client_secret: result.data.paymentIntentClientSecret,
+          payment_intent: result.data.stripePaymentIntentId || "",
+          client_secret: result.data.paymentIntentClientSecret || "",
           booking_id: result.data.booking.id,
         });
 
@@ -381,21 +389,6 @@ export default function BookingPage() {
             <h1 className="text-3xl font-bold">Booking</h1>
           </div>
         </BlurFade>
-
-        {/* Stripe Onboarding Error Alert */}
-        {stripeOnboardingError.show && (
-          <BlurFade duration={0.5} inView>
-            <Alert className="mb-6 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/50">
-              <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-              <AlertDescription className="text-amber-800 dark:text-amber-200">
-                <strong>Booking kunne ikke fullføres.</strong>{" "}
-                {stripeOnboardingError.stylistName} mangler betalingsoppsett og
-                har blitt varslet om å fullføre dette. Du kan prøve å booke
-                igjen senere når oppsettet er fullført.
-              </AlertDescription>
-            </Alert>
-          </BlurFade>
-        )}
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Booking Steps */}

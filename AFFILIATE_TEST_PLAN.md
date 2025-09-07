@@ -175,13 +175,13 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Priority: Medium | Dependencies: Code Attribution**
 
-- [ ] **Multi-Browser Cookie Handling**
+- [x] **Multi-Browser Cookie Handling**
 
   - Chrome, Firefox, Safari, Edge
   - Test cookie sync limitations
   - Verify clean fallbacks when cookies disabled
 
-- [ ] **Mobile Device Testing**
+- [x] **Mobile Device Testing**
   - Test URL parameter handling in mobile browsers
   - Verify responsive design for affiliate interfaces
   - Test deep link behavior from social media apps
@@ -217,7 +217,7 @@ This test plan validates the complete affiliate (partner) system functionality, 
 
 **Test Order:**
 
-1. [ ] **Commission Recording**
+1. [x] **Commission Recording**
 
    - Complete booking with affiliate attribution
    - Verify entry created in `affiliate_commissions` table

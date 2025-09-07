@@ -5,6 +5,7 @@ import { sendEmail } from "@/lib/resend-utils";
 import { BookingReceiptEmail } from "@/transactional/emails/booking-receipt";
 import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
 import { StripeOnboardingRequired } from "@/transactional/emails/stripe-onboarding-required";
+import { BookingAwaitingPayment } from "@/transactional/emails/booking-awaiting-payment";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
@@ -12,8 +13,112 @@ import { shouldReceiveNotificationServerSide } from "@/server/preferences.action
 import { Database } from "@/types/database.types";
 
 /**
+ * Send notification when booking is created but awaiting payment setup
+ * Called after booking creation when stylist hasn't completed Stripe onboarding
+ */
+export async function sendBookingAwaitingPaymentEmails({
+    bookingId,
+    customerEmail,
+    customerName,
+    customerProfileId,
+}: {
+    bookingId: string;
+    customerEmail: string;
+    customerName: string;
+    customerProfileId: string;
+}) {
+    const supabase = await createClient();
+
+    try {
+        // Get comprehensive booking details
+        const { data: booking, error: bookingError } = await supabase
+            .from("bookings")
+            .select(`
+                *,
+                stylist:profiles!bookings_stylist_id_fkey(
+                    id,
+                    full_name,
+                    email
+                ),
+                address:addresses(
+                    street_address,
+                    city
+                ),
+                booking_services(
+                    service:services(
+                        title,
+                        duration_minutes
+                    )
+                )
+            `)
+            .eq("id", bookingId)
+            .single();
+
+        if (bookingError || !booking) {
+            console.error("Failed to get booking for awaiting payment emails:", bookingError);
+            return { error: "Booking not found", data: null };
+        }
+
+        // Prepare email data
+        const services = booking.booking_services?.map((bs) => bs.service).filter(Boolean) || [];
+        const serviceName = services.length > 0
+            ? services[0]?.title || "Booking"
+            : "Booking";
+        const serviceNameWithCount = services.length > 1
+            ? `${serviceName} +${services.length - 1} til`
+            : serviceName;
+
+        const startTime = new Date(booking.start_time);
+        const endTime = new Date(booking.end_time);
+        const bookingDate = format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
+        const bookingTime = `${format(startTime, "HH:mm")} - ${format(endTime, "HH:mm")}`;
+
+        // Determine location
+        let location = "Hos stylisten";
+        if (booking.address_id && booking.address) {
+            location = `${booking.address.street_address}, ${booking.address.city}`;
+        }
+
+        const logoUrl = getNabostylistenLogoUrl("png");
+
+        // Send email to customer
+        const emailResult = await sendEmail({
+            to: [customerEmail],
+            subject: `Booking bekreftet - venter på betaling - Nabostylisten`,
+            react: BookingAwaitingPayment({
+                logoUrl,
+                customerName,
+                customerProfileId,
+                stylistName: booking.stylist?.full_name || "Stylist",
+                bookingId,
+                serviceName: serviceNameWithCount,
+                bookingDate,
+                bookingTime,
+                location,
+            }),
+        });
+
+        if (emailResult.error) {
+            console.error("Failed to send booking awaiting payment email:", emailResult.error);
+            return { error: "Failed to send email", data: null };
+        }
+
+        return {
+            data: { emailSent: true },
+            error: null,
+        };
+    } catch (error) {
+        console.error("Error in sendBookingAwaitingPaymentEmails:", error);
+        return {
+            error: "Failed to send awaiting payment emails",
+            data: null,
+        };
+    }
+}
+
+/**
  * Handle Stripe onboarding notification emails
- * Called when a booking fails due to incomplete stylist Stripe setup
+ * Called when a booking is created without payment due to incomplete stylist Stripe setup
  */
 export async function notifyStripeOnboardingRequired({
     stylistId,
@@ -288,11 +393,11 @@ export async function sendPostPaymentEmails(bookingId: string) {
             format(endTime, "HH:mm")
         }`;
 
-        // Determine location text
-        let location = "Hos stylisten";
+        // Determine location type and details
+        let locationType: "stylist" | "customer" = "stylist";
         let locationDetails = null;
         if (booking.address_id && booking.address) {
-            location = "Hjemme hos deg";
+            locationType = "customer";
             locationDetails = {
                 street: booking.address.street_address,
                 city: booking.address.city,
@@ -325,13 +430,16 @@ export async function sendPostPaymentEmails(bookingId: string) {
                     react: BookingReceiptEmail({
                         logoUrl,
                         customerName: booking.customer.full_name || "Kunde",
+                        customerProfileId: booking.customer_id,
                         stylistName: booking.stylist?.full_name || "Stylist",
                         bookingId: bookingId,
                         serviceName: serviceNameWithCount,
                         bookingDate,
                         bookingTime,
-                        location,
-                        locationDetails,
+                        location: locationType,
+                        customerAddress: locationType === "customer" 
+                            ? `${locationDetails?.street}, ${locationDetails?.city}` 
+                            : undefined,
                         totalAmount: payment.final_amount,
                         originalAmount: payment.original_amount,
                         discountAmount: payment.discount_amount || 0,
@@ -365,12 +473,15 @@ export async function sendPostPaymentEmails(bookingId: string) {
                         logoUrl,
                         customerName: booking.customer?.full_name || "Kunde",
                         stylistName: booking.stylist.full_name || "Stylist",
+                        stylistProfileId: booking.stylist_id,
                         bookingId: bookingId,
                         serviceName: serviceNameWithCount,
                         bookingDate,
                         bookingTime,
-                        location,
-                        locationDetails,
+                        location: locationType,
+                        customerAddress: locationType === "customer" 
+                            ? `${locationDetails?.street}, ${locationDetails?.city}` 
+                            : undefined,
                         totalAmount: payment.final_amount,
                         currency: payment.currency || "NOK",
                         services: services.map((service) => ({

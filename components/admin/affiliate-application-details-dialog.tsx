@@ -22,9 +22,13 @@ import {
   CheckCircle,
   XCircle,
   AlertCircle,
+  Instagram,
+  Facebook,
+  ExternalLink,
 } from "lucide-react";
 
 import { getAffiliateApplicationById } from "@/server/affiliate/affiliate-applications.actions";
+import { FaTiktok } from "react-icons/fa";
 
 interface AffiliateApplicationDetailsDialogProps {
   applicationId: string | null;
@@ -78,7 +82,7 @@ export function AffiliateApplicationDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Detaljer om partnersøknad</DialogTitle>
           <DialogDescription>
@@ -111,7 +115,7 @@ export function AffiliateApplicationDetailsDialog({
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-4">
                   <div>
                     <h4 className="font-semibold text-sm text-muted-foreground mb-1">
                       Stylist
@@ -143,12 +147,6 @@ export function AffiliateApplicationDetailsDialog({
                       )}
                     </p>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">
-                      Status
-                    </h4>
-                    <p className="font-mono">{application.status}</p>
-                  </div>
                 </div>
 
                 {application.stylist?.stylist_details && (
@@ -169,33 +167,42 @@ export function AffiliateApplicationDetailsDialog({
                         <div className="flex flex-wrap gap-2">
                           {application.stylist.stylist_details
                             .instagram_profile && (
-                            <Badge variant="secondary">
-                              Instagram:{" "}
-                              {
-                                application.stylist.stylist_details
-                                  .instagram_profile
-                              }
-                            </Badge>
+                            <a
+                              href={`https://instagram.com/${application.stylist.stylist_details.instagram_profile.replace("@", "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                            >
+                              <Instagram className="w-4 h-4" />
+                              Instagram
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
                           )}
                           {application.stylist.stylist_details
                             .facebook_profile && (
-                            <Badge variant="secondary">
-                              Facebook:{" "}
-                              {
-                                application.stylist.stylist_details
-                                  .facebook_profile
-                              }
-                            </Badge>
+                            <a
+                              href={`https://facebook.com/${application.stylist.stylist_details.facebook_profile.replace("@", "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                            >
+                              <Facebook className="w-4 h-4" />
+                              Facebook
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
                           )}
                           {application.stylist.stylist_details
                             .tiktok_profile && (
-                            <Badge variant="secondary">
-                              TikTok:{" "}
-                              {
-                                application.stylist.stylist_details
-                                  .tiktok_profile
-                              }
-                            </Badge>
+                            <a
+                              href={`https://tiktok.com/@${application.stylist.stylist_details.tiktok_profile.replace("@", "")}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
+                            >
+                              <FaTiktok className="w-4 h-4" />
+                              TikTok
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
                           )}
                         </div>
                       </div>

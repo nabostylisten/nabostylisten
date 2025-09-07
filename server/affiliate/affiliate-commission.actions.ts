@@ -549,16 +549,22 @@ export async function trackAffiliateCommission(bookingId: string) {
   const supabase = createServiceClient(); // Use service client to bypass RLS
 
   try {
-    // Check if commission already exists for this booking to prevent duplicates
+    // First check if commission already exists for this booking
+    // This is a quick check to avoid unnecessary work
     const { data: existingCommission } = await supabase
       .from("affiliate_commissions")
-      .select("id")
+      .select("id, affiliate_id, amount, status")
       .eq("booking_id", bookingId)
       .single();
 
     if (existingCommission) {
-      console.log("Commission already exists for booking:", bookingId);
-      return { error: "Commission already tracked for this booking", data: null };
+      console.log(`Commission already exists for booking ${bookingId}:`, {
+        commissionId: existingCommission.id,
+        affiliateId: existingCommission.affiliate_id,
+        amount: existingCommission.amount,
+        status: existingCommission.status
+      });
+      return { error: null, data: existingCommission }; // Return existing commission, not an error
     }
 
     // Get booking details with payment information
@@ -589,7 +595,7 @@ export async function trackAffiliateCommission(bookingId: string) {
       return { error: null, data: null }; // Not an error, just no affiliate
     }
 
-    // Create commission record
+    // Create commission record with proper error handling for unique constraint
     const { data: commission, error: commissionError } = await supabase
       .from("affiliate_commissions")
       .insert({
@@ -603,6 +609,20 @@ export async function trackAffiliateCommission(bookingId: string) {
       .single();
 
     if (commissionError) {
+      // Check if it's a unique constraint violation (duplicate key error)
+      if (commissionError.code === '23505') {
+        console.log(`Race condition detected - commission already created for booking ${bookingId}`);
+        
+        // Fetch and return the existing commission
+        const { data: existingCommission } = await supabase
+          .from("affiliate_commissions")
+          .select("*")
+          .eq("booking_id", bookingId)
+          .single();
+        
+        return { error: null, data: existingCommission };
+      }
+      
       console.error("Error creating commission record:", commissionError);
       return { error: "Failed to track commission", data: null };
     }

@@ -672,7 +672,7 @@ CREATE TABLE IF NOT EXISTS public.affiliate_commissions (
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
 
     -- Link to the booking that generated this commission
-    booking_id uuid NOT NULL REFERENCES public.bookings(id) ON DELETE CASCADE,
+    booking_id uuid NOT NULL UNIQUE REFERENCES public.bookings(id) ON DELETE CASCADE,
     
     -- Link to the affiliate who earned this commission
     affiliate_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
@@ -690,7 +690,10 @@ CREATE TABLE IF NOT EXISTS public.affiliate_commissions (
     paid_at timestamp with time zone,
     
     -- Additional metadata
-    notes text
+    notes text,
+    
+    -- Ensure only one commission per booking (prevents duplicate payouts)
+    CONSTRAINT affiliate_commissions_booking_affiliate_unique UNIQUE (booking_id, affiliate_id)
 );
 
 -- ================== TRIGGERS AND FUNCTIONS ==================

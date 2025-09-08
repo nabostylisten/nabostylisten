@@ -1122,7 +1122,8 @@ export function ServiceForm({
                       Publiser tjenesten
                     </FormLabel>
                     <FormDescription>
-                      Kun publiserte tjenester er synlige for kunder. Du kan endre dette senere.
+                      Kun publiserte tjenester er synlige for kunder. Du kan
+                      endre dette senere.
                     </FormDescription>
                   </div>
                   <FormControl>

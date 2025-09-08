@@ -9,6 +9,7 @@ import {
   ChevronUp,
   X,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,8 @@ import {
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getServiceCategories } from "@/server/service.actions";
 
 type ServiceCategory = {
   id: string;
@@ -39,7 +42,6 @@ type ServiceCategory = {
 interface ServiceCategoryComboboxProps {
   selectedCategories: string[];
   onSelectedCategoriesChange: (categories: string[]) => void;
-  categories: ServiceCategory[];
   placeholder?: string;
   disabled?: boolean;
 }
@@ -211,12 +213,18 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
 export function ServiceCategoryCombobox({
   selectedCategories,
   onSelectedCategoriesChange,
-  categories,
   placeholder = "Velg kategorier...",
   disabled = false,
 }: ServiceCategoryComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
+
+  // Fetch categories
+  const { data: categories = [], isLoading: isCategoriesLoading } = useQuery({
+    queryKey: ["service-categories"],
+    queryFn: () => getServiceCategories(),
+    select: (data) => data?.data || [],
+  });
 
   const categoryTree = React.useMemo(
     () => buildCategoryTree(categories),
@@ -275,6 +283,11 @@ export function ServiceCategoryCombobox({
         ? selectedCategoryNames[0]
         : `${selectedCategoryNames.length} kategorier valgt`
       : placeholder;
+
+  // Show loading skeleton if categories are still loading
+  if (isCategoriesLoading) {
+    return <Skeleton className="h-10 w-full" />;
+  }
 
   return (
     <div className="space-y-2">

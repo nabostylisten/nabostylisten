@@ -24,13 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Plus,
-  Scissors,
-  Search,
-  Filter,
-  CreditCard,
-} from "lucide-react";
+import { Plus, Scissors, Search, Filter, CreditCard } from "lucide-react";
 import {
   Pagination,
   PaginationContent,
@@ -46,7 +40,6 @@ import { StylistServiceCard } from "@/components/stylist-service-card";
 import {
   deleteService,
   getFilteredStylistServices,
-  getServiceCategories,
 } from "@/server/service.actions";
 import { getCurrentUserStripeStatus } from "@/server/stripe.actions";
 import { BlurFade } from "@/components/magicui/blur-fade";
@@ -145,12 +138,6 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   const [maxPrice, setMaxPrice] = React.useState(filters.maxPrice || "");
   const [currentPage, setCurrentPage] = React.useState(filters.page || 1);
 
-  // Fetch categories
-  const { data: categoriesData } = useQuery({
-    queryKey: ["service-categories"],
-    queryFn: () => getServiceCategories(),
-    select: (data) => data.data || [],
-  });
 
   // Fetch filtered services
   const {
@@ -167,8 +154,6 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   const services = servicesResult?.data || [];
   const totalPages = servicesResult?.totalPages || 0;
   const totalCount = servicesResult?.count || 0;
-
-  console.log(services);
 
   // Delete service mutation
   const deleteMutation = useMutation({
@@ -531,7 +516,6 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
                 <ServiceCategoryCombobox
                   selectedCategories={selectedCategories}
                   onSelectedCategoriesChange={setSelectedCategories}
-                  categories={categoriesData || []}
                   placeholder="Velg kategorier..."
                 />
               </div>

@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -81,6 +81,7 @@ export function ServiceCategoryForm({
   category,
   onSuccess,
 }: ServiceCategoryFormProps) {
+  const queryClient = useQueryClient();
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categoryFormSchema),
     defaultValues: {
@@ -92,7 +93,7 @@ export function ServiceCategoryForm({
 
   // Fetch all categories for parent selection
   const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
-    queryKey: ["all-service-categories"],
+    queryKey: ["service-categories"],
     queryFn: async () => {
       const result = await getAllServiceCategories();
       if (result.error) {
@@ -145,6 +146,8 @@ export function ServiceCategoryForm({
       toast.success("Kategori opprettet!");
       form.reset();
       onOpenChange(false);
+      // Invalidate both queries to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["service-categories"] });
       onSuccess?.();
     },
     onError: (error) => {
@@ -172,6 +175,8 @@ export function ServiceCategoryForm({
     onSuccess: () => {
       toast.success("Kategori oppdatert!");
       onOpenChange(false);
+      // Invalidate both queries to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["service-categories"] });
       onSuccess?.();
     },
     onError: (error) => {

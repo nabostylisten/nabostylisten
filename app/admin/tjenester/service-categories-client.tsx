@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,7 +26,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { ServiceCategoryForm } from "@/components/service-category-form";
-import { deleteServiceCategory } from "@/server/service-category.actions";
+import { deleteServiceCategory, getAllServiceCategories } from "@/server/service-category.actions";
 import type { Database } from "@/types/database.types";
 
 type ServiceCategory =
@@ -34,7 +35,7 @@ type ServiceCategory =
 type CategoryWithChildren = ServiceCategory & { children: ServiceCategory[] };
 
 interface ServiceCategoriesClientProps {
-  categories: ServiceCategory[];
+  // No props needed anymore since we're fetching client-side
 }
 
 // Helper function to build nested category structure
@@ -166,9 +167,8 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
   );
 };
 
-export function ServiceCategoriesClient({
-  categories,
-}: ServiceCategoriesClientProps) {
+export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
+  const queryClient = useQueryClient();
   const [categoryFormOpen, setCategoryFormOpen] = React.useState(false);
   const [categoryFormMode, setCategoryFormMode] = React.useState<
     "create" | "edit"
@@ -183,6 +183,20 @@ export function ServiceCategoriesClient({
   const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
     new Set()
   );
+
+  // Fetch categories with TanStack Query
+  const { data: categories = [], isLoading, error } = useQuery({
+    queryKey: ["service-categories"],
+    queryFn: async () => {
+      const result = await getAllServiceCategories();
+      if (result.error) {
+        throw new Error(
+          typeof result.error === "string" ? result.error : result.error.message
+        );
+      }
+      return result.data || [];
+    },
+  });
 
   const categoryTree = React.useMemo(
     () => buildCategoryTree(categories),
@@ -217,8 +231,8 @@ export function ServiceCategoriesClient({
       toast.success(message);
       setDeleteDialogOpen(false);
       setCategoryToDelete(undefined);
-      // Refresh the page to show updated data
-      window.location.reload();
+      // Invalidate the query to refetch the updated data
+      queryClient.invalidateQueries({ queryKey: ["service-categories"] });
     },
     onError: (error) => {
       toast.error(`Feil ved sletting: ${error.message}`);
@@ -259,8 +273,8 @@ export function ServiceCategoriesClient({
   };
 
   const handleFormSuccess = () => {
-    // Refresh the page to show updated data
-    window.location.reload();
+    // Invalidate the query to refetch the updated data
+    queryClient.invalidateQueries({ queryKey: ["service-categories"] });
   };
 
   const expandAll = () => {
@@ -307,7 +321,58 @@ export function ServiceCategoriesClient({
         </div>
 
         {/* Categories display */}
-        {categoryTree.length > 0 ? (
+        {error ? (
+          // Error state with red card
+          <Card className="border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-950/30">
+            <CardContent className="flex flex-col items-center justify-center py-12">
+              <AlertTriangle className="w-16 h-16 text-red-500 dark:text-red-400 mb-4" />
+              <h3 className="text-lg font-semibold mb-2 text-red-800 dark:text-red-200">
+                Kunne ikke laste kategorier
+              </h3>
+              <p className="text-red-700 dark:text-red-300 text-center mb-4 max-w-md">
+                Det oppstod en feil ved lasting av tjenestekategorier. Vennligst prøv på nytt.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20"
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ["service-categories"] })}
+                >
+                  Prøv på nytt
+                </Button>
+                <Button
+                  onClick={handleCreateCategory}
+                  className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-800"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Opprett kategori likevel
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : isLoading ? (
+          // Loading skeleton matching the category layout
+          <div className="space-y-2">
+            {[1, 2, 3, 4, 5].map((index) => (
+              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                <div className="flex items-center gap-3 flex-1">
+                  <Skeleton className="h-6 w-6" />
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-32" />
+                      {index % 2 === 0 && <Skeleton className="h-4 w-24" />}
+                    </div>
+                    {index % 3 === 0 && <Skeleton className="h-4 w-48 mt-1" />}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Skeleton className="h-8 w-8" />
+                  <Skeleton className="h-8 w-8" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : categoryTree.length > 0 ? (
           <div className="space-y-2">
             {categoryTree.map((category) => (
               <CategoryItem

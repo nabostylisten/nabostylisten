@@ -28,7 +28,10 @@ import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingActionsDropdown } from "./booking-actions-dropdown";
 import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { cn } from "@/lib/utils";
-import { BookingPricingDisplay, DiscountInfoDisplay } from "@/lib/booking-pricing-display";
+import {
+  BookingPricingDisplay,
+  DiscountInfoDisplay,
+} from "@/lib/booking-pricing-display";
 
 // Infer the booking type from the server action return type
 type GetUserBookingsResult = Awaited<ReturnType<typeof getUserBookings>>;
@@ -64,7 +67,7 @@ export function BookingCard({
   // Fetch address details if booking has an address_id
   const { data: addressData, isLoading: addressLoading } = useQuery({
     queryKey: ["address", booking.address_id],
-    queryFn: () => booking.address_id ? getAddress(booking.address_id) : null,
+    queryFn: () => (booking.address_id ? getAddress(booking.address_id) : null),
     enabled: !!booking.address_id,
   });
 
@@ -85,19 +88,28 @@ export function BookingCard({
         );
       case "confirmed":
         return (
-          <Badge variant="outline" className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-800">
+          <Badge
+            variant="outline"
+            className="text-green-600 border-green-200 dark:text-green-400 dark:border-green-800"
+          >
             Bekreftet
           </Badge>
         );
       case "cancelled":
         return (
-          <Badge variant="outline" className="text-red-600 border-red-200 dark:text-red-400 dark:border-red-800">
+          <Badge
+            variant="outline"
+            className="text-red-600 border-red-200 dark:text-red-400 dark:border-red-800"
+          >
             Avlyst
           </Badge>
         );
       case "completed":
         return (
-          <Badge variant="outline" className="text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800">
+          <Badge
+            variant="outline"
+            className="text-blue-600 border-blue-200 dark:text-blue-400 dark:border-blue-800"
+          >
             Fullført
           </Badge>
         );
@@ -159,7 +171,9 @@ export function BookingCard({
               <span>
                 {(() => {
                   try {
-                    return format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
+                    return format(startTime, "EEEE d. MMMM yyyy", {
+                      locale: nb,
+                    });
                   } catch (error) {
                     return "Ugyldig dato";
                   }
@@ -184,62 +198,67 @@ export function BookingCard({
           </div>
 
           {/* Trial Session Info */}
-          {booking.trial_booking && Array.isArray(booking.trial_booking) && booking.trial_booking.length > 0 && (
-            <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-              <div className="flex items-center gap-2 text-sm text-purple-800 font-medium mb-1">
-                <Star className="w-4 h-4" />
-                <span>Prøveseksjon planlagt</span>
+          {booking.trial_booking &&
+            Array.isArray(booking.trial_booking) &&
+            booking.trial_booking.length > 0 && (
+              <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-2 text-sm text-purple-800 font-medium mb-1">
+                  <Star className="w-4 h-4" />
+                  <span>Prøveseksjon planlagt</span>
+                </div>
+                <div className="text-sm text-purple-700">
+                  {(() => {
+                    try {
+                      return format(
+                        new Date(booking.trial_booking[0].start_time),
+                        "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                        { locale: nb }
+                      );
+                    } catch (error) {
+                      return "Ugyldig dato";
+                    }
+                  })()}
+                </div>
+                <Link
+                  href={`/bookinger/${booking.trial_booking[0].id}`}
+                  className="text-xs text-purple-600 hover:text-purple-800 underline mt-1 inline-block"
+                >
+                  Se prøveseksjon detaljer
+                </Link>
               </div>
-              <div className="text-sm text-purple-700">
-                {(() => {
-                  try {
-                    return format(
-                      new Date(booking.trial_booking[0].start_time),
-                      "EEEE d. MMMM yyyy 'kl.' HH:mm",
-                      { locale: nb }
-                    );
-                  } catch (error) {
-                    return "Ugyldig dato";
-                  }
-                })()}
-              </div>
-              <Link
-                href={`/bookinger/${booking.trial_booking[0].id}`}
-                className="text-xs text-purple-600 hover:text-purple-800 underline mt-1 inline-block"
-              >
-                Se prøveseksjon detaljer
-              </Link>
-            </div>
-          )}
+            )}
 
           {/* Main Booking Link for Trial Sessions */}
-          {booking.is_trial_session && booking.main_booking && Array.isArray(booking.main_booking) && booking.main_booking.length > 0 && (
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-              <div className="flex items-center gap-2 text-sm text-blue-800 font-medium mb-1">
-                <Calendar className="w-4 h-4" />
-                <span>Hovedseksjon planlagt</span>
+          {booking.is_trial_session &&
+            booking.main_booking &&
+            Array.isArray(booking.main_booking) &&
+            booking.main_booking.length > 0 && (
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-2 text-sm text-blue-800 font-medium mb-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Hovedseksjon planlagt</span>
+                </div>
+                <div className="text-sm text-blue-700">
+                  {(() => {
+                    try {
+                      return format(
+                        new Date(booking.main_booking[0].start_time),
+                        "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                        { locale: nb }
+                      );
+                    } catch (error) {
+                      return "Ugyldig dato";
+                    }
+                  })()}
+                </div>
+                <Link
+                  href={`/bookinger/${booking.main_booking[0].id}`}
+                  className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 inline-block"
+                >
+                  Se hovedseksjon detaljer
+                </Link>
               </div>
-              <div className="text-sm text-blue-700">
-                {(() => {
-                  try {
-                    return format(
-                      new Date(booking.main_booking[0].start_time),
-                      "EEEE d. MMMM yyyy 'kl.' HH:mm",
-                      { locale: nb }
-                    );
-                  } catch (error) {
-                    return "Ugyldig dato";
-                  }
-                })()}
-              </div>
-              <Link
-                href={`/bookinger/${booking.main_booking[0].id}`}
-                className="text-xs text-blue-600 hover:text-blue-800 underline mt-1 inline-block"
-              >
-                Se hovedseksjon detaljer
-              </Link>
-            </div>
-          )}
+            )}
 
           {/* Location */}
           {booking.address_id && (
@@ -254,7 +273,9 @@ export function BookingCard({
                 ) : address ? (
                   <div className="text-muted-foreground text-xs">
                     <p>{address.street_address}</p>
-                    <p>{address.postal_code} {address.city}</p>
+                    <p>
+                      {address.postal_code} {address.city}
+                    </p>
                   </div>
                 ) : null}
               </div>
@@ -294,14 +315,18 @@ export function BookingCard({
           {/* Discount Applied */}
           {booking.discount && booking.discount_applied > 0 && (
             <div className="flex items-center gap-2">
-              <CreditCard className="w-4 h-4 text-green-600" />
+              <CreditCard className="w-4 h-4 text-green-600 dark:text-green-400" />
               <DiscountInfoDisplay
                 booking={{
                   total_price: booking.total_price,
                   discount_applied: booking.discount_applied,
                   is_trial_session: booking.is_trial_session,
                 }}
-                payment={Array.isArray(booking.payments) ? booking.payments[0] : booking.payments}
+                payment={
+                  Array.isArray(booking.payments)
+                    ? booking.payments[0]
+                    : booking.payments
+                }
                 discount={booking.discount}
               />
             </div>
@@ -316,7 +341,11 @@ export function BookingCard({
                   discount_applied: booking.discount_applied,
                   is_trial_session: booking.is_trial_session,
                 }}
-                payment={Array.isArray(booking.payments) ? booking.payments[0] : booking.payments}
+                payment={
+                  Array.isArray(booking.payments)
+                    ? booking.payments[0]
+                    : booking.payments
+                }
                 discount={booking.discount}
                 options={{ showDiscountCode: false }}
               />

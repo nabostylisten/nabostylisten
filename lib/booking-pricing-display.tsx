@@ -31,10 +31,11 @@ export function getPricingBreakdown(
   discount?: DiscountData | null
 ) {
   // Use payment data if available (more accurate), otherwise use booking data
-  const originalAmount = payment?.original_amount ?? booking.total_price + booking.discount_applied;
+  const originalAmount =
+    payment?.original_amount ?? booking.total_price + booking.discount_applied;
   const discountAmount = payment?.discount_amount ?? booking.discount_applied;
   const finalAmount = payment?.final_amount ?? booking.total_price;
-  
+
   return {
     originalAmount,
     discountAmount,
@@ -58,7 +59,8 @@ export function BookingPricingDisplay({
   options?: PricingDisplayOptions;
 }) {
   const breakdown = getPricingBreakdown(booking, payment, discount);
-  const { showDiscountCode = true, isTrialSession = breakdown.isTrialSession } = options;
+  const { showDiscountCode = true, isTrialSession = breakdown.isTrialSession } =
+    options;
 
   // Special handling for trial sessions
   if (isTrialSession) {
@@ -70,7 +72,9 @@ export function BookingPricingDisplay({
             <span className="text-xs ml-1">(prøvepris)</span>
           </>
         ) : (
-          <span className="text-green-600">Gratis prøvetime</span>
+          <span className="text-green-600 dark:text-green-400">
+            Gratis prøvetime
+          </span>
         )}
       </span>
     );
@@ -83,7 +87,7 @@ export function BookingPricingDisplay({
         <span className="text-sm text-muted-foreground line-through">
           {formatCurrency(breakdown.originalAmount)}
         </span>
-        <span className="text-green-600">
+        <span className="text-green-600 dark:text-green-400">
           {formatCurrency(breakdown.finalAmount)}
           <span className="text-xs ml-1">
             (-{formatCurrency(breakdown.discountAmount)})
@@ -119,9 +123,10 @@ export function DiscountInfoDisplay({
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm text-green-600">
+    <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
       <span>
-        Rabatt anvendt ({breakdown.discountCode}): -{formatCurrency(breakdown.discountAmount)}
+        Rabatt anvendt ({breakdown.discountCode}): -
+        {formatCurrency(breakdown.discountAmount)}
       </span>
     </div>
   );

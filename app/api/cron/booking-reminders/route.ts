@@ -16,10 +16,10 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Calculate the target date range (20-28 hours from now)
+    // Calculate the target date range (22-27 hours from now)
     const now = new Date();
-    const startTime = addHours(now, 20); // 20 hours from now
-    const endTime = addHours(now, 28); // 28 hours from now
+    const startTime = addHours(now, 22); // 22 hours from now
+    const endTime = addHours(now, 27); // 27 hours from now
 
     console.log(
       `[BOOKING_REMINDERS] Checking bookings between ${startTime.toISOString()} and ${endTime.toISOString()}`,

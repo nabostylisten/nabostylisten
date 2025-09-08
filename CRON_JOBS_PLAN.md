@@ -6,16 +6,16 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 
 ## 📊 Phase 1: Core Business Operations
 
-### ⚠️ Vercel Hobby Plan Limitations
+### ✅ Vercel Pro Plan Configuration
 
-**Constraint**: Hobby accounts are limited to daily cron jobs (cannot run more than once per day).
+**Capability**: Pro accounts support unlimited cron invocations with up to 40 cron jobs.
 
-**Critical Jobs Affected**: Payment processing and payout processing originally required more frequent execution for complete coverage and timely payouts.
+**Optimized Configuration**: Leveraging frequent execution for better user experience:
 
-**Solution Implemented**: Multiple daily runs within the daily limit:
-- **Payment Processing**: 2x daily (6 AM & 6 PM) with 12-hour window coverage
-- **Payout Processing**: 3x daily (9 AM, 3 PM, 9 PM) with 8-hour window coverage
-- **Safety Measures**: Expanded time windows with existing duplicate prevention checks ensure no missed transactions
+- **Payment Processing**: Every 2 hours with 3-hour window coverage (24-27 hours before appointment)
+- **Payout Processing**: Every hour with 2-hour window coverage (1-3 hours after completion)
+- **Booking Reminders**: Every 4 hours with 5-hour window coverage (22-27 hours before appointment)
+- **Safety Measures**: Smaller, overlapping windows with duplicate prevention ensure precise timing and no missed transactions
 
 ### 1. Weekly Analytics Report
 
@@ -40,18 +40,17 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 
 ### 2. Booking Reminders & Notifications
 
-- **Schedule**: `0 10 * * *` (Daily at 10 AM UTC)
+- **Schedule**: `0 */4 * * *` (Every 4 hours)
 - **Path**: `/api/cron/booking-reminders`
 - **Target**: Customers and stylists with upcoming bookings
 - **Priority**: High
 
 **Functions**:
 
-- 24-hour advance reminders to customers
-- 2-hour advance reminders to both parties
-- Payment capture notifications (24 hours before appointment)
-- Follow-up for incomplete booking processes
-- Stylist availability confirmations
+- Approximately 24-hour advance reminders to customers (22-27 hour window)
+- Better timezone coverage with 4-hour intervals
+- Payment capture coordination
+- Consistent reminder timing across different booking times
 
 ### 3. Review Request Automation
 
@@ -69,14 +68,14 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 
 ### 4. Payment Processing
 
-- **Schedule**: `0 6,18 * * *` (Daily at 6 AM & 6 PM UTC - 12h intervals)
+- **Schedule**: `0 */2 * * *` (Every 2 hours)
 - **Path**: `/api/cron/payment-processing`
 - **Target**: System-wide payment operations
 - **Priority**: Critical
 
 **Tasks**:
 
-- Capture payments 24-36 hours before appointments (expanded 12-hour window)
+- Capture payments 24-27 hours before appointments (3-hour window for precision)
 - Send payment confirmation emails to customers and stylists
 - Handle failed payment retries with exponential backoff
 - Generate payment failure alerts for admin team
@@ -84,14 +83,14 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 
 ### 4b. Payout Processing
 
-- **Schedule**: `0 9,15,21 * * *` (Daily at 9 AM, 3 PM & 9 PM UTC - 8h intervals)
+- **Schedule**: `0 * * * *` (Every hour)
 - **Path**: `/api/cron/payout-processing`
 - **Target**: Stylist payout operations
 - **Priority**: Critical
 
 **Tasks**:
 
-- Process payouts for bookings completed 1-9 hours ago (expanded 8-hour window)
+- Process payouts for bookings completed 1-3 hours ago (2-hour window for fast payouts)
 - Initiate stylist payouts via Stripe Connect
 - Send payout confirmation emails to stylists
 - Send service completion notifications to customers
@@ -101,7 +100,7 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 
 ### 5. Abandoned Cart Recovery
 
-- **Schedule**: `0 11,15,19 * * *` (3 times daily: 11 AM, 3 PM, 7 PM UTC)
+- **Schedule**: `0 */6 * * *` (Every 6 hours)
 - **Path**: `/api/cron/abandoned-cart-recovery`
 - **Target**: Users with incomplete booking flows
 - **Priority**: Medium
@@ -178,7 +177,7 @@ This document outlines the comprehensive cron job strategy for the Nabostylisten
 
 ### 10. System Health Monitoring
 
-- **Schedule**: `*/30 * * * *` (Every 30 minutes)
+- **Schedule**: `0,30 * * * *` (Every 30 minutes)
 - **Path**: `/api/cron/system-health-check`
 - **Target**: Development and admin team
 - **Priority**: High

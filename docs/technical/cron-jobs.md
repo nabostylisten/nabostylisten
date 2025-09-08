@@ -92,8 +92,8 @@ Vercel supports standard cron expression format with UTC timezone:
 - All times are in UTC (no timezone configuration)
 - No support for MON, SUN, JAN, DEC aliases
 - Cannot specify both day of month and day of week
-- **Hobby accounts limited to daily cron jobs** - Each job can run at most once per day
-- Pro accounts support sub-daily frequencies (hourly, every few minutes, etc.)
+- **Pro Plan Configuration**: Unlimited cron invocations with up to 40 cron jobs
+- Optimized for frequent execution with smaller time windows
 
 ## Configuration
 
@@ -161,20 +161,20 @@ export async function GET(request: NextRequest) {
 ### 2. Payment Processing
 
 **Path**: `/api/cron/payment-processing`  
-**Schedule**: `0 6,18 * * *` (Daily at 6 AM & 6 PM UTC - 12h intervals)  
-**Purpose**: Capture payments 24-36 hours before bookings and send confirmation emails
+**Schedule**: `0 */2 * * *` (Every 2 hours)  
+**Purpose**: Capture payments 24-27 hours before bookings and send confirmation emails
 
 ### 3. Payout Processing
 
 **Path**: `/api/cron/payout-processing`  
-**Schedule**: `0 9,15,21 * * *` (Daily at 9 AM, 3 PM & 9 PM UTC - 8h intervals)  
-**Purpose**: Process payouts to stylists 1-9 hours after service completion and send notifications
+**Schedule**: `0 * * * *` (Every hour)  
+**Purpose**: Process payouts to stylists 1-3 hours after service completion and send notifications
 
 ### 4. Booking Reminders
 
 **Path**: `/api/cron/booking-reminders`  
-**Schedule**: `0 10 * * *` (Daily at 10 AM UTC)  
-**Purpose**: Send booking reminders to customers 20-28 hours before appointments
+**Schedule**: `0 */4 * * *` (Every 4 hours)  
+**Purpose**: Send booking reminders to customers 22-27 hours before appointments
 
 ### 5. Weekly Analytics Report
 
@@ -417,34 +417,35 @@ When automated recovery fails:
 
 ### Payment Processing Details
 
-#### Multiple Daily Runs Strategy
+#### Optimized Pro Plan Configuration
 
-Due to Vercel hobby plan limitations, payment processing uses multiple daily runs with expanded windows:
+With Vercel Pro plan, payment processing uses frequent runs with precise windows:
 
-- **Window Size**: Checks bookings starting 24-36 hours from now (12-hour window)
-- **Frequency**: 2x daily (6 AM & 6 PM) - 12-hour intervals
+- **Window Size**: Checks bookings starting 24-27 hours from now (3-hour window)
+- **Frequency**: Every 2 hours
 - **Duplicate Prevention**: Uses `payment_captured_at` field to track processed payments
 
 **Example Timeline:**
 
 ```
-Monday 06:00 - Checks bookings Tuesday 06:00-18:00 (12-hour window)
-Monday 18:00 - Checks bookings Tuesday 18:00-06:00 (12-hour window)
-Tuesday 06:00 - Checks bookings Wednesday 06:00-18:00 (12-hour window)
+Monday 00:00 - Checks bookings Tuesday 00:00-03:00 (3-hour window)
+Monday 02:00 - Checks bookings Tuesday 02:00-05:00 (3-hour window)
+Monday 04:00 - Checks bookings Tuesday 04:00-07:00 (3-hour window)
+... continues every 2 hours for precise 24-hour capture timing
 ```
 
 **Safety Measures:**
 
 - Overlapping windows ensure complete coverage
 - `payment_captured_at` timestamp prevents duplicate processing
-- Expanded 12-hour window accommodates reduced frequency
+- 3-hour window provides precise capture timing closer to exactly 24 hours before appointment
 
 #### Technical Implementation
 
 ```typescript
-// Calculate 12-hour window for 12-hour intervals
+// Calculate 3-hour window for 2-hour intervals
 const windowStart = addHours(now, 24); // 24 hours from now
-const windowEnd = addHours(now, 36); // 36 hours from now (12-hour window)
+const windowEnd = addHours(now, 27); // 27 hours from now (3-hour window)
 
 // Query with duplicate prevention
 const { data: bookings } = await supabase
@@ -458,17 +459,17 @@ const { data: bookings } = await supabase
 
 ### Payout Processing Details
 
-#### Multiple Daily Runs for Timely Payouts
+#### Hourly Processing for Fast Payouts
 
-The payout processing cron uses 3x daily runs for better stylist experience:
+The payout processing cron runs hourly for optimal stylist experience:
 
-- **Window**: Bookings that ended 1-9 hours ago (8-hour window)
-- **Frequency**: 3x daily (9 AM, 3 PM & 9 PM) - 8-hour intervals
+- **Window**: Bookings that ended 1-3 hours ago (2-hour window)
+- **Frequency**: Every hour
 - **Status Check**: Only processes bookings with status "completed"
 - **Prerequisites**: Payment must have been captured (`payment_captured_at` not null)
 - **Tracking**: Uses `payout_processed_at` to prevent duplicate payouts
 
-**Rationale**: More frequent payouts improve stylist satisfaction while staying within Vercel's daily limits.
+**Rationale**: Hourly payouts provide near real-time cash flow for stylists, maximizing satisfaction.
 
 #### Notification Flow
 
@@ -533,48 +534,50 @@ All cron job executions should log:
 - Any errors encountered
 - User agent and IP (from headers)
 
-## Vercel Hobby Plan Adaptations
+## Vercel Pro Plan Configuration
 
-### Challenge
+### Optimization Strategy
 
-Vercel hobby accounts limit cron jobs to run at most once per day, which posed challenges for:
+With Vercel Pro plan's unlimited cron invocations, we've optimized for:
 
-- **Payment processing**: Originally required every 6 hours for complete coverage
-- **Payout processing**: Originally required hourly execution for timely payouts
+- **Payment processing**: Every 2 hours for precise 24-hour capture timing
+- **Payout processing**: Every hour for near real-time stylist payouts
+- **Booking reminders**: Every 4 hours for better timezone coverage
 
-### Solution
-
-**Multiple Daily Runs Strategy**: Use multiple time slots within the daily limit:
+### Current Configuration
 
 ```json
 {
   "crons": [
     {
       "path": "/api/cron/payment-processing",
-      "schedule": "0 6,18 * * *" // 2x daily: 6 AM & 6 PM
+      "schedule": "0 */2 * * *" // Every 2 hours
     },
     {
       "path": "/api/cron/payout-processing",
-      "schedule": "0 9,15,21 * * *" // 3x daily: 9 AM, 3 PM, 9 PM
+      "schedule": "0 * * * *" // Every hour
+    },
+    {
+      "path": "/api/cron/booking-reminders",
+      "schedule": "0 */4 * * *" // Every 4 hours
     }
   ]
 }
 ```
 
+### Benefits
+
+- **Precise Timing**: Smaller windows mean actions happen closer to intended times
+- **Better UX**: Faster payouts and more timely notifications
+- **Lower Risk**: Smaller batches reduce impact of any failures
+- **Scalability**: Configuration ready for platform growth
+
 ### Safety Guarantees
 
-- **Expanded Windows**: Larger time windows ensure no gaps between runs
+- **Overlapping Windows**: Ensure complete coverage with no gaps
 - **Duplicate Prevention**: Existing timestamp checks prevent double-processing
-- **Complete Coverage**: Overlapping windows guarantee no missed transactions
-- **Business Continuity**: Critical payment flows remain uninterrupted
-
-### Alternative Solutions Considered
-
-1. **Single Daily Run**: Too risky for critical payment operations
-2. **Webhook-Based Processing**: Would require significant architecture changes
-3. **Queue-Based System**: Complex implementation for current needs
-4. **Pro Plan Upgrade**: Multiple daily runs provide sufficient coverage for current scale
+- **Graceful Degradation**: Can easily reduce frequency if needed
 
 ## Summary
 
-Cron jobs are essential for maintaining data hygiene, system performance, and automated workflows in Nabostylisten. By adapting to Vercel's hobby plan constraints through multiple daily runs and expanded time windows, we maintain reliable, secure, and efficient execution of scheduled tasks while ensuring system stability and data integrity. The solution preserves all existing safety mechanisms while working within platform limitations.
+Cron jobs are essential for maintaining data hygiene, system performance, and automated workflows in Nabostylisten. With Vercel Pro plan's unlimited cron invocations, we've optimized execution frequency to provide better user experience through precise payment capture timing, rapid stylist payouts, and timely customer notifications. The configuration maintains all safety mechanisms while maximizing the benefits of the Pro plan capabilities.

@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
     const now = new Date();
 
     // Find completed bookings that need payout processing
-    // Process bookings that ended 1-9 hours ago to ensure no gaps with 8-hour run intervals
-    const windowStart = subHours(now, 9);
+    // Process bookings that ended 1-3 hours ago with hourly intervals for fast payouts
+    const windowStart = subHours(now, 3);
     const windowEnd = subHours(now, 1);
 
     console.log(

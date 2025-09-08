@@ -12,18 +12,18 @@ export async function POST(request: NextRequest) {
 
     const supabase = await createClient();
 
-    // Calculate the target date range with a 12-hour window
-    // We check for bookings 24-36 hours from now to ensure no gaps with 12-hour run intervals
+    // Calculate the target date range with a 3-hour window
+    // We check for bookings 24-27 hours from now with 2-hour run intervals
     const now = new Date();
     const windowStart = addHours(now, 24); // 24 hours from now
-    const windowEnd = addHours(now, 36); // 36 hours from now (12-hour window)
+    const windowEnd = addHours(now, 27); // 27 hours from now (3-hour window)
 
     console.log(
       `[PAYMENT_PROCESSING] Processing payments for bookings between ${windowStart.toISOString()} and ${windowEnd.toISOString()}`,
     );
 
     // Query confirmed bookings that need payment processing
-    // Using a 6-hour window to ensure no bookings are missed
+    // Using a 3-hour window with 2-hour intervals ensures complete coverage
     // For rescheduled bookings, we use the current start_time (not the original rescheduled_from time)
     const { data: bookings, error: bookingsError } = await supabase
       .from("bookings")

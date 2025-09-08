@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react'
 interface UseRealtimeChatProps {
   roomName: string
   username: string
+  userId: string // Add userId to properly track message ownership
   onReadStatusChange?: (data: { chat_id: string; message_id: string; is_read: boolean }) => void
 }
 
@@ -14,6 +15,7 @@ export interface ChatMessage {
   content: string
   user: {
     name: string
+    senderId: string // Sender ID for message ownership comparison
   }
   createdAt: string
   images?: Array<{
@@ -25,7 +27,7 @@ export interface ChatMessage {
 
 const EVENT_MESSAGE_TYPE = 'message'
 
-export function useRealtimeChat({ roomName, username, onReadStatusChange }: UseRealtimeChatProps) {
+export function useRealtimeChat({ roomName, username, userId, onReadStatusChange }: UseRealtimeChatProps) {
   const supabase = createClient()
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [channel, setChannel] = useState<ReturnType<typeof supabase.channel> | null>(null)
@@ -54,7 +56,7 @@ export function useRealtimeChat({ roomName, username, onReadStatusChange }: UseR
     return () => {
       supabase.removeChannel(newChannel)
     }
-  }, [roomName, username, onReadStatusChange, supabase])
+  }, [roomName, username, userId, onReadStatusChange, supabase])
 
   const sendMessage = useCallback(
     async (content: string) => {
@@ -65,6 +67,7 @@ export function useRealtimeChat({ roomName, username, onReadStatusChange }: UseR
         content,
         user: {
           name: username,
+          senderId: userId,
         },
         createdAt: new Date().toISOString(),
       }
@@ -78,7 +81,7 @@ export function useRealtimeChat({ roomName, username, onReadStatusChange }: UseR
         payload: message,
       })
     },
-    [channel, isConnected, username]
+    [channel, isConnected, username, userId]
   )
 
   return { messages, sendMessage, isConnected }

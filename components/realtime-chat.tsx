@@ -13,6 +13,7 @@ import { UploadImagesDialog } from "@/components/chat/upload-images-dialog";
 interface RealtimeChatProps {
   roomName: string;
   username: string;
+  currentUserId: string; // Required for proper message ownership comparison
   chatId?: string;
   onMessage?: (messages: ChatMessage[]) => void;
   messages?: ChatMessage[];
@@ -38,6 +39,7 @@ export const RealtimeChat = ({
   onMessage,
   messages: initialMessages = [],
   onReadStatusChange,
+  currentUserId,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
 
@@ -48,6 +50,7 @@ export const RealtimeChat = ({
   } = useRealtimeChat({
     roomName,
     username,
+    userId: currentUserId,
     onReadStatusChange,
   });
   const [newMessage, setNewMessage] = useState("");
@@ -103,6 +106,7 @@ export const RealtimeChat = ({
         content: "", // No text content for image-only messages
         user: {
           name: username,
+          senderId: currentUserId,
         },
         createdAt: new Date().toISOString(),
         images: uploadedImages,
@@ -114,7 +118,7 @@ export const RealtimeChat = ({
         onMessage(updatedMessages);
       }
     },
-    [isConnected, username, allMessages, onMessage]
+    [isConnected, username, currentUserId, allMessages, onMessage]
   );
 
   return (
@@ -132,6 +136,20 @@ export const RealtimeChat = ({
             const showHeader =
               !prevMessage || prevMessage.user.name !== message.user.name;
 
+            // Determine if message is from current user using senderId
+            const isOwnMessage = message.user.senderId === currentUserId;
+            
+            // Debug logging
+            console.log("[DEBUG] Message display:", {
+              messageId: message.id,
+              messageUserName: message.user.name,
+              messageSenderId: message.user.senderId,
+              currentUsername: username,
+              currentUserId,
+              isOwnMessage,
+              content: message.content?.substring(0, 30) + "..."
+            });
+
             return (
               <div
                 key={message.id}
@@ -139,7 +157,7 @@ export const RealtimeChat = ({
               >
                 <ChatMessageItem
                   message={message}
-                  isOwnMessage={message.user.name === username}
+                  isOwnMessage={isOwnMessage}
                   showHeader={showHeader}
                 />
               </div>

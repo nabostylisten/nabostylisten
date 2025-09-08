@@ -82,6 +82,10 @@ export function BookingChatContent({
       // Clear processed messages when initial messages change
       processedMessageIds.current.clear();
       
+      console.log("[DEBUG] Loading messages with images");
+      console.log("[DEBUG] Current user ID:", currentUserId);
+      console.log("[DEBUG] Current user name:", currentUserName);
+      
       const messagesWithImages = await Promise.all(
         initialMessages.map(async (msg) => {
           // Mark initial messages as processed
@@ -91,12 +95,29 @@ export function BookingChatContent({
           const imagesResult = await getChatMessageImages(msg.id);
           const images = imagesResult.error ? [] : imagesResult.data || [];
 
+          const isOwnMessage = msg.sender.id === currentUserId;
+          console.log("[DEBUG] Message:", {
+            id: msg.id,
+            senderId: msg.sender.id,
+            senderName: msg.sender.full_name,
+            isCurrentUser: isOwnMessage,
+            currentUserId,
+            currentUserName,
+            content: msg.content.substring(0, 50) + "..."
+          });
+
+          // IMPORTANT: Use the same username format for both loaded and new messages
+          // If the message is from current user, use currentUserName ("Kunde" or "Stylist")
+          // Otherwise use the sender's full name
+          const userName = isOwnMessage ? currentUserName : (msg.sender.full_name || "Ukjent bruker");
+
           return {
             id: msg.id,
             content: msg.content,
             createdAt: msg.created_at,
             user: {
-              name: msg.sender.full_name || "Ukjent bruker",
+              name: userName,
+              senderId: msg.sender.id, // Add sender ID for proper comparison
             },
             images: images.length > 0 ? images : undefined,
           };
@@ -330,6 +351,7 @@ export function BookingChatContent({
         <RealtimeChat
           roomName={`booking-${bookingId}`}
           username={currentUserName}
+          currentUserId={currentUserId}
           chatId={chatId}
           messages={convertedMessages}
           onMessage={handleMessage}

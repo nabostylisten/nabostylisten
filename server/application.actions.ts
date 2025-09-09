@@ -94,6 +94,70 @@ export async function uploadPortfolioImages(
 }
 
 /**
+ * Get current user's profile data for prepopulating the application form
+ */
+export async function getCurrentUserApplicationData() {
+    try {
+        const supabase = await createClient();
+        
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+            return { data: null, error: null }; // No user logged in
+        }
+        
+        // Get user's profile data
+        const { data: profile, error: profileError } = await supabase
+            .from("profiles")
+            .select("*")
+            .eq("id", user.id)
+            .single();
+        
+        if (profileError) {
+            console.error("Error fetching profile:", profileError);
+            return { data: null, error: null }; // Don't throw, just return null
+        }
+        
+        // Get user's primary address if it exists
+        const { data: address } = await supabase
+            .from("addresses")
+            .select("*")
+            .eq("user_id", user.id)
+            .eq("is_primary", true)
+            .single();
+        
+        // Prepare the data for the form
+        const formData = {
+            fullName: profile?.full_name || undefined,
+            email: profile?.email || user.email || undefined,
+            phoneNumber: profile?.phone_number || undefined,
+            address: address ? {
+                nickname: address.nickname || undefined,
+                streetAddress: address.street_address || undefined,
+                city: address.city || undefined,
+                postalCode: address.postal_code || undefined,
+                country: address.country || undefined,
+                countryCode: address.country_code || undefined,
+                entryInstructions: address.entry_instructions || undefined,
+                // Convert PostGIS point to [lng, lat] array if location exists
+                geometry: address.location ? undefined : undefined, // We'll handle this separately if needed
+            } : undefined,
+        };
+        
+        return { data: formData, error: null };
+    } catch (error) {
+        console.error("Error fetching current user data:", error);
+        return {
+            data: null,
+            error: error instanceof Error
+                ? error.message
+                : "En ukjent feil oppstod",
+        };
+    }
+}
+
+/**
  * Create a new stylist application
  */
 export async function createApplication(data: ApplicationFormData) {

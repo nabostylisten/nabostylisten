@@ -2,13 +2,14 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarIcon, Upload } from "lucide-react";
 import { format } from "date-fns";
 import imageCompression from "browser-image-compression";
+import { useAuth } from "@/hooks/use-auth";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ import { ApplicationAddressSection } from "@/components/addresses";
 import {
   createApplication,
   uploadPortfolioImages,
+  getCurrentUserApplicationData,
 } from "@/server/application.actions";
 import { cn } from "@/lib/utils";
 
@@ -139,6 +141,20 @@ export function StylistApplicationForm({
   const [portfolioImages, setPortfolioImages] = useState<File[]>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
 
+  const { user, profile } = useAuth();
+
+  // Fetch prepopulated data if user is authenticated and is a customer
+  const { data: prepopulatedData } = useQuery({
+    queryKey: ["application", "prepopulated", user?.id],
+    queryFn: async () => {
+      const result = await getCurrentUserApplicationData();
+      return result.data; // Extract the data from the result
+    },
+    enabled: !!user && profile?.role === "customer",
+  });
+
+  console.log(prepopulatedData);
+
   const form = useForm<ApplicationFormValues>({
     resolver: zodResolver(applicationFormSchema),
     defaultValues: {
@@ -148,6 +164,41 @@ export function StylistApplicationForm({
       },
     },
   });
+
+  // Update form values when prepopulated data is available
+  useEffect(() => {
+    if (prepopulatedData) {
+      // The prepopulatedData is the actual data, not wrapped in a data property
+      const data = prepopulatedData;
+
+      // Update form fields with prepopulated data
+      if (data.fullName) form.setValue("fullName", data.fullName);
+      if (data.email) form.setValue("email", data.email);
+      if (data.phoneNumber) form.setValue("phoneNumber", data.phoneNumber);
+
+      // Update address fields if available
+      if (data.address) {
+        if (data.address.nickname)
+          form.setValue("address.nickname", data.address.nickname);
+        if (data.address.streetAddress)
+          form.setValue("address.streetAddress", data.address.streetAddress);
+        if (data.address.city) form.setValue("address.city", data.address.city);
+        if (data.address.postalCode)
+          form.setValue("address.postalCode", data.address.postalCode);
+        if (data.address.country)
+          form.setValue("address.country", data.address.country);
+        if (data.address.countryCode)
+          form.setValue("address.countryCode", data.address.countryCode);
+        if (data.address.entryInstructions)
+          form.setValue(
+            "address.entryInstructions",
+            data.address.entryInstructions
+          );
+        if (data.address.geometry)
+          form.setValue("address.geometry", data.address.geometry);
+      }
+    }
+  }, [prepopulatedData, form]);
 
   const uploadImagesMutation = useMutation({
     mutationFn: ({
@@ -347,7 +398,6 @@ export function StylistApplicationForm({
                             disabled={(date) =>
                               date > new Date() || date < new Date("1950-01-01")
                             }
-                            initialFocus
                             captionLayout="dropdown"
                           />
                         </PopoverContent>

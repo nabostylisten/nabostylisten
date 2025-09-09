@@ -99,26 +99,26 @@ export async function uploadPortfolioImages(
 export async function getCurrentUserApplicationData() {
     try {
         const supabase = await createClient();
-        
+
         // Get current user
         const { data: { user } } = await supabase.auth.getUser();
-        
+
         if (!user) {
             return { data: null, error: null }; // No user logged in
         }
-        
+
         // Get user's profile data
         const { data: profile, error: profileError } = await supabase
             .from("profiles")
             .select("*")
             .eq("id", user.id)
             .single();
-        
+
         if (profileError) {
             console.error("Error fetching profile:", profileError);
             return { data: null, error: null }; // Don't throw, just return null
         }
-        
+
         // Get user's primary address if it exists
         const { data: address } = await supabase
             .from("addresses")
@@ -126,25 +126,27 @@ export async function getCurrentUserApplicationData() {
             .eq("user_id", user.id)
             .eq("is_primary", true)
             .single();
-        
+
         // Prepare the data for the form
         const formData = {
             fullName: profile?.full_name || undefined,
             email: profile?.email || user.email || undefined,
             phoneNumber: profile?.phone_number || undefined,
-            address: address ? {
-                nickname: address.nickname || undefined,
-                streetAddress: address.street_address || undefined,
-                city: address.city || undefined,
-                postalCode: address.postal_code || undefined,
-                country: address.country || undefined,
-                countryCode: address.country_code || undefined,
-                entryInstructions: address.entry_instructions || undefined,
-                // Convert PostGIS point to [lng, lat] array if location exists
-                geometry: address.location ? undefined : undefined, // We'll handle this separately if needed
-            } : undefined,
+            address: address
+                ? {
+                    nickname: address.nickname || undefined,
+                    streetAddress: address.street_address || undefined,
+                    city: address.city || undefined,
+                    postalCode: address.postal_code || undefined,
+                    country: address.country || undefined,
+                    countryCode: address.country_code || undefined,
+                    entryInstructions: address.entry_instructions || undefined,
+                    // Convert PostGIS point to [lng, lat] array if location exists
+                    geometry: address.location ? undefined : undefined, // We'll handle this separately if needed
+                }
+                : undefined,
         };
-        
+
         return { data: formData, error: null };
     } catch (error) {
         console.error("Error fetching current user data:", error);
@@ -503,135 +505,234 @@ export async function updateApplicationStatus({
         }
 
         if (status === "approved") {
-            // For approved applications, create auth user and profile
+            // For approved applications, handle both new and existing users
             console.log(
                 `[APPROVAL_PROCESS] Starting complete onboarding process for application ${applicationId}`,
             );
             console.log(
                 `[APPROVAL_PROCESS] Applicant: ${application.full_name} (${application.email})`,
             );
+
+            let authUserId: string;
+            let isExistingUser = false;
+
             try {
-                // Create auth user with email
-                const { data: authUser, error: authError } =
-                    await serviceSupabaseClient.auth
-                        .admin.createUser({
-                            email: application.email,
-                            email_confirm: true, // Auto-confirm email since we're creating it programmatically
-                            user_metadata: {
-                                full_name: application.full_name,
-                                phone_number: application.phone_number,
-                                role: "stylist",
-                                application_id: application.id,
-                            },
-                            app_metadata: {
-                                role: "stylist",
-                            },
-                        });
-
-                if (authError) {
-                    throw new Error(
-                        `Kunne ikke opprette bruker: ${authError.message}`,
-                    );
-                }
-
-                if (!authUser.user) {
-                    throw new Error(
-                        "Ingen bruker returnert fra auth opprettelse",
-                    );
-                }
-
-                console.log(
-                    `[USER_CREATION] Successfully created auth user: ${authUser.user.id}`,
-                );
-                console.log(
-                    `[USER_CREATION] User email: ${authUser.user.email}`,
-                );
-
-                // Update the application with the new user_id
-                const { error: updateError } = await supabase
-                    .from("applications")
-                    .update({ user_id: authUser.user.id })
-                    .eq("id", applicationId);
-
-                if (updateError) {
-                    console.error(
-                        "Error updating application with user_id:",
-                        updateError,
-                    );
-                    // Don't throw here, the user was created successfully
-                } else {
+                // First check if user already exists (they might be a customer)
+                if (application.user_id) {
+                    // User already exists and is linked to the application
+                    authUserId = application.user_id;
+                    isExistingUser = true;
                     console.log(
-                        `[APPLICATION_UPDATE] Successfully linked application ${applicationId} to user ${authUser.user.id}`,
+                        `[APPROVAL_PROCESS] Using existing user: ${authUserId}`,
                     );
-                }
+                } else {
+                    // Check if a user with this email exists
+                    const { data: existingUser } = await supabase.from(
+                        "profiles",
+                    )
+                        .select("id")
+                        .eq("email", application.email)
+                        .single();
 
-                // Create address record from application data
-                try {
-                    let addressGeometry = application.address_geometry;
-
-                    // If no geometry from application, try to get it from Mapbox
-                    if (!addressGeometry) {
-                        try {
-                            const { getGeometryFromAddressComponents } =
-                                await import("@/lib/mapbox");
-                            const geometry =
-                                await getGeometryFromAddressComponents({
-                                    streetAddress: application.street_address,
-                                    city: application.city,
-                                    postalCode: application.postal_code,
-                                    country: application.country,
+                    if (existingUser) {
+                        // User exists, use their ID
+                        authUserId = existingUser.id;
+                        isExistingUser = true;
+                        console.log(
+                            `[APPROVAL_PROCESS] Found existing user with email ${application.email}: ${authUserId}`,
+                        );
+                    } else {
+                        // Create new auth user
+                        const { data: authUser, error: authError } =
+                            await serviceSupabaseClient.auth
+                                .admin.createUser({
+                                    email: application.email,
+                                    email_confirm: true, // Auto-confirm email since we're creating it programmatically
+                                    user_metadata: {
+                                        full_name: application.full_name,
+                                        phone_number: application.phone_number,
+                                        role: "stylist",
+                                        application_id: application.id,
+                                    },
+                                    app_metadata: {
+                                        role: "stylist",
+                                    },
                                 });
 
-                            if (geometry) {
-                                addressGeometry = `POINT(${geometry[0]} ${
-                                    geometry[1]
-                                })`;
-                                console.log(
-                                    `[APPLICATION_APPROVAL] Retrieved geometry from Mapbox for address: ${
-                                        geometry[0]
-                                    }, ${geometry[1]}`,
-                                );
-                            }
-                        } catch (mapboxError) {
-                            console.error(
-                                "Error fetching geometry from Mapbox:",
-                                mapboxError,
+                        if (authError) {
+                            throw new Error(
+                                `Kunne ikke opprette bruker: ${authError.message}`,
                             );
-                            // Continue without geometry - not critical for address creation
                         }
+
+                        if (!authUser.user) {
+                            throw new Error(
+                                "Ingen bruker returnert fra auth opprettelse",
+                            );
+                        }
+
+                        authUserId = authUser.user.id;
+                        console.log(
+                            `[USER_CREATION] Successfully created new auth user: ${authUserId}`,
+                        );
+                    }
+                }
+
+                // Update the user's role to stylist if they were a customer
+                if (isExistingUser) {
+                    console.log(
+                        `[ROLE_UPDATE] Updating role to stylist for user ${authUserId}`,
+                    );
+
+                    // Update the user's metadata to reflect stylist role
+                    const { error: updateAuthError } =
+                        await serviceSupabaseClient.auth
+                            .admin.updateUserById(authUserId, {
+                                user_metadata: {
+                                    role: "stylist",
+                                    application_id: application.id,
+                                },
+                                app_metadata: {
+                                    role: "stylist",
+                                },
+                            });
+
+                    if (updateAuthError) {
+                        console.error(
+                            "Error updating user auth metadata:",
+                            updateAuthError,
+                        );
                     }
 
-                    const addressData:
-                        Database["public"]["Tables"]["addresses"]["Insert"] = {
-                            user_id: authUser.user.id,
-                            nickname: application.address_nickname || "Hjemme",
-                            street_address: application.street_address,
-                            city: application.city,
-                            postal_code: application.postal_code,
-                            country: application.country,
-                            country_code: application.country_code, // Use stored country code from application
-                            entry_instructions: application.entry_instructions,
-                            // Transfer geometry if available (from application or Mapbox fallback)
-                            location: addressGeometry,
-                        };
+                    // Update the profile role
+                    const { error: profileUpdateError } =
+                        await serviceSupabaseClient
+                            .from("profiles")
+                            .update({ role: "stylist" })
+                            .eq("id", authUserId);
 
-                    const { error: addressError } = await supabase
-                        .from("addresses")
-                        .insert(addressData);
+                    if (profileUpdateError) {
+                        console.error(
+                            "Error updating profile role:",
+                            profileUpdateError,
+                        );
+                        throw new Error(
+                            `Kunne ikke oppdatere brukerrolle: ${profileUpdateError.message}`,
+                        );
+                    }
 
-                    if (addressError) {
+                    console.log(
+                        `[ROLE_UPDATE] Successfully updated role to stylist for user ${authUserId}`,
+                    );
+                }
+
+                // Update the application with the user_id (if not already set)
+                if (!application.user_id) {
+                    const { error: updateError } = await supabase
+                        .from("applications")
+                        .update({ user_id: authUserId })
+                        .eq("id", applicationId);
+
+                    if (updateError) {
                         console.error(
-                            "[ADDRESS_CREATION] Error creating address for approved stylist:",
-                            addressError,
+                            "Error updating application with user_id:",
+                            updateError,
                         );
-                        console.error(
-                            "[ADDRESS_CREATION] Address data:",
-                            JSON.stringify(addressData, null, 2),
-                        );
-                        // Don't throw - address creation is not critical for user creation
+                        // Don't throw here, the user was created successfully
                     } else {
                         console.log(
-                            `[ADDRESS_CREATION] Successfully created address for stylist ${authUser.user.id}`,
+                            `[APPLICATION_UPDATE] Successfully linked application ${applicationId} to user ${authUserId}`,
+                        );
+                    }
+                }
+
+                // Create address record from application data (only if user doesn't already have one)
+                try {
+                    // Check if user already has a primary address
+                    const { data: existingAddress } = await supabase
+                        .from("addresses")
+                        .select("id")
+                        .eq("user_id", authUserId)
+                        .eq("is_primary", true)
+                        .single();
+
+                    if (!existingAddress) {
+                        let addressGeometry = application.address_geometry;
+
+                        // If no geometry from application, try to get it from Mapbox
+                        if (!addressGeometry) {
+                            try {
+                                const { getGeometryFromAddressComponents } =
+                                    await import("@/lib/mapbox");
+                                const geometry =
+                                    await getGeometryFromAddressComponents({
+                                        streetAddress:
+                                            application.street_address,
+                                        city: application.city,
+                                        postalCode: application.postal_code,
+                                        country: application.country,
+                                    });
+
+                                if (geometry) {
+                                    addressGeometry = `POINT(${geometry[0]} ${
+                                        geometry[1]
+                                    })`;
+                                    console.log(
+                                        `[APPLICATION_APPROVAL] Retrieved geometry from Mapbox for address: ${
+                                            geometry[0]
+                                        }, ${geometry[1]}`,
+                                    );
+                                }
+                            } catch (mapboxError) {
+                                console.error(
+                                    "Error fetching geometry from Mapbox:",
+                                    mapboxError,
+                                );
+                                // Continue without geometry - not critical for address creation
+                            }
+                        }
+
+                        const addressData:
+                            Database["public"]["Tables"]["addresses"][
+                                "Insert"
+                            ] = {
+                                user_id: authUserId,
+                                nickname: application.address_nickname ||
+                                    "Hjemme",
+                                street_address: application.street_address,
+                                city: application.city,
+                                postal_code: application.postal_code,
+                                country: application.country,
+                                country_code: application.country_code, // Use stored country code from application
+                                entry_instructions:
+                                    application.entry_instructions,
+                                // Transfer geometry if available (from application or Mapbox fallback)
+                                location: addressGeometry,
+                                is_primary: true, // Set as primary address
+                            };
+
+                        const { error: addressError } = await supabase
+                            .from("addresses")
+                            .insert(addressData);
+
+                        if (addressError) {
+                            console.error(
+                                "[ADDRESS_CREATION] Error creating address for approved stylist:",
+                                addressError,
+                            );
+                            console.error(
+                                "[ADDRESS_CREATION] Address data:",
+                                JSON.stringify(addressData, null, 2),
+                            );
+                            // Don't throw - address creation is not critical for user creation
+                        } else {
+                            console.log(
+                                `[ADDRESS_CREATION] Successfully created address for stylist ${authUserId}`,
+                            );
+                        }
+                    } else {
+                        console.log(
+                            `[ADDRESS_CREATION] User ${authUserId} already has a primary address, skipping creation`,
                         );
                     }
                 } catch (addressCreateError) {
@@ -643,10 +744,10 @@ export async function updateApplicationStatus({
                 }
 
                 // Send approval email with login instructions
-                // Check if newly created user should receive application status notifications
+                // Check if user should receive application status notifications
                 const canSendApprovalEmail = await shouldReceiveNotification(
                     supabase,
-                    authUser.user.id,
+                    authUserId,
                     "application.statusUpdates",
                 );
 
@@ -677,7 +778,7 @@ export async function updateApplicationStatus({
                     }
                 } else {
                     console.log(
-                        `[APPLICATION_STATUS] Skipping approval email for user ${authUser.user.id} - preferences disabled`,
+                        `[APPLICATION_STATUS] Skipping approval email for user ${authUserId} - preferences disabled`,
                     );
                 }
 
@@ -689,7 +790,7 @@ export async function updateApplicationStatus({
                         react: StylistOnboardingEmail({
                             logoUrl: getNabostylistenLogoUrl("png"),
                             stylistName: application.full_name,
-                            userId: authUser.user.id,
+                            userId: authUserId,
                         }),
                     });
 
@@ -716,39 +817,57 @@ export async function updateApplicationStatus({
                 let stripeCustomerId: string | null = null;
 
                 // Step 1: Create Stripe Customer (stylists can also purchase services)
+                // Only create if user doesn't already have a Stripe customer ID
                 try {
-                    console.log(
-                        `[STRIPE_CUSTOMER] Creating customer for user ${authUser.user.id}`,
-                    );
+                    // Check if user already has a Stripe customer ID
+                    const { data: existingProfile } = await supabase
+                        .from("profiles")
+                        .select("stripe_customer_id")
+                        .eq("id", authUserId)
+                        .single();
 
-                    // Import the service function directly and use the service client
-                    const { createCustomerWithDatabase } = await import(
-                        "@/lib/stripe/connect"
-                    );
-                    const customerResult = await createCustomerWithDatabase({
-                        supabaseClient: serviceSupabaseClient, // Use service client for admin operations
-                        profileId: authUser.user.id,
-                        email: application.email,
-                        fullName: application.full_name,
-                    });
-
-                    if (customerResult.error || !customerResult.data) {
-                        console.error(
-                            "[STRIPE_CUSTOMER] Error creating Stripe customer:",
-                            customerResult.error,
+                    if (!existingProfile?.stripe_customer_id) {
+                        console.log(
+                            `[STRIPE_CUSTOMER] Creating customer for user ${authUserId}`,
                         );
-                        // Don't throw - continue with Connect account creation
+
+                        // Import the service function directly and use the service client
+                        const { createCustomerWithDatabase } = await import(
+                            "@/lib/stripe/connect"
+                        );
+                        const customerResult = await createCustomerWithDatabase(
+                            {
+                                supabaseClient: serviceSupabaseClient, // Use service client for admin operations
+                                profileId: authUserId,
+                                email: application.email,
+                                fullName: application.full_name,
+                            },
+                        );
+
+                        if (customerResult.error || !customerResult.data) {
+                            console.error(
+                                "[STRIPE_CUSTOMER] Error creating Stripe customer:",
+                                customerResult.error,
+                            );
+                            // Don't throw - continue with Connect account creation
+                        } else {
+                            stripeCustomerId =
+                                customerResult.data.stripeCustomerId;
+                            console.log(
+                                `[STRIPE_CUSTOMER] Successfully created customer ${stripeCustomerId} for user ${authUserId}`,
+                            );
+                            console.log(
+                                `[STRIPE_CUSTOMER] Database save status: ${
+                                    customerResult.data.savedToDatabase
+                                        ? "SUCCESS"
+                                        : "FAILED"
+                                }`,
+                            );
+                        }
                     } else {
-                        stripeCustomerId = customerResult.data.stripeCustomerId;
+                        stripeCustomerId = existingProfile.stripe_customer_id;
                         console.log(
-                            `[STRIPE_CUSTOMER] Successfully created customer ${stripeCustomerId} for user ${authUser.user.id}`,
-                        );
-                        console.log(
-                            `[STRIPE_CUSTOMER] Database save status: ${
-                                customerResult.data.savedToDatabase
-                                    ? "SUCCESS"
-                                    : "FAILED"
-                            }`,
+                            `[STRIPE_CUSTOMER] User ${authUserId} already has Stripe customer ID: ${stripeCustomerId}`,
                         );
                     }
                 } catch (customerError) {
@@ -760,57 +879,74 @@ export async function updateApplicationStatus({
                 }
 
                 // Step 2: Create Stripe Connect account for receiving payments
+                // Only create if user doesn't already have a Connect account
                 try {
-                    console.log(
-                        `[STRIPE_CONNECT] Creating connected account for user ${authUser.user.id}`,
-                    );
+                    // Check if user already has a Stripe Connect account
+                    const { data: existingStylistDetails } = await supabase
+                        .from("stylist_details")
+                        .select("stripe_account_id")
+                        .eq("profile_id", authUserId)
+                        .single();
 
-                    // Import the service function directly and use the service client
-                    const { createConnectedAccountWithDatabase } = await import(
-                        "@/lib/stripe/connect"
-                    );
-
-                    const countryCode = getCountryCode(
-                        application.country_code || "NO",
-                    ); // Fallback to Norway if no country code is provided
-
-                    const stripeResult =
-                        await createConnectedAccountWithDatabase({
-                            supabaseClient: serviceSupabaseClient, // Use service client for admin operations
-                            profileId: authUser.user.id,
-                            email: application.email,
-                            name: application.full_name,
-                            address: {
-                                addressLine1: application.street_address,
-                                addressLine2: "", // Not stored separately in applications
-                                city: application.city,
-                                state: "", // Norway doesn't have states like US
-                                postalCode: application.postal_code,
-                                country: countryCode, // Use ISO code instead of country name
-                            },
-                        });
-
-                    if (stripeResult.error || !stripeResult.data) {
-                        console.error(
-                            "[STRIPE_CONNECT] Error creating Stripe account:",
-                            stripeResult.error,
+                    if (!existingStylistDetails?.stripe_account_id) {
+                        console.log(
+                            `[STRIPE_CONNECT] Creating connected account for user ${authUserId}`,
                         );
-                        // Don't throw - user creation was successful, just log the issue
+
+                        // Import the service function directly and use the service client
+                        const { createConnectedAccountWithDatabase } =
+                            await import(
+                                "@/lib/stripe/connect"
+                            );
+
+                        const countryCode = getCountryCode(
+                            application.country_code || "NO",
+                        ); // Fallback to Norway if no country code is provided
+
+                        const stripeResult =
+                            await createConnectedAccountWithDatabase({
+                                supabaseClient: serviceSupabaseClient, // Use service client for admin operations
+                                profileId: authUserId,
+                                email: application.email,
+                                name: application.full_name,
+                                address: {
+                                    addressLine1: application.street_address,
+                                    addressLine2: "", // Not stored separately in applications
+                                    city: application.city,
+                                    state: "", // Norway doesn't have states like US
+                                    postalCode: application.postal_code,
+                                    country: countryCode, // Use ISO code instead of country name
+                                },
+                            });
+
+                        if (stripeResult.error || !stripeResult.data) {
+                            console.error(
+                                "[STRIPE_CONNECT] Error creating Stripe account:",
+                                stripeResult.error,
+                            );
+                            // Don't throw - user creation was successful, just log the issue
+                        } else {
+                            stripeAccountId = stripeResult.data.stripeAccountId;
+                            console.log(
+                                `[STRIPE_CONNECT] Successfully created account ${stripeAccountId} for user ${authUserId}`,
+                            );
+                            console.log(
+                                `[STRIPE_CONNECT] Database save status: ${
+                                    stripeResult.data.savedToDatabase
+                                        ? "SUCCESS"
+                                        : "FAILED"
+                                }`,
+                            );
+
+                            // Note: Onboarding link will be created when stylist visits /stylist/stripe page
+                            // This allows better UX with authentication flow and status checking
+                        }
                     } else {
-                        stripeAccountId = stripeResult.data.stripeAccountId;
+                        stripeAccountId =
+                            existingStylistDetails.stripe_account_id;
                         console.log(
-                            `[STRIPE_CONNECT] Successfully created account ${stripeAccountId} for user ${authUser.user.id}`,
+                            `[STRIPE_CONNECT] User ${authUserId} already has Stripe Connect account: ${stripeAccountId}`,
                         );
-                        console.log(
-                            `[STRIPE_CONNECT] Database save status: ${
-                                stripeResult.data.savedToDatabase
-                                    ? "SUCCESS"
-                                    : "FAILED"
-                            }`,
-                        );
-
-                        // Note: Onboarding link will be created when stylist visits /stylist/stripe page
-                        // This allows better UX with authentication flow and status checking
                     }
                 } catch (stripeError) {
                     console.error(
@@ -821,56 +957,94 @@ export async function updateApplicationStatus({
                 }
 
                 // Create stylist_details record (required for stylist functionality)
+                // Only create if it doesn't already exist
                 try {
-                    console.log(
-                        `[STYLIST_DETAILS] Creating stylist details for user ${authUser.user.id}`,
-                    );
-                    console.log(
-                        `[STYLIST_DETAILS] Using service client to bypass RLS policies for admin operation`,
-                    );
+                    // Check if stylist_details already exists for this user
+                    const { data: existingDetails } = await supabase
+                        .from("stylist_details")
+                        .select("profile_id")
+                        .eq("profile_id", authUserId)
+                        .single();
 
-                    const stylistDetailsData:
-                        Database["public"]["Tables"]["stylist_details"][
-                            "Insert"
-                        ] = {
-                            profile_id: authUser.user.id,
-                            stripe_account_id: stripeAccountId, // Link to the Stripe Connect account
-                            // Set sensible defaults for required fields
-                            can_travel: true,
-                            has_own_place: true,
-                            travel_distance_km: 20,
-                        };
+                    if (!existingDetails) {
+                        console.log(
+                            `[STYLIST_DETAILS] Creating stylist details for user ${authUserId}`,
+                        );
+                        console.log(
+                            `[STYLIST_DETAILS] Using service client to bypass RLS policies for admin operation`,
+                        );
 
-                    console.log(
-                        `[STYLIST_DETAILS] Inserting data:`,
-                        JSON.stringify(stylistDetailsData, null, 2),
-                    );
+                        const stylistDetailsData:
+                            Database["public"]["Tables"]["stylist_details"][
+                                "Insert"
+                            ] = {
+                                profile_id: authUserId,
+                                stripe_account_id: stripeAccountId, // Link to the Stripe Connect account
+                                // Set sensible defaults for required fields
+                                can_travel: true,
+                                has_own_place: true,
+                                travel_distance_km: 20,
+                            };
 
-                    const { data: insertedData, error: stylistDetailsError } =
-                        await serviceSupabaseClient
+                        console.log(
+                            `[STYLIST_DETAILS] Inserting data:`,
+                            JSON.stringify(stylistDetailsData, null, 2),
+                        );
+
+                        const {
+                            data: insertedData,
+                            error: stylistDetailsError,
+                        } = await serviceSupabaseClient
                             .from("stylist_details")
                             .insert(stylistDetailsData)
                             .select();
 
-                    if (stylistDetailsError) {
-                        console.error(
-                            "[STYLIST_DETAILS] Error creating stylist details:",
-                            stylistDetailsError,
-                        );
-                        console.error(
-                            "[STYLIST_DETAILS] Error details:",
-                            JSON.stringify(stylistDetailsError, null, 2),
-                        );
-                        // Don't throw - this would break the approval flow
-                        // The stylist can still access the platform, they just might need manual intervention
+                        if (stylistDetailsError) {
+                            console.error(
+                                "[STYLIST_DETAILS] Error creating stylist details:",
+                                stylistDetailsError,
+                            );
+                            console.error(
+                                "[STYLIST_DETAILS] Error details:",
+                                JSON.stringify(stylistDetailsError, null, 2),
+                            );
+                            // Don't throw - this would break the approval flow
+                            // The stylist can still access the platform, they just might need manual intervention
+                        } else {
+                            console.log(
+                                `[STYLIST_DETAILS] Successfully created stylist details for user ${authUserId}`,
+                            );
+                            console.log(
+                                `[STYLIST_DETAILS] Inserted record:`,
+                                JSON.stringify(insertedData, null, 2),
+                            );
+                        }
                     } else {
                         console.log(
-                            `[STYLIST_DETAILS] Successfully created stylist details for user ${authUser.user.id}`,
+                            `[STYLIST_DETAILS] User ${authUserId} already has stylist details, skipping creation`,
                         );
-                        console.log(
-                            `[STYLIST_DETAILS] Inserted record:`,
-                            JSON.stringify(insertedData, null, 2),
-                        );
+
+                        // Update with Stripe account ID if it wasn't set before
+                        if (stripeAccountId) {
+                            const { error: updateError } =
+                                await serviceSupabaseClient
+                                    .from("stylist_details")
+                                    .update({
+                                        stripe_account_id: stripeAccountId,
+                                    })
+                                    .eq("profile_id", authUserId);
+
+                            if (updateError) {
+                                console.error(
+                                    "[STYLIST_DETAILS] Error updating Stripe account ID:",
+                                    updateError,
+                                );
+                            } else {
+                                console.log(
+                                    `[STYLIST_DETAILS] Updated Stripe account ID for user ${authUserId}`,
+                                );
+                            }
+                        }
                     }
                 } catch (stylistDetailsCreationError) {
                     console.error(
@@ -887,20 +1061,23 @@ export async function updateApplicationStatus({
                 }
 
                 console.log(
-                    `[APPROVAL_PROCESS] ✅ Successfully completed onboarding for user ${authUser.user.id}`,
+                    `[APPROVAL_PROCESS] ✅ Successfully completed onboarding for user ${authUserId}`,
                 );
                 console.log(
-                    `[APPROVAL_PROCESS] Summary - User: ${authUser.user.id}, Stripe Connect: ${
+                    `[APPROVAL_PROCESS] Summary - User: ${authUserId}, Stripe Connect: ${
                         stripeAccountId || "FAILED"
-                    }, Stripe Customer: ${stripeCustomerId || "FAILED"}`,
+                    }, Stripe Customer: ${
+                        stripeCustomerId || "FAILED"
+                    }, Existing User: ${isExistingUser}`,
                 );
 
                 return {
                     data: updatedApplication,
                     error: null,
-                    createdUserId: authUser.user.id,
+                    createdUserId: authUserId,
                     stripeAccountId,
                     stripeCustomerId,
+                    wasExistingUser: isExistingUser,
                 };
             } catch (userCreationError) {
                 console.error("Error creating auth user:", userCreationError);

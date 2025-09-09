@@ -236,6 +236,69 @@ nabostylisten/
 - Use `cn()` utility for conditional classes
 - Prefer composition over customization for component variants
 
+### Color Pattern Standards
+
+Always respect light and dark mode when using colors. Use Tailwind's color system with appropriate dark mode variants.
+
+#### Color Usage Pattern
+
+```tsx
+// ✅ CORRECT - Respects both light and dark mode
+<div className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
+  <p className="text-green-800 dark:text-green-200">Success message</p>
+</div>
+
+// ❌ INCORRECT - No dark mode support
+<div className="bg-green-50 border-green-200">
+  <p className="text-green-800">Success message</p>
+</div>
+```
+
+#### Standard Color Combinations
+
+| Color | Light Background | Dark Background | Light Border | Dark Border | Light Text | Dark Text |
+|-------|-----------------|-----------------|--------------|-------------|------------|----------|
+| Green | `bg-green-50` | `dark:bg-green-950/30` | `border-green-200` | `dark:border-green-800` | `text-green-800` | `dark:text-green-200` |
+| Red | `bg-red-50` | `dark:bg-red-950/30` | `border-red-200` | `dark:border-red-800` | `text-red-800` | `dark:text-red-200` |
+| Blue | `bg-blue-50` | `dark:bg-blue-950/30` | `border-blue-200` | `dark:border-blue-800` | `text-blue-800` | `dark:text-blue-200` |
+| Purple | `bg-purple-50` | `dark:bg-purple-950/30` | `border-purple-200` | `dark:border-purple-800` | `text-purple-800` | `dark:text-purple-200` |
+| Amber | `bg-amber-50` | `dark:bg-amber-950/30` | `border-amber-200` | `dark:border-amber-800` | `text-amber-800` | `dark:text-amber-200` |
+| Yellow | `bg-yellow-50` | `dark:bg-yellow-950/30` | `border-yellow-200` | `dark:border-yellow-800` | `text-yellow-800` | `dark:text-yellow-200` |
+
+#### Real-World Examples
+
+```tsx
+// Success notification
+<div className="p-4 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+  <p className="text-green-800 dark:text-green-200">Operation completed successfully</p>
+</div>
+
+// Error notification
+<div className="p-4 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
+  <p className="text-red-800 dark:text-red-200">An error occurred</p>
+</div>
+
+// Info card
+<Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30">
+  <CardHeader>
+    <CardTitle className="text-blue-800 dark:text-blue-200">Information</CardTitle>
+  </CardHeader>
+</Card>
+
+// Warning alert
+<div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg">
+  <p className="text-amber-900 dark:text-amber-100">Warning message</p>
+</div>
+```
+
+#### Guidelines
+
+- Always provide both light and dark mode variants
+- Use `/30` opacity for dark backgrounds (e.g., `dark:bg-color-950/30`)
+- Maintain sufficient contrast for accessibility
+- Test color combinations in both light and dark modes
+- Follow the established pattern consistently across the application
+
 ### Loading States
 
 - Use `Spinner` component from `components/ui/kibo-ui/spinner/index.tsx`
@@ -445,5 +508,27 @@ curl -H "Authorization: Bearer your-secret-here" \
   http://localhost:3000/api/cron/cleanup-old-messages
 ```
 
-- when running seed script, first run the seed script and then afterwards reset the database
-- After making changes to the database, before running seed script again, we must run seed:sync to sync snaplet to the database
+## Database Seeding
+
+### Seed Script Workflow
+
+1. **Initial Seeding**:
+
+   ```bash
+   bun seed               # Run the seed script first
+   bun supabase:db:reset  # Then reset the database
+   ```
+
+2. **After Database Schema Changes**:
+
+   ```bash
+   bun seed:sync          # Sync Snaplet with the new database schema
+   bun seed               # Run the seed script
+   bun supabase:db:reset  # Reset the database
+   ```
+
+### Important Notes
+
+- Always run the seed script BEFORE resetting the database
+- After modifying database schemas, you MUST run `seed:sync` to synchronize Snaplet with the database before seeding again
+- This ensures that Snaplet generates data that matches your current schema

@@ -140,8 +140,8 @@ export function ApplicationStatusForm({
         </div>
 
         {status === "approved" && (
-          <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-sm text-green-800">
+          <div className="p-3 bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg">
+            <p className="text-sm text-green-800 dark:text-green-200">
               <strong>Merk:</strong> Når du godkjenner denne søknaden, vil
               brukeren få tilgang til å opprette tjenester på platformen.
             </p>
@@ -149,8 +149,8 @@ export function ApplicationStatusForm({
         )}
 
         {status === "rejected" && (
-          <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-sm text-red-800">
+          <div className="p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-sm text-red-800 dark:text-red-200">
               <strong>Merk:</strong> Avviste søknader kan ikke endres tilbake
               til godkjent.
             </p>

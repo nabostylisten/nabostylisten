@@ -9,13 +9,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CheckCircle, Users, Calendar, CreditCard } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { CheckCircle, Users, Calendar, CreditCard, InfoIcon, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { StylistApplicationForm } from "@/components/forms/stylist-application-form";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function BliStylistPage() {
   const [showApplicationForm, setShowApplicationForm] = useState(false);
+  const { user, profile } = useAuth();
+  
+  const isStylist = profile?.role === "stylist";
 
   const benefits = [
     {
@@ -76,15 +81,52 @@ export default function BliStylistPage() {
             lykkes.
           </p>
           <div className="flex gap-4 justify-center">
-            <Button size="lg" onClick={handleShowApplicationForm}>
-              Søk nå
-            </Button>
-            <Button size="lg" variant="outline" asChild>
-              <Link href="#requirements">Les mer</Link>
-            </Button>
+            {!isStylist ? (
+              <>
+                <Button size="lg" onClick={handleShowApplicationForm}>
+                  Søk nå
+                </Button>
+                <Button size="lg" variant="outline" asChild>
+                  <Link href="#requirements">Les mer</Link>
+                </Button>
+              </>
+            ) : (
+              <Button size="lg" asChild className="gap-2">
+                <Link href={`/profiler/${user?.id}/mine-tjenester`}>
+                  Gå til mine tjenester
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
           </div>
         </div>
         </BlurFade>
+
+        {/* Already a Stylist Alert */}
+        {isStylist && (
+          <BlurFade delay={0.05} duration={0.5} inView>
+            <div className="max-w-3xl mx-auto mb-12">
+              <Alert className="border-green-500/50 bg-green-50/50 dark:bg-green-950/20 dark:border-green-500/30">
+                <InfoIcon className="h-4 w-4 text-green-600 dark:text-green-400" />
+                <AlertTitle className="text-green-800 dark:text-green-300">
+                  Du er allerede registrert som stylist!
+                </AlertTitle>
+                <AlertDescription className="text-green-700 dark:text-green-400">
+                  <p className="mb-4">
+                    Du har allerede tilgang til alle stylist-funksjonene på Nabostylisten. 
+                    Gå til dine tjenester for å administrere din profil og tilbud.
+                  </p>
+                  <Button asChild className="gap-2">
+                    <Link href={`/profiler/${user?.id}/mine-tjenester`}>
+                      Gå til mine tjenester
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            </div>
+          </BlurFade>
+        )}
 
         {/* Benefits Section */}
         <BlurFade delay={0.1} duration={0.5} inView>
@@ -138,7 +180,7 @@ export default function BliStylistPage() {
         </BlurFade>
 
         {/* Application Form Section */}
-        {showApplicationForm && (
+        {showApplicationForm && !isStylist && (
           <BlurFade delay={0.2} duration={0.5} inView>
             <div id="application-form" className="py-16">
             <div className="text-center mb-12">
@@ -194,7 +236,7 @@ export default function BliStylistPage() {
         </BlurFade>
 
         {/* CTA Section */}
-        {!showApplicationForm && (
+        {!showApplicationForm && !isStylist && (
           <BlurFade delay={0.3} duration={0.5} inView>
             <div className="py-16 text-center">
             <div className="bg-primary/5 rounded-lg p-12">

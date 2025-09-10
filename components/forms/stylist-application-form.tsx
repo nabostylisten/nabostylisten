@@ -232,51 +232,34 @@ export function StylistApplicationForm({
   });
 
   async function onSubmit(values: ApplicationFormValues) {
-    console.log("[APPLICATION_FORM] Starting submission with values:", values);
-    console.log("[APPLICATION_FORM] Portfolio images count:", portfolioImages.length);
-    console.log("[APPLICATION_FORM] Portfolio images details:", portfolioImages.map(img => ({
-      name: img.name,
-      size: img.size,
-      type: img.type
-    })));
-
     // Validate portfolio images since they're not part of the form schema
     if (portfolioImages.length === 0) {
-      console.error("[APPLICATION_FORM] No portfolio images uploaded");
       toast.error("Last opp minst ett portfoliobilde");
       return;
     }
     if (portfolioImages.length > 10) {
-      console.error("[APPLICATION_FORM] Too many portfolio images:", portfolioImages.length);
       toast.error("Maksimalt 10 bilder tillatt");
       return;
     }
 
     setIsSubmitting(true);
-    console.log("[APPLICATION_FORM] Submission started");
 
     try {
       // First, create the application to get an applicationId
-      console.log("[APPLICATION_FORM] Step 1: Creating application without images");
       const applicationResult = await submitApplication.mutateAsync({
         ...values,
         portfolioImageUrls: [], // Empty initially, we'll upload images after
       });
 
-      console.log("[APPLICATION_FORM] Application creation result:", applicationResult);
-
       if (applicationResult.error || !applicationResult.data) {
-        console.error("[APPLICATION_FORM] Application creation failed:", applicationResult.error);
         throw new Error(
           applicationResult.error || "Kunne ikke opprette søknad"
         );
       }
 
       const applicationId = applicationResult.data.applicationId;
-      console.log("[APPLICATION_FORM] Application created with ID:", applicationId);
 
       setIsUploadingImages(true);
-      console.log("[APPLICATION_FORM] Step 2: Starting image upload");
 
       // Then upload the portfolio images using the applicationId
       const imageUploadResult = await uploadImagesMutation.mutateAsync({
@@ -284,26 +267,15 @@ export function StylistApplicationForm({
         applicationId: applicationId,
       });
 
-      console.log("[APPLICATION_FORM] Image upload result:", imageUploadResult);
-
       if (imageUploadResult.error || !imageUploadResult.data) {
-        console.error("[APPLICATION_FORM] Image upload failed:", imageUploadResult.error);
         throw new Error(
           imageUploadResult.error || "Kunne ikke laste opp bilder"
         );
       }
-
-      console.log("[APPLICATION_FORM] Images uploaded successfully:", imageUploadResult.data);
-      
-      // Now we need to update the application with the image URLs
-      console.log("[APPLICATION_FORM] Step 3: Updating application with image URLs");
-      // Note: The current flow uploads images but doesn't update the application with their URLs
-      // This might be the issue - we're not linking the uploaded images back to the application
       
       setIsUploadingImages(false);
 
       // Success - both application and images are uploaded
-      console.log("[APPLICATION_FORM] ✅ Application submission complete!");
       toast.success(
         "Søknaden din er sendt inn! Vi vil kontakte deg innen 2-3 virkedager."
       );
@@ -311,7 +283,6 @@ export function StylistApplicationForm({
       setPortfolioImages([]);
       onSuccess?.();
     } catch (error) {
-      console.error("[APPLICATION_FORM] ❌ Submission failed:", error);
       setIsUploadingImages(false);
       setIsSubmitting(false);
       toast.error(
@@ -322,8 +293,6 @@ export function StylistApplicationForm({
     }
   }
 
-  console.log(form.formState.errors);
-  console.log(form.getValues());
 
   return (
     <Card className="w-full max-w-4xl mx-auto">

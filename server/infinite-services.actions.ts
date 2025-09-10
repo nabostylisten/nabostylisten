@@ -49,24 +49,11 @@ async function fetchGeographicServices(
 ): Promise<InfiniteServicesResponse> {
   const { location, ...otherFilters } = filters;
 
-  console.log("🔍 Geographic Search Debug:");
-  console.log("  - Original filters:", filters);
-  console.log("  - Location coordinates:", location?.coordinates);
-  console.log("  - Radius:", location?.radius);
-  console.log("  - Other filters:", otherFilters);
-
   if (!location?.coordinates) {
     throw new Error("Geographic search requires coordinates");
   }
 
   const rpcParams = { ...otherFilters, radiusKm: location.radius };
-  console.log("  - RPC parameters:", rpcParams);
-  console.log(
-    "  - Calling nearby_services with lat:",
-    location.coordinates.lat,
-    "lng:",
-    location.coordinates.lng,
-  );
 
   const { data, error } = await findNearbyServices(
     supabase,
@@ -76,12 +63,9 @@ async function fetchGeographicServices(
   );
 
   if (error) {
-    console.log("  ❌ RPC Error:", error);
+    console.error("  ❌ RPC Error:", error);
     throw new Error(`Failed to fetch nearby services: ${error}`);
   }
-
-  console.log("  ✅ RPC Success - Raw data length:", data?.length || 0);
-  console.log("  - First few results:", data?.slice(0, 3));
 
   if (!data) {
     console.log("  ⚠️ No data returned from RPC");
@@ -91,11 +75,6 @@ async function fetchGeographicServices(
   // Apply pagination to the results
   const totalCount = data.length;
   const paginatedData = data.slice(offset, offset + limit);
-
-  console.log("  📄 Pagination:");
-  console.log("    - Total count:", totalCount);
-  console.log("    - Offset:", offset, "Limit:", limit);
-  console.log("    - Paginated data length:", paginatedData.length);
 
   // Transform RPC results to ServiceWithRelations format
   const services = await Promise.all(
@@ -121,16 +100,11 @@ async function fetchTraditionalServices(
   limit: number,
   offset: number,
 ): Promise<InfiniteServicesResponse> {
-  console.log("🔧 fetchTraditionalServices starting...");
-  console.log("  - Filters:", JSON.stringify(filters, null, 2));
-  console.log("  - Limit:", limit, "Offset:", offset);
-
   const rpcParams = {
     ...filters,
     limit,
     offset,
   };
-  console.log("  - RPC Params to findTraditionalServices:", JSON.stringify(rpcParams, null, 2));
 
   // Use the RPC function with pagination built in
   const { data, error } = await findTraditionalServices(supabase, rpcParams);
@@ -140,45 +114,17 @@ async function fetchTraditionalServices(
     throw new Error(`Failed to fetch traditional services: ${error}`);
   }
 
-  console.log("  ✅ RPC Success:");
-  console.log("    - Data count:", data?.length || 0);
-
   if (!data) {
-    console.log("  - No data returned from RPC");
+    console.log("  ⚠️ No data returned from RPC");
     return { services: [], hasMore: false, totalCount: 0 };
   }
 
-  // Log ALL services returned by SQL function to see their ratings
-  console.log("  📋 ALL SERVICES FROM SQL (sorted by rating_asc):");
-  data.forEach((service, index) => {
-    console.log(`    ${index + 1}. ${service.service_title}: rating=${service.average_rating}, reviews=${service.total_reviews}`);
-  });
-
-  console.log(
-    "  - Sample service data:",
-    data[0]
-      ? {
-        service_id: data[0].service_id,
-        service_title: data[0].service_title,
-        average_rating: data[0].average_rating,
-        total_reviews: data[0].total_reviews,
-      }
-      : "No services",
-  );
-
   // Transform RPC results to ServiceWithRelations format
-  console.log("  - Transforming", data.length, "services...");
   const services = await Promise.all(
     data.map((service: TraditionalServiceData) =>
       transformTraditionalServiceToServiceWithRelations(supabase, service)
     ),
   );
-
-  // Debug: Check if the order is preserved after transformation
-  console.log("  📊 FINAL TRANSFORMED ORDER (after transformation):");
-  services.forEach((service, index) => {
-    console.log(`    ${index + 1}. ${service.title}: rating=${service.average_rating}, reviews=${service.total_reviews}`);
-  });
 
   // Since we're using the RPC function with built-in pagination, we need to determine if there are more results
   // by checking if we got a full page of results
@@ -188,12 +134,6 @@ async function fetchTraditionalServices(
   // For total count, we would need another query or modify the RPC to return it
   // For now, we'll use a conservative estimate
   const totalCount = hasMore ? offset + limit + 1 : offset + data.length;
-
-  console.log("  - Final result:");
-  console.log("    - Services count:", services.length);
-  console.log("    - Has more:", hasMore);
-  console.log("    - Next offset:", nextOffset);
-  console.log("    - Estimated total count:", totalCount);
 
   return {
     services,

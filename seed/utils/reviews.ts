@@ -1,7 +1,7 @@
 import type {
   booking_servicesScalars,
   bookingsScalars,
-  reviewsScalars,
+  public_reviewsScalars,
   SeedClient,
   servicesScalars,
   usersScalars,
@@ -125,8 +125,8 @@ async function createReviewsForCompletedBookings(
 
   if (reviewsToCreate.length > 0) {
     try {
-      const result = await seed.reviews(reviewsToCreate);
-      return result.reviews || result;
+      const { public_reviews } = await seed.public_reviews(reviewsToCreate);
+      return public_reviews;
     } catch (error) {
       console.log(
         `-- Error creating reviews: ${
@@ -233,11 +233,11 @@ async function createStylistCrossBookingsWithReviews(
     }
   }
 
-  let createdAdditionalReviews = [];
+  let createdAdditionalReviews: public_reviewsScalars[] = [];
   if (additionalReviews.length > 0) {
     try {
-      const result = await seed.reviews(additionalReviews);
-      createdAdditionalReviews = result.reviews || result;
+      const { public_reviews } = await seed.public_reviews(additionalReviews);
+      createdAdditionalReviews = public_reviews;
     } catch (error) {
       console.log(
         `-- Error creating additional reviews: ${
@@ -260,7 +260,7 @@ async function ensureEveryServiceHasReviews(
   stylistUsers: usersScalars[],
   bookingServiceLinks: Partial<booking_servicesScalars>[],
   allBookings: bookingsScalars[],
-  existingReviews: reviewsScalars[],
+  existingReviews: public_reviewsScalars[],
 ) {
   console.log("-- Ensuring every service has reviews...");
 
@@ -354,7 +354,7 @@ async function ensureEveryServiceHasReviews(
   }
 
   // Create reviews for these additional bookings
-  const additionalReviews = [];
+  const additionalReviews: public_reviewsScalars[] = [];
   for (const booking of newBookings) {
     if (booking.id && booking.customer_id && booking.stylist_id) {
       const rating = [3, 4, 4, 4, 5, 5, 5, 5][Math.floor(Math.random() * 8)];
@@ -377,11 +377,11 @@ async function ensureEveryServiceHasReviews(
 
   if (additionalReviews.length > 0) {
     try {
-      const result = await seed.reviews(additionalReviews);
+      const { public_reviews } = await seed.public_reviews(additionalReviews);
       console.log(
         `-- Created ${additionalReviews.length} additional reviews to ensure service coverage`,
       );
-      return result.reviews || result;
+      return public_reviews;
     } catch (error) {
       console.log(
         `-- Error creating additional reviews: ${
@@ -400,7 +400,7 @@ async function ensureEveryServiceHasReviews(
  */
 async function addReviewImages(
   seed: SeedClient,
-  reviews: reviewsScalars[],
+  reviews: public_reviewsScalars[],
 ) {
   const reviewImagesData: DatabaseTables["media"]["Insert"][] = [];
   const reviewsWithImages = reviews.filter((_, index) => index % 3 === 0); // Every 3rd review gets images

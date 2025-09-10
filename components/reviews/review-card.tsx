@@ -3,14 +3,16 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { Star, ChevronRight } from "lucide-react";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Star, ChevronRight, Edit } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import Image from "next/image";
 import Link from "next/link";
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { getPublicUrl } from "@/lib/supabase/storage";
+import { ReviewDialog } from "./review-dialog";
 import { cn } from "@/lib/utils";
 
 type ReviewCardProps = {
@@ -51,6 +53,8 @@ type ReviewCardProps = {
 };
 
 export function ReviewCard({ review, viewType }: ReviewCardProps) {
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+
   const reviewImages =
     review.media?.filter((m) => m.media_type === "review_image") || [];
   const displayPerson =
@@ -161,27 +165,63 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
               </div>
             )}
 
-            {/* Footer with booking link */}
-            {review.booking && (
-              <div className="flex justify-end pt-2 border-t">
-                <Link
-                  href={`/bookinger/${review.booking.id}`}
-                  className={cn(
-                    buttonVariants({
-                      variant: "outline",
-                      size: "sm",
-                    }),
-                    "flex items-center gap-2"
-                  )}
-                >
-                  Til booking
-                  <ChevronRight className="w-4 h-4" />
-                </Link>
+            {/* Footer with actions */}
+            <div className="flex justify-end gap-2 items-center pt-2 border-t">
+              <div className="flex gap-2">
+                {/* Edit button for user's own reviews */}
+                {viewType === "customer" && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsReviewDialogOpen(true)}
+                  >
+                    <Edit className="w-4 h-4 mr-2" />
+                    Rediger anmeldelse
+                  </Button>
+                )}
               </div>
-            )}
+              <div className="flex gap-2">
+                {review.booking && (
+                  <Link
+                    href={`/bookinger/${review.booking.id}`}
+                    className={cn(
+                      buttonVariants({
+                        variant: "outline",
+                        size: "sm",
+                      }),
+                      "flex items-center gap-2"
+                    )}
+                  >
+                    Til booking
+                    <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>
+
+      {/* Review Dialog for editing/deleting own reviews */}
+      {viewType === "customer" && review.booking && (
+        <ReviewDialog
+          open={isReviewDialogOpen}
+          onOpenChange={setIsReviewDialogOpen}
+          bookingId={review.booking.id}
+          stylistName={displayPerson?.full_name || "Stylisten"}
+          serviceTitles={services.filter((s): s is string => Boolean(s))}
+          existingReview={{
+            id: review.id,
+            rating: review.rating,
+            comment: review.comment,
+            customer_id: review.customer?.id || "",
+            stylist_id: review.stylist?.id || "",
+            booking_id: review.booking.id,
+            created_at: review.created_at,
+            media: review.media || undefined,
+          }}
+        />
+      )}
     </Card>
   );
 }

@@ -353,14 +353,7 @@ export function BookingCard({
             <div className="flex gap-2">
               {/* Actions dropdown for both customers and stylists */}
               <BookingActionsDropdown
-                booking={{
-                  id: booking.id,
-                  customer_id: booking.customer_id,
-                  stylist_id: booking.stylist_id,
-                  start_time: booking.start_time,
-                  total_price: booking.total_price,
-                  status: booking.status,
-                }}
+                booking={booking}
                 currentUserId={currentUserId}
                 userRole={userRole}
                 serviceName={services[0]?.title || "Booking"}

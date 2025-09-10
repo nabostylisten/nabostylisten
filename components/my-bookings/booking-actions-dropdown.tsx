@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, CalendarCheck, X, Settings, CheckCircle } from "lucide-react";
+import { MoreHorizontal, CalendarCheck, X, Settings, CheckCircle, CheckSquare } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { CancelBookingDialog } from "./cancel-booking-dialog";
 import { BookingStatusDialog } from "./booking-status-dialog";
+import { CompleteBookingDialog } from "./complete-booking-dialog";
 import type { Database } from "@/types/database.types";
 
 type BookingStatus = Database["public"]["Tables"]["bookings"]["Row"]["status"];
@@ -24,6 +25,7 @@ interface BookingActionsDropdownProps {
     customer_id: string;
     stylist_id: string;
     start_time: string;
+    end_time: string;
     total_price: number;
     status: BookingStatus;
   };
@@ -47,6 +49,7 @@ export function BookingActionsDropdown({
   const router = useRouter();
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
+  const [isCompleteDialogOpen, setIsCompleteDialogOpen] = useState(false);
 
   // Don't show actions for cancelled or completed bookings
   if (booking.status === "cancelled" || booking.status === "completed") {
@@ -54,6 +57,9 @@ export function BookingActionsDropdown({
   }
 
   // Determine available actions based on role and booking status
+  const now = new Date();
+  const bookingEndTime = new Date(booking.end_time);
+  
   const canConfirm =
     userRole === "stylist" &&
     booking.status === "pending";
@@ -65,6 +71,11 @@ export function BookingActionsDropdown({
   const canCancel =
     booking.status === "pending" || booking.status === "confirmed";
 
+  const canComplete =
+    userRole === "stylist" &&
+    booking.status === "confirmed" &&
+    now > bookingEndTime;
+
   const canAdminister =
     userRole === "stylist" && 
     booking.status === "pending" &&
@@ -75,6 +86,7 @@ export function BookingActionsDropdown({
     canAdminister && "administer",
     canConfirm && "confirm",
     canReschedule && "reschedule",
+    canComplete && "complete",
     canCancel && "cancel",
   ].filter(Boolean);
 
@@ -173,6 +185,16 @@ export function BookingActionsDropdown({
             </DropdownMenuItem>
           )}
 
+          {canComplete && (
+            <DropdownMenuItem
+              onClick={() => setIsCompleteDialogOpen(true)}
+              className="cursor-pointer"
+            >
+              <CheckSquare className="mr-2 h-4 w-4" />
+              Marker som fullført
+            </DropdownMenuItem>
+          )}
+
           {canCancel && (
             <DropdownMenuItem
               onClick={() => setIsCancelDialogOpen(true)}
@@ -201,6 +223,16 @@ export function BookingActionsDropdown({
         serviceName={serviceName}
         isOpen={isStatusDialogOpen}
         onOpenChange={setIsStatusDialogOpen}
+      />
+
+      <CompleteBookingDialog
+        open={isCompleteDialogOpen}
+        onOpenChange={setIsCompleteDialogOpen}
+        booking={booking}
+        currentUserId={currentUserId}
+        userRole={userRole}
+        serviceName={serviceName}
+        customerName={customerName}
       />
     </>
   );

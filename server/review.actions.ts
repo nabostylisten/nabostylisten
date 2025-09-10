@@ -449,21 +449,37 @@ export async function getStylistAverageRating(stylistId: string) {
     return { error: null, average, count: data.length };
 }
 
-export async function getCompletedBookingsWithoutReviews(customerId: string) {
+export async function getCompletedBookingsWithoutReviews(userId: string, userRole?: "customer" | "stylist" | "admin") {
     const supabase = await createClient();
 
     // Get current user
     const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (!user || userError || user.id !== customerId) {
+    if (!user || userError || user.id !== userId) {
         return { error: "Unauthorized access", data: null };
     }
 
-    const { data, error } = await supabase
+    // Get user profile to determine role if not provided
+    if (!userRole) {
+        const { data: profile } = await supabase
+            .from("profiles")
+            .select("role")
+            .eq("id", userId)
+            .single();
+        userRole = profile?.role as "customer" | "stylist" | "admin" || "customer";
+    }
+
+    let query = supabase
         .from("bookings")
         .select(`
             id,
             start_time,
+            customer_id,
+            stylist_id,
             stylist:profiles!bookings_stylist_id_fkey(
+                id,
+                full_name
+            ),
+            customer:profiles!bookings_customer_id_fkey(
                 id,
                 full_name
             ),
@@ -474,22 +490,51 @@ export async function getCompletedBookingsWithoutReviews(customerId: string) {
                 )
             )
         `)
-        .eq("customer_id", customerId)
-        .eq("status", "completed")
-        .not(
-            "id",
-            "in",
-            `(${
-                // Subquery to get booking IDs that already have reviews
-                await supabase
-                    .from("reviews")
-                    .select("booking_id")
-                    .eq("customer_id", customerId)
-                    .then(({ data: reviews }) =>
-                        reviews?.map((r) => r.booking_id).join(",") || "null"
-                    )})`,
-        )
-        .order("start_time", { ascending: false });
+        .eq("status", "completed");
+
+    // Filter based on user role
+    if (userRole === "customer") {
+        // For customers: only their own bookings
+        query = query.eq("customer_id", userId);
+        
+        // Exclude bookings that already have reviews by this customer
+        const { data: existingReviews } = await supabase
+            .from("reviews")
+            .select("booking_id")
+            .eq("customer_id", userId);
+        
+        const reviewedBookingIds = existingReviews?.map(r => r.booking_id) || [];
+        if (reviewedBookingIds.length > 0) {
+            query = query.not("id", "in", `(${reviewedBookingIds.join(",")})`);
+        }
+    } else if (userRole === "stylist") {
+        // For stylists: bookings where they were the stylist
+        query = query.eq("stylist_id", userId);
+        
+        // Exclude bookings that already have reviews (since stylists care about getting reviews)
+        const { data: existingReviews } = await supabase
+            .from("reviews")
+            .select("booking_id");
+        
+        const reviewedBookingIds = existingReviews?.map(r => r.booking_id) || [];
+        if (reviewedBookingIds.length > 0) {
+            query = query.not("id", "in", `(${reviewedBookingIds.join(",")})`);
+        }
+    }
+    // For admins: show all completed bookings without reviews (no additional filters)
+    else if (userRole === "admin") {
+        // Exclude bookings that already have reviews
+        const { data: existingReviews } = await supabase
+            .from("reviews")
+            .select("booking_id");
+        
+        const reviewedBookingIds = existingReviews?.map(r => r.booking_id) || [];
+        if (reviewedBookingIds.length > 0) {
+            query = query.not("id", "in", `(${reviewedBookingIds.join(",")})`);
+        }
+    }
+
+    const { data, error } = await query.order("start_time", { ascending: false });
 
     return { data, error };
 }

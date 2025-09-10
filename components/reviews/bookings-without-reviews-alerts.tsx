@@ -8,12 +8,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 interface BookingsWithoutReviewsAlertsProps {
-  customerId: string;
+  userId: string;
+  userRole?: "customer" | "stylist" | "admin";
   className?: string;
 }
 
 export function BookingsWithoutReviewsAlerts({
-  customerId,
+  userId,
+  userRole = "customer",
   className,
 }: BookingsWithoutReviewsAlertsProps) {
   const {
@@ -21,9 +23,9 @@ export function BookingsWithoutReviewsAlerts({
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["completedBookingsWithoutReviews", customerId],
+    queryKey: ["completedBookingsWithoutReviews", userId, userRole],
     queryFn: async () => {
-      const result = await getCompletedBookingsWithoutReviews(customerId);
+      const result = await getCompletedBookingsWithoutReviews(userId, userRole);
       if (result.error) {
         throw new Error(
           typeof result.error === "string" ? result.error : result.error.message
@@ -47,11 +49,17 @@ export function BookingsWithoutReviewsAlerts({
                 ?.map((bs) => bs.services?.title)
                 .filter(Boolean) || [];
 
+            // For customers: show stylist info (original behavior)
+            // For stylists/admins: show customer info  
+            const displayName = userRole === "customer" 
+              ? (booking.stylist?.full_name || "Stylisten")
+              : (booking.customer?.full_name || "Kunden");
+
             return (
               <ReviewReminderAlert
                 key={booking.id}
                 bookingId={booking.id}
-                stylistName={booking.stylist?.full_name || "Stylisten"}
+                stylistName={displayName}
                 serviceTitles={serviceTitles}
                 bookingDate={booking.start_time}
               />

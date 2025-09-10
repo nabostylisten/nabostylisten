@@ -11,11 +11,7 @@ import {
   Text,
   Hr,
 } from "@react-email/components";
-import {
-  baseStyles,
-  sectionStyles,
-  colors,
-} from "./utils/styles";
+import { baseStyles, sectionStyles, colors } from "./utils/styles";
 
 interface AffiliateApplicationConfirmationProps {
   logoUrl: string;
@@ -48,14 +44,14 @@ export const AffiliateApplicationConfirmation = ({
             />
           </Section>
 
-          <Heading style={heading}>Takk for din partnersøknad! ✨</Heading>
+          <Heading style={heading}>Takk for din partnersøknad!</Heading>
 
           <Text style={paragraph}>Kjære {stylistName},</Text>
 
           <Text style={paragraph}>
             Takk for at du søkte om å bli partner hos Nabostylisten! Vi har
-            mottatt søknaden din og setter stor pris på din interesse for å
-            være en del av vårt partnerprogram.
+            mottatt søknaden din og setter stor pris på din interesse for å være
+            en del av vårt partnerprogram.
           </Text>
 
           <Section style={confirmationSection}>
@@ -69,43 +65,43 @@ export const AffiliateApplicationConfirmation = ({
                 minute: "2-digit",
               })}
             </Text>
-            
+
             <Text style={confirmationLabel}>Referanse:</Text>
             <Text style={confirmationValue}>{applicationId}</Text>
           </Section>
 
           <Section style={nextStepsSection}>
             <Heading style={subHeading}>Hva skjer nå?</Heading>
-            
+
             <Text style={stepItem}>
               <strong>1. Vurdering</strong>
               <br />
               Vårt team vil nøye gå gjennom søknaden din og vurdere din
               bakgrunn, rekkevidde og markedsføringsplaner.
             </Text>
-            
+
             <Text style={stepItem}>
               <strong>2. Behandlingstid</strong>
               <br />
-              Vi behandler vanligvis søknader innen 3-5 virkedager. Du vil
-              motta en e-post med vår beslutning.
+              Vi behandler vanligvis søknader innen 3-5 virkedager. Du vil motta
+              en e-post med vår beslutning.
             </Text>
-            
+
             <Text style={stepItem}>
               <strong>3. Godkjenning</strong>
               <br />
-              Hvis søknaden din blir godkjent, vil du få din unike
-              partnerkode og tilgang til partnerdashboard.
+              Hvis søknaden din blir godkjent, vil du få din unike partnerkode
+              og tilgang til partnerdashboard.
             </Text>
           </Section>
 
           <Section style={infoSection}>
             <Heading style={subHeading}>I mellomtiden</Heading>
-            
+
             <Text style={paragraph}>
               Mens vi behandler søknaden din, oppfordrer vi deg til å:
             </Text>
-            
+
             <Text style={infoItem}>
               • Fortsette å bygge din tilstedeværelse på sosiale medier
             </Text>
@@ -113,7 +109,8 @@ export const AffiliateApplicationConfirmation = ({
               • Gi fantastisk service til dine eksisterende kunder
             </Text>
             <Text style={infoItem}>
-              • Bli kjent med Nabostylisten-plattformen hvis du ikke allerede har det
+              • Bli kjent med Nabostylisten-plattformen hvis du ikke allerede
+              har det
             </Text>
             <Text style={infoItem}>
               • Følg oss på sosiale medier for å holde deg oppdatert
@@ -123,8 +120,8 @@ export const AffiliateApplicationConfirmation = ({
           <Hr style={hr} />
 
           <Text style={paragraph}>
-            Hvis du har spørsmål om søknaden din eller partnerprogrammet,
-            ikke nøl med å kontakte oss på{" "}
+            Hvis du har spørsmål om søknaden din eller partnerprogrammet, ikke
+            nøl med å kontakte oss på{" "}
             <Link href="mailto:partner@nabostylisten.no" style={link}>
               partner@nabostylisten.no
             </Link>

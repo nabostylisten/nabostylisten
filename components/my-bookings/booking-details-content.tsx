@@ -38,6 +38,7 @@ import {
   Link as LinkIcon,
   Facebook,
   Youtube,
+  Edit,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -51,6 +52,8 @@ import { BookingNoteDialog } from "../booking/booking-note-dialog";
 import { BookingNoteCard } from "../booking/booking-note-card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getBookingNotes } from "@/server/booking-note.actions";
+import { ReviewDialog } from "@/components/reviews/review-dialog";
+import { getReviewByBookingId } from "@/server/review.actions";
 import { Database } from "@/types/database.types";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import {
@@ -91,6 +94,7 @@ export function BookingDetailsContent({
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
   const [isBookingNotesDialogOpen, setIsBookingNotesDialogOpen] =
     useState(false);
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<BookingNote | null>(null);
 
   const {
@@ -125,6 +129,13 @@ export function BookingDetailsContent({
     enabled: !!bookingResponse?.data?.address_id,
   });
 
+  // Check if there's an existing review for this booking
+  const { data: reviewResponse } = useQuery({
+    queryKey: ["review", bookingId],
+    queryFn: () => getReviewByBookingId(bookingId),
+    enabled: bookingResponse?.data?.status === "completed" && userRole === "customer",
+  });
+
   if (isLoading) {
     return <BookingDetailsSkeleton />;
   }
@@ -153,6 +164,7 @@ export function BookingDetailsContent({
 
   const booking = bookingResponse.data;
   const address = addressData?.data;
+  const existingReview = reviewResponse?.data;
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
   const services =
@@ -945,6 +957,48 @@ export function BookingDetailsContent({
           </Card>
         </BlurFade>
 
+        {/* Review Actions - For customers with completed bookings */}
+        {userRole === "customer" && booking.status === "completed" && (
+          <BlurFade delay={0.4} duration={0.5}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Star className="w-5 h-5" />
+                  Anmeldelse
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-muted-foreground">
+                      {existingReview
+                        ? "Du har gitt en anmeldelse for denne bookingen. Du kan endre den hvis du ønsker."
+                        : "Del din opplevelse med andre kunder ved å gi en anmeldelse av denne tjenesten."}
+                    </p>
+                  </div>
+                  <Button
+                    variant={existingReview ? "outline" : "default"}
+                    onClick={() => setIsReviewDialogOpen(true)}
+                    className="shrink-0"
+                  >
+                    {existingReview ? (
+                      <>
+                        <Edit className="w-4 h-4 mr-2" />
+                        Endre anmeldelse
+                      </>
+                    ) : (
+                      <>
+                        <Star className="w-4 h-4 mr-2" />
+                        Gi anmeldelse
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </BlurFade>
+        )}
+
         {/* Booking Notes - For stylists and admins */}
         {(userRole === "stylist" || userRole === "admin") && (
           <BlurFade delay={0.4} duration={0.5}>
@@ -1054,6 +1108,18 @@ export function BookingDetailsContent({
           onEditComplete={() => {
             setEditingNote(null);
           }}
+        />
+      )}
+
+      {/* Review Dialog for Customers */}
+      {userRole === "customer" && booking.status === "completed" && (
+        <ReviewDialog
+          open={isReviewDialogOpen}
+          onOpenChange={setIsReviewDialogOpen}
+          bookingId={bookingId}
+          stylistName={booking.stylist?.full_name || "Stylisten"}
+          serviceTitles={services.map((s) => s?.title || "Tjeneste")}
+          existingReview={existingReview}
         />
       )}
     </div>

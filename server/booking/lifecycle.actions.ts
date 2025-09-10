@@ -1173,3 +1173,235 @@ export async function rescheduleBooking({
 
     return { data: updatedBooking, error: null };
 }
+
+export async function markBookingAsCompleted(bookingId: string) {
+    const supabase = await createClient();
+
+    // Get current user
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError) {
+        return { error: "User not authenticated", data: null };
+    }
+
+    // Get booking details with user information for email
+    const { data: booking, error: bookingError } = await supabase
+        .from("bookings")
+        .select(`
+            *,
+            customer:profiles!bookings_customer_id_fkey(
+                id,
+                full_name,
+                email
+            ),
+            stylist:profiles!bookings_stylist_id_fkey(
+                id,
+                full_name,
+                email,
+                addresses!addresses_user_id_fkey(
+                    street_address,
+                    city,
+                    postal_code,
+                    is_primary
+                )
+            ),
+            addresses(
+                street_address,
+                city,
+                postal_code,
+                entry_instructions
+            ),
+            booking_services(
+                services(
+                    id,
+                    title,
+                    description
+                )
+            )
+        `)
+        .eq("id", bookingId)
+        .single();
+
+    if (bookingError || !booking) {
+        return { error: "Booking not found", data: null };
+    }
+
+    // Check if user is the assigned stylist
+    if (booking.stylist_id !== user.id) {
+        return { error: "Not authorized to complete this booking", data: null };
+    }
+
+    // Only allow completing confirmed bookings
+    if (booking.status !== "confirmed") {
+        return {
+            error: "Can only complete confirmed bookings",
+            data: null,
+        };
+    }
+
+    // Check if the booking end time has passed
+    const now = new Date();
+    const bookingEndTime = new Date(booking.end_time);
+    if (now <= bookingEndTime) {
+        return {
+            error: "Cannot complete booking before end time",
+            data: null,
+        };
+    }
+
+    // Update booking status to completed
+    const { data, error } = await supabase
+        .from("bookings")
+        .update({
+            status: "completed",
+        })
+        .eq("id", bookingId)
+        .select(`
+            *,
+            customer:profiles!bookings_customer_id_fkey(
+                id,
+                full_name,
+                email,
+                phone_number
+            ),
+            stylist:profiles!bookings_stylist_id_fkey(
+                id,
+                full_name,
+                email,
+                phone_number
+            )
+        `)
+        .single();
+
+    if (error) {
+        return { error: "Failed to complete booking", data: null };
+    }
+
+    // Send completion emails to both customer and stylist
+    try {
+        if (
+            booking.customer?.email && booking.stylist?.full_name &&
+            booking.stylist?.email
+        ) {
+            // Check user preferences for booking notifications
+            const [canSendToCustomer, canSendToStylist] = await Promise.all([
+                shouldReceiveNotificationServerSide(
+                    booking.customer_id,
+                    "booking_status_updates",
+                ),
+                shouldReceiveNotificationServerSide(
+                    booking.stylist_id,
+                    "booking_status_updates",
+                ),
+            ]);
+
+            if (canSendToCustomer || canSendToStylist) {
+                // Prepare common email data
+                const services = booking.booking_services?.map((bs) =>
+                    bs.services
+                ).filter(Boolean) || [];
+                const serviceName = services.length > 0
+                    ? services[0]?.title || "Booking"
+                    : "Booking";
+                const serviceNameWithCount = services.length > 1
+                    ? `${serviceName} +${services.length - 1} til`
+                    : serviceName;
+
+                const startTime = new Date(booking.start_time);
+                const endTime = new Date(booking.end_time);
+                const bookingDate = format(startTime, "EEEE d. MMMM yyyy", {
+                    locale: nb,
+                });
+                const bookingTime = `${format(startTime, "HH:mm")} - ${
+                    format(endTime, "HH:mm")
+                }`;
+
+                // Determine location - get actual address if available
+                let location = "";
+                if (booking.address_id && booking.addresses) {
+                    // Show booking address details
+                    location =
+                        `${booking.addresses.street_address}, ${booking.addresses.postal_code} ${booking.addresses.city}`;
+                } else if (
+                    booking.stylist?.addresses &&
+                    Array.isArray(booking.stylist.addresses)
+                ) {
+                    // Show stylist address if no booking address
+                    const stylistPrimaryAddress = booking.stylist.addresses
+                        .find((addr) => addr.is_primary);
+                    if (stylistPrimaryAddress) {
+                        location =
+                            `${stylistPrimaryAddress.street_address}, ${stylistPrimaryAddress.postal_code} ${stylistPrimaryAddress.city}`;
+                    }
+                }
+
+                const customerEmailSubject = `Tjeneste fullført: ${serviceName}`;
+                const stylistEmailSubject = `Du fullførte tjeneste: ${serviceName}`;
+
+                // Common email props
+                const emailProps = {
+                    customerName: booking.customer.full_name || "Kunde",
+                    stylistName: booking.stylist.full_name,
+                    bookingId: bookingId,
+                    stylistId: booking.stylist_id,
+                    serviceName: serviceNameWithCount,
+                    bookingDate,
+                    bookingTime,
+                    status: "completed" as const,
+                    location,
+                    isTrialSession: booking.is_trial_session || false,
+                };
+
+                // Import the new completion email template
+                const BookingCompletionEmail = (await import(
+                    "@/transactional/emails/booking-completion"
+                )).default;
+
+                // Send email to customer (only if they want notifications)
+                if (canSendToCustomer) {
+                    const { error: customerEmailError } = await sendEmail({
+                        to: [booking.customer.email],
+                        subject: customerEmailSubject,
+                        react: BookingCompletionEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            ...emailProps,
+                            recipientType: "customer",
+                        }),
+                    });
+
+                    if (customerEmailError) {
+                        console.error(
+                            "Error sending customer completion email:",
+                            customerEmailError,
+                        );
+                    }
+                }
+
+                // Send email to stylist (only if they want notifications)
+                if (canSendToStylist) {
+                    const { error: stylistEmailError } = await sendEmail({
+                        to: [booking.stylist.email],
+                        subject: stylistEmailSubject,
+                        react: BookingCompletionEmail({
+                            logoUrl: getNabostylistenLogoUrl("png"),
+                            ...emailProps,
+                            recipientType: "stylist",
+                        }),
+                    });
+
+                    if (stylistEmailError) {
+                        console.error(
+                            "Error sending stylist completion email:",
+                            stylistEmailError,
+                        );
+                    }
+                }
+            }
+        }
+    } catch (emailError) {
+        console.error("Error sending completion emails:", emailError);
+        // Don't fail the entire operation if email fails - log the error
+        // The booking completion was successful, email is a nice-to-have
+    }
+
+    return { data, error: null };
+}

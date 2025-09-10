@@ -398,6 +398,7 @@ export const urgencyColors = {
 export const statusColors = {
   confirmed: colors.accentForeground, // green
   cancelled: colors.destructive, // red
+  completed: colors.accentForeground, // green
   approved: colors.accentForeground, // green
   rejected: colors.destructive, // red
   pending: colors.primary, // purple

@@ -77,7 +77,7 @@ export const AffiliateMonthlyPayout = ({
             />
           </Section>
 
-          <Heading style={heading}>Din partnerutbetaling er på vei! 💰</Heading>
+          <Heading style={heading}>Din partnerutbetaling er på vei!</Heading>
 
           <Text style={paragraph}>Kjære {stylistName},</Text>
 

@@ -95,15 +95,14 @@ export function MyBookingsPageContent({
           </div>
         </BlurFade>
 
-        {/* Show review alerts for customers only */}
-        {userRole === "customer" && (
-          <BlurFade delay={0.15} duration={0.5} inView>
-            <BookingsWithoutReviewsAlerts
-              customerId={userId}
-              className="my-4"
-            />
-          </BlurFade>
-        )}
+        {/* Show review alerts for all user roles */}
+        <BlurFade delay={0.15} duration={0.5} inView>
+          <BookingsWithoutReviewsAlerts
+            userId={userId}
+            userRole={userRole}
+            className="my-4"
+          />
+        </BlurFade>
 
         {/* Mode toggle for stylists */}
         {userRole === "stylist" && (

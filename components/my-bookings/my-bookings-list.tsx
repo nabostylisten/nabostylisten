@@ -36,7 +36,8 @@ export function MyBookingsList({
 
   const filters = searchParamsToBookingFilters(
     {
-      search: searchParams.get("search") || undefined,
+      services: searchParams.get("services") || undefined,
+      stylists: searchParams.get("stylists") || undefined,
       sort: searchParams.get("sort") || undefined,
     },
     undefined, // no dateRange anymore
@@ -50,7 +51,7 @@ export function MyBookingsList({
   // Reset page to 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [filters.search, status, filters.sortBy]);
+  }, [filters.serviceIds, filters.stylistIds, status, filters.sortBy]);
 
   const {
     data: bookingsResponse,
@@ -109,7 +110,8 @@ export function MyBookingsList({
   const bookings = bookingsResponse?.data || [];
   const total = bookingsResponse?.total || 0;
   const totalPages = bookingsResponse?.totalPages || 0;
-  const hasSearch = filters.search?.trim();
+  const hasActiveFilters = (filters.serviceIds && filters.serviceIds.length > 0) ||
+    (filters.stylistIds && filters.stylistIds.length > 0);
 
   console.log(bookings);
   console.log(bookingsResponse);
@@ -282,13 +284,12 @@ export function MyBookingsList({
     return (
       <Card>
         <CardContent className="p-6 text-center py-12">
-          {hasSearch ? (
+          {hasActiveFilters ? (
             <div className="space-y-3">
               <Search className="w-12 h-12 mx-auto text-muted-foreground" />
               <h3 className="text-lg font-medium">Ingen treff</h3>
               <p className="text-muted-foreground">
-                Vi fant ingen bookinger som matcher søket ditt "{filters.search}
-                ".
+                Vi fant ingen bookinger som matcher dine valgte filtre.
               </p>
             </div>
           ) : (

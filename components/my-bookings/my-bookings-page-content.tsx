@@ -136,7 +136,7 @@ export function MyBookingsPageContent({
         {/* Filter */}
         <BlurFade delay={0.25} duration={0.5} inView>
           <div className="mb-6">
-            <MyBookingsFilter />
+            <MyBookingsFilter userId={userId} userRole={effectiveRole} />
           </div>
         </BlurFade>
 

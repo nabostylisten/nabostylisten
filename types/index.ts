@@ -410,7 +410,8 @@ export interface MapboxSuggestion {
 
 // Booking filters for user bookings page
 export interface BookingFilters {
-  search?: string;
+  serviceIds?: string[]; // Filter by specific services
+  stylistIds?: string[]; // Filter by specific stylists
   status?: "pending" | "confirmed" | "cancelled" | "completed";
   dateRange?: "upcoming" | "completed" | "all" | "to_be_confirmed" | "planned";
   sortBy?: "date_asc" | "date_desc" | "newest" | "price_asc" | "price_desc";
@@ -420,7 +421,8 @@ export interface BookingFilters {
 
 // URL search parameters for bookings (as they appear in the URL)
 export interface BookingSearchParams {
-  search?: string;
+  services?: string; // Comma-separated service IDs
+  stylists?: string; // Comma-separated stylist IDs
   sort?: string;
 }
 
@@ -432,7 +434,8 @@ export function searchParamsToBookingFilters(
   limit?: number,
 ): BookingFilters {
   return {
-    search: searchParams.search,
+    serviceIds: searchParams.services ? searchParams.services.split(",") : undefined,
+    stylistIds: searchParams.stylists ? searchParams.stylists.split(",") : undefined,
     dateRange,
     sortBy: searchParams.sort as BookingFilters["sortBy"] || "date_desc",
     page: page || 1,
@@ -445,7 +448,8 @@ export function bookingFiltersToSearchParams(
   filters: BookingFilters,
 ): BookingSearchParams {
   return {
-    search: filters.search,
+    services: filters.serviceIds?.length ? filters.serviceIds.join(",") : undefined,
+    stylists: filters.stylistIds?.length ? filters.stylistIds.join(",") : undefined,
     sort: filters.sortBy === "date_desc" ? undefined : filters.sortBy,
   };
 }

@@ -2,10 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Search, Filter } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -13,23 +13,71 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Combobox,
+  ComboboxTrigger,
+  ComboboxContent,
+  ComboboxInput,
+  ComboboxList,
+  ComboboxEmpty,
+  ComboboxItem,
+} from "@/components/ui/kibo-ui/combobox";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { BookingFilters } from "@/types";
+import {
+  getUserBookingServices,
+  getUserBookingStylists,
+} from "@/server/booking/crud.actions";
 
-export function MyBookingsFilter() {
+interface MyBookingsFilterProps {
+  userId: string;
+  userRole?: "customer" | "stylist";
+}
+
+export function MyBookingsFilter({
+  userId,
+  userRole = "customer",
+}: MyBookingsFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
-  const [search, setSearch] = useState(searchParams.get("search") || "");
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(
+    searchParams.get("services")?.split(",").filter(Boolean) || []
+  );
+  const [selectedStylistIds, setSelectedStylistIds] = useState<string[]>(
+    searchParams.get("stylists")?.split(",").filter(Boolean) || []
+  );
   const [sortBy, setSortBy] = useState<BookingFilters["sortBy"]>(
     (searchParams.get("sort") as BookingFilters["sortBy"]) || "date_desc"
   );
+
+  // Fetch available services for this user
+  const { data: services = [] } = useQuery({
+    queryKey: ["user-booking-services", userId, userRole],
+    queryFn: async () => {
+      const result = await getUserBookingServices(userId, userRole);
+      return result.data || [];
+    },
+  });
+
+  // Fetch available stylists/customers for this user
+  const { data: stylists = [] } = useQuery({
+    queryKey: ["user-booking-stylists", userId, userRole],
+    queryFn: async () => {
+      const result = await getUserBookingStylists(userId, userRole);
+      return result.data || [];
+    },
+  });
 
   const handleSearch = () => {
     startTransition(() => {
       const params = new URLSearchParams();
 
-      if (search.trim()) params.set("search", search.trim());
+      if (selectedServiceIds.length > 0)
+        params.set("services", selectedServiceIds.join(","));
+      if (selectedStylistIds.length > 0)
+        params.set("stylists", selectedStylistIds.join(","));
       if (sortBy !== "date_desc" && sortBy) params.set("sort", sortBy);
 
       const queryString = params.toString();
@@ -39,41 +87,126 @@ export function MyBookingsFilter() {
 
   const handleClearFilters = () => {
     startTransition(() => {
-      setSearch("");
+      setSelectedServiceIds([]);
+      setSelectedStylistIds([]);
       setSortBy("date_desc");
       router.push(window.location.pathname);
     });
   };
 
-
   const hasActiveFilters =
-    search ||
+    selectedServiceIds.length > 0 ||
+    selectedStylistIds.length > 0 ||
     sortBy !== "date_desc";
 
+  // Transform services for combobox
+  const serviceComboboxData = services.map((service) => ({
+    value: service.id,
+    label: service.title,
+  }));
+
+  // Transform stylists for combobox
+  const stylistComboboxData = stylists.map((stylist) => ({
+    value: stylist.id,
+    label: stylist.full_name || stylist.email || "Unavngitt",
+  }));
 
   return (
     <Card>
       <CardContent className="p-6 space-y-4">
-        {/* Search and Sort Row */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Søk i bookinger, tjenester eller stylister..."
-              className="pl-10"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-            />
-          </div>
-          
-          {/* Sort By */}
-          <div className="flex-1">
+        {/* Sort Row */}
+        <div className="flex justify-end"></div>
+
+        {/* Services and Stylists Filter Row */}
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Services Combobox */}
+          <Combobox data={serviceComboboxData} type="tjenester">
+            <ComboboxTrigger className="w-full flex-1">
+              <span className="flex w-full items-center justify-between gap-2">
+                {selectedServiceIds.length > 0
+                  ? `${selectedServiceIds.length} tjenester valgt`
+                  : "Velg tjenester..."}
+              </span>
+            </ComboboxTrigger>
+            <ComboboxContent className="w-full">
+              <ComboboxInput />
+              <ComboboxList>
+                <ComboboxEmpty />
+                {serviceComboboxData.map((service) => (
+                  <ComboboxItem
+                    key={service.value}
+                    value={service.value}
+                    onSelect={(value) => {
+                      setSelectedServiceIds((prev) =>
+                        prev.includes(value)
+                          ? prev.filter((id) => id !== value)
+                          : [...prev, value]
+                      );
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={selectedServiceIds.includes(service.value)}
+                        onCheckedChange={() => {}}
+                      />
+                      <span>{service.label}</span>
+                    </div>
+                  </ComboboxItem>
+                ))}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+
+          {/* Stylists Combobox */}
+
+          <Combobox
+            data={stylistComboboxData}
+            type={userRole === "customer" ? "stylister" : "kunder"}
+          >
+            <ComboboxTrigger className="w-full flex-1">
+              <span className="flex w-full items-center justify-between gap-2">
+                {selectedStylistIds.length > 0
+                  ? `${selectedStylistIds.length} ${userRole === "customer" ? "stylister" : "kunder"} valgt`
+                  : `Velg ${userRole === "customer" ? "stylister" : "kunder"}...`}
+              </span>
+            </ComboboxTrigger>
+            <ComboboxContent className="w-full">
+              <ComboboxInput />
+              <ComboboxList>
+                <ComboboxEmpty />
+                {stylistComboboxData.map((stylist) => (
+                  <ComboboxItem
+                    key={stylist.value}
+                    value={stylist.value}
+                    onSelect={(value) => {
+                      setSelectedStylistIds((prev) =>
+                        prev.includes(value)
+                          ? prev.filter((id) => id !== value)
+                          : [...prev, value]
+                      );
+                    }}
+                  >
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        checked={selectedStylistIds.includes(stylist.value)}
+                        onCheckedChange={() => {}}
+                      />
+                      <span>{stylist.label}</span>
+                    </div>
+                  </ComboboxItem>
+                ))}
+              </ComboboxList>
+            </ComboboxContent>
+          </Combobox>
+
+          <div className="w-full flex-1">
             <Select
               value={sortBy}
-              onValueChange={(value) => setSortBy(value as BookingFilters["sortBy"])}
+              onValueChange={(value) =>
+                setSortBy(value as BookingFilters["sortBy"])
+              }
             >
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="Sorter etter" />
               </SelectTrigger>
               <SelectContent>
@@ -86,7 +219,6 @@ export function MyBookingsFilter() {
             </Select>
           </div>
         </div>
-
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-2">

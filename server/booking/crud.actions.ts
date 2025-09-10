@@ -6,6 +6,7 @@ import {
     bookingsUpdateSchema,
 } from "@/schemas/database.schema";
 import type { BookingFilters, DatabaseTables } from "@/types";
+import type { Service, Profile } from "@/types/database-helpers";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -168,14 +169,33 @@ export async function getUserBookings(
         query = query.eq("stylist_id", userId);
     }
 
-    // Apply search filter
-    if (filters.search?.trim()) {
-        // Search in service titles, stylist names, or booking messages
-        query = query.or(`
-            message_to_stylist.ilike.%${filters.search}%,
-            booking_services.service.title.ilike.%${filters.search}%,
-            stylist.full_name.ilike.%${filters.search}%
-        `);
+
+    // Apply service IDs filter
+    if (filters.serviceIds && filters.serviceIds.length > 0) {
+        // Find bookings that contain any of the specified services
+        const { data: matchingBookingIds } = await supabase
+            .from("booking_services")
+            .select("booking_id")
+            .in("service_id", filters.serviceIds);
+        
+        if (matchingBookingIds && matchingBookingIds.length > 0) {
+            const ids = matchingBookingIds.map(bs => bs.booking_id);
+            query = query.in("id", ids);
+        } else {
+            // No matches found, return empty result
+            return { data: [], error: null, total: 0, totalPages: 0, currentPage: page };
+        }
+    }
+
+    // Apply stylist IDs filter
+    if (filters.stylistIds && filters.stylistIds.length > 0) {
+        if (userRole === "customer") {
+            // For customers, filter by stylist IDs
+            query = query.in("stylist_id", filters.stylistIds);
+        } else {
+            // For stylists, filter by customer IDs (though this is less common)
+            query = query.in("customer_id", filters.stylistIds);
+        }
     }
 
     // Apply status filter
@@ -231,13 +251,27 @@ export async function getUserBookings(
         countQuery.eq("stylist_id", userId);
     }
 
-    // Apply the same filters for counting
-    if (filters.search?.trim()) {
-        countQuery.or(`
-            message_to_stylist.ilike.%${filters.search}%,
-            booking_services.service.title.ilike.%${filters.search}%,
-            stylist.full_name.ilike.%${filters.search}%
-        `);
+
+    if (filters.serviceIds && filters.serviceIds.length > 0) {
+        const { data: matchingBookingIds } = await supabase
+            .from("booking_services")
+            .select("booking_id")
+            .in("service_id", filters.serviceIds);
+        
+        if (matchingBookingIds && matchingBookingIds.length > 0) {
+            const ids = matchingBookingIds.map(bs => bs.booking_id);
+            countQuery.in("id", ids);
+        } else {
+            return { data: [], error: null, total: 0, totalPages: 0, currentPage: page };
+        }
+    }
+
+    if (filters.stylistIds && filters.stylistIds.length > 0) {
+        if (userRole === "customer") {
+            countQuery.in("stylist_id", filters.stylistIds);
+        } else {
+            countQuery.in("customer_id", filters.stylistIds);
+        }
     }
 
     if (filters.status) {
@@ -588,6 +622,161 @@ export async function getBookingDetails(bookingId: string) {
     };
 
     return { data, error: null };
+}
+
+// Type for the service data returned by getUserBookingServices
+type UserBookingService = Pick<Service, "id" | "title" | "price" | "currency" | "duration_minutes">;
+
+export async function getUserBookingServices(
+    userId: string,
+    userRole: "customer" | "stylist" = "customer",
+): Promise<{ data: UserBookingService[] | null; error: string | null }> {
+    const supabase = await createClient();
+
+    // Get current user to verify access
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError || user.id !== userId) {
+        return {
+            error: "Unauthorized access",
+            data: null,
+        };
+    }
+
+    // Build base query to get distinct services from user's bookings
+    let query = supabase
+        .from("bookings")
+        .select(`
+            booking_services!inner(
+                service:services(
+                    id,
+                    title,
+                    price,
+                    currency,
+                    duration_minutes
+                )
+            )
+        `);
+
+    // Filter by role
+    if (userRole === "customer") {
+        query = query.eq("customer_id", userId);
+    } else {
+        query = query.eq("stylist_id", userId);
+    }
+
+    const { data: bookingsData, error } = await query;
+
+    if (error) {
+        return { error: error.message, data: null };
+    }
+
+    // Extract and deduplicate services
+    const servicesMap = new Map<string, UserBookingService>();
+    bookingsData?.forEach((booking) => {
+        booking.booking_services?.forEach((bs) => {
+            if (bs.service) {
+                servicesMap.set(bs.service.id, {
+                    id: bs.service.id,
+                    title: bs.service.title,
+                    price: bs.service.price,
+                    currency: bs.service.currency,
+                    duration_minutes: bs.service.duration_minutes,
+                } satisfies UserBookingService);
+            }
+        });
+    });
+
+    const services = Array.from(servicesMap.values()).sort((a, b) => 
+        a.title.localeCompare(b.title)
+    );
+
+    return { data: services, error: null };
+}
+
+// Type for the stylist/customer data returned by getUserBookingStylists
+type UserBookingStylist = Pick<Profile, "id" | "full_name" | "email">;
+
+export async function getUserBookingStylists(
+    userId: string,
+    userRole: "customer" | "stylist" = "customer",
+): Promise<{ data: UserBookingStylist[] | null; error: string | null }> {
+    const supabase = await createClient();
+
+    // Get current user to verify access
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (!user || userError || user.id !== userId) {
+        return {
+            error: "Unauthorized access",
+            data: null,
+        };
+    }
+
+    let bookingsData, error;
+
+    // For customers, get stylists they've booked with
+    // For stylists, get customers they've served
+    if (userRole === "customer") {
+        const query = supabase
+            .from("bookings")
+            .select(`
+                stylist:profiles!bookings_stylist_id_fkey(
+                    id,
+                    full_name,
+                    email
+                )
+            `)
+            .eq("customer_id", userId);
+
+        const result = await query;
+        bookingsData = result.data;
+        error = result.error;
+    } else {
+        const query = supabase
+            .from("bookings")
+            .select(`
+                customer:profiles!bookings_customer_id_fkey(
+                    id,
+                    full_name,
+                    email
+                )
+            `)
+            .eq("stylist_id", userId);
+
+        const result = await query;
+        bookingsData = result.data;
+        error = result.error;
+    }
+
+    if (error) {
+        return { error: error.message, data: null };
+    }
+
+    // Extract and deduplicate stylists/customers
+    const profilesMap = new Map<string, UserBookingStylist>();
+    bookingsData?.forEach((booking) => {
+        let profile;
+        if (userRole === "customer" && "stylist" in booking) {
+            profile = booking.stylist;
+        } else if (userRole === "stylist" && "customer" in booking) {
+            profile = booking.customer;
+        }
+        
+        if (profile) {
+            profilesMap.set(profile.id, {
+                id: profile.id,
+                full_name: profile.full_name,
+                email: profile.email,
+            } satisfies UserBookingStylist);
+        }
+    });
+
+    const profiles = Array.from(profilesMap.values())
+        .filter((profile): profile is UserBookingStylist & { full_name: string } => 
+            profile.full_name !== null
+        ) // Only include profiles with names
+        .sort((a, b) => a.full_name.localeCompare(b.full_name));
+
+    return { data: profiles, error: null };
 }
 
 export async function getBookingCounts(

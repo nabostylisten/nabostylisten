@@ -116,7 +116,7 @@ export default async function ApplicationDetailPage({
   // Add public URLs for media using the proper storage handling
   const mediaWithUrls = media?.map((mediaItem) => ({
     ...mediaItem,
-    publicUrl: getPublicUrlFromPath(supabase, mediaItem.file_path),
+    publicUrl: getPublicUrlFromPath(supabase, mediaItem.file_path, mediaItem.media_type),
   })) || [];
 
   return (

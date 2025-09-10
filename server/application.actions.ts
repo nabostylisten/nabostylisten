@@ -53,37 +53,133 @@ export async function uploadPortfolioImages(
     files: File[],
     applicationId: string,
 ) {
+    console.log(
+        "[UPLOAD_PORTFOLIO] Starting upload for application:",
+        applicationId,
+    );
+    console.log("[UPLOAD_PORTFOLIO] Number of files to upload:", files.length);
+    console.log(
+        "[UPLOAD_PORTFOLIO] File details:",
+        files.map((f) => ({
+            name: f.name,
+            size: f.size,
+            type: f.type,
+        })),
+    );
+
     try {
+        // Use service client to bypass RLS policies for media record creation
+        const serviceSupabase = await createServiceClient();
+        console.log(
+            "[UPLOAD_PORTFOLIO] Using service client for media records (bypasses RLS)",
+        );
+
+        // Get current user if authenticated
+        const regularSupabase = await createClient();
+        const { data: { user } } = await regularSupabase.auth.getUser();
+        const userId = user?.id || null;
+        console.log(
+            "[UPLOAD_PORTFOLIO] Current user ID:",
+            userId || "unauthenticated",
+        );
+
         // Upload all files to the applications bucket
-        const uploadPromises = files.map(async (file) => {
+        const uploadPromises = files.map(async (file, index) => {
+            console.log(
+                `[UPLOAD_PORTFOLIO] Uploading file ${
+                    index + 1
+                }/${files.length}: ${file.name}`,
+            );
+
             const uploadResult = await uploadApplicationImage({
                 applicationId,
                 file,
             });
 
+            console.log(
+                `[UPLOAD_PORTFOLIO] Upload result for ${file.name}:`,
+                uploadResult,
+            );
+
             if (uploadResult.error) {
+                console.error(
+                    `[UPLOAD_PORTFOLIO] Failed to upload ${file.name}:`,
+                    uploadResult.error,
+                );
                 throw new Error(
                     `Kunne ikke laste opp bilde ${file.name}: ${uploadResult.error}`,
                 );
             }
 
             if (!uploadResult.data) {
+                console.error(
+                    `[UPLOAD_PORTFOLIO] No data returned for ${file.name}`,
+                );
                 throw new Error(
                     `Ingen data returnert for opplasting av ${file.name}`,
                 );
             }
 
-            return uploadResult.data.publicUrl || uploadResult.data.fullPath;
+            const imageUrl = uploadResult.data.publicUrl ||
+                uploadResult.data.fullPath;
+            console.log(
+                `[UPLOAD_PORTFOLIO] Image URL for ${file.name}:`,
+                imageUrl,
+            );
+
+            // Create media record for this uploaded image using service client
+            const filePath = uploadResult.data.path ||
+                uploadResult.data.fullPath;
+            console.log(
+                `[UPLOAD_PORTFOLIO] Creating media record with path:`,
+                filePath,
+            );
+
+            const { data: mediaData, error: mediaError } = await serviceSupabase
+                .from("media")
+                .insert({
+                    application_id: applicationId,
+                    file_path: filePath,
+                    media_type: "application_image" as const,
+                    owner_id: userId, // Can be null for unauthenticated applications
+                })
+                .select()
+                .single();
+
+            if (mediaError) {
+                console.error(
+                    "[UPLOAD_PORTFOLIO] ❌ Failed to create media record:",
+                    mediaError,
+                );
+                console.error("[UPLOAD_PORTFOLIO] Media insert data:", {
+                    application_id: applicationId,
+                    file_path: filePath,
+                    media_type: "application_image",
+                    owner_id: userId,
+                });
+                // Don't throw here, image is uploaded successfully
+            } else {
+                console.log(
+                    `[UPLOAD_PORTFOLIO] ✅ Media record created for ${file.name}:`,
+                    mediaData,
+                );
+            }
+
+            return imageUrl;
         });
 
         const results = await Promise.all(uploadPromises);
+        console.log("[UPLOAD_PORTFOLIO] All uploads complete. URLs:", results);
 
         return {
             data: results,
             error: null,
         };
     } catch (error) {
-        console.error("Error uploading portfolio images:", error);
+        console.error(
+            "[UPLOAD_PORTFOLIO] ❌ Error uploading portfolio images:",
+            error,
+        );
         return {
             data: null,
             error: error instanceof Error
@@ -163,12 +259,24 @@ export async function getCurrentUserApplicationData() {
  * Create a new stylist application
  */
 export async function createApplication(data: ApplicationFormData) {
+    console.log("[CREATE_APPLICATION] Starting application creation");
+    console.log("[CREATE_APPLICATION] Data received:", {
+        fullName: data.fullName,
+        email: data.email,
+        portfolioImageUrls: data.portfolioImageUrls?.length || 0,
+        serviceCategories: data.serviceCategories,
+    });
+
     try {
         const supabase = await createClient();
 
         // Get current user (optional - applications can be submitted without auth)
         const { data: { user } } = await supabase.auth.getUser();
         const userId = user?.id || null;
+        console.log(
+            "[CREATE_APPLICATION] User ID:",
+            userId || "unauthenticated",
+        );
 
         // Create application with all data stored directly
         const applicationData = {
@@ -216,104 +324,85 @@ export async function createApplication(data: ApplicationFormData) {
                 .single();
 
         if (applicationError || !applicationResult) {
+            console.error(
+                "[CREATE_APPLICATION] Failed to create application:",
+                applicationError,
+            );
             throw new Error(
                 "Kunne ikke opprette søknad: " + applicationError?.message,
             );
         }
 
-        // Create media records for portfolio image URLs
-        const mediaPromises = data.portfolioImageUrls.map(async (imageUrl) => {
-            // Extract the file path from the full URL using storage utils
-            let filePath: string;
+        console.log(
+            "[CREATE_APPLICATION] Application created successfully:",
+            applicationResult.id,
+        );
+
+        // Note: Media records are now created in uploadPortfolioImages function
+        // which is called after the application is created
+        if (data.portfolioImageUrls && data.portfolioImageUrls.length > 0) {
+            console.log(
+                "[CREATE_APPLICATION] Note: This application was created with pre-existing image URLs",
+            );
+            console.log(
+                "[CREATE_APPLICATION] Image URLs count:",
+                data.portfolioImageUrls.length,
+            );
+            // This path is typically not used in the current flow, as images are uploaded after application creation
+        }
+
+        if (process.env.ADMIN_EMAIL) {
+            // Send email notification to admin
             try {
-                // Try to extract path from Supabase storage URL
-                const url = new URL(imageUrl);
-                const pathParts = url.pathname.split("/");
-
-                // Find the applications bucket segment
-                const bucketIndex = pathParts.findIndex((part) =>
-                    part === "applications"
-                );
-                if (bucketIndex !== -1 && bucketIndex < pathParts.length - 1) {
-                    // Get the path after the bucket name
-                    filePath = pathParts.slice(bucketIndex + 1).join("/");
-                } else {
-                    // Fallback: use the last parts of the path
-                    filePath = pathParts.slice(-2).join("/"); // applicationId/filename
-                }
-
-                console.log(
-                    `[MEDIA_CREATION] Extracted file path: ${filePath} from URL: ${imageUrl}`,
-                );
-            } catch (error) {
-                console.error("Error parsing image URL:", error);
-                // Fallback to using the URL as-is
-                filePath = imageUrl;
-            }
-
-            // Create media record (owner_id can be null for application images)
-            const { error: mediaError } = await supabase
-                .from("media")
-                .insert({
-                    application_id: applicationResult.id,
-                    file_path: filePath,
-                    media_type: "application_image",
-                    owner_id: userId, // Can be null for unauthenticated applications
+                const { error: emailError } = await sendEmail({
+                    to: [process.env.ADMIN_EMAIL], // Admin email
+                    subject: "Ny stylist-søknad mottatt",
+                    react: StylistApplicationEmail({
+                        logoUrl: getNabostylistenLogoUrl("png"),
+                        applicantName: data.fullName,
+                        applicantEmail: data.email,
+                        applicationId: applicationResult.id,
+                        submittedAt: new Date(),
+                        portfolioImageCount: data.portfolioImageUrls.length,
+                        serviceCategories: data.serviceCategories,
+                        priceRange: {
+                            from: data.priceRangeFrom,
+                            to: data.priceRangeTo,
+                            currency: "NOK",
+                        },
+                    }),
                 });
 
-            if (mediaError) {
-                console.error("Error creating media record:", mediaError);
-                throw new Error(
-                    `Kunne ikke opprette media record: ${mediaError.message}`,
-                );
+                if (emailError) {
+                    console.error(
+                        "Error sending admin notification email:",
+                        emailError,
+                    );
+                }
+            } catch (emailError) {
+                console.error("Error sending notification email:", emailError);
+                // Don't throw here, the application was created successfully
             }
-
-            return { path: filePath, publicUrl: imageUrl };
-        });
-
-        const mediaResults = await Promise.all(mediaPromises);
-
-        // Send email notification to admin
-        try {
-            const { error: emailError } = await sendEmail({
-                to: [process.env.ADMIN_EMAIL || "magnus.rodseth@gmail.com"], // Admin email
-                subject: "Ny stylist-søknad mottatt",
-                react: StylistApplicationEmail({
-                    logoUrl: getNabostylistenLogoUrl("png"),
-                    applicantName: data.fullName,
-                    applicantEmail: data.email,
-                    applicationId: applicationResult.id,
-                    submittedAt: new Date(),
-                    portfolioImageCount: data.portfolioImageUrls.length,
-                    serviceCategories: data.serviceCategories,
-                    priceRange: {
-                        from: data.priceRangeFrom,
-                        to: data.priceRangeTo,
-                        currency: "NOK",
-                    },
-                }),
-            });
-
-            if (emailError) {
-                console.error(
-                    "Error sending admin notification email:",
-                    emailError,
-                );
-            }
-        } catch (emailError) {
-            console.error("Error sending notification email:", emailError);
-            // Don't throw here, the application was created successfully
+        } else {
+            console.log(
+                "[CREATE_APPLICATION] Admin email not configured, skipping admin notification",
+            );
         }
+
+        console.log("[CREATE_APPLICATION] ✅ Application creation complete");
 
         return {
             data: {
                 applicationId: applicationResult.id,
-                uploadedImages: mediaResults.length,
+                uploadedImages: 0, // Images are uploaded separately after application creation
             },
             error: null,
         };
     } catch (error) {
-        console.error("Error creating application:", error);
+        console.error(
+            "[CREATE_APPLICATION] ❌ Error creating application:",
+            error,
+        );
         return {
             data: null,
             error: error instanceof Error

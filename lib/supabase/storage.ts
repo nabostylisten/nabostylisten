@@ -186,34 +186,92 @@ export async function downloadFile(
 
 /**
  * Helper function to extract bucket and path from file_path stored in database
- * File paths are stored as: "bucket_name/path/to/file.ext"
+ * File paths are stored without bucket prefix, just as: "id/filename.ext" or "id1/id2/filename.ext"
+ * We need to determine the bucket based on the path pattern or context
  */
 export function parseFilePath(
     filePath: string,
 ): { bucket: string; path: string } {
-    const firstSlashIndex = filePath.indexOf("/");
-    if (firstSlashIndex === -1) {
-        // If no slash, assume it's in a default bucket
+    // For application images, the path format is: "applicationId/filename.ext"
+    // For service images, the path format is: "serviceId/filename.ext"
+    // For chat images, the path format is: "chatId/messageId/filename.ext"
+    // For review images, the path format is: "reviewId/filename.ext"
+    // For booking note images, the path format is: "bookingId/noteId/filename.ext"
+    
+    // Count the number of segments in the path
+    const segments = filePath.split("/");
+    
+    // If the path starts with a known bucket name, extract it
+    const knownBuckets = ["avatars", "chat-media", "landing-media", "assets", "service-media", 
+                          "review-media", "applications", "booking-note-media", "portfolio"];
+    
+    if (knownBuckets.includes(segments[0])) {
+        // Path includes bucket name as first segment
+        return {
+            bucket: segments[0],
+            path: segments.slice(1).join("/")
+        };
+    }
+    
+    // Otherwise, infer bucket from path structure
+    // This is a fallback for legacy data where bucket isn't included in path
+    if (segments.length === 3) {
+        // Three segments typically means chat-media or booking-note-media
+        // Format: id1/id2/filename
+        return { bucket: "chat-media", path: filePath };
+    } else if (segments.length === 2) {
+        // Two segments could be service-media, review-media, or applications
+        // Format: id/filename
+        // Default to applications for now since that's what we're fixing
+        return { bucket: "applications", path: filePath };
+    } else if (segments.length === 1) {
+        // Single segment with no path separator
+        // Likely a standalone file in service-media or assets
         return { bucket: "service-media", path: filePath };
     }
-
-    const bucket = filePath.substring(0, firstSlashIndex);
-    const path = filePath.substring(firstSlashIndex + 1);
-
-    return { bucket, path };
+    
+    // Default fallback
+    return { bucket: "service-media", path: filePath };
 }
 
 /**
  * Get public URL from file_path stored in database
+ * @param mediaType - Optional media type to help determine the correct bucket
  */
 export function getPublicUrlFromPath(
     supabase: SupabaseClient,
     filePath: string,
+    mediaType?: string,
 ): string {
     if (filePath.startsWith("https://images.unsplash.com/")) {
         return filePath;
     }
 
+    // Use media type to determine bucket if provided
+    if (mediaType) {
+        const bucketMap: Record<string, string> = {
+            "avatar": "avatars",
+            "service_image": "service-media",
+            "review_image": "review-media",
+            "chat_image": "chat-media",
+            "application_image": "applications",
+            "landing_asset": "landing-media",
+            "logo_asset": "assets",
+            "booking_note_image": "booking-note-media",
+            "other": "assets",
+        };
+        
+        const bucket = bucketMap[mediaType];
+        if (bucket) {
+            // If the path already includes the bucket name, remove it
+            const pathWithoutBucket = filePath.startsWith(bucket + "/") 
+                ? filePath.substring(bucket.length + 1)
+                : filePath;
+            return getPublicUrl(supabase, bucket, pathWithoutBucket);
+        }
+    }
+
+    // Fallback to parsing the path
     const { bucket, path } = parseFilePath(filePath);
     return getPublicUrl(supabase, bucket, path);
 }

@@ -312,6 +312,9 @@ export async function uploadApplicationImage({
     applicationId: string;
     file: File;
 }): Promise<FileUploadResult> {
+    console.log(`[UPLOAD_APP_IMAGE] Starting upload for application ${applicationId}`);
+    console.log(`[UPLOAD_APP_IMAGE] File: ${file.name} (${file.size} bytes, ${file.type})`);
+    
     try {
         const supabase = await createClient();
 
@@ -322,6 +325,7 @@ export async function uploadApplicationImage({
             bucketConfigs.applications.maxSize,
         );
         if (validation) {
+            console.error(`[UPLOAD_APP_IMAGE] Validation failed:`, validation);
             return { data: null, error: validation };
         }
 
@@ -331,8 +335,8 @@ export async function uploadApplicationImage({
             applicationId,
             filename,
         );
-
-        console.log("storagePath", storagePath);
+        
+        console.log(`[UPLOAD_APP_IMAGE] Storage path:`, storagePath);
 
         // Upload file
         const { data, error } = await supabase.storage
@@ -342,27 +346,30 @@ export async function uploadApplicationImage({
                 upsert: true,
             });
 
-        console.log("data", data);
-        console.log("error", error);
-
         if (error) {
+            console.error(`[UPLOAD_APP_IMAGE] Storage upload failed:`, error);
             return { data: null, error: error.message };
         }
+
+        console.log(`[UPLOAD_APP_IMAGE] File uploaded successfully:`, data);
 
         // Get public URL for application images
         const { data: urlData } = supabase.storage
             .from(storagePath.bucket)
             .getPublicUrl(storagePath.path);
 
+        console.log(`[UPLOAD_APP_IMAGE] Public URL generated:`, urlData.publicUrl);
+
         return {
             data: {
-                path: data.path,
+                path: storagePath.path,  // This is the path without bucket: "applicationId/filename"
                 fullPath: data.fullPath,
                 publicUrl: urlData.publicUrl,
             },
             error: null,
         };
     } catch (error) {
+        console.error(`[UPLOAD_APP_IMAGE] ❌ Unexpected error:`, error);
         return {
             data: null,
             error: error instanceof Error

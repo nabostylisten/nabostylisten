@@ -62,11 +62,18 @@ export function InfiniteServicesGrid({
         setIsLast(true);
       }
 
-      // Merge new services with previously loaded ones, avoiding duplicates
+      // For initial load or when filters change, replace the array completely to preserve sort order
+      // For infinite scroll (currentOffset > 0), append new services
       setLoadedServices((prevServices) => {
-        const existingIds = new Set(prevServices.map(service => service.id));
-        const newServices = result.services.filter(service => !existingIds.has(service.id));
-        return [...prevServices, ...newServices];
+        if (currentOffset === 0) {
+          // Initial load or filter change - replace completely to preserve sort order
+          return result.services;
+        } else {
+          // Infinite scroll - merge new services, avoiding duplicates
+          const existingIds = new Set(prevServices.map(service => service.id));
+          const newServices = result.services.filter(service => !existingIds.has(service.id));
+          return [...prevServices, ...newServices];
+        }
       });
 
       // Increment offset for next load

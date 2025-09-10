@@ -2,7 +2,10 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getPublicUrl } from "@/lib/supabase/storage";
-import { findNearbyServices, debugGeographicData } from "@/lib/supabase/rpc";
+import {
+  findNearbyServices,
+  findTraditionalServices,
+} from "@/lib/supabase/rpc";
 import type { ServiceFilters } from "@/types";
 import type { ServiceWithRelations } from "@/components/services/service-card";
 import type { Database } from "@/types/database.types";
@@ -17,6 +20,10 @@ export interface InfiniteServicesResponse {
 // Infer the return type from the nearby_services RPC function
 type NearbyServiceData =
   Database["public"]["Functions"]["nearby_services"]["Returns"][0];
+
+// Infer the return type from the traditional_services RPC function
+type TraditionalServiceData =
+  Database["public"]["Functions"]["traditional_services"]["Returns"][0];
 
 export async function fetchInfiniteServices(
   filters: ServiceFilters = {},
@@ -54,7 +61,12 @@ async function fetchGeographicServices(
 
   const rpcParams = { ...otherFilters, radiusKm: location.radius };
   console.log("  - RPC parameters:", rpcParams);
-  console.log("  - Calling nearby_services with lat:", location.coordinates.lat, "lng:", location.coordinates.lng);
+  console.log(
+    "  - Calling nearby_services with lat:",
+    location.coordinates.lat,
+    "lng:",
+    location.coordinates.lng,
+  );
 
   const { data, error } = await findNearbyServices(
     supabase,
@@ -76,16 +88,10 @@ async function fetchGeographicServices(
     return { services: [], hasMore: false, totalCount: 0 };
   }
 
-  // If we got 0 results, run diagnostic to understand why
-  if (data.length === 0) {
-    console.log("  🔍 Zero results returned - running diagnostics...");
-    await debugGeographicData(supabase);
-  }
-
   // Apply pagination to the results
   const totalCount = data.length;
   const paginatedData = data.slice(offset, offset + limit);
-  
+
   console.log("  📄 Pagination:");
   console.log("    - Total count:", totalCount);
   console.log("    - Offset:", offset, "Limit:", limit);
@@ -115,159 +121,171 @@ async function fetchTraditionalServices(
   limit: number,
   offset: number,
 ): Promise<InfiniteServicesResponse> {
-  const {
-    search,
-    categories,
-    location,
-    serviceDestination,
-    stylistIds,
-    minPrice,
-    maxPrice,
-    sortBy = "newest",
-  } = filters;
+  console.log("🔧 fetchTraditionalServices starting...");
+  console.log("  - Filters:", JSON.stringify(filters, null, 2));
+  console.log("  - Limit:", limit, "Offset:", offset);
 
-  let query = supabase
-    .from("services")
-    .select(
-      `
-            *,
-            service_service_categories (
-                service_categories (
-                    id,
-                    name,
-                    description,
-                    parent_category_id
-                )
-            ),
-            media (
-                id,
-                file_path,
-                media_type,
-                is_preview_image,
-                created_at
-            ),
-            profiles!inner (
-                id,
-                full_name,
-                stylist_details (
-                    bio,
-                    can_travel,
-                    has_own_place,
-                    travel_distance_km
-                ),
-                addresses (
-                    id,
-                    city,
-                    postal_code,
-                    street_address,
-                    is_primary
-                )
-            )
-        `,
-      { count: "exact" },
-    )
-    .eq("is_published", true);
+  const rpcParams = {
+    ...filters,
+    limit,
+    offset,
+  };
+  console.log("  - RPC Params to findTraditionalServices:", JSON.stringify(rpcParams, null, 2));
 
-  // Apply search filter
-  if (search) {
-    query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%`);
-  }
-
-  // Apply category filter (multiple categories)
-  if (categories && categories.length > 0) {
-    const { data: serviceIds } = await supabase
-      .from("service_service_categories")
-      .select("service_id")
-      .in("category_id", categories);
-
-    if (serviceIds && serviceIds.length > 0) {
-      const ids = serviceIds.map((item) => item.service_id);
-      query = query.in("id", ids);
-    } else {
-      return { services: [], hasMore: false, totalCount: 0 };
-    }
-  }
-
-  // Apply service destination filter
-  if (
-    serviceDestination?.atCustomerPlace && !serviceDestination?.atStylistPlace
-  ) {
-    query = query.eq("at_customer_place", true);
-  } else if (
-    serviceDestination?.atStylistPlace && !serviceDestination?.atCustomerPlace
-  ) {
-    query = query.eq("at_stylist_place", true);
-  }
-
-  // Apply stylist filter
-  if (stylistIds && stylistIds.length > 0) {
-    query = query.in("stylist_id", stylistIds);
-  }
-
-  // Apply price filters (convert from strings to numbers)
-  if (minPrice) {
-    query = query.gte("price", parseFloat(minPrice));
-  }
-  if (maxPrice) {
-    query = query.lte("price", parseFloat(maxPrice));
-  }
-
-  // Apply location filter (text-based city matching)
-  if (location?.address) {
-    query = query.eq("profiles.addresses.city", location.address);
-  }
-
-  // Apply sorting (without rating and distance for traditional query)
-  switch (sortBy) {
-    case "price_asc":
-      query = query.order("price", { ascending: true });
-      break;
-    case "price_desc":
-      query = query.order("price", { ascending: false });
-      break;
-    case "newest":
-      query = query.order("created_at", { ascending: false });
-      break;
-    default:
-      query = query.order("created_at", { ascending: false });
-  }
-
-  // Apply pagination
-  const from = offset;
-  const to = from + limit - 1;
-  query = query.range(from, to);
-
-  const { data, error, count } = await query;
+  // Use the RPC function with pagination built in
+  const { data, error } = await findTraditionalServices(supabase, rpcParams);
 
   if (error) {
-    throw new Error(`Failed to fetch services: ${error.message}`);
+    console.log("  ❌ RPC Error:", error);
+    throw new Error(`Failed to fetch traditional services: ${error}`);
   }
 
+  console.log("  ✅ RPC Success:");
+  console.log("    - Data count:", data?.length || 0);
+
   if (!data) {
+    console.log("  - No data returned from RPC");
     return { services: [], hasMore: false, totalCount: 0 };
   }
 
-  // Add public URLs for media
-  const servicesWithUrls: ServiceWithRelations[] = data.map((service) => ({
-    ...service,
-    media: service.media?.map((media) => ({
-      ...media,
-      publicUrl: media.file_path.startsWith("http")
-        ? media.file_path
-        : getPublicUrl(supabase, "service-media", media.file_path),
-    })),
-  }));
+  // Log ALL services returned by SQL function to see their ratings
+  console.log("  📋 ALL SERVICES FROM SQL (sorted by rating_asc):");
+  data.forEach((service, index) => {
+    console.log(`    ${index + 1}. ${service.service_title}: rating=${service.average_rating}, reviews=${service.total_reviews}`);
+  });
 
-  const totalCount = count || 0;
-  const hasMore = offset + limit < totalCount;
+  console.log(
+    "  - Sample service data:",
+    data[0]
+      ? {
+        service_id: data[0].service_id,
+        service_title: data[0].service_title,
+        average_rating: data[0].average_rating,
+        total_reviews: data[0].total_reviews,
+      }
+      : "No services",
+  );
+
+  // Transform RPC results to ServiceWithRelations format
+  console.log("  - Transforming", data.length, "services...");
+  const services = await Promise.all(
+    data.map((service: TraditionalServiceData) =>
+      transformTraditionalServiceToServiceWithRelations(supabase, service)
+    ),
+  );
+
+  // Debug: Check if the order is preserved after transformation
+  console.log("  📊 FINAL TRANSFORMED ORDER (after transformation):");
+  services.forEach((service, index) => {
+    console.log(`    ${index + 1}. ${service.title}: rating=${service.average_rating}, reviews=${service.total_reviews}`);
+  });
+
+  // Since we're using the RPC function with built-in pagination, we need to determine if there are more results
+  // by checking if we got a full page of results
+  const hasMore = data.length === limit;
   const nextOffset = hasMore ? offset + limit : undefined;
 
+  // For total count, we would need another query or modify the RPC to return it
+  // For now, we'll use a conservative estimate
+  const totalCount = hasMore ? offset + limit + 1 : offset + data.length;
+
+  console.log("  - Final result:");
+  console.log("    - Services count:", services.length);
+  console.log("    - Has more:", hasMore);
+  console.log("    - Next offset:", nextOffset);
+  console.log("    - Estimated total count:", totalCount);
+
   return {
-    services: servicesWithUrls,
+    services,
     nextOffset,
     hasMore,
     totalCount,
   };
+}
+
+async function transformTraditionalServiceToServiceWithRelations(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  traditionalService: TraditionalServiceData,
+): Promise<ServiceWithRelations> {
+  // Fetch additional service data (categories, media) that RPC doesn't include
+  const { data: serviceData } = await supabase
+    .from("services")
+    .select(`
+      service_service_categories (
+        service_categories (
+          id,
+          name,
+          description,
+          parent_category_id
+        )
+      ),
+      media (
+        id,
+        file_path,
+        media_type,
+        is_preview_image,
+        created_at
+      )
+    `)
+    .eq("id", traditionalService.service_id)
+    .single();
+
+  const mediaWithUrls = serviceData?.media?.map((media) => ({
+    ...media,
+    publicUrl: media.file_path.startsWith("http")
+      ? media.file_path
+      : getPublicUrl(supabase, "service-media", media.file_path),
+  })) || [];
+
+  // Transform RPC result to match ServiceWithRelations interface
+  return {
+    id: traditionalService.service_id,
+    title: traditionalService.service_title,
+    description: traditionalService.service_description,
+    price: traditionalService.service_price,
+    currency: traditionalService.service_currency,
+    duration_minutes: traditionalService.service_duration_minutes,
+    at_customer_place: traditionalService.service_at_customer_place,
+    at_stylist_place: traditionalService.service_at_stylist_place,
+    is_published: traditionalService.service_is_published,
+    created_at: traditionalService.service_created_at,
+    updated_at: traditionalService.service_created_at, // Not available from RPC
+    stylist_id: traditionalService.stylist_id,
+    has_trial_session: traditionalService.service_has_trial_session,
+    trial_session_price: traditionalService.service_trial_session_price,
+    trial_session_duration_minutes:
+      traditionalService.service_trial_session_duration_minutes,
+    trial_session_description:
+      traditionalService.service_trial_session_description,
+    includes: null, // Not available from RPC
+    requirements: null, // Not available from RPC
+    service_service_categories: serviceData?.service_service_categories || [],
+    media: mediaWithUrls,
+    profiles: {
+      id: traditionalService.stylist_id,
+      full_name: traditionalService.stylist_full_name,
+      stylist_details: traditionalService.stylist_bio
+        ? {
+          bio: traditionalService.stylist_bio,
+          can_travel: traditionalService.stylist_can_travel,
+          has_own_place: traditionalService.stylist_has_own_place,
+          travel_distance_km: null, // Not available from RPC
+        }
+        : null,
+      addresses: traditionalService.address_id
+        ? [{
+          id: traditionalService.address_id,
+          city: traditionalService.address_city,
+          postal_code: traditionalService.address_postal_code,
+          street_address: traditionalService.address_street_address,
+          is_primary: true, // RPC only returns primary addresses
+        }]
+        : [],
+    },
+    // Rating data from traditional search
+    average_rating: traditionalService.average_rating,
+    total_reviews: traditionalService.total_reviews,
+  } as ServiceWithRelations;
 }
 
 async function transformNearbyServiceToServiceWithRelations(
@@ -320,7 +338,8 @@ async function transformNearbyServiceToServiceWithRelations(
     stylist_id: nearbyService.stylist_id,
     has_trial_session: nearbyService.service_has_trial_session,
     trial_session_price: nearbyService.service_trial_session_price,
-    trial_session_duration_minutes: nearbyService.service_trial_session_duration_minutes,
+    trial_session_duration_minutes:
+      nearbyService.service_trial_session_duration_minutes,
     trial_session_description: nearbyService.service_trial_session_description,
     includes: null, // Not available from RPC
     requirements: null, // Not available from RPC

@@ -304,7 +304,7 @@ export function ServiceCategoryCombobox({
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-[500px] p-0" align="start">
+        <PopoverContent className="w-72 sm:w-96 md:w-[500px] p-0" align="start">
           <Command>
             <div className="flex w-full items-center border-b">
               <CommandInput
@@ -318,21 +318,21 @@ export function ServiceCategoryCombobox({
                   variant="ghost"
                   size="sm"
                   onClick={handleExpandAll}
-                  className="h-8 px-2 text-xs"
+                  className="h-8 px-1 sm:px-2 text-xs"
                   type="button"
                 >
-                  <ChevronDown className="h-3 w-3 mr-1" />
-                  Utvid alle
+                  <ChevronDown className="h-3 w-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Utvid alle</span>
                 </Button>
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={handleCollapseAll}
-                  className="h-8 px-2 text-xs"
+                  className="h-8 px-1 sm:px-2 text-xs"
                   type="button"
                 >
-                  <ChevronUp className="h-3 w-3 mr-1" />
-                  Lukk alle
+                  <ChevronUp className="h-3 w-3 sm:mr-1" />
+                  <span className="hidden sm:inline">Lukk alle</span>
                 </Button>
               </div>
             </div>

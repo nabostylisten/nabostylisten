@@ -200,10 +200,10 @@ export function ServiceFilterForm({
   };
 
   return (
-    <Card>
-      <CardContent className="p-6 space-y-4">
+    <Card className="w-full overflow-hidden">
+      <CardContent className="p-4 sm:p-6 space-y-4">
         {/* Search and Location Row */}
-        <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-4">
           <div className="md:flex-1 flex gap-2">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -219,7 +219,7 @@ export function ServiceFilterForm({
               variant="ghost"
               size="sm"
               onClick={() => setIsHelpDialogOpen(true)}
-              className="h-10 w-10 p-0 md:hidden"
+              className="h-10 min-w-[2.5rem] w-10 p-0 flex-shrink-0 md:hidden"
             >
               <HelpCircle className="h-4 w-4" />
               <span className="sr-only">Åpne hjelp</span>
@@ -249,7 +249,7 @@ export function ServiceFilterForm({
               />
             </div>
             {location.coordinates && (
-              <div className="flex items-center gap-2 min-w-0">
+              <div className="flex items-center gap-1 md:gap-2 min-w-0">
                 <Input
                   type="number"
                   value={location.radius}
@@ -261,7 +261,7 @@ export function ServiceFilterForm({
                   }
                   min="1"
                   max="50"
-                  className="w-16"
+                  className="w-14 md:w-16"
                   placeholder="10"
                 />
                 <span className="text-sm text-muted-foreground whitespace-nowrap">
@@ -273,7 +273,7 @@ export function ServiceFilterForm({
               variant="ghost"
               size="sm"
               onClick={() => setIsHelpDialogOpen(true)}
-              className="h-10 w-10 p-0 hidden md:block"
+              className="h-10 min-w-[2.5rem] w-10 p-0 flex-shrink-0 hidden md:flex md:items-center md:justify-center"
             >
               <HelpCircle className="h-4 w-4" />
               <span className="sr-only">Åpne hjelp</span>
@@ -282,15 +282,14 @@ export function ServiceFilterForm({
         </div>
 
         {/* Filters Rows - Split into multiple rows for better responsiveness */}
-        <div className="space-y-4">
+        <div className="space-y-2 md:space-y-4">
           {/* First row: Categories and Service Destination */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
             {/* Category Filter */}
             <div>
               <ServiceCategoryCombobox
                 selectedCategories={selectedCategories}
                 onSelectedCategoriesChange={setSelectedCategories}
-                categories={categories}
                 placeholder="Velg kategorier..."
               />
             </div>
@@ -306,11 +305,11 @@ export function ServiceFilterForm({
                     <MapPin className="mr-2 h-4 w-4" />
                     {!serviceDestination.atCustomerPlace &&
                     !serviceDestination.atStylistPlace
-                      ? "Hvor?"
+                      ? "Hvor skal tjenesten utføres?"
                       : getFormattedServiceDestination()}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4">
+                <PopoverContent className="w-72 sm:w-80 p-4">
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium">
                       Hvor skal tjenesten utføres?
@@ -376,7 +375,7 @@ export function ServiceFilterForm({
           </div>
 
           {/* Second row: Stylists and Price Range */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
             {/* Stylists Filter */}
             <div>
               <Popover>
@@ -391,7 +390,7 @@ export function ServiceFilterForm({
                       : `${selectedStylists.length} stylist${selectedStylists.length > 1 ? "er" : ""} valgt`}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4">
+                <PopoverContent className="w-72 sm:w-80 p-4">
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">
                       Filtrer etter stylister
@@ -462,10 +461,10 @@ export function ServiceFilterForm({
                     <DollarSign className="mr-2 h-4 w-4" />
                     {!minPrice && !maxPrice
                       ? "Prisområde..."
-                      : `${minPrice ? `${minPrice} kr` : "0"} - ${maxPrice ? `${maxPrice} kr` : "∞"}`}
+                      : `${minPrice || "0"}-${maxPrice || "∞"} kr`}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-80 p-4">
+                <PopoverContent className="w-72 sm:w-80 p-4">
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium">Prisområde</h4>
                     <div className="space-y-2">
@@ -516,8 +515,8 @@ export function ServiceFilterForm({
           </div>
 
           {/* Third row: Sorting */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-            <div className="sm:col-span-1">
+          <div className="grid grid-cols-1 gap-4">
+            <div className="w-full">
               <Select
                 value={sortBy}
                 onValueChange={(value) =>
@@ -588,8 +587,8 @@ export function ServiceFilterForm({
             {location.coordinates && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">Lokasjon:</span>
-                <Badge variant="secondary" className="flex items-center gap-1">
-                  {location.address} ({location.radius}km)
+                <Badge variant="secondary" className="flex items-center gap-1 max-w-full">
+                  <span className="truncate">{location.address}</span> ({location.radius}km)
                   <X
                     className="h-3 w-3 cursor-pointer"
                     onClick={() =>
@@ -660,8 +659,7 @@ export function ServiceFilterForm({
                   Prisområde:
                 </span>
                 <Badge variant="secondary" className="flex items-center gap-1">
-                  {minPrice ? `${minPrice} kr` : "0"} -{" "}
-                  {maxPrice ? `${maxPrice} kr` : "∞"}
+                  {minPrice || "0"}-{maxPrice || "∞"} kr
                   <X
                     className="h-3 w-3 cursor-pointer"
                     onClick={() => {

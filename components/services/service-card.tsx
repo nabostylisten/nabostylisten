@@ -38,6 +38,11 @@ export type ServiceWithRelations = {
   trial_session_price?: number | null;
   trial_session_duration_minutes?: number | null;
   trial_session_description?: string | null;
+  // Service-specific rating data (from SQL functions)
+  average_rating?: number | null;
+  total_reviews?: number | null;
+  // Geographic data (for nearby services)
+  distance_meters?: number | null;
   service_service_categories?: Array<{
     service_categories: {
       id: string;
@@ -149,9 +154,22 @@ export function ServiceCard({ service }: ServiceCardProps) {
         <div className="cursor-pointer">
           <CardHeader>
             <div className="flex justify-between items-start gap-2">
-              <CardTitle className="text-xl line-clamp-1">
-                {service.title}
-              </CardTitle>
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-xl line-clamp-1">
+                  {service.title}
+                </CardTitle>
+                {/* Service-specific rating near title */}
+                {service.average_rating !== undefined && service.average_rating !== null && service.total_reviews && service.total_reviews > 0 && (
+                  <div className="mt-1">
+                    <RatingDisplay
+                      average={service.average_rating}
+                      count={service.total_reviews}
+                      size="sm"
+                      className="text-xs"
+                    />
+                  </div>
+                )}
+              </div>
               <Badge variant="secondary" className="shrink-0">
                 Fra {service.price} {service.currency}
               </Badge>
@@ -192,16 +210,36 @@ export function ServiceCard({ service }: ServiceCardProps) {
               )}
             </div>
             {service.profiles?.full_name && (
-              <div className="mt-2 space-y-1">
-                <div className="text-sm text-muted-foreground">
-                  av {service.profiles.full_name}
+              <div className="mt-2">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    av {service.profiles.full_name}
+                  </div>
+                  {/* Stylist overall rating near stylist name - only show if we have stylist rating and it's different from service rating or no service rating exists */}
+                  {!isRatingLoading && rating && rating.count > 0 && (
+                    (!service.total_reviews || service.total_reviews !== rating.count) && (
+                      <RatingDisplay
+                        average={rating.average}
+                        count={rating.count}
+                        size="sm"
+                        className="text-xs opacity-75"
+                        showCount={false}
+                      />
+                    )
+                  )}
                 </div>
-                <RatingDisplay
-                  average={rating?.average || 0}
-                  count={rating?.count || 0}
-                  size="sm"
-                  isLoading={isRatingLoading}
-                />
+                {/* Show stylist rating with count if no service rating exists */}
+                {(!service.total_reviews || service.total_reviews === 0) && (
+                  <div className="mt-1">
+                    <RatingDisplay
+                      average={rating?.average || 0}
+                      count={rating?.count || 0}
+                      size="sm"
+                      className="text-xs"
+                      isLoading={isRatingLoading}
+                    />
+                  </div>
+                )}
               </div>
             )}
             <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">

@@ -75,31 +75,84 @@ async function createReviewsForCompletedBookings(
   completedBookings: bookingsScalars[],
 ) {
   const reviewTemplates = [
+    // 5-star reviews (excellent experiences)
     {
-      ratings: [5, 5, 4, 5],
+      ratings: [5, 5, 5, 5],
       comments: [
         "Absolutt fantastisk! Emma er så dyktig og profesjonell. Resultatet overgikk mine forventninger. Kommer definitivt tilbake!",
         "Perfekt service fra start til slutt. Hun lyttet til ønskene mine og leverte akkurat det jeg ba om. Anbefales på det sterkeste!",
-        "Så fornøyd med resultatet! Profesjonell og hyggelig betjening. Stedet var rent og pent. Kommer igjen!",
+        "WOW! Beste opplevelsen jeg har hatt hos en stylist noensinne. Så fornøyd!",
         "Emma er fantastisk! Hun gjorde en utrolig jobb og jeg følte meg så velkommen. Kunne ikke vært mer fornøyd!",
       ],
     },
+    // 4-star reviews (good experiences with minor issues)
     {
-      ratings: [4, 5, 5, 4],
+      ratings: [4, 4, 4, 4],
       comments: [
         "Veldig fornøyd med tjenesten! Sofia er dyktig og jobbet nøye. Litt travelt den dagen, men resultatet var bra.",
-        "Utrolig bra jobb! Sofia har virkelig peiling på det hun driver med. Anbefaler henne til alle!",
-        "Så glad for at jeg valgte Sofia! Hun er så profesjonell og resultatet ble bedre enn jeg hadde forventet.",
+        "God service og hyggelig betjening. Litt høyere pris enn forventet, men kvaliteten var det verdt.",
+        "Resultatet ble bra! Tok litt lengre tid enn planlagt, men Sofia var veldig grundig.",
         "Bra service og hyggelig betjening. Sofia tok seg god tid og forklarte alt hun gjorde. Kommer tilbake!",
       ],
     },
+    // 3-star reviews (average experiences)
     {
-      ratings: [5, 4, 5, 5],
+      ratings: [3, 3, 3, 3],
+      comments: [
+        "Greit resultat, men ikke helt som forventet. Kanskje jeg hadde for høye forventninger.",
+        "Ok service. Resultatet var fint, men opplevelsen kunne vært bedre. Litt stress i salongen.",
+        "Det var greit. Ikke noe spesielt, men heller ikke dårlig. Gjennomsnittlig opplevelse.",
+        "Resultatet ble OK. Hadde håpet på litt mer for prisen, men det fungerer.",
+      ],
+    },
+    // 2-star reviews (disappointed experiences)
+    {
+      ratings: [2, 2, 2, 2],
+      comments: [
+        "Skuffet over resultatet. Dette var ikke det jeg ba om. Måtte fikse det et annet sted.",
+        "Dårlig kommunikasjon og resultatet ble ikke som avtalt. Veldig skuffende.",
+        "Ikke fornøyd. Ventet i 30 minutter selv om jeg hadde time. Resultatet var heller ikke bra.",
+        "Dessverre ikke det jeg forventet. Kvaliteten stemte ikke med prisen.",
+      ],
+    },
+    // 1-star reviews (very bad experiences)
+    {
+      ratings: [1, 1, 1, 1],
+      comments: [
+        "Forferdelig opplevelse! Kommer aldri tilbake. Resultatet ble helt feil.",
+        "Verste opplevelse jeg har hatt. Uprofesjonelt og dårlig resultat.",
+        "Katastrofe! Måtte gå rett til en annen stylist for å fikse skaden.",
+        "Helt uakseptabelt. Dårlig service og elendig resultat. Anbefaler ikke.",
+      ],
+    },
+    // Mixed bag - various ratings
+    {
+      ratings: [5, 3, 4, 2],
       comments: [
         "Maria er helt fantastisk! Hun har gullhender og er så snill. Resultatet ble perfekt!",
+        "Greit nok, men hadde forventet mer. Maria virket stresset den dagen.",
         "Veldig fornøyd med opplevelsen. Maria er profesjonell og gjorde en grundig jobb. Anbefales!",
-        "Kunne ikke vært mer fornøyd! Maria lyttet til ønskene mine og leverte akkurat det jeg ønsket meg.",
-        "Fantastisk service! Maria er så dyktig og hyggelig. Stedet er også veldig koselig og rent.",
+        "Ikke fornøyd denne gangen. Har vært hos Maria før og det var mye bedre da.",
+      ],
+    },
+    // Mostly positive with some variation
+    {
+      ratings: [5, 4, 5, 3],
+      comments: [
+        "Utrolig bra! Beste behandlingen jeg har fått på lenge!",
+        "Fornøyd med resultatet, men litt dyrt for det man får.",
+        "Fantastisk service! Kommer absolutt tilbake!",
+        "Ok opplevelse, men ikke noe spesielt. Forventet mer basert på anmeldelsene.",
+      ],
+    },
+    // Lower average ratings
+    {
+      ratings: [2, 3, 2, 4],
+      comments: [
+        "Skuffende. Resultatet ble ikke som lovet.",
+        "Middels fornøyd. Servicen var grei, men resultatet kunne vært bedre.",
+        "Ikke verdt pengene. Kvaliteten var under forventning.",
+        "Ganske bra faktisk! Litt usikker i starten, men resultatet ble fint.",
       ],
     },
   ];
@@ -218,10 +271,39 @@ async function createStylistCrossBookingsWithReviews(
   const additionalReviews = [];
   for (const booking of extraBookings) {
     if (booking.id && booking.customer_id && booking.stylist_id) {
-      const rating = [3, 4, 4, 4, 5, 5, 5, 5][Math.floor(Math.random() * 8)];
-      const comment = stylistReviewComments[
-        Math.floor(Math.random() * stylistReviewComments.length)
-      ];
+      // More varied rating distribution: 10% 1-star, 15% 2-star, 20% 3-star, 25% 4-star, 30% 5-star
+      const ratingDistribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5];
+      const rating = ratingDistribution[Math.floor(Math.random() * ratingDistribution.length)];
+      
+      // Select appropriate comment based on rating
+      let comment: string;
+      if (rating === 5) {
+        comment = stylistReviewComments[Math.floor(Math.random() * stylistReviewComments.length)];
+      } else if (rating === 4) {
+        comment = [
+          "God jobb! Som stylist selv ser jeg at dette er solid håndverk, men det er alltid rom for forbedring.",
+          "Profesjonelt utført. Jeg jobber i bransjen og dette holder god standard.",
+          "Fornøyd med resultatet. God teknikk, men jeg har sett enda bedre utførelse.",
+        ][Math.floor(Math.random() * 3)];
+      } else if (rating === 3) {
+        comment = [
+          "Greit utført. Som kollega i bransjen ser jeg både styrker og svakheter.",
+          "Ok resultat. Jeg forventer litt mer av en profesjonell.",
+          "Middels fornøyd. Teknikken kunne vært bedre.",
+        ][Math.floor(Math.random() * 3)];
+      } else if (rating === 2) {
+        comment = [
+          "Skuffende for en som jobber i bransjen. Dette holder ikke mål.",
+          "Som stylist selv må jeg si at dette ikke var godt nok.",
+          "Under forventning. Jeg vet at dette kan gjøres mye bedre.",
+        ][Math.floor(Math.random() * 3)];
+      } else {
+        comment = [
+          "Som profesjonell i bransjen er jeg sjokkert over det dårlige resultatet.",
+          "Dette holder ikke mål i det hele tatt. Svært uprofesjonelt.",
+          "Jeg jobber selv som stylist og dette er langt under akseptabel standard.",
+        ][Math.floor(Math.random() * 3)];
+      }
 
       additionalReviews.push({
         booking_id: booking.id,
@@ -355,15 +437,69 @@ async function ensureEveryServiceHasReviews(
 
   // Create reviews for these additional bookings
   const additionalReviews: public_reviewsScalars[] = [];
-  for (const booking of newBookings) {
+  for (let idx = 0; idx < newBookings.length; idx++) {
+    const booking = newBookings[idx];
     if (booking.id && booking.customer_id && booking.stylist_id) {
-      const rating = [3, 4, 4, 4, 5, 5, 5, 5][Math.floor(Math.random() * 8)];
-      const comment = [
-        "Fantastisk opplevelse! Akkurat det jeg trengte.",
-        "Så fornøyd med resultatet. Kommer definitivt tilbake!",
-        "Profesjonell og hyggelig service. Anbefales på det sterkeste!",
-        "Utrolig dyktig! Resultatet overgikk mine forventninger.",
-      ][Math.floor(Math.random() * 4)];
+      // More realistic distribution with service-specific variation
+      // Some services will naturally have higher/lower ratings
+      const serviceIndex = idx % servicesToEnsureReviews.length;
+      const baseRatingBias = Math.random(); // Each service gets a quality bias
+      
+      let rating: number;
+      if (baseRatingBias < 0.1) {
+        // 10% of services are poorly rated overall
+        rating = [1, 1, 2, 2, 2, 3, 3][Math.floor(Math.random() * 7)];
+      } else if (baseRatingBias < 0.3) {
+        // 20% of services are average
+        rating = [2, 3, 3, 3, 4, 4][Math.floor(Math.random() * 6)];
+      } else if (baseRatingBias < 0.6) {
+        // 30% of services are good
+        rating = [3, 4, 4, 4, 5][Math.floor(Math.random() * 5)];
+      } else {
+        // 40% of services are excellent
+        rating = [4, 4, 5, 5, 5][Math.floor(Math.random() * 5)];
+      }
+
+      // Select appropriate comment based on rating
+      let comment: string;
+      if (rating === 5) {
+        comment = [
+          "Fantastisk opplevelse! Akkurat det jeg trengte.",
+          "Så fornøyd med resultatet. Kommer definitivt tilbake!",
+          "Profesjonell og hyggelig service. Anbefales på det sterkeste!",
+          "Utrolig dyktig! Resultatet overgikk mine forventninger.",
+          "Beste behandlingen jeg har fått! Kan ikke anbefales høyt nok!",
+          "Perfekt fra start til slutt. Dette er hvordan det skal gjøres!",
+        ][Math.floor(Math.random() * 6)];
+      } else if (rating === 4) {
+        comment = [
+          "Veldig fornøyd! Litt småting som kunne vært bedre, men overall bra.",
+          "God service og fint resultat. Kommer nok tilbake.",
+          "Fornøyd med behandlingen. Profesjonelt utført.",
+          "Bra jobb! Ikke helt perfekt, men absolutt verdt pengene.",
+        ][Math.floor(Math.random() * 4)];
+      } else if (rating === 3) {
+        comment = [
+          "Greit nok. Ikke noe spesielt, men heller ikke dårlig.",
+          "Ok opplevelse. Resultatet var som forventet, ikke mer eller mindre.",
+          "Middels fornøyd. Det var greit, men jeg har opplevd bedre.",
+          "Fungerer, men jeg forventer litt mer for prisen.",
+        ][Math.floor(Math.random() * 4)];
+      } else if (rating === 2) {
+        comment = [
+          "Skuffende opplevelse. Hadde høyere forventninger.",
+          "Ikke fornøyd med resultatet. Må nok prøve et annet sted neste gang.",
+          "Under forventning. Service og resultat kunne vært mye bedre.",
+          "Dessverre ikke bra. Flere ting som ikke fungerte.",
+        ][Math.floor(Math.random() * 4)];
+      } else {
+        comment = [
+          "Forferdelig! Kommer aldri tilbake.",
+          "Veldig dårlig opplevelse. Kan ikke anbefale dette.",
+          "Katastrofe fra start til slutt. Hold dere unna!",
+          "Verste opplevelsen jeg har hatt. Totalt bortkastet tid og penger.",
+        ][Math.floor(Math.random() * 4)];
+      }
 
       additionalReviews.push({
         booking_id: booking.id,

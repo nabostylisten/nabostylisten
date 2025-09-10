@@ -2,10 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Edit,
   Save,
@@ -52,6 +52,7 @@ import type { Database } from "@/types/database.types";
 import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ProfileAddresses } from "@/components/addresses";
 import { StylistDetailsForm } from "@/components/stylist-details-form";
+import { useAuth } from "@/hooks/use-auth";
 
 // Form schema for profile updates
 const profileFormSchema = z.object({
@@ -70,7 +71,7 @@ interface ProfileFormProps {
 }
 
 export function ProfileForm({
-  profile,
+  profile: initialProfile,
   stylistDetails,
   isOwner,
 }: ProfileFormProps) {
@@ -78,6 +79,10 @@ export function ProfileForm({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const queryClient = useQueryClient();
+  const { profile: clientProfile } = useAuth();
+  
+  // Use client-side profile data if available, fallback to server-side data
+  const profile = clientProfile || initialProfile;
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -87,13 +92,22 @@ export function ProfileForm({
     },
   });
 
+  // Update form when profile data changes
+  useEffect(() => {
+    form.reset({
+      full_name: profile.full_name || "",
+      phone_number: profile.phone_number || "",
+    });
+  }, [profile.full_name, profile.phone_number, form]);
+
   const updateProfileMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: ProfileFormValues }) =>
       updateProfile(id, data),
     onSuccess: () => {
-      // Invalidate all profile-related queries to ensure data consistency
-      queryClient.invalidateQueries({ queryKey: ["auth", "profile"] });
-      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      // Invalidate the specific user's profile query key from useAuth hook
+      queryClient.invalidateQueries({ 
+        queryKey: ["auth", "profile", profile.id] 
+      });
       toast.success("Profil oppdatert!");
       setIsEditing(false);
     },

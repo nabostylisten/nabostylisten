@@ -25,6 +25,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { X, Users, DollarSign, MapPin } from "lucide-react";
 import type { ServiceFilters } from "@/types";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 interface ServiceFilterFormProps {
   categories?: Array<{
@@ -59,6 +60,7 @@ export function ServiceFilterForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Enhanced state management for new filters
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -305,7 +307,7 @@ export function ServiceFilterForm({
                     <MapPin className="mr-2 h-4 w-4" />
                     {!serviceDestination.atCustomerPlace &&
                     !serviceDestination.atStylistPlace
-                      ? "Hvor skal tjenesten utføres?"
+                      ? isMobile ? "Hvor?" : "Hvor skal tjenesten utføres?"
                       : getFormattedServiceDestination()}
                   </Button>
                 </PopoverTrigger>
@@ -515,33 +517,31 @@ export function ServiceFilterForm({
           </div>
 
           {/* Third row: Sorting */}
-          <div className="grid grid-cols-1 gap-4">
-            <div className="w-full">
-              <Select
-                value={sortBy}
-                onValueChange={(value) =>
-                  setSortBy(value as ServiceFilters["sortBy"])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sorter etter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="newest">Nyeste først</SelectItem>
-                  <SelectItem value="price_asc">Lavest pris først</SelectItem>
-                  <SelectItem value="price_desc">Høyest pris først</SelectItem>
-                  <SelectItem value="rating_desc">
-                    Høyest vurdering først
-                  </SelectItem>
-                  <SelectItem value="rating_asc">
-                    Lavest vurdering først
-                  </SelectItem>
-                  {location.coordinates && (
-                    <SelectItem value="distance_asc">Nærmest først</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="w-full">
+            <Select
+              value={sortBy}
+              onValueChange={(value) =>
+                setSortBy(value as ServiceFilters["sortBy"])
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sorter etter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">Nyeste først</SelectItem>
+                <SelectItem value="price_asc">Lavest pris først</SelectItem>
+                <SelectItem value="price_desc">Høyest pris først</SelectItem>
+                <SelectItem value="rating_desc">
+                  Høyest vurdering først
+                </SelectItem>
+                <SelectItem value="rating_asc">
+                  Lavest vurdering først
+                </SelectItem>
+                {location.coordinates && (
+                  <SelectItem value="distance_asc">Nærmest først</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 

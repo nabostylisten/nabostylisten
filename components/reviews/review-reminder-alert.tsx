@@ -40,7 +40,7 @@ export function ReviewReminderAlert({
 
   return (
     <div className="flex flex-1 flex-col gap-4">
-      <div className="max-w-4xl mx-auto w-full">
+      <div className="mx-auto w-full">
         <Alert className={className}>
           <Star className="h-4 w-4" />
           <AlertTitle>Vurder din opplevelse</AlertTitle>

@@ -449,6 +449,11 @@ export async function getStylistAverageRating(stylistId: string) {
     return { error: null, average, count: data.length };
 }
 
+/**
+ * Gets completed bookings that the user hasn't reviewed yet.
+ * Always returns bookings where the user was the CUSTOMER, regardless of their current role.
+ * This means stylists will see review alerts for bookings where they were customers.
+ */
 export async function getCompletedBookingsWithoutReviews(userId: string, userRole?: "customer" | "stylist" | "admin") {
     const supabase = await createClient();
 
@@ -458,16 +463,8 @@ export async function getCompletedBookingsWithoutReviews(userId: string, userRol
         return { error: "Unauthorized access", data: null };
     }
 
-    // Get user profile to determine role if not provided
-    if (!userRole) {
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", userId)
-            .single();
-        userRole = profile?.role as "customer" | "stylist" | "admin" || "customer";
-    }
-
+    // Always show bookings where the user was the customer (regardless of their current role)
+    // A stylist can also be a customer in other bookings and should see review alerts for those
     let query = supabase
         .from("bookings")
         .select(`
@@ -490,48 +487,18 @@ export async function getCompletedBookingsWithoutReviews(userId: string, userRol
                 )
             )
         `)
-        .eq("status", "completed");
+        .eq("status", "completed")
+        .eq("customer_id", userId); // Always filter by customer_id, not user role
 
-    // Filter based on user role
-    if (userRole === "customer") {
-        // For customers: only their own bookings
-        query = query.eq("customer_id", userId);
-        
-        // Exclude bookings that already have reviews by this customer
-        const { data: existingReviews } = await supabase
-            .from("reviews")
-            .select("booking_id")
-            .eq("customer_id", userId);
-        
-        const reviewedBookingIds = existingReviews?.map(r => r.booking_id) || [];
-        if (reviewedBookingIds.length > 0) {
-            query = query.not("id", "in", `(${reviewedBookingIds.join(",")})`);
-        }
-    } else if (userRole === "stylist") {
-        // For stylists: bookings where they were the stylist
-        query = query.eq("stylist_id", userId);
-        
-        // Exclude bookings that already have reviews (since stylists care about getting reviews)
-        const { data: existingReviews } = await supabase
-            .from("reviews")
-            .select("booking_id");
-        
-        const reviewedBookingIds = existingReviews?.map(r => r.booking_id) || [];
-        if (reviewedBookingIds.length > 0) {
-            query = query.not("id", "in", `(${reviewedBookingIds.join(",")})`);
-        }
-    }
-    // For admins: show all completed bookings without reviews (no additional filters)
-    else if (userRole === "admin") {
-        // Exclude bookings that already have reviews
-        const { data: existingReviews } = await supabase
-            .from("reviews")
-            .select("booking_id");
-        
-        const reviewedBookingIds = existingReviews?.map(r => r.booking_id) || [];
-        if (reviewedBookingIds.length > 0) {
-            query = query.not("id", "in", `(${reviewedBookingIds.join(",")})`);
-        }
+    // Exclude bookings that already have reviews by this customer
+    const { data: existingReviews } = await supabase
+        .from("reviews")
+        .select("booking_id")
+        .eq("customer_id", userId);
+    
+    const reviewedBookingIds = existingReviews?.map(r => r.booking_id) || [];
+    if (reviewedBookingIds.length > 0) {
+        query = query.not("id", "in", `(${reviewedBookingIds.join(",")})`);
     }
 
     const { data, error } = await query.order("start_time", { ascending: false });

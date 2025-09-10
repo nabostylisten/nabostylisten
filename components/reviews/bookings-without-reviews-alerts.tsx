@@ -49,11 +49,9 @@ export function BookingsWithoutReviewsAlerts({
                 ?.map((bs) => bs.services?.title)
                 .filter(Boolean) || [];
 
-            // For customers: show stylist info (original behavior)
-            // For stylists/admins: show customer info  
-            const displayName = userRole === "customer" 
-              ? (booking.stylist?.full_name || "Stylisten")
-              : (booking.customer?.full_name || "Kunden");
+            // Since we're always showing bookings where the current user was the customer,
+            // we should always show the stylist's name (the person they can review)
+            const displayName = booking.stylist?.full_name || "Stylisten";
 
             return (
               <ReviewReminderAlert

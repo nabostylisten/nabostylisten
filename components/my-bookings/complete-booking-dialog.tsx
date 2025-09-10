@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { CheckSquare, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { markBookingAsCompleted } from "@/server/booking/lifecycle.actions";
 import type { Database } from "@/types/database.types";
 
 type BookingStatus = Database["public"]["Tables"]["bookings"]["Row"]["status"];
@@ -49,22 +50,13 @@ export function CompleteBookingDialog({
 
   const completeMutation = useMutation({
     mutationFn: async () => {
-      const response = await fetch("/api/bookings/complete", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          bookingId: booking.id,
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to complete booking");
+      const result = await markBookingAsCompleted(booking.id);
+      
+      if (result.error) {
+        throw new Error(result.error);
       }
-
-      return response.json();
+      
+      return result.data;
     },
     onSuccess: () => {
       toast.success("Booking markert som fullført");

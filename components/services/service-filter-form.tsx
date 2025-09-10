@@ -249,7 +249,7 @@ export function ServiceFilterForm({
               />
             </div>
             {location.coordinates && (
-              <div className="flex items-center gap-1 md:gap-2 min-w-0">
+              <div className="flex items-center gap-1 min-w-0">
                 <Input
                   type="number"
                   value={location.radius}
@@ -261,10 +261,10 @@ export function ServiceFilterForm({
                   }
                   min="1"
                   max="50"
-                  className="w-14 md:w-16"
+                  className="w-12 sm:w-14 md:w-16 text-sm"
                   placeholder="10"
                 />
-                <span className="text-sm text-muted-foreground whitespace-nowrap">
+                <span className="text-xs sm:text-sm text-muted-foreground">
                   km
                 </span>
               </div>
@@ -309,7 +309,7 @@ export function ServiceFilterForm({
                       : getFormattedServiceDestination()}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72 sm:w-80 p-4">
+                <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm p-4">
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium">
                       Hvor skal tjenesten utføres?
@@ -390,7 +390,7 @@ export function ServiceFilterForm({
                       : `${selectedStylists.length} stylist${selectedStylists.length > 1 ? "er" : ""} valgt`}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72 sm:w-80 p-4">
+                <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm p-4">
                   <div className="space-y-2">
                     <h4 className="text-sm font-medium">
                       Filtrer etter stylister
@@ -464,7 +464,7 @@ export function ServiceFilterForm({
                       : `${minPrice || "0"}-${maxPrice || "∞"} kr`}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-72 sm:w-80 p-4">
+                <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm p-4">
                   <div className="space-y-4">
                     <h4 className="text-sm font-medium">Prisområde</h4>
                     <div className="space-y-2">
@@ -566,11 +566,11 @@ export function ServiceFilterForm({
                     <Badge
                       key={categoryId}
                       variant="secondary"
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 text-xs sm:text-sm"
                     >
                       {category?.name || "Ukjent"}
                       <X
-                        className="h-3 w-3 cursor-pointer"
+                        className="h-3 w-3 cursor-pointer flex-shrink-0"
                         onClick={() =>
                           setSelectedCategories(
                             selectedCategories.filter((id) => id !== categoryId)
@@ -587,10 +587,10 @@ export function ServiceFilterForm({
             {location.coordinates && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">Lokasjon:</span>
-                <Badge variant="secondary" className="flex items-center gap-1 max-w-full">
-                  <span className="truncate">{location.address}</span> ({location.radius}km)
+                <Badge variant="secondary" className="flex items-center gap-1 max-w-[250px] sm:max-w-full">
+                  <span className="truncate text-xs sm:text-sm">{location.address}</span> ({location.radius}km)
                   <X
-                    className="h-3 w-3 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer flex-shrink-0"
                     onClick={() =>
                       setLocation({
                         address: "",
@@ -608,10 +608,10 @@ export function ServiceFilterForm({
               serviceDestination.atStylistPlace) && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">Utføres:</span>
-                <Badge variant="secondary" className="flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 text-xs sm:text-sm">
                   {getFormattedServiceDestination()}
                   <X
-                    className="h-3 w-3 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer flex-shrink-0"
                     onClick={() =>
                       setServiceDestination({
                         atCustomerPlace: false,
@@ -635,11 +635,11 @@ export function ServiceFilterForm({
                     <Badge
                       key={stylistId}
                       variant="secondary"
-                      className="flex items-center gap-1"
+                      className="flex items-center gap-1 text-xs sm:text-sm"
                     >
                       {stylist?.full_name || "Ukjent"}
                       <X
-                        className="h-3 w-3 cursor-pointer"
+                        className="h-3 w-3 cursor-pointer flex-shrink-0"
                         onClick={() =>
                           setSelectedStylists(
                             selectedStylists.filter((id) => id !== stylistId)
@@ -658,10 +658,10 @@ export function ServiceFilterForm({
                 <span className="text-sm text-muted-foreground">
                   Prisområde:
                 </span>
-                <Badge variant="secondary" className="flex items-center gap-1">
+                <Badge variant="secondary" className="flex items-center gap-1 text-xs sm:text-sm">
                   {minPrice || "0"}-{maxPrice || "∞"} kr
                   <X
-                    className="h-3 w-3 cursor-pointer"
+                    className="h-3 w-3 cursor-pointer flex-shrink-0"
                     onClick={() => {
                       setMinPrice("");
                       setMaxPrice("");

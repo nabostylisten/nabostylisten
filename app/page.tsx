@@ -29,7 +29,7 @@ async function ServiceFilterSection() {
 
   return (
     <BlurFade duration={0.5} inView inViewMargin="-10px">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-4xl mx-auto px-4">
         <ServiceFilterForm
           categories={categories}
           stylists={stylists}
@@ -42,17 +42,17 @@ async function ServiceFilterSection() {
 
 export default async function Home() {
   return (
-    <main className="min-h-screen flex flex-col items-center">
-      <div className="flex-1 w-full flex flex-col gap-20 items-center">
-        <div className="flex-1 flex flex-col gap-20 max-w-5xl p-5">
-          {/* Hero Section */}
-          <div className="text-center space-y-8 pt-20">
+    <main className="min-h-screen">
+      <div className="w-full">
+        {/* Hero Section */}
+        <section className="container mx-auto px-4 py-12 md:py-20 max-w-6xl">
+          <div className="text-center space-y-6 md:space-y-8">
             <BlurFade duration={0.5} inView>
-              <div className="space-y-4">
-                <h1 className="text-4xl md:text-6xl font-bold font-fraunces">
+              <div className="space-y-4 md:space-y-6">
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold font-fraunces">
                   Nabostylisten
                 </h1>
-                <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+                <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto px-2">
                   Din lokale markedsplass for{" "}
                   <Highlighter
                     action="underline"
@@ -63,7 +63,7 @@ export default async function Home() {
                     skjønnhetstjenester
                   </Highlighter>
                 </p>
-                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                <p className="text-base md:text-lg text-muted-foreground max-w-3xl mx-auto px-2">
                   Koble deg sammen med profesjonelle stylister for hår, negler,
                   sminke og mer - enten hjemme hos deg eller hos stylisten.
                 </p>
@@ -71,11 +71,11 @@ export default async function Home() {
             </BlurFade>
 
             <BlurFade delay={0.1} duration={0.5} inView>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" asChild>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
+                <Button size="lg" asChild className="w-full sm:w-auto">
                   <Link href="/tjenester">Se tjenester</Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild>
+                <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
                   <Link href="/bli-stylist">Bli stylist</Link>
                 </Button>
               </div>
@@ -83,9 +83,9 @@ export default async function Home() {
 
             {/* Separator */}
             <BlurFade delay={0.12} duration={0.5} inView>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 max-w-md mx-auto">
                 <Separator className="flex-1" />
-                <span className="text-muted-foreground text-sm font-medium">
+                <span className="text-muted-foreground text-sm font-medium px-2">
                   eller
                 </span>
                 <Separator className="flex-1" />
@@ -93,13 +93,13 @@ export default async function Home() {
             </BlurFade>
 
             {/* Service Filter Form */}
-            <div className="pb-8">
+            <div className="pt-4 md:pt-8">
               <BlurFade delay={0.15} duration={0.5} inView>
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl md:text-3xl font-bold font-fraunces mb-4">
+                <div className="text-center mb-6 md:mb-8">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-fraunces mb-3 md:mb-4">
                     Søk etter tjenester
                   </h2>
-                  <p className="text-muted-foreground max-w-2xl mx-auto">
+                  <p className="text-sm md:text-base text-muted-foreground max-w-2xl mx-auto px-2">
                     Finn akkurat den tjenesten du leter etter med våre smarte
                     filtre
                   </p>
@@ -108,17 +108,17 @@ export default async function Home() {
               <Suspense
                 fallback={
                   <BlurFade duration={0.5} inView>
-                    <Card>
-                      <CardContent className="p-6">
+                    <Card className="mx-4">
+                      <CardContent className="p-4 md:p-6">
                         <div className="animate-pulse space-y-4">
-                          <div className="flex gap-4">
+                          <div className="flex flex-col md:flex-row gap-4">
                             <div className="flex-1 h-10 bg-muted rounded"></div>
                             <div className="flex-1 h-10 bg-muted rounded"></div>
                           </div>
-                          <div className="flex gap-4">
-                            <div className="flex-1 h-10 bg-muted rounded"></div>
-                            <div className="flex-1 h-10 bg-muted rounded"></div>
-                            <div className="flex-1 h-10 bg-muted rounded"></div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div className="h-10 bg-muted rounded"></div>
+                            <div className="h-10 bg-muted rounded"></div>
+                            <div className="h-10 bg-muted rounded"></div>
                           </div>
                           <div className="h-10 bg-muted rounded"></div>
                         </div>
@@ -131,27 +131,39 @@ export default async function Home() {
               </Suspense>
             </div>
           </div>
+        </section>
 
+        {/* Content Sections */}
+        <div className="space-y-16 md:space-y-24 pb-8">
           {/* Popular Services Section */}
-          <PopularServices />
+          <section className="container mx-auto px-4 max-w-7xl">
+            <PopularServices />
+          </section>
 
           {/* How It Works Section */}
-          <HowItWorks />
+          <section className="container mx-auto px-4 max-w-6xl">
+            <HowItWorks />
+          </section>
 
           {/* Media Section */}
-          <MediaMentions />
-
-          {/* Stats Section */}
-          {/* <StatsSection /> */}
+          <section className="container mx-auto px-4 max-w-6xl">
+            <MediaMentions />
+          </section>
 
           {/* FAQ Section */}
-          <FAQPreview />
+          <section className="container mx-auto px-4 max-w-5xl">
+            <FAQPreview />
+          </section>
 
           {/* About the Founder Section */}
-          <AboutFounder />
+          <section className="container mx-auto px-4 max-w-6xl">
+            <AboutFounder />
+          </section>
 
           {/* Stylist CTA Section */}
-          <StylistCTA />
+          <section className="container mx-auto px-4 max-w-5xl">
+            <StylistCTA />
+          </section>
         </div>
       </div>
     </main>

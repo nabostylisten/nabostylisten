@@ -35,11 +35,11 @@ export function MediaMentions() {
             Nabostylisten har blitt omtalt i flere av Norges ledende medier
           </p>
         </div>
-        <div className="flex justify-center items-center gap-6 lg:gap-8 flex-wrap">
+        <div className="flex justify-center items-center gap-4 sm:gap-6 lg:gap-8 flex-wrap px-4">
           {mediaLogos.map((logo, index) => (
             <Card
               key={logo.alt}
-              className="p-6 bg-primary/10 w-32 h-20 flex items-center justify-center"
+              className="p-4 sm:p-6 bg-primary/10 w-24 h-16 sm:w-28 sm:h-18 md:w-32 md:h-20 flex items-center justify-center"
             >
               <Image
                 src={logo.src}

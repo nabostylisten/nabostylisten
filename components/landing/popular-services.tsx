@@ -15,9 +15,9 @@ import { Button } from "../ui/button";
 
 function PopularServicesSkeleton() {
   return (
-    <div className="flex gap-4 justify-center">
+    <div className="flex gap-3 sm:gap-4 justify-center overflow-x-auto px-4">
       {[1, 2, 3].map((i) => (
-        <Skeleton key={i} className="w-[350px] h-[300px] rounded-lg" />
+        <Skeleton key={i} className="w-[300px] sm:w-[320px] md:w-[350px] h-[280px] sm:h-[290px] md:h-[300px] rounded-lg flex-shrink-0" />
       ))}
     </div>
   );
@@ -44,9 +44,9 @@ async function PopularServicesContent() {
 
     return (
       <Link href={`/tjenester/${service.id}`}>
-        <figure className="relative h-full w-[350px] cursor-pointer overflow-hidden rounded-xl border p-4 border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05] dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15] transition-colors">
+        <figure className="relative h-full w-[300px] sm:w-[320px] md:w-[350px] cursor-pointer overflow-hidden rounded-xl border p-3 sm:p-4 border-gray-950/[.1] bg-gray-950/[.01] hover:bg-gray-950/[.05] dark:border-gray-50/[.1] dark:bg-gray-50/[.10] dark:hover:bg-gray-50/[.15] transition-colors">
           {imageUrl && (
-            <div className="relative h-48 w-full mb-4">
+            <div className="relative h-40 sm:h-44 md:h-48 w-full mb-3 sm:mb-4">
               <Image
                 src={imageUrl}
                 alt={service.title}
@@ -58,7 +58,7 @@ async function PopularServicesContent() {
           <div className="space-y-3">
             <div className="flex justify-between items-start">
               <div className="flex-1">
-                <h3 className="text-lg font-semibold line-clamp-1">
+                <h3 className="text-base sm:text-lg font-semibold line-clamp-1">
                   {service.title}
                 </h3>
                 {category && (
@@ -68,7 +68,7 @@ async function PopularServicesContent() {
                 )}
               </div>
               <div className="text-right">
-                <p className="font-bold text-lg">{service.price} kr</p>
+                <p className="font-bold text-base sm:text-lg">{service.price} kr</p>
                 <p className="text-xs text-muted-foreground">
                   {service.duration_minutes} min
                 </p>
@@ -110,8 +110,8 @@ async function PopularServicesContent() {
           <ServiceCard key={service.id} service={service} />
         ))}
       </Marquee>
-      <div className="pointer-events-none absolute inset-y-0 left-0 w-1/6 lg:w-1/10 bg-gradient-to-r from-background"></div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-1/6 lg:w-1/10 bg-gradient-to-l from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 left-0 w-8 sm:w-12 md:w-16 lg:w-20 bg-gradient-to-r from-background"></div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-8 sm:w-12 md:w-16 lg:w-20 bg-gradient-to-l from-background"></div>
       <div className="mt-8 pointer-events-auto">
         <Button asChild className="group">
           <Link href="/tjenester">

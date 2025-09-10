@@ -52,7 +52,7 @@ export function HowItWorks() {
         </p>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-6 md:space-y-2">
         {steps.map((step, index) => {
           const isEven = index % 2 === 0;
           const isLast = index === steps.length - 1;
@@ -62,15 +62,17 @@ export function HowItWorks() {
             <div key={step.number}>
               <BlurFade delay={index * 0.1} duration={0.5} inView>
                 <div
-                  className={`flex flex-col lg:flex-row items-center gap-8 ${
-                    !isEven ? "lg:flex-row-reverse" : ""
+                  className={`flex flex-col md:flex-row items-center gap-6 md:gap-8 ${
+                    !isEven ? "md:flex-row-reverse" : ""
                   }`}
                 >
                   {/* Step Number and Icon */}
                   <div className="flex-shrink-0">
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center relative">
-                      <div className="text-primary">{step.icon}</div>
-                      <div className="absolute -top-2 -right-2 w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-bold">
+                    <div className="w-16 h-16 sm:w-18 sm:h-18 md:w-20 md:h-20 bg-primary/10 rounded-full flex items-center justify-center relative">
+                      <div className="text-primary w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8">
+                        {step.icon}
+                      </div>
+                      <div className="absolute -top-1 -right-1 sm:-top-2 sm:-right-2 w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs sm:text-sm font-bold">
                         {step.number}
                       </div>
                     </div>
@@ -79,13 +81,13 @@ export function HowItWorks() {
                   {/* Content */}
                   <div className="flex-1">
                     <Card>
-                      <CardHeader>
-                        <CardTitle className="text-xl md:text-2xl">
+                      <CardHeader className="pb-3 sm:pb-4">
+                        <CardTitle className="text-lg sm:text-xl md:text-2xl text-center md:text-left">
                           {step.title}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent className="space-y-4">
-                        <p className="text-muted-foreground leading-relaxed">
+                      <CardContent>
+                        <p className="text-sm sm:text-base text-muted-foreground leading-relaxed text-center md:text-left">
                           {step.description}
                         </p>
                       </CardContent>
@@ -98,16 +100,18 @@ export function HowItWorks() {
               {!isLast && (
                 <BlurFade delay={(index + 1) * 0.1} duration={0.5} inView>
                   <div
-                    className={`flex justify-center my-2 ${index % 2 === 0 ? "ml-12" : "mr-12"}`}
+                    className={`flex justify-center my-4 md:my-2 ${
+                      index % 2 === 0 ? "md:ml-12" : "md:mr-12"
+                    }`}
                   >
                     {index % 2 === 0 ? (
                       <CurvedArrow
-                        className="text-primary/60"
+                        className="text-primary/60 h-24 md:h-full"
                         mirrored={everyThird}
                       />
                     ) : (
                       <WindingArrow
-                        className="text-primary/60"
+                        className="text-primary/60 h-24 md:h-full"
                         mirrored={!isEven}
                       />
                     )}
@@ -121,11 +125,11 @@ export function HowItWorks() {
 
       {/* CTA */}
       <BlurFade delay={0.4} duration={0.5} inView>
-        <div className="text-center pt-8">
-          <h3 className="text-lg mb-6 font-fraunces">
+        <div className="text-center pt-6 md:pt-8">
+          <h3 className="text-base sm:text-lg mb-4 md:mb-6 font-fraunces px-4">
             Klar til å prøve? Kom i gang på under 2 minutter!
           </h3>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center px-4">
             <Button asChild>
               <Link href="/tjenester">
                 Se alle tjenester

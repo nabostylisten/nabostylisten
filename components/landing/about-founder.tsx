@@ -43,47 +43,47 @@ export function AboutFounder({
           <div className="flex flex-col lg:flex-row">
             {/* Image Section */}
             <div className="lg:w-1/3 relative">
-              <div className="aspect-[4/5] lg:aspect-auto lg:h-full relative">
+              <div className="aspect-[4/3] sm:aspect-[4/4] lg:aspect-auto lg:h-full relative">
                 <Image
                   src={imageUrl}
                   alt={personName}
                   fill
                   className="object-cover"
-                  sizes="(max-width: 768px) 100vw, 33vw"
+                  sizes="(max-width: 1024px) 100vw, 33vw"
                   priority={false}
                 />
               </div>
             </div>
 
             {/* Content Section */}
-            <div className="lg:w-2/3 p-8 lg:p-12 flex flex-col justify-center">
-              <div className="mb-6">
+            <div className="lg:w-2/3 p-6 sm:p-8 lg:p-12 flex flex-col justify-center">
+              <div className="mb-4 sm:mb-6">
                 {showQuoteIcon && (
-                  <Quote className="w-8 h-8 text-primary dark:text-secondary mb-4" />
+                  <Quote className="w-6 h-6 sm:w-8 sm:h-8 text-primary dark:text-secondary mb-3 sm:mb-4" />
                 )}
-                <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold font-fraunces mb-3 sm:mb-4">
                   {title}
                 </h2>
               </div>
 
-              <div className="space-y-6">
-                <blockquote className="text-lg leading-relaxed text-muted-foreground">
+              <div className="space-y-4 sm:space-y-6">
+                <blockquote className="text-base sm:text-lg leading-relaxed text-muted-foreground">
                   {showQuoteIcon ? `"${description}"` : description}
                 </blockquote>
 
-                <div className="flex flex-col space-y-4">
-                  <div className="flex items-center gap-4">
-                    <div className="w-4 h-0.5 bg-primary"></div>
+                <div className="flex flex-col space-y-3 sm:space-y-4">
+                  <div className="flex items-center gap-3 sm:gap-4">
+                    <div className="w-3 sm:w-4 h-0.5 bg-primary flex-shrink-0"></div>
                     <div>
-                      <p className="font-semibold text-lg">{personName}</p>
-                      <p className="text-sm text-muted-foreground">
+                      <p className="font-semibold text-base sm:text-lg">{personName}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground">
                         {personTitle}
                       </p>
                     </div>
                   </div>
 
-                  <div className="pt-4">
-                    <Button asChild>
+                  <div className="pt-2 sm:pt-4">
+                    <Button asChild size="sm" className="sm:size-default">
                       <Link href={ctaLink}>
                         {ctaText}
                         <ArrowRight className="ml-2 w-4 h-4" />

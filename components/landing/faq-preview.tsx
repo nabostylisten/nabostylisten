@@ -25,12 +25,12 @@ export function FAQPreview() {
           </p>
         </div>
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <Tabs defaultValue="booking" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="booking">Kunde</TabsTrigger>
-                <TabsTrigger value="stylist">Stylist</TabsTrigger>
-                <TabsTrigger value="general">Generelt</TabsTrigger>
+              <TabsList className="grid w-full grid-cols-3 h-auto">
+                <TabsTrigger value="booking" className="text-xs sm:text-sm px-2 sm:px-3 py-2">Kunde</TabsTrigger>
+                <TabsTrigger value="stylist" className="text-xs sm:text-sm px-2 sm:px-3 py-2">Stylist</TabsTrigger>
+                <TabsTrigger value="general" className="text-xs sm:text-sm px-2 sm:px-3 py-2">Generelt</TabsTrigger>
               </TabsList>
               {["booking", "stylist", "general"].map((category) => (
                 <TabsContent
@@ -42,13 +42,13 @@ export function FAQPreview() {
                     <Card key={faq.id}>
                       <Collapsible>
                         <CollapsibleTrigger asChild>
-                          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <CardTitle className="text-left text-base">
+                          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors p-3 sm:p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                                <CardTitle className="text-left text-sm sm:text-base leading-tight">
                                   {faq.question}
                                 </CardTitle>
-                                <Badge variant="outline" className="text-xs">
+                                <Badge variant="outline" className="text-xs self-start sm:self-center flex-shrink-0">
                                   {
                                     faqCategories.find(
                                       (cat) => cat.id === faq.category
@@ -56,13 +56,13 @@ export function FAQPreview() {
                                   }
                                 </Badge>
                               </div>
-                              <ChevronDown className="h-4 w-4 transition-transform" />
+                              <ChevronDown className="h-4 w-4 transition-transform flex-shrink-0 mt-1 sm:mt-0" />
                             </div>
                           </CardHeader>
                         </CollapsibleTrigger>
                         <CollapsibleContent>
-                          <CardContent className="pt-0">
-                            <p className="text-muted-foreground leading-relaxed">
+                          <CardContent className="pt-0 px-3 sm:px-4 pb-3 sm:pb-4">
+                            <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                               {faq.answer}
                             </p>
                           </CardContent>

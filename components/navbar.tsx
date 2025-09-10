@@ -2,19 +2,26 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Separator } from "@/components/ui/separator";
-import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ThemeSwitcher } from "@/components/theme-switcher";
 import { AuthDialog } from "@/components/auth-dialog";
+import { UserDropdown } from "@/components/nav/user-dropdown";
 import { navigationItems } from "@/lib/navigation";
 import { useAuth } from "@/hooks/use-auth";
-import { Menu, X, LogOut, ShoppingCart, MessageCircle } from "lucide-react";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import {
+  Menu,
+  LogOut,
+  ShoppingCart,
+  MessageCircle,
+  ChevronRight,
+} from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -27,234 +34,349 @@ import { useCartStore } from "@/stores/cart.store";
 import { useUnreadMessages } from "@/hooks/use-unread-messages";
 
 export const Navbar = () => {
-  const [isOpen, setOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [authMode, setAuthMode] = useState<"login" | "signup">("login");
   const { user, profile, loading, signOut } = useAuth();
   const router = useRouter();
   const { getTotalItems } = useCartStore();
   const { unreadCount } = useUnreadMessages();
+  const isMobile = useMediaQuery("(max-width: 1024px)");
 
   const totalItems = getTotalItems();
 
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
+    setSheetOpen(false);
   };
 
   const handleLoginClick = () => {
     setAuthMode("login");
     setShowAuthDialog(true);
+    setSheetOpen(false);
   };
 
-  const handleSignUpClick = () => {
-    setAuthMode("signup");
-    setShowAuthDialog(true);
+  const handleLinkClick = () => {
+    setSheetOpen(false);
   };
 
-  return (
-    <header className="w-full z-40 fixed top-0 left-0 bg-background border-b">
-      <div className="w-full max-w-none mx-auto px-6 lg:px-12 min-h-16 flex items-center justify-between">
-        {/* Logo and Navigation */}
-        <div className="flex items-center gap-6">
-          {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <h1 className="font-bold text-xl text-primary">Nabostylisten</h1>
-          </Link>
+  // Desktop Navbar
+  const DesktopNavbar = () => (
+    <>
+      {/* Logo and Navigation */}
+      <div className="flex items-center gap-6">
+        <Link href="/" className="flex items-center">
+          <h1 className="font-bold text-xl text-primary">Nabostylisten</h1>
+        </Link>
 
-          {/* Vertical Separator */}
-          <Separator orientation="vertical" className="h-6" />
+        <Separator orientation="vertical" className="h-6" />
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center">
-            {navigationItems.map((item) => (
-              <Button key={item.title} variant="ghost" size="sm" asChild>
-                <Link href={item.href!}>{item.title}</Link>
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Right Side Actions */}
-        <div className="flex items-center gap-3">
-          {/* Bli stylist button for customers */}
-          {!loading &&
-            user &&
-            (profile?.role === "customer" || !profile?.role) && (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/bli-stylist">Bli stylist</Link>
-              </Button>
-            )}
-
-          {/* Cart Icon - always visible */}
-          <>
-            <CartHoverCard>
-              <Button variant="outline" size="sm" className="relative" asChild>
-                <Link href="/handlekurv">
-                  <ShoppingCart className="w-5 h-5" />
-                  {totalItems > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium min-w-5">
-                      {totalItems}
-                    </span>
-                  )}
-                </Link>
-              </Button>
-            </CartHoverCard>
-
-            {/* Chat Icon - only for authenticated users with unread messages */}
-            {user && unreadCount > 0 && (
-              <Button variant="outline" size="sm" className="relative" asChild>
-                <Link href={`/profiler/${user.id}/chat`}>
-                  <MessageCircle className="w-5 h-5" />
-                  <span className="absolute -top-1 -right-1 flex h-4 w-4">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
-                    <span className="relative inline-flex h-4 w-4 rounded-full bg-primary text-primary-foreground text-xs items-center justify-center font-medium">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  </span>
-                </Link>
-              </Button>
-            )}
-
-            <Separator orientation="vertical" className="h-6" />
-          </>
-
-          {/* Theme Switcher */}
-          <ThemeSwitcher />
-
-          {!loading && (
-            <>
-              {user ? (
-                // Authenticated User Dropdown
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <CurrentUserAvatar />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <div>
-                      {getSidebarItems(profile?.role).map((item) => {
-                        const Icon = item.icon;
-                        return (
-                          <DropdownMenuItem key={item.href} asChild>
-                            <Link
-                              href={`/profiler/${user.id}${item.href}`}
-                              className="flex items-center gap-2"
-                            >
-                              <Icon className="w-4 h-4" />
-                              {item.title}
-                            </Link>
-                          </DropdownMenuItem>
-                        );
-                      })}
-                      <DropdownMenuSeparator />
-                    </div>
-
-                    {/* Admin navigation - only show on mobile for admins */}
-                    {profile && isAdmin(profile.role) && (
-                      <div>
-                        {adminSidebarItems.map((item) => {
-                          const Icon = item.icon;
-                          return (
-                            <DropdownMenuItem key={item.href} asChild>
-                              <Link
-                                href={item.href}
-                                className="flex items-center gap-2"
-                              >
-                                <Icon className="w-4 h-4" />
-                                {item.title}
-                              </Link>
-                            </DropdownMenuItem>
-                          );
-                        })}
-                        <DropdownMenuSeparator />
-                      </div>
-                    )}
-                    <DropdownMenuItem
-                      onClick={handleSignOut}
-                      className="flex items-center gap-2"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Logg ut
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                // Unauthenticated User Buttons
-                <div className="hidden md:flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLoginClick}
-                  >
-                    Logg inn
-                  </Button>
-                  <Button size="sm" asChild>
-                    <Link href="/bli-stylist">Bli stylist</Link>
-                  </Button>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Loading State */}
-          {loading && <Spinner className="w-4 h-4" />}
-
-          {/* Mobile Menu Toggle */}
-          <div className="flex lg:hidden">
-            <Button variant="ghost" size="sm" onClick={() => setOpen(!isOpen)}>
-              {isOpen ? (
-                <X className="w-5 h-5" />
-              ) : (
-                <Menu className="w-5 h-5" />
-              )}
+        <div className="flex items-center">
+          {navigationItems.map((item) => (
+            <Button key={item.title} variant="ghost" size="sm" asChild>
+              <Link href={item.href!}>{item.title}</Link>
             </Button>
-          </div>
+          ))}
         </div>
       </div>
 
-      {/* Mobile Menu */}
-      {isOpen && (
-        <div className="lg:hidden absolute top-16 left-0 right-0 border-t bg-background shadow-lg">
-          <div className="px-6 py-4 space-y-4">
-            {/* Mobile Navigation Items */}
-            {navigationItems.map((item) => (
-              <Link
-                key={item.title}
-                href={item.href!}
-                className="flex justify-between items-center py-2"
-                onClick={() => setOpen(false)}
-              >
-                <span className="text-lg">{item.title}</span>
-              </Link>
-            ))}
+      {/* Right Side Actions */}
+      <div className="flex items-center gap-3">
+        {/* Bli stylist button for customers */}
+        {!loading &&
+          user &&
+          (profile?.role === "customer" || !profile?.role) && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/bli-stylist">Bli stylist</Link>
+            </Button>
+          )}
 
-            {/* Mobile Auth Buttons */}
-            {!loading && !user && (
-              <div className="pt-4 border-t space-y-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full"
-                  onClick={() => {
-                    setOpen(false);
-                    handleLoginClick();
-                  }}
-                >
+        {/* Cart Icon */}
+        <CartHoverCard>
+          <Button variant="outline" size="sm" className="relative" asChild>
+            <Link href="/handlekurv">
+              <ShoppingCart className="w-5 h-5" />
+              {totalItems > 0 && (
+                <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium min-w-5">
+                  {totalItems}
+                </span>
+              )}
+            </Link>
+          </Button>
+        </CartHoverCard>
+
+        {/* Chat Icon */}
+        {user && unreadCount > 0 && (
+          <Button variant="outline" size="sm" className="relative" asChild>
+            <Link href={`/profiler/${user.id}/chat`}>
+              <MessageCircle className="w-5 h-5" />
+              <span className="absolute -top-1 -right-1 flex h-4 w-4">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75"></span>
+                <span className="relative inline-flex h-4 w-4 rounded-full bg-primary text-primary-foreground text-xs items-center justify-center font-medium">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              </span>
+            </Link>
+          </Button>
+        )}
+
+        <Separator orientation="vertical" className="h-6" />
+        <ThemeSwitcher />
+
+        {!loading && (
+          <>
+            {user ? (
+              <UserDropdown
+                user={user}
+                profile={profile}
+                onSignOut={handleSignOut}
+              />
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleLoginClick}>
                   Logg inn
                 </Button>
-                <Button size="sm" className="w-full" asChild>
-                  <Link href="/bli-stylist" onClick={() => setOpen(false)}>
-                    Bli stylist
-                  </Link>
+                <Button size="sm" asChild>
+                  <Link href="/bli-stylist">Bli stylist</Link>
                 </Button>
               </div>
             )}
+          </>
+        )}
 
-            {/* Mobile Loading State */}
-            {loading && <Spinner className="w-4 h-4" />}
-          </div>
-        </div>
-      )}
+        {loading && <Spinner className="w-4 h-4" />}
+      </div>
+    </>
+  );
+
+  // Mobile Navbar
+  const MobileNavbar = () => (
+    <>
+      {/* Logo */}
+      <Link href="/" className="flex items-center">
+        <h1 className="font-bold text-lg text-primary">Nabostylisten</h1>
+      </Link>
+
+      {/* Right Side - Cart, User, and Sheet */}
+      <div className="flex items-center gap-2">
+        {/* Cart Icon */}
+        <Button variant="outline" size="sm" className="relative" asChild>
+          <Link href="/handlekurv">
+            <ShoppingCart className="w-4 h-4" />
+            {totalItems > 0 && (
+              <span className="absolute -top-1 -right-1 bg-primary text-primary-foreground text-xs rounded-full h-4 w-4 flex items-center justify-center font-medium min-w-4 text-[10px]">
+                {totalItems > 9 ? "9+" : totalItems}
+              </span>
+            )}
+          </Link>
+        </Button>
+
+        {/* User Dropdown for authenticated users */}
+        {!loading && user && (
+          <UserDropdown
+            user={user}
+            profile={profile}
+            onSignOut={handleSignOut}
+          />
+        )}
+
+        {/* Loading State */}
+        {loading && <Spinner className="w-4 h-4" />}
+
+        {/* Mobile Sheet Trigger */}
+        <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
+          <SheetTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Menu className="w-4 h-4" />
+              <span className="sr-only">Åpne meny</span>
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="right" className="w-80 sm:w-96">
+            <SheetHeader className="text-left px-4">
+              <div className="flex items-center justify-start gap-2">
+                <SheetTitle className="text-primary font-bold font-fraunces text-xl">
+                  Nabostylisten
+                </SheetTitle>
+                <ThemeSwitcher />
+              </div>
+            </SheetHeader>
+
+            <div className="flex flex-col h-full pt-6 px-4">
+              {/* Auth Buttons for Unauthenticated Users - Above Navigation */}
+              {!loading && !user && (
+                <div className="space-y-2 mb-6">
+                  <Button
+                    variant="outline"
+                    onClick={handleLoginClick}
+                    className="w-full"
+                  >
+                    Logg inn
+                  </Button>
+                  <Button className="w-full" asChild>
+                    <Link href="/bli-stylist" onClick={handleLinkClick}>
+                      Bli stylist
+                    </Link>
+                  </Button>
+                </div>
+              )}
+
+              <div className="space-y-6">
+                {/* Navigation Links */}
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                    Navigasjon
+                  </h3>
+                  {navigationItems.map((item) => (
+                    <Button
+                      key={item.title}
+                      variant="ghost"
+                      className="w-full justify-start text-base"
+                      asChild
+                    >
+                      <Link href={item.href!} onClick={handleLinkClick}>
+                        <ChevronRight className="w-4 h-4" /> {item.title}
+                      </Link>
+                    </Button>
+                  ))}
+                </div>
+
+                {/* Quick Actions - Only show if there are actions to show */}
+                {((user && unreadCount > 0) || 
+                  (!loading && user && (profile?.role === "customer" || !profile?.role))) && (
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                      Handlinger
+                    </h3>
+
+                    {/* Chat Link with Badge */}
+                    {user && unreadCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-base"
+                        asChild
+                      >
+                        <Link
+                          href={`/profiler/${user.id}/chat`}
+                          onClick={handleLinkClick}
+                          className="flex items-center gap-2"
+                        >
+                          <MessageCircle className="w-4 h-4" />
+                          Meldinger
+                          <span className="ml-auto bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                          </span>
+                        </Link>
+                      </Button>
+                    )}
+
+                    {/* Bli stylist button */}
+                    {!loading &&
+                      user &&
+                      (profile?.role === "customer" || !profile?.role) && (
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-base"
+                          asChild
+                        >
+                          <Link href="/bli-stylist" onClick={handleLinkClick}>
+                            Bli stylist
+                          </Link>
+                        </Button>
+                      )}
+                  </div>
+                )}
+
+                {/* User Profile Links */}
+                {user && (
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                      Min profil
+                    </h3>
+                    {getSidebarItems(profile?.role).map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Button
+                          key={item.href}
+                          variant="ghost"
+                          className="w-full justify-start text-base"
+                          asChild
+                        >
+                          <Link
+                            href={`/profiler/${user.id}${item.href}`}
+                            onClick={handleLinkClick}
+                            className="flex items-center gap-2"
+                          >
+                            <Icon className="w-4 h-4" />
+                            {item.title}
+                          </Link>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Admin Links */}
+                {user && profile && isAdmin(profile.role) && (
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-3">
+                      Admin
+                    </h3>
+                    {adminSidebarItems.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Button
+                          key={item.href}
+                          variant="ghost"
+                          className="w-full justify-start text-base"
+                          asChild
+                        >
+                          <Link
+                            href={item.href}
+                            onClick={handleLinkClick}
+                            className="flex items-center gap-2"
+                          >
+                            <Icon className="w-4 h-4" />
+                            {item.title}
+                          </Link>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Auth Actions at Bottom - Only for authenticated users */}
+              {!loading && user && (
+                <div className="mt-auto pt-6 pb-6 border-t space-y-2">
+                  <Button
+                    variant="ghost"
+                    onClick={handleSignOut}
+                    className="w-full justify-start text-base"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Logg ut
+                  </Button>
+                </div>
+              )}
+
+              {loading && (
+                <div className="mt-auto flex justify-center py-4">
+                  <Spinner className="w-4 h-4" />
+                </div>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
+    </>
+  );
+
+  return (
+    <header className="w-full z-40 fixed top-0 left-0 bg-background border-b">
+      <div className="w-full max-w-none mx-auto px-4 sm:px-6 lg:px-12 min-h-16 flex items-center justify-between">
+        {isMobile ? <MobileNavbar /> : <DesktopNavbar />}
+      </div>
 
       <AuthDialog
         open={showAuthDialog}

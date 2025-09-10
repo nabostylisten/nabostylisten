@@ -82,9 +82,7 @@ const OmOssPage = async () => {
                 <div className="text-3xl font-bold text-primary mb-2">
                   {avgRating}
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  Gjennomsnittlig rating
-                </div>
+                <div className="text-sm text-muted-foreground">Rating</div>
               </div>
             </div>
           </div>

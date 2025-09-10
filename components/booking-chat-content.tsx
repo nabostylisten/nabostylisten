@@ -321,6 +321,7 @@ export function BookingChatContent({
               currentUserId={currentUserId}
               userRole={isCurrentUserStylist ? 'stylist' : 'customer'}
               serviceName={serviceTitles[0] || 'Booking'}
+              customerName={isCurrentUserStylist ? partnerName : currentUserName}
             />
           </div>
         </CardContent>

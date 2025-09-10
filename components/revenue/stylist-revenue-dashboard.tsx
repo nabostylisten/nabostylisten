@@ -171,9 +171,9 @@ export function StylistRevenueDashboard({
           <Card>
             <CardHeader>
               <div className="flex items-center gap-3 mb-4">
-                <AlertCircle className="w-8 h-8 text-red-500" />
+                <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
                 <div>
-                  <CardTitle className="text-2xl text-red-600">
+                  <CardTitle className="text-2xl text-red-800 dark:text-red-200">
                     Kunne ikke laste inntektsinformasjon
                   </CardTitle>
                   <CardDescription className="text-lg">
@@ -183,8 +183,8 @@ export function StylistRevenueDashboard({
               </div>
             </CardHeader>
             <CardContent>
-              <div className="p-4 bg-red-50 rounded-lg border border-red-200 mb-4">
-                <p className="text-red-800 text-sm">
+              <div className="p-4 bg-red-50 dark:bg-red-950/30 rounded-lg border border-red-200 dark:border-red-800 mb-4">
+                <p className="text-red-800 dark:text-red-200 text-sm">
                   Det oppstod en feil ved henting av kontoinformasjon.
                 </p>
               </div>
@@ -228,25 +228,25 @@ export function StylistRevenueDashboard({
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div className="flex items-center gap-2">
                         {stripeStatus.status.details_submitted ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-500" />
+                          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                         )}
                         <span className="text-sm">Informasjon innsendt</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {stripeStatus.status.charges_enabled ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-500" />
+                          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                         )}
                         <span className="text-sm">Kan motta betaling</span>
                       </div>
                       <div className="flex items-center gap-2">
                         {stripeStatus.status.payouts_enabled ? (
-                          <CheckCircle className="h-4 w-4 text-green-500" />
+                          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-500" />
+                          <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
                         )}
                         <span className="text-sm">Utbetalinger aktivert</span>
                       </div>
@@ -262,7 +262,7 @@ export function StylistRevenueDashboard({
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 border rounded-lg text-center">
-                      <FileText className="h-8 w-8 text-blue-500 mx-auto mb-2" />
+                      <FileText className="h-8 w-8 text-blue-600 dark:text-blue-400 mx-auto mb-2" />
                       <h4 className="font-medium text-sm">Personinfo</h4>
                       <p className="text-xs text-muted-foreground mt-1">
                         Navn, adresse og fødselsdato
@@ -270,7 +270,7 @@ export function StylistRevenueDashboard({
                     </div>
 
                     <div className="p-4 border rounded-lg text-center">
-                      <CreditCard className="h-8 w-8 text-green-500 mx-auto mb-2" />
+                      <CreditCard className="h-8 w-8 text-green-600 dark:text-green-400 mx-auto mb-2" />
                       <h4 className="font-medium text-sm">Bankinfo</h4>
                       <p className="text-xs text-muted-foreground mt-1">
                         Kontonummer for utbetalinger
@@ -278,7 +278,7 @@ export function StylistRevenueDashboard({
                     </div>
 
                     <div className="p-4 border rounded-lg text-center">
-                      <Shield className="h-8 w-8 text-purple-500 mx-auto mb-2" />
+                      <Shield className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
                       <h4 className="font-medium text-sm">Verifisering</h4>
                       <p className="text-xs text-muted-foreground mt-1">
                         Identitetsbekreftelse og skatteinfo
@@ -290,14 +290,14 @@ export function StylistRevenueDashboard({
 
               {/* Time estimate and security */}
               <BlurFade delay={0.25} duration={0.5} inView>
-                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
-                  <div className="flex items-center gap-2 text-blue-800 mb-2">
+                <div className="p-4 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <div className="flex items-center gap-2 text-blue-800 dark:text-blue-200 mb-2">
                     <Clock className="h-4 w-4" />
                     <span className="font-medium text-sm">
                       Estimert tid: 3 minutter
                     </span>
                   </div>
-                  <p className="text-blue-700 text-sm">
+                  <p className="text-blue-800 dark:text-blue-200 text-sm">
                     All informasjon behandles sikkert i henhold til GDPR og
                     norsk personvernlovgivning.
                   </p>
@@ -340,7 +340,7 @@ export function StylistRevenueDashboard({
         <Card>
           <CardHeader>
             <div className="flex items-center gap-3 mb-4">
-              <TrendingUp className="w-8 h-8 text-green-500" />
+              <TrendingUp className="w-8 h-8 text-green-600 dark:text-green-400" />
               <div>
                 <CardTitle className="text-2xl">
                   Inntekter og statistikk
@@ -355,14 +355,14 @@ export function StylistRevenueDashboard({
           <CardContent className="space-y-6">
             {/* Status confirmation */}
             <BlurFade delay={0.1} duration={0.5} inView>
-              <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-center gap-2 text-green-800 mb-2">
+              <div className="p-4 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex items-center gap-2 text-green-800 dark:text-green-200 mb-2">
                   <CheckCircle className="h-5 w-5" />
                   <span className="font-medium">
                     Din konto er fullstendig verifisert
                   </span>
                 </div>
-                <p className="text-green-700 text-sm">
+                <p className="text-green-800 dark:text-green-200 text-sm">
                   Du har tilgang til alle stylistfunksjonene og kan motta
                   betalinger.
                 </p>

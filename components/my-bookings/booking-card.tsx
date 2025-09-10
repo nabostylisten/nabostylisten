@@ -364,6 +364,7 @@ export function BookingCard({
                 currentUserId={currentUserId}
                 userRole={userRole}
                 serviceName={services[0]?.title || "Booking"}
+                customerName={booking.customer?.full_name || "Kunde"}
                 onStatusDialogOpen={() => setIsStatusDialogOpen(true)}
               />
               {/* Review button for completed bookings (customers only) */}
@@ -409,7 +410,7 @@ export function BookingCard({
         <BookingStatusDialog
           bookingId={booking.id}
           currentStatus={booking.status}
-          customerName="Kunde"
+          customerName={booking.customer?.full_name || "Kunde"}
           serviceName={services[0]?.title || "Booking"}
           isOpen={isStatusDialogOpen}
           onOpenChange={setIsStatusDialogOpen}

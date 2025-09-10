@@ -297,6 +297,7 @@ export function TrialSessionCard({
                 currentUserId={currentUserId}
                 userRole={userRole}
                 serviceName={services[0]?.title || "Prøveseksjon"}
+                customerName={booking.customer?.full_name || "Kunde"}
                 onStatusDialogOpen={() => setIsStatusDialogOpen(true)}
               />
               {/* Review button for completed bookings (customers only) */}
@@ -342,7 +343,7 @@ export function TrialSessionCard({
         <BookingStatusDialog
           bookingId={booking.id}
           currentStatus={booking.status}
-          customerName="Kunde"
+          customerName={booking.customer?.full_name || "Kunde"}
           serviceName={services[0]?.title || "Prøveseksjon"}
           isOpen={isStatusDialogOpen}
           onOpenChange={setIsStatusDialogOpen}

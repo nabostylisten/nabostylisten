@@ -130,7 +130,7 @@ export function BookingStatusDialog({
                           htmlFor="confirmed"
                           className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          <CheckCircle className="w-4 h-4 text-green-600" />
+                          <CheckCircle className="w-4 h-4 text-green-600 dark:text-green-400" />
                           Bekreft
                         </label>
                       </div>
@@ -140,7 +140,7 @@ export function BookingStatusDialog({
                           htmlFor="cancelled"
                           className="flex items-center gap-2 text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                          <XCircle className="w-4 h-4 text-red-600" />
+                          <XCircle className="w-4 h-4 text-red-600 dark:text-red-400" />
                           Avlys
                         </label>
                       </div>

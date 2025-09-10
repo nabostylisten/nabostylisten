@@ -298,6 +298,7 @@ export function BookingDetailsContent({
                     currentUserId={userId}
                     userRole={userRole}
                     serviceName={services[0]?.title || "Booking"}
+                    customerName={booking.customer?.full_name || "Kunde"}
                   />
                   {/* Stylist actions for pending bookings, or admin actions */}
                   {((userRole === "stylist" && booking.status === "pending") ||

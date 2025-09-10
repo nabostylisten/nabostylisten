@@ -23,7 +23,7 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: true,
       travel_distance_km: 15,
-      instagram_profile: "@mariahansen_hair",
+      instagram_profile: "https://www.instagram.com/mariahansen_hair",
       stripe_account_id: null,
     },
     {
@@ -33,8 +33,8 @@ export async function createStylistDetailedProfiles(
       can_travel: false,
       has_own_place: true,
       travel_distance_km: null,
-      instagram_profile: "@sophialashes",
-      facebook_profile: "sophialarsenlashes",
+      instagram_profile: "https://www.instagram.com/sophialashes",
+      facebook_profile: "https://www.facebook.com/sophialarsenlashes",
       stripe_account_id: null,
     },
     // Bergen stylists
@@ -45,8 +45,8 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: false,
       travel_distance_km: 20,
-      instagram_profile: "@emma_beauty",
-      tiktok_profile: "@emmabeautybergen",
+      instagram_profile: "https://www.instagram.com/emma_beauty",
+      tiktok_profile: "https://www.tiktok.com/@emmabeautybergen",
       stripe_account_id: null,
     },
     {
@@ -56,7 +56,7 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: true,
       travel_distance_km: 25,
-      instagram_profile: "@lisaberg_hair",
+      instagram_profile: "https://www.instagram.com/lisaberg_hair",
       stripe_account_id: null,
     },
     // Trondheim stylists
@@ -67,8 +67,8 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: true,
       travel_distance_km: 30,
-      instagram_profile: "@anna_makeup_trondheim",
-      facebook_profile: "annamakeup",
+      instagram_profile: "https://www.instagram.com/anna_makeup_trondheim",
+      facebook_profile: "https://www.facebook.com/annamakeup",
       stripe_account_id: null,
     },
     {
@@ -78,7 +78,7 @@ export async function createStylistDetailedProfiles(
       can_travel: false,
       has_own_place: true,
       travel_distance_km: null,
-      instagram_profile: "@ingrid_nails",
+      instagram_profile: "https://www.instagram.com/ingrid_nails",
       stripe_account_id: null,
     },
     // Stavanger stylists
@@ -89,8 +89,8 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: true,
       travel_distance_km: 20,
-      instagram_profile: "@camilla_hair_stavanger",
-      tiktok_profile: "@camillahair",
+      instagram_profile: "https://www.instagram.com/camilla_hair_stavanger",
+      tiktok_profile: "https://www.tiktok.com/@camillahair",
       stripe_account_id: null,
     },
     {
@@ -100,7 +100,7 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: false,
       travel_distance_km: 15,
-      instagram_profile: "@thea_lashes",
+      instagram_profile: "https://www.instagram.com/thea_lashes",
       stripe_account_id: null,
     },
     // Kristiansand stylists
@@ -111,8 +111,8 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: true,
       travel_distance_km: 25,
-      instagram_profile: "@marte_beauty_krs",
-      youtube_profile: "martebeauty",
+      instagram_profile: "https://www.instagram.com/marte_beauty_krs",
+      youtube_profile: "https://www.youtube.com/channel/UCMarteBeautyKRS",
       stripe_account_id: null,
     },
     {
@@ -122,7 +122,7 @@ export async function createStylistDetailedProfiles(
       can_travel: true,
       has_own_place: true,
       travel_distance_km: 20,
-      instagram_profile: "@sara_hair_kristiansand",
+      instagram_profile: "https://www.instagram.com/sara_hair_kristiansand",
       stripe_account_id: null,
     },
   ]);

@@ -5,6 +5,14 @@ import { useForm } from "react-hook-form";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
+import {
+  getPlatformFromUrl,
+  getHandleFromSocialMediaPlatform,
+  getSocialMediaDisplayName,
+  validateAndFormatSocialMediaUrl,
+  normalizeSocialMediaUrl,
+  type SocialMediaPlatform,
+} from "@/lib/social-media";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -56,11 +64,46 @@ const stylistDetailsFormSchema = z.object({
     .max(100, "Avstand kan ikke være mer enn 100 km")
     .nullable()
     .optional(),
-  instagram_profile: z.string().optional().nullable(),
-  facebook_profile: z.string().optional().nullable(),
-  tiktok_profile: z.string().optional().nullable(),
-  youtube_profile: z.string().optional().nullable(),
-  snapchat_profile: z.string().optional().nullable(),
+  instagram_profile: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => !val || validateAndFormatSocialMediaUrl(val).isValid,
+      "Ugyldig Instagram URL"
+    ),
+  facebook_profile: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => !val || validateAndFormatSocialMediaUrl(val).isValid,
+      "Ugyldig Facebook URL"
+    ),
+  tiktok_profile: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => !val || validateAndFormatSocialMediaUrl(val).isValid,
+      "Ugyldig TikTok URL"
+    ),
+  youtube_profile: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => !val || validateAndFormatSocialMediaUrl(val).isValid,
+      "Ugyldig YouTube URL"
+    ),
+  snapchat_profile: z
+    .string()
+    .optional()
+    .nullable()
+    .refine(
+      (val) => !val || validateAndFormatSocialMediaUrl(val).isValid,
+      "Ugyldig Snapchat URL"
+    ),
   other_social_media_urls: z.array(z.string()).optional().nullable(),
 });
 
@@ -117,8 +160,8 @@ export function StylistDetailsForm({
       router.refresh(); // Force server component to re-fetch data
       toast.success(
         stylistDetails
-          ? "Stylist detaljer oppdatert!"
-          : "Stylist detaljer opprettet!"
+          ? "Stylist-detaljer oppdatert!"
+          : "Stylist-detaljer opprettet!"
       );
       setIsEditing(false);
     },
@@ -141,14 +184,24 @@ export function StylistDetailsForm({
 
   const onSubmit = (values: StylistDetailsFormValues) => {
     if (isOwner) {
-      // Clean up empty social media fields
+      // Normalize and validate social media URLs
       const cleanedValues = {
         ...values,
-        instagram_profile: values.instagram_profile?.trim() || null,
-        facebook_profile: values.facebook_profile?.trim() || null,
-        tiktok_profile: values.tiktok_profile?.trim() || null,
-        youtube_profile: values.youtube_profile?.trim() || null,
-        snapchat_profile: values.snapchat_profile?.trim() || null,
+        instagram_profile: values.instagram_profile
+          ? normalizeSocialMediaUrl(values.instagram_profile.trim()) || null
+          : null,
+        facebook_profile: values.facebook_profile
+          ? normalizeSocialMediaUrl(values.facebook_profile.trim()) || null
+          : null,
+        tiktok_profile: values.tiktok_profile
+          ? normalizeSocialMediaUrl(values.tiktok_profile.trim()) || null
+          : null,
+        youtube_profile: values.youtube_profile
+          ? normalizeSocialMediaUrl(values.youtube_profile.trim()) || null
+          : null,
+        snapchat_profile: values.snapchat_profile
+          ? normalizeSocialMediaUrl(values.snapchat_profile.trim()) || null
+          : null,
         travel_distance_km: values.can_travel
           ? values.travel_distance_km
           : null,
@@ -330,7 +383,7 @@ export function StylistDetailsForm({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="brukernavn (uten @)"
+                          placeholder="https://www.instagram.com/brukernavn"
                           {...field}
                           value={field.value || ""}
                         />
@@ -351,7 +404,7 @@ export function StylistDetailsForm({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="brukernavn eller side"
+                          placeholder="https://www.facebook.com/brukernavn"
                           {...field}
                           value={field.value || ""}
                         />
@@ -372,7 +425,7 @@ export function StylistDetailsForm({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="brukernavn (uten @)"
+                          placeholder="https://www.tiktok.com/@brukernavn"
                           {...field}
                           value={field.value || ""}
                         />
@@ -393,7 +446,7 @@ export function StylistDetailsForm({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="kanal navn eller ID"
+                          placeholder="https://www.youtube.com/channel/UCxxx"
                           {...field}
                           value={field.value || ""}
                         />
@@ -414,7 +467,7 @@ export function StylistDetailsForm({
                       </FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="brukernavn"
+                          placeholder="https://www.snapchat.com/@brukernavn"
                           {...field}
                           value={field.value || ""}
                         />
@@ -515,82 +568,105 @@ export function StylistDetailsForm({
                     {stylistDetails.instagram_profile && (
                       <Button variant="outline" size="sm" asChild>
                         <a
-                          href={`https://instagram.com/${stylistDetails.instagram_profile}`}
+                          href={stylistDetails.instagram_profile}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex gap-2"
                         >
                           <Instagram className="w-4 h-4" />
-                          Instagram
+                          {getSocialMediaDisplayName(
+                            "instagram",
+                            stylistDetails.instagram_profile
+                          )}
                         </a>
                       </Button>
                     )}
                     {stylistDetails.facebook_profile && (
                       <Button variant="outline" size="sm" asChild>
                         <a
-                          href={`https://facebook.com/${stylistDetails.facebook_profile}`}
+                          href={stylistDetails.facebook_profile}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex gap-2"
                         >
                           <Facebook className="w-4 h-4" />
-                          Facebook
+                          {getSocialMediaDisplayName(
+                            "facebook",
+                            stylistDetails.facebook_profile
+                          )}
                         </a>
                       </Button>
                     )}
                     {stylistDetails.tiktok_profile && (
                       <Button variant="outline" size="sm" asChild>
                         <a
-                          href={`https://tiktok.com/@${stylistDetails.tiktok_profile}`}
+                          href={stylistDetails.tiktok_profile}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex gap-2"
                         >
                           <FaTiktok className="w-4 h-4" />
-                          TikTok
+                          {getSocialMediaDisplayName(
+                            "tiktok",
+                            stylistDetails.tiktok_profile
+                          )}
                         </a>
                       </Button>
                     )}
                     {stylistDetails.youtube_profile && (
                       <Button variant="outline" size="sm" asChild>
                         <a
-                          href={`https://youtube.com/${stylistDetails.youtube_profile}`}
+                          href={stylistDetails.youtube_profile}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex gap-2"
                         >
                           <Youtube className="w-4 h-4" />
-                          YouTube
+                          {getSocialMediaDisplayName(
+                            "youtube",
+                            stylistDetails.youtube_profile
+                          )}
                         </a>
                       </Button>
                     )}
                     {stylistDetails.snapchat_profile && (
                       <Button variant="outline" size="sm" asChild>
                         <a
-                          href={`https://snapchat.com/add/${stylistDetails.snapchat_profile}`}
+                          href={stylistDetails.snapchat_profile}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex gap-2"
                         >
                           <FaSnapchatGhost className="w-4 h-4" />
-                          Snapchat
+                          {getSocialMediaDisplayName(
+                            "snapchat",
+                            stylistDetails.snapchat_profile
+                          )}
                         </a>
                       </Button>
                     )}
                     {stylistDetails.other_social_media_urls?.map(
-                      (url, index) => (
-                        <Button key={index} variant="outline" size="sm" asChild>
-                          <a
-                            href={url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex gap-2"
+                      (url, index) => {
+                        const platform = getPlatformFromUrl(url);
+                        return (
+                          <Button
+                            key={index}
+                            variant="outline"
+                            size="sm"
+                            asChild
                           >
-                            <LucideLink className="w-4 h-4" />
-                            Annet
-                          </a>
-                        </Button>
-                      )
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex gap-2"
+                            >
+                              <LucideLink className="w-4 h-4" />
+                              {getSocialMediaDisplayName(platform, url)}
+                            </a>
+                          </Button>
+                        );
+                      }
                     )}
                   </div>
                 </div>

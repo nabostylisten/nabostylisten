@@ -28,6 +28,10 @@ import {
 } from "lucide-react";
 
 import { getAffiliateApplicationById } from "@/server/affiliate/affiliate-applications.actions";
+import {
+  getPlatformFromUrl,
+  getSocialMediaDisplayName,
+} from "@/lib/social-media";
 import { FaTiktok } from "react-icons/fa";
 
 interface AffiliateApplicationDetailsDialogProps {
@@ -168,39 +172,48 @@ export function AffiliateApplicationDetailsDialog({
                           {application.stylist.stylist_details
                             .instagram_profile && (
                             <a
-                              href={`https://instagram.com/${application.stylist.stylist_details.instagram_profile.replace("@", "")}`}
+                              href={application.stylist.stylist_details.instagram_profile}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
                             >
                               <Instagram className="w-4 h-4" />
-                              Instagram
+                              {getSocialMediaDisplayName(
+                                "instagram",
+                                application.stylist.stylist_details.instagram_profile
+                              )}
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           )}
                           {application.stylist.stylist_details
                             .facebook_profile && (
                             <a
-                              href={`https://facebook.com/${application.stylist.stylist_details.facebook_profile.replace("@", "")}`}
+                              href={application.stylist.stylist_details.facebook_profile}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
                             >
                               <Facebook className="w-4 h-4" />
-                              Facebook
+                              {getSocialMediaDisplayName(
+                                "facebook",
+                                application.stylist.stylist_details.facebook_profile
+                              )}
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           )}
                           {application.stylist.stylist_details
                             .tiktok_profile && (
                             <a
-                              href={`https://tiktok.com/@${application.stylist.stylist_details.tiktok_profile.replace("@", "")}`}
+                              href={application.stylist.stylist_details.tiktok_profile}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground text-sm font-medium hover:bg-secondary/80 transition-colors"
                             >
                               <FaTiktok className="w-4 h-4" />
-                              TikTok
+                              {getSocialMediaDisplayName(
+                                "tiktok",
+                                application.stylist.stylist_details.tiktok_profile
+                              )}
                               <ExternalLink className="w-3 h-3" />
                             </a>
                           )}

@@ -1154,6 +1154,21 @@
       ],
       "uniqueConstraints": [
         {
+          "name": "affiliate_commissions_booking_affiliate_unique",
+          "fields": [
+            "affiliate_id",
+            "booking_id"
+          ],
+          "nullNotDistinct": false
+        },
+        {
+          "name": "affiliate_commissions_booking_id_key",
+          "fields": [
+            "booking_id"
+          ],
+          "nullNotDistinct": false
+        },
+        {
           "name": "affiliate_commissions_pkey",
           "fields": [
             "id"
@@ -2977,6 +2992,20 @@
           "isGenerated": false,
           "sequence": false,
           "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "id": "public.bookings.awaiting_payment_setup",
+          "name": "awaiting_payment_setup",
+          "columnName": "awaiting_payment_setup",
+          "type": "bool",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": true,
           "isId": false,
           "maxLength": null
         },
@@ -19037,6 +19066,9 @@
       "schemaName": "public",
       "values": [
         {
+          "name": "cancelled"
+        },
+        {
           "name": "failed"
         },
         {
@@ -19047,6 +19079,9 @@
         },
         {
           "name": "processing"
+        },
+        {
+          "name": "refunded"
         }
       ]
     },

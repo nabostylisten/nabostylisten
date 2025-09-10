@@ -68,7 +68,7 @@ export const CartStylistWarningDialog = ({
               best ved å booke tjenester hos én stylist om gangen.
             </p>
             <p>
-              Du har for øyeblikket <strong>{items.length}</strong> tjeneste
+              Du har for øyeblikket <strong>{items.length}</strong> tjeneste{" "}
               {items.length > 1 ? "r" : ""}
               fra <strong>{currentStylist.full_name}</strong> i handlekurven.
             </p>

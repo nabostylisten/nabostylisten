@@ -31,6 +31,10 @@ import { FaTiktok, FaSnapchatGhost } from "react-icons/fa";
 import Link from "next/link";
 import type { StylistProfileData } from "@/server/profile.actions";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import {
+  getPlatformFromUrl,
+  getSocialMediaDisplayName,
+} from "@/lib/social-media";
 
 type StylistPublicProfileProps = NonNullable<StylistProfileData>;
 
@@ -300,65 +304,90 @@ export function StylistPublicProfile({
                             {stylistDetails.instagram_profile && (
                               <Button variant="outline" size="sm" asChild>
                                 <Link
-                                  href={`https://instagram.com/${stylistDetails.instagram_profile}`}
+                                  href={stylistDetails.instagram_profile}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex gap-2"
                                 >
                                   <Instagram className="w-4 h-4" />
-                                  <span>Instagram</span>
+                                  <span>
+                                    {getSocialMediaDisplayName(
+                                      "instagram",
+                                      stylistDetails.instagram_profile
+                                    )}
+                                  </span>
                                 </Link>
                               </Button>
                             )}
                             {stylistDetails.facebook_profile && (
                               <Button variant="outline" size="sm" asChild>
                                 <Link
-                                  href={`https://facebook.com/${stylistDetails.facebook_profile}`}
+                                  href={stylistDetails.facebook_profile}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex gap-2"
                                 >
                                   <Facebook className="w-4 h-4" />
-                                  <span>Facebook</span>
+                                  <span>
+                                    {getSocialMediaDisplayName(
+                                      "facebook",
+                                      stylistDetails.facebook_profile
+                                    )}
+                                  </span>
                                 </Link>
                               </Button>
                             )}
                             {stylistDetails.youtube_profile && (
                               <Button variant="outline" size="sm" asChild>
                                 <Link
-                                  href={`https://youtube.com/${stylistDetails.youtube_profile}`}
+                                  href={stylistDetails.youtube_profile}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex gap-2"
                                 >
                                   <Youtube className="w-4 h-4" />
-                                  <span>YouTube</span>
+                                  <span>
+                                    {getSocialMediaDisplayName(
+                                      "youtube",
+                                      stylistDetails.youtube_profile
+                                    )}
+                                  </span>
                                 </Link>
                               </Button>
                             )}
                             {stylistDetails.tiktok_profile && (
                               <Button variant="outline" size="sm" asChild>
                                 <Link
-                                  href={`https://tiktok.com/@${stylistDetails.tiktok_profile}`}
+                                  href={stylistDetails.tiktok_profile}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex gap-2"
                                 >
                                   <FaTiktok className="w-4 h-4" />
-                                  <span>TikTok</span>
+                                  <span>
+                                    {getSocialMediaDisplayName(
+                                      "tiktok",
+                                      stylistDetails.tiktok_profile
+                                    )}
+                                  </span>
                                 </Link>
                               </Button>
                             )}
                             {stylistDetails.snapchat_profile && (
                               <Button variant="outline" size="sm" asChild>
                                 <Link
-                                  href={`https://snapchat.com/add/${stylistDetails.snapchat_profile}`}
+                                  href={stylistDetails.snapchat_profile}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="flex gap-2"
                                 >
                                   <FaSnapchatGhost className="w-4 h-4" />
-                                  <span>Snapchat</span>
+                                  <span>
+                                    {getSocialMediaDisplayName(
+                                      "snapchat",
+                                      stylistDetails.snapchat_profile
+                                    )}
+                                  </span>
                                 </Link>
                               </Button>
                             )}
@@ -366,24 +395,32 @@ export function StylistPublicProfile({
                               stylistDetails.other_social_media_urls.length >
                                 0 &&
                               stylistDetails.other_social_media_urls.map(
-                                (url, index) => (
-                                  <Button
-                                    key={index}
-                                    variant="outline"
-                                    size="sm"
-                                    asChild
-                                  >
-                                    <Link
-                                      href={url}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="flex gap-2"
+                                (url, index) => {
+                                  const platform = getPlatformFromUrl(url);
+                                  return (
+                                    <Button
+                                      key={index}
+                                      variant="outline"
+                                      size="sm"
+                                      asChild
                                     >
-                                      <LucideLink className="w-4 h-4" />
-                                      <span>Annet</span>
-                                    </Link>
-                                  </Button>
-                                )
+                                      <Link
+                                        href={url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="flex gap-2"
+                                      >
+                                        <LucideLink className="w-4 h-4" />
+                                        <span>
+                                          {getSocialMediaDisplayName(
+                                            platform,
+                                            url
+                                          )}
+                                        </span>
+                                      </Link>
+                                    </Button>
+                                  );
+                                }
                               )}
                           </div>
                         </div>

@@ -36,6 +36,8 @@ import {
   TestTube,
   ArrowRight,
   Link as LinkIcon,
+  Facebook,
+  Youtube,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -52,10 +54,20 @@ import { getBookingNotes } from "@/server/booking-note.actions";
 import { Database } from "@/types/database.types";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import {
+  getPlatformFromUrl,
+  getSocialMediaDisplayName,
+} from "@/lib/social-media";
+import {
   BookingPricingDisplay,
   getPricingBreakdown,
 } from "@/lib/booking-pricing-display";
 import { formatCurrency } from "@/lib/booking-calculations";
+import {
+  FaFacebook,
+  FaInstagram,
+  FaSnapchatGhost,
+  FaTiktok,
+} from "react-icons/fa";
 
 interface BookingDetailsContentProps {
   bookingId: string;
@@ -106,7 +118,10 @@ export function BookingDetailsContent({
   // Fetch address details if booking has an address_id
   const { data: addressData, isLoading: addressLoading } = useQuery({
     queryKey: ["address", bookingResponse?.data?.address_id],
-    queryFn: () => bookingResponse?.data?.address_id ? getAddress(bookingResponse.data.address_id) : null,
+    queryFn: () =>
+      bookingResponse?.data?.address_id
+        ? getAddress(bookingResponse.data.address_id)
+        : null,
     enabled: !!bookingResponse?.data?.address_id,
   });
 
@@ -361,7 +376,9 @@ export function BookingDetailsContent({
                             <div className="font-medium">Adresse</div>
                             <div className="text-sm text-muted-foreground">
                               <p>{address.street_address}</p>
-                              <p>{address.postal_code} {address.city}</p>
+                              <p>
+                                {address.postal_code} {address.city}
+                              </p>
                             </div>
                           </div>
                         ) : null}
@@ -596,8 +613,13 @@ export function BookingDetailsContent({
                             booking.stylist.stylist_details.instagram_profile
                           }
                           target="_blank"
+                          className="flex gap-2 items-center"
                         >
-                          Instagram
+                          <FaInstagram className="w-4 h-4" />
+                          {getSocialMediaDisplayName(
+                            "instagram",
+                            booking.stylist.stylist_details.instagram_profile
+                          )}
                         </Link>
                       </Button>
                     )}
@@ -608,8 +630,63 @@ export function BookingDetailsContent({
                             booking.stylist.stylist_details.facebook_profile
                           }
                           target="_blank"
+                          className="flex gap-2 items-center"
                         >
-                          Facebook
+                          <Facebook className="w-4 h-4" />
+                          {getSocialMediaDisplayName(
+                            "facebook",
+                            booking.stylist.stylist_details.facebook_profile
+                          )}
+                        </Link>
+                      </Button>
+                    )}
+
+                    {booking.stylist.stylist_details.youtube_profile && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link
+                          href={booking.stylist.stylist_details.youtube_profile}
+                          target="_blank"
+                          className="flex gap-2 items-center"
+                        >
+                          <Youtube className="w-4 h-4" />
+                          {getSocialMediaDisplayName(
+                            "youtube",
+                            booking.stylist.stylist_details.youtube_profile
+                          )}
+                        </Link>
+                      </Button>
+                    )}
+
+                    {booking.stylist.stylist_details.tiktok_profile && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link
+                          href={booking.stylist.stylist_details.tiktok_profile}
+                          target="_blank"
+                          className="flex gap-2 items-center"
+                        >
+                          <FaTiktok className="w-4 h-4" />
+                          {getSocialMediaDisplayName(
+                            "tiktok",
+                            booking.stylist.stylist_details.tiktok_profile
+                          )}
+                        </Link>
+                      </Button>
+                    )}
+
+                    {booking.stylist.stylist_details.snapchat_profile && (
+                      <Button variant="outline" size="sm" asChild>
+                        <Link
+                          href={
+                            booking.stylist.stylist_details.snapchat_profile
+                          }
+                          target="_blank"
+                          className="flex gap-2 items-center"
+                        >
+                          <FaSnapchatGhost className="w-4 h-4" />
+                          {getSocialMediaDisplayName(
+                            "snapchat",
+                            booking.stylist.stylist_details.snapchat_profile
+                          )}
                         </Link>
                       </Button>
                     )}

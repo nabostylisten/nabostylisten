@@ -341,12 +341,12 @@ export function ProfileForm({
           <Separator />
 
           {/* BankID Verification */}
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label>BankID verifisering</Label>
             <p className="text-sm text-muted-foreground">
               {profile.bankid_verified ? "Verifisert" : "Ikke verifisert"}
             </p>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
 
@@ -402,10 +402,13 @@ export function ProfileForm({
                     </AlertDialogTitle>
                     <AlertDialogDescription className="text-left">
                       <p className="mb-3 text-sm">
-                        Vi vil sende en <strong>bekreftelseslenke til din e-post</strong> som du må klikke på for å fullføre slettingen. 
-                        Dette er en ekstra sikkerhet for å sikre at det virkelig er deg som ønsker å slette kontoen.
+                        Vi vil sende en{" "}
+                        <strong>bekreftelseslenke til din e-post</strong> som du
+                        må klikke på for å fullføre slettingen. Dette er en
+                        ekstra sikkerhet for å sikre at det virkelig er deg som
+                        ønsker å slette kontoen.
                       </p>
-                      
+
                       <strong>Dette vil permanent slette:</strong>
                       <ul className="list-disc list-inside mt-2 space-y-1 text-sm">
                         <li>Din personlige profil og kontoinformasjon</li>
@@ -414,13 +417,15 @@ export function ProfileForm({
                         <li>Anmeldelser og vurderinger du har gitt</li>
                         <li>Lagrede betalingsmetoder og adresser</li>
                       </ul>
-                      
+
                       <p className="mt-3 font-medium text-destructive">
-                        Denne handlingen kan ikke angres etter at du har bekreftet via e-post.
+                        Denne handlingen kan ikke angres etter at du har
+                        bekreftet via e-post.
                       </p>
-                      
+
                       <p className="mt-3 text-sm">
-                        Skriv <strong>"{deleteMyUserText}"</strong> for å sende bekreftelseslenke:
+                        Skriv <strong>"{deleteMyUserText}"</strong> for å sende
+                        bekreftelseslenke:
                       </p>
                     </AlertDialogDescription>
                   </AlertDialogHeader>

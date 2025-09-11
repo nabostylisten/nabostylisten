@@ -153,9 +153,9 @@ export function ServiceCard({ service }: ServiceCardProps) {
       <Link href={`/tjenester/${service.id}`}>
         <div className="cursor-pointer">
           <CardHeader>
-            <div className="flex justify-between items-start gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-start">
               <div className="flex-1 min-w-0">
-                <CardTitle className="text-xl line-clamp-1">
+                <CardTitle className="text-xl line-clamp-2 sm:line-clamp-1">
                   {service.title}
                 </CardTitle>
                 {/* Service-specific rating near title */}
@@ -170,7 +170,7 @@ export function ServiceCard({ service }: ServiceCardProps) {
                   </div>
                 )}
               </div>
-              <Badge variant="secondary" className="shrink-0">
+              <Badge variant="secondary" className="shrink-0 self-start">
                 Fra {service.price} {service.currency}
               </Badge>
             </div>
@@ -258,15 +258,15 @@ export function ServiceCard({ service }: ServiceCardProps) {
       {/* Add to Cart Button - positioned outside the Link to prevent nested links */}
       {service.profiles && (
         <div className="p-6 pt-0">
-          <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm" className="flex-1">
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button asChild variant="outline" size="sm" className="w-full sm:flex-1">
               <Link href={`/tjenester/${service.id}`}>Se detaljer</Link>
             </Button>
             <AddToCartButton
               service={service}
               stylist={service.profiles}
               size="sm"
-              className="flex-1"
+              className="w-full sm:flex-1"
               showIcon={false}
             />
           </div>

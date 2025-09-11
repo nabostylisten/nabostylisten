@@ -210,7 +210,7 @@ export function ServiceFilterForm({
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Søk etter tjeneste..."
+                placeholder={isMobile ? "Søk..." : "Søk etter tjeneste..."}
                 className="pl-10"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -307,7 +307,9 @@ export function ServiceFilterForm({
                     <MapPin className="mr-2 h-4 w-4" />
                     {!serviceDestination.atCustomerPlace &&
                     !serviceDestination.atStylistPlace
-                      ? isMobile ? "Hvor?" : "Hvor skal tjenesten utføres?"
+                      ? isMobile
+                        ? "Hvor?"
+                        : "Hvor skal tjenesten utføres?"
                       : getFormattedServiceDestination()}
                   </Button>
                 </PopoverTrigger>
@@ -587,8 +589,14 @@ export function ServiceFilterForm({
             {location.coordinates && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">Lokasjon:</span>
-                <Badge variant="secondary" className="flex items-center gap-1 max-w-[250px] sm:max-w-full">
-                  <span className="truncate text-xs sm:text-sm">{location.address}</span> ({location.radius}km)
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-1 max-w-[250px] sm:max-w-full"
+                >
+                  <span className="truncate text-xs sm:text-sm">
+                    {location.address}
+                  </span>{" "}
+                  ({location.radius}km)
                   <X
                     className="h-3 w-3 cursor-pointer flex-shrink-0"
                     onClick={() =>
@@ -608,7 +616,10 @@ export function ServiceFilterForm({
               serviceDestination.atStylistPlace) && (
               <div className="flex flex-wrap gap-2">
                 <span className="text-sm text-muted-foreground">Utføres:</span>
-                <Badge variant="secondary" className="flex items-center gap-1 text-xs sm:text-sm">
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-1 text-xs sm:text-sm"
+                >
                   {getFormattedServiceDestination()}
                   <X
                     className="h-3 w-3 cursor-pointer flex-shrink-0"
@@ -658,7 +669,10 @@ export function ServiceFilterForm({
                 <span className="text-sm text-muted-foreground">
                   Prisområde:
                 </span>
-                <Badge variant="secondary" className="flex items-center gap-1 text-xs sm:text-sm">
+                <Badge
+                  variant="secondary"
+                  className="flex items-center gap-1 text-xs sm:text-sm"
+                >
                   {minPrice || "0"}-{maxPrice || "∞"} kr
                   <X
                     className="h-3 w-3 cursor-pointer flex-shrink-0"

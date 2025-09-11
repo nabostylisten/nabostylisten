@@ -5,7 +5,7 @@ import { BlurFade } from "@/components/magicui/blur-fade";
 export default function ApplicationsPage() {
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-12">
         <BlurFade delay={0.1} duration={0.5} inView>
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">

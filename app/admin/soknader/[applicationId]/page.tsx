@@ -20,27 +20,9 @@ import { AdminLayout } from "@/components/admin-layout";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { getPublicUrlFromPath } from "@/lib/supabase/storage";
 import Image from "next/image";
+import { DatabaseTables } from "@/types";
 
-type Application = {
-  id: string;
-  full_name: string;
-  email: string;
-  phone_number: string;
-  city: string;
-  country: string;
-  street_address: string;
-  postal_code: string;
-  address_nickname: string | null;
-  entry_instructions: string | null;
-  birth_date: string;
-  status: "applied" | "pending_info" | "rejected" | "approved";
-  created_at: string;
-  professional_experience: string;
-  price_range_from: number;
-  price_range_to: number;
-  price_range_currency: string;
-  user_id: string | null;
-};
+type Application = DatabaseTables["applications"]["Row"];
 
 const getStatusBadge = (status: Application["status"]) => {
   const variants = {
@@ -112,22 +94,34 @@ export default async function ApplicationDetailPage({
     .eq("media_type", "application_image");
 
   const applicationData = application as Application;
-  
+
   // Add public URLs for media using the proper storage handling
-  const mediaWithUrls = media?.map((mediaItem) => ({
-    ...mediaItem,
-    publicUrl: getPublicUrlFromPath(supabase, mediaItem.file_path, mediaItem.media_type),
-  })) || [];
+  const mediaWithUrls =
+    media?.map((mediaItem) => ({
+      ...mediaItem,
+      publicUrl: getPublicUrlFromPath(
+        supabase,
+        mediaItem.file_path,
+        mediaItem.media_type
+      ),
+    })) || [];
 
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-12">
         <BlurFade delay={0.1} duration={0.5} inView>
           <div className="mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold mb-2">Søknadsdetaljer</h1>
-                <p className="text-muted-foreground">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <Link href="/admin/soknader">
+                    <Button variant="ghost" size="sm" className="p-1 h-8 w-8">
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                  </Link>
+                  <h1 className="text-2xl sm:text-3xl font-bold break-words">Søknadsdetaljer</h1>
+                </div>
+                <p className="text-muted-foreground break-words">
                   Gjennomgå søknad fra {applicationData.full_name}
                 </p>
               </div>
@@ -142,12 +136,14 @@ export default async function ApplicationDetailPage({
             <BlurFade delay={0.15} duration={0.5} inView>
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle>{applicationData.full_name}</CardTitle>
-                      <CardDescription>{applicationData.email}</CardDescription>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <div className="min-w-0 flex-1">
+                      <CardTitle className="break-words">{applicationData.full_name}</CardTitle>
+                      <CardDescription className="break-words">{applicationData.email}</CardDescription>
                     </div>
-                    {getStatusBadge(applicationData.status)}
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(applicationData.status)}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -235,10 +231,12 @@ export default async function ApplicationDetailPage({
                 <Card>
                   <CardHeader>
                     <CardTitle>Arbeidsprøver</CardTitle>
-                    <CardDescription>Bilder av tidligere arbeid</CardDescription>
+                    <CardDescription>
+                      Bilder av tidligere arbeid
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {mediaWithUrls.map((mediaItem) => (
                         <div
                           key={mediaItem.id}
@@ -249,7 +247,7 @@ export default async function ApplicationDetailPage({
                             alt="Arbeidsprøve"
                             fill
                             className="object-cover"
-                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                            sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1200px) 50vw, 33vw"
                           />
                         </div>
                       ))}

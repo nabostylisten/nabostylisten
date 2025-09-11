@@ -300,7 +300,7 @@ export function DiscountsDataTable({
         className="w-full"
       >
         <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-md grid-cols-4">
+          <TabsList className="grid w-full max-w-md grid-cols-2 sm:grid-cols-4 h-auto sm:h-10">
             <TabsTrigger value="all" className="relative">
               Alle
               {allCount > 0 && (
@@ -338,7 +338,7 @@ export function DiscountsDataTable({
 
         <TabsContent value={activeTab} className="space-y-4">
           {/* Toolbar */}
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="flex flex-1 items-center space-x-2">
               <Input
                 placeholder="Søk etter kode eller beskrivelse..."
@@ -413,7 +413,7 @@ export function DiscountsDataTable({
           </div>
 
           {/* Table */}
-          <div className="rounded-md border">
+          <div className="overflow-hidden rounded-md border">
             {isLoading ? (
               <DataTableSkeleton 
                 columns={Array.from({ length: 8 }, (_, i) => ({ id: i.toString() }) as any)} 
@@ -472,12 +472,12 @@ export function DiscountsDataTable({
           </div>
 
           {/* Pagination */}
-          <div className="flex items-center justify-end space-x-2 py-4">
-            <div className="flex-1 text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+            <div className="text-sm text-muted-foreground text-center sm:text-left">
               Viser {table.getRowModel().rows.length} av {filteredData.length}{" "}
               rabattkoder.
             </div>
-            <div className="space-x-2">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"

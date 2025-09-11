@@ -217,7 +217,7 @@ export function PaymentsDataTable() {
     <div className="w-full min-w-0">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex w-full items-center justify-between">
-          <TabsList className="inline-flex h-full w-full max-w-fit flex-col lg:h-10 lg:flex-row">
+          <TabsList className="flex flex-col sm:grid sm:grid-cols-3 lg:grid-cols-6 w-full gap-1 sm:gap-0 h-auto sm:h-10 p-1">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.value}
@@ -293,7 +293,7 @@ export function PaymentsDataTable() {
                   </DropdownMenu>
                 </div>
               </div>
-              <div className="rounded-md border">
+              <div className="overflow-hidden rounded-md border">
                 <Table>
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -347,8 +347,8 @@ export function PaymentsDataTable() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex items-center justify-between py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+                <div className="text-sm text-muted-foreground text-center sm:text-left">
                   Viser{" "}
                   {table.getState().pagination.pageIndex *
                     table.getState().pagination.pageSize +
@@ -361,7 +361,7 @@ export function PaymentsDataTable() {
                   )}{" "}
                   av {filteredData.length} betaling(er).
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
                   <Button
                     variant="outline"
                     size="sm"

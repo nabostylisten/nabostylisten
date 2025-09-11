@@ -147,7 +147,7 @@ export function StylistApplicationDataTable() {
             </div>
           ) : (
             <>
-              <div className="flex items-center justify-between py-4">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 py-4">
                 <Input
                   placeholder="Søk etter navn eller e-post..."
                   value={
@@ -160,11 +160,11 @@ export function StylistApplicationDataTable() {
                       .getColumn("full_name")
                       ?.setFilterValue(event.target.value);
                   }}
-                  className="max-w-sm"
+                  className="w-full sm:max-w-sm"
                 />
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
+                    <Button variant="outline" className="w-full sm:w-auto">
                       <Settings2 className="mr-2 h-4 w-4" />
                       Kolonner
                     </Button>
@@ -189,7 +189,7 @@ export function StylistApplicationDataTable() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              <div className="rounded-md border">
+              <div className="overflow-hidden rounded-md border">
                 <Table>
                   <TableHeader>
                     {table.getHeaderGroups().map((headerGroup) => (
@@ -239,12 +239,12 @@ export function StylistApplicationDataTable() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex items-center justify-end space-x-2 py-4">
-                <div className="flex-1 text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+                <div className="text-sm text-muted-foreground text-center sm:text-left">
                   {table.getFilteredRowModel().rows.length} av {data.length}{" "}
                   søknad(er).
                 </div>
-                <div className="space-x-2">
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"

@@ -302,7 +302,10 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
               </CardHeader>
               <CardContent className="space-y-3 sm:space-y-4">
                 {[...Array(2)].map((_, j) => (
-                  <div key={j} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                  <div
+                    key={j}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0"
+                  >
                     <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
                       <div className="h-3.5 sm:h-4 w-24 sm:w-32 bg-muted rounded animate-pulse" />
                       <div className="h-3 w-full max-w-48 sm:max-w-64 bg-muted rounded animate-pulse" />
@@ -322,7 +325,7 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
     <div className="space-y-6">
       {/* Header with submit button */}
       <BlurFade delay={0.1} duration={0.5} inView>
-        <div className="flex justify-between items-center">
+        <div className="flex justify-between flex-col sm:flex-row gap-2 items-center">
           <div>
             <p className="text-sm text-muted-foreground">
               Endringer lagres automatisk

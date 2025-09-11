@@ -203,7 +203,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-12">
       <BlurFade delay={0.1} duration={0.5} inView>
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
@@ -215,23 +215,21 @@ export default function AdminDashboard() {
 
       <BlurFade delay={0.15} duration={0.5} inView>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <div className="flex w-full items-center justify-center md:justify-start mb-6">
-            <TabsList className="grid w-full grid-cols-4 md:grid-cols-7 h-auto p-1">
-              {tabs.map((tab) => {
-                const Icon = tab.icon;
-                return (
-                  <TabsTrigger
-                    key={tab.value}
-                    value={tab.value}
-                    className="flex flex-col gap-1 py-2 px-3 data-[state=active]:bg-background data-[state=active]:shadow-sm"
-                  >
-                    <Icon className="h-4 w-4" />
-                    <span className="text-xs font-medium">{tab.label}</span>
-                  </TabsTrigger>
-                );
-              })}
-            </TabsList>
-          </div>
+          <TabsList className="flex flex-col sm:grid sm:grid-cols-4 lg:grid-cols-7 w-full gap-1 sm:gap-0 h-auto sm:h-auto p-1 mb-6">
+            {tabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
+                <TabsTrigger
+                  key={tab.value}
+                  value={tab.value}
+                  className="flex items-center gap-2 w-full justify-center sm:flex-col sm:gap-1 py-2 px-3 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="text-xs font-medium">{tab.label}</span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
 
           {tabs.map((tab) => {
             const Component = tab.component;

@@ -142,12 +142,12 @@ export default function OverviewTab() {
             {recentActivity.isLoading ? (
               <div className="space-y-4">
                 {Array.from({ length: 5 }).map((_, index) => (
-                  <div key={index} className="flex items-center justify-between border-b pb-2">
+                  <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-3">
                     <div className="flex-1 space-y-2">
                       <div className="h-4 bg-muted rounded animate-pulse w-3/4"></div>
                       <div className="h-3 bg-muted rounded animate-pulse w-1/2"></div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       <div className="h-4 bg-muted rounded animate-pulse w-16"></div>
                       <div className="h-6 bg-muted rounded animate-pulse w-20"></div>
                     </div>
@@ -157,10 +157,10 @@ export default function OverviewTab() {
             ) : recentActivity.data && recentActivity.data.length > 0 ? (
               <div className="space-y-4">
                 {recentActivity.data.map((activity, index) => (
-                  <div key={`${activity.type}-${activity.id}-${index}`} className="flex items-center justify-between border-b pb-2">
-                    <div className="flex-1">
-                      <p className="text-sm">{activity.description}</p>
-                      <p className="text-xs text-muted-foreground">
+                  <div key={`${activity.type}-${activity.id}-${index}`} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b pb-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm break-words">{activity.description}</p>
+                      <p className="text-xs text-muted-foreground mt-1">
                         {new Date(activity.created_at).toLocaleDateString("nb-NO", {
                           year: "numeric",
                           month: "short",
@@ -170,7 +170,7 @@ export default function OverviewTab() {
                         })}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-shrink-0">
                       {activity.amount && (
                         <span className="text-sm font-medium">
                           {new Intl.NumberFormat("nb-NO", {

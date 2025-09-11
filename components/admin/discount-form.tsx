@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-import { CalendarIcon, Dices, X, Users } from "lucide-react";
+import { CalendarIcon, Dices, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -54,6 +55,7 @@ import {
   getDiscountWithRestrictions,
 } from "@/server/discounts.actions";
 import type { DatabaseTables, UserSearchFilters } from "@/types";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 type Discount = DatabaseTables["discounts"]["Row"];
 
@@ -169,6 +171,7 @@ export function DiscountForm({
   onCancel,
 }: DiscountFormProps) {
   const queryClient = useQueryClient();
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
 
   const form = useForm<DiscountFormData>({
     resolver: zodResolver(discountFormSchema),
@@ -313,12 +316,6 @@ export function DiscountForm({
     }
   };
 
-  const handleRemoveUser = (userId: string) => {
-    const currentUsers = restrictedUsers || [];
-    const newUsers = currentUsers.filter((id) => id !== userId);
-    form.setValue("restrictedUsers", newUsers);
-    setSelectedUsersData((prev) => prev.filter((u) => u.id !== userId));
-  };
 
   const mutation = useMutation({
     mutationFn: async (data: DiscountFormData) => {
@@ -777,12 +774,13 @@ export function DiscountForm({
             name="restrictedUsers"
             render={({ field }) => (
               <FormItem>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <FormLabel>Begrenset til spesifikke brukere</FormLabel>
                   <Badge
                     variant={
                       selectedUsersData.length > 0 ? "default" : "secondary"
                     }
+                    className="flex-shrink-0 self-start sm:self-center"
                   >
                     {(() => {
                       console.log(
@@ -804,12 +802,14 @@ export function DiscountForm({
                       onValueChange={handleUserSelect}
                     >
                       <ComboboxTrigger className="w-full">
-                        <div className="flex items-center gap-2 text-left">
-                          <Users className="h-4 w-4" />
-                          <span>
+                        <div className="flex flex-row items-center gap-2 text-left">
+                          <Users className="h-4 w-4 flex-shrink-0" />
+                          <span className="break-words">
                             {selectedUsersData.length > 0
                               ? `${selectedUsersData.length} bruker${selectedUsersData.length !== 1 ? "e" : ""} valgt`
-                              : "Søk og velg brukere (valgfritt)"}
+                              : isSmallScreen
+                                ? "Brukere"
+                                : "Søk og velg brukere (valgfritt)"}
                           </span>
                         </div>
                       </ComboboxTrigger>
@@ -832,32 +832,19 @@ export function DiscountForm({
                               <ComboboxItem
                                 key={user.value}
                                 value={user.value}
-                                className="flex items-center gap-2"
+                                className="flex items-center gap-2 cursor-pointer"
                                 onSelect={() => {
-                                  // Handle user selection when clicking anywhere on the row
-                                  console.log(
-                                    "👆 ComboboxItem clicked for user:",
-                                    user.userId,
-                                    user.label
-                                  );
                                   handleUserSelect(user.userId);
                                 }}
                               >
-                                <input
-                                  type="checkbox"
+                                <Checkbox
                                   checked={
                                     restrictedUsers?.includes(user.userId) ||
                                     false
                                   }
-                                  onChange={() => {
-                                    console.log(
-                                      "🔘 Checkbox clicked for user:",
-                                      user.userId,
-                                      user.label
-                                    );
+                                  onCheckedChange={() => {
                                     handleUserSelect(user.userId);
                                   }}
-                                  className="rounded"
                                 />
                                 {user.label}
                               </ComboboxItem>
@@ -880,24 +867,16 @@ export function DiscountForm({
                             {selectedUsersData.map((user) => (
                               <div
                                 key={user.id}
-                                className="flex items-center justify-between p-2 rounded-sm hover:bg-muted/50"
+                                className="flex items-center p-2 rounded-sm hover:bg-muted/50 gap-2"
                               >
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">
+                                  <p className="text-sm font-medium break-words">
                                     {user.full_name || "Uten navn"}
                                   </p>
-                                  <p className="text-xs text-muted-foreground truncate">
+                                  <p className="text-xs text-muted-foreground break-all">
                                     {user.email || "Uten e-post"}
                                   </p>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveUser(user.id)}
-                                  className="ml-2 p-1 hover:bg-destructive/10 hover:text-destructive rounded-sm transition-colors"
-                                  aria-label={`Fjern ${user.full_name || "bruker"}`}
-                                >
-                                  <X className="h-4 w-4" />
-                                </button>
                               </div>
                             ))}
                           </div>
@@ -908,7 +887,8 @@ export function DiscountForm({
                 </FormControl>
                 <FormDescription>
                   Hvis ingen brukere er valgt, kan alle bruke rabattkoden. Hvis
-                  brukere er valgt, kan kun disse brukerne bruke koden.
+                  brukere er valgt, kan kun disse brukerne bruke koden. 
+                  Kryss av/av for å legge til eller fjerne brukere.
                 </FormDescription>
                 <FormMessage />
               </FormItem>
@@ -981,12 +961,13 @@ export function DiscountForm({
         </div>
 
         {/* Action buttons */}
-        <div className="flex gap-3 pt-4">
+        <div className="flex flex-col sm:flex-row gap-3 pt-4">
           <Button
             type="button"
             variant="outline"
             onClick={onCancel}
             disabled={isLoading}
+            className="w-full sm:w-auto"
           >
             Avbryt
           </Button>

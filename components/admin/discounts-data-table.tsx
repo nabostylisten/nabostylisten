@@ -234,23 +234,26 @@ export function DiscountsDataTable({
 
     const csvData = allFilteredData.data.map((discount) => {
       const restrictionCount = discount.discount_restrictions?.[0]?.count || 0;
-      
+
       return {
-        "Kode": discount.code,
-        "Beskrivelse": discount.description || "",
-        "Type": discount.discount_percentage !== null
-          ? `${discount.discount_percentage}%`
-          : `${(discount.discount_amount! / 100).toLocaleString("no-NO")} kr`,
-        "Bruk": `${discount.current_uses || 0}${discount.max_uses ? ` / ${discount.max_uses}` : " / ∞"}`,
-        "Kan brukes av": restrictionCount === 0 
-          ? "Alle" 
-          : `${restrictionCount} bruker${restrictionCount !== 1 ? "e" : ""}`,
+        Kode: discount.code,
+        Beskrivelse: discount.description || "",
+        Type:
+          discount.discount_percentage !== null
+            ? `${discount.discount_percentage}%`
+            : `${(discount.discount_amount! / 100).toLocaleString("no-NO")} kr`,
+        Bruk: `${discount.current_uses || 0}${discount.max_uses ? ` / ${discount.max_uses}` : " / ∞"}`,
+        "Kan brukes av":
+          restrictionCount === 0
+            ? "Alle"
+            : `${restrictionCount} bruker${restrictionCount !== 1 ? "e" : ""}`,
         "Gyldig periode": `Fra: ${new Date(discount.valid_from).toLocaleDateString("no-NO")}${
           discount.expires_at
             ? ` - Til: ${new Date(discount.expires_at).toLocaleDateString("no-NO")}`
             : ""
         }`,
-        "Ordrebegrensninger": [
+        Ordrebegrensninger:
+          [
             discount.minimum_order_amount
               ? `Min: ${(discount.minimum_order_amount / 100).toLocaleString("no-NO")} kr`
               : null,
@@ -260,8 +263,8 @@ export function DiscountsDataTable({
           ]
             .filter(Boolean)
             .join(", ") || "Ingen",
-        "Status": discount.is_active ? "Aktiv" : "Inaktiv",
-        "Opprettet": new Date(discount.created_at).toLocaleString("no-NO"),
+        Status: discount.is_active ? "Aktiv" : "Inaktiv",
+        Opprettet: new Date(discount.created_at).toLocaleString("no-NO"),
       };
     });
 
@@ -272,7 +275,12 @@ export function DiscountsDataTable({
 
   // Use server-fetched counts or fallback to 0
   const counts = countsData || { all: 0, active: 0, inactive: 0, expired: 0 };
-  const { all: allCount, active: activeCount, inactive: inactiveCount, expired: expiredCount } = counts;
+  const {
+    all: allCount,
+    active: activeCount,
+    inactive: inactiveCount,
+    expired: expiredCount,
+  } = counts;
 
   if (error) {
     return (
@@ -288,7 +296,10 @@ export function DiscountsDataTable({
     <div className="space-y-4">
       {/* Header with create button */}
       <div className="flex items-center justify-end">
-        <Button onClick={onCreateDiscount} className="flex items-center gap-2">
+        <Button
+          onClick={onCreateDiscount}
+          className="flex items-center gap-2 w-full sm:w-auto"
+        >
           <Plus className="h-4 w-4" />
           Opprett ny rabattkode
         </Button>
@@ -300,8 +311,11 @@ export function DiscountsDataTable({
         className="w-full"
       >
         <div className="flex items-center justify-between">
-          <TabsList className="grid w-full max-w-md grid-cols-2 sm:grid-cols-4 h-auto sm:h-10">
-            <TabsTrigger value="all" className="relative">
+          <TabsList className="flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-4 w-full max-w-md gap-1 sm:gap-0 h-auto sm:h-10 p-1">
+            <TabsTrigger
+              value="all"
+              className="w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
               Alle
               {allCount > 0 && (
                 <span className="ml-2 rounded-full bg-muted px-2 py-0.5 text-xs">
@@ -309,26 +323,35 @@ export function DiscountsDataTable({
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="active" className="relative">
+            <TabsTrigger
+              value="active"
+              className="w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
               Aktive
               {activeCount > 0 && (
-                <span className="ml-2 rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-800">
+                <span className="ml-2 rounded-full bg-green-50 dark:bg-green-950/30 px-2 py-0.5 text-xs text-green-800 dark:text-green-200">
                   {activeCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="inactive" className="relative">
+            <TabsTrigger
+              value="inactive"
+              className="w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
               Inaktive
               {inactiveCount > 0 && (
-                <span className="ml-2 rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-800">
+                <span className="ml-2 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-gray-800 dark:text-gray-200">
                   {inactiveCount}
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="expired" className="relative">
+            <TabsTrigger
+              value="expired"
+              className="w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+            >
               Utløpte
               {expiredCount > 0 && (
-                <span className="ml-2 rounded-full bg-red-100 px-2 py-0.5 text-xs text-red-800">
+                <span className="ml-2 rounded-full bg-red-50 dark:bg-red-950/30 px-2 py-0.5 text-xs text-red-800 dark:text-red-200">
                   {expiredCount}
                 </span>
               )}
@@ -344,10 +367,10 @@ export function DiscountsDataTable({
                 placeholder="Søk etter kode eller beskrivelse..."
                 value={globalFilter}
                 onChange={(event) => setGlobalFilter(event.target.value)}
-                className="h-8 w-[150px] lg:w-[250px]"
+                className="h-8 w-full sm:w-[150px] lg:w-[250px]"
               />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:space-x-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -356,37 +379,31 @@ export function DiscountsDataTable({
                   refetchCounts();
                 }}
                 disabled={isRefetching}
-                className="h-8 px-2 lg:px-3"
+                className="h-8 px-2 lg:px-3 w-full sm:w-auto"
               >
                 <RefreshCcw
-                  className={cn("h-4 w-4", isRefetching && "animate-spin")}
+                  className={cn("h-4 w-4 mr-2", isRefetching && "animate-spin")}
                 />
-                <span className="sr-only lg:not-sr-only lg:whitespace-nowrap">
-                  Oppdater
-                </span>
+                Oppdater
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={exportToCSV}
-                className="h-8 px-2 lg:px-3"
+                className="h-8 px-2 lg:px-3 w-full sm:w-auto"
               >
-                <Download className="h-4 w-4" />
-                <span className="sr-only lg:not-sr-only lg:whitespace-nowrap">
-                  Eksporter
-                </span>
+                <Download className="h-4 w-4 mr-2" />
+                Eksporter
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="ml-auto h-8 lg:flex"
+                    className="h-8 lg:flex w-full sm:w-auto"
                   >
-                    <Settings2 className="h-4 w-4" />
-                    <span className="sr-only lg:not-sr-only lg:whitespace-nowrap">
-                      Vis
-                    </span>
+                    <Settings2 className="h-4 w-4 mr-2" />
+                    Kolonner
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[150px]">
@@ -415,9 +432,12 @@ export function DiscountsDataTable({
           {/* Table */}
           <div className="overflow-hidden rounded-md border">
             {isLoading ? (
-              <DataTableSkeleton 
-                columns={Array.from({ length: 8 }, (_, i) => ({ id: i.toString() }) as any)} 
-                rows={6} 
+              <DataTableSkeleton
+                columns={Array.from(
+                  { length: 8 },
+                  (_, i) => ({ id: i.toString() }) as any
+                )}
+                rows={6}
               />
             ) : (
               <Table>

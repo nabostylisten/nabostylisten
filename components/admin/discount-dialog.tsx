@@ -33,7 +33,7 @@ export function DiscountDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] overflow-y-scroll max-h-screen">
         <DialogHeader>
           <DialogTitle>
             {existingDiscount ? "Rediger rabattkode" : "Opprett ny rabattkode"}

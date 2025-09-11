@@ -4,33 +4,27 @@ import Link from "next/link";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdmin } from "@/lib/permissions";
+import { FooterCategories } from "@/components/footer-categories";
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
   const { profile, loading } = useAuth();
 
-  const footerLinks = {
-    Tjenester: [
-      { name: "Hår", href: "/tjenester?category=hair" },
-      { name: "Negler", href: "/tjenester?category=nails" },
-      { name: "Sminke", href: "/tjenester?category=makeup" },
-      { name: "Vipper & Bryn", href: "/tjenester?category=lashes-brows" },
-    ],
-    Selskap: [
-      { name: "Om oss", href: "/om-oss" },
-      { name: "Kontakt", href: "/kontakt" },
-      { name: "Bli stylist", href: "/bli-stylist" },
-    ],
-    Juridisk: [
-      { name: "Personvern", href: "/privacy" },
-      { name: "Vilkår", href: "/terms-of-service" },
-      { name: "Ofte stilte spørsmål (FAQ)", href: "/faq" },
-    ],
-  };
+  const companyLinks = [
+    { name: "Om oss", href: "/om-oss" },
+    { name: "Kontakt", href: "/kontakt" },
+    { name: "Bli stylist", href: "/bli-stylist" },
+  ];
+
+  const legalLinks = [
+    { name: "Personvern", href: "/privacy" },
+    { name: "Vilkår", href: "/terms-of-service" },
+    { name: "Ofte stilte spørsmål (FAQ)", href: "/faq" },
+  ];
 
   // Add admin link if user is admin and not loading
   if (!loading && profile && isAdmin(profile.role)) {
-    footerLinks.Selskap.push({ name: "Administrator", href: "/admin" });
+    companyLinks.push({ name: "Administrator", href: "/admin" });
   }
 
   return (
@@ -49,24 +43,47 @@ export const Footer = () => {
             </p>
           </div>
 
-          {/* Footer Links */}
-          {Object.entries(footerLinks).map(([category, links]) => (
-            <div key={category}>
-              <h3 className="font-fraunces font-semibold mb-4">{category}</h3>
-              <ul className="space-y-2">
-                {links.map((link) => (
-                  <li key={link.name}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {link.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+          {/* Services Links - Dynamic */}
+          <div>
+            <h3 className="font-fraunces font-semibold mb-4">Tjenester</h3>
+            <ul className="space-y-2">
+              <FooterCategories />
+            </ul>
+          </div>
+
+          {/* Company Links */}
+          <div>
+            <h3 className="font-fraunces font-semibold mb-4">Selskap</h3>
+            <ul className="space-y-2">
+              {companyLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Legal Links */}
+          <div>
+            <h3 className="font-fraunces font-semibold mb-4">Juridisk</h3>
+            <ul className="space-y-2">
+              {legalLinks.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <Separator className="my-8" />

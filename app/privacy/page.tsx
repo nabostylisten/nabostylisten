@@ -15,8 +15,8 @@ export default function PrivacyPage() {
         <div className="max-w-4xl mx-auto">
           {/* Header */}
           <div className="text-center py-16">
-            <h1 className="text-4xl lg:text-5xl font-bold mb-6">
-              Personvernerklæring
+            <h1 className="text-4xl lg:text-5xl font-bold mb-6 hyphens-manual">
+              Personvern&shy;erklæring
             </h1>
             <p className="text-lg text-muted-foreground">
               Sist oppdatert: {lastUpdated}

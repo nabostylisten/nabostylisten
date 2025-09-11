@@ -133,6 +133,23 @@ async function getAllDescendantIds(
     return descendantIds;
 }
 
+export async function getTopLevelServiceCategories() {
+    const supabase = await createClient();
+    
+    const { data, error } = await supabase
+        .from("service_categories")
+        .select("*")
+        .is("parent_category_id", null)
+        .order("name");
+
+    if (error) {
+        console.error("Error fetching top-level service categories:", error);
+        return { data: null, error: error.message };
+    }
+
+    return { data, error: null };
+}
+
 export async function deleteServiceCategory(categoryId: string) {
     const supabase = await createClient();
 

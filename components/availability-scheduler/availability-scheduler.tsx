@@ -873,98 +873,104 @@ export function AvailabilityScheduler({
 
           {/* Weekly calendar view */}
           <div className="border rounded-lg overflow-hidden">
-            <div className="grid grid-cols-8 bg-muted">
-              <div className="p-2 border-r pt-4">
-                <Clock className="w-4 h-4 mx-auto" />
-              </div>
-              {weekDays.map((day, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "p-2 text-center border-r last:border-r-0",
-                    isSameDay(day, new Date()) && "bg-primary/10 font-semibold"
-                  )}
-                >
-                  <div className="text-xs text-muted-foreground">
-                    {format(day, "EEE", { locale: nb })}
+            {/* Scrollable container for both X and Y axis */}
+            <div className="overflow-auto max-h-[600px] touch-pan-x touch-pan-y">
+              <div className="min-w-[800px]">
+                {/* Header */}
+                <div className="grid grid-cols-8 bg-muted">
+                  <div className="p-2 border-r pt-4">
+                    <Clock className="w-4 h-4 mx-auto" />
                   </div>
-                  <div className="text-sm">{format(day, "d")}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Hour slots */}
-            <div className="max-h-[600px] overflow-y-auto">
-              {getAllHours().map((hour) => (
-                <div key={hour} className="grid grid-cols-8">
-                  <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50">
-                    {`${hour.toString().padStart(2, "0")}:00`}
-                  </div>
-                  {weekDays.map((day, dayIndex) => {
-                    const isWorkDay = isDayWorkDay(day);
-                    const isWorkHour = isHourInWorkTime(hour);
-                    const isAvailable = isWorkDay && isWorkHour;
-                    const isUnavailable = isTimeSlotUnavailable(day, hour);
-
-                    const cellContent = (
-                      <div
-                        className={cn(
-                          "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors",
-                          !isAvailable && "bg-gray-100",
-                          isAvailable &&
-                            !isUnavailable &&
-                            "bg-green-100 hover:bg-green-300",
-                          isUnavailable && "bg-red-100 hover:bg-red-200"
-                        )}
-                        onClick={() => {
-                          if (isAvailable && !isUnavailable) {
-                            // Green cell - add unavailability
-                            const clickedDate = new Date(day);
-                            clickedDate.setHours(hour, 0, 0, 0);
-                            setUnavailableStart(clickedDate);
-                            const endDate = new Date(clickedDate);
-                            endDate.setHours(hour + 1, 0, 0, 0);
-                            setUnavailableEnd(endDate);
-                            setShowAddUnavailable(true);
-                          } else if (!isAvailable && !isWorkDay) {
-                            // Gray cell - add work day
-                            setSelectedGrayCell(day);
-                            setShowAddWorkDay(true);
-                          } else if (isUnavailable) {
-                            // Red cell - manage unavailability
-                            setSelectedRedCell({ date: day, hour });
-                            setShowManageUnavailable(true);
-                          }
-                        }}
-                      >
-                        {isUnavailable && (
-                          <Badge variant="destructive" className="text-xs">
-                            Opptatt
-                          </Badge>
-                        )}
+                  {weekDays.map((day, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "p-2 text-center border-r last:border-r-0",
+                        isSameDay(day, new Date()) && "bg-primary/10 font-semibold"
+                      )}
+                    >
+                      <div className="text-xs text-muted-foreground">
+                        {format(day, "EEE", { locale: nb })}
                       </div>
-                    );
-
-                    // Wrap red cells with tooltip
-                    if (isUnavailable) {
-                      return (
-                        <TooltipProvider key={dayIndex} delayDuration={100}>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              {cellContent}
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>{getUnavailabilityTooltip(day, hour)}</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                      );
-                    }
-
-                    return <div key={dayIndex}>{cellContent}</div>;
-                  })}
+                      <div className="text-sm">{format(day, "d")}</div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+
+                {/* Hour slots */}
+                <div>
+                  {getAllHours().map((hour) => (
+                    <div key={hour} className="grid grid-cols-8">
+                      <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50">
+                        {`${hour.toString().padStart(2, "0")}:00`}
+                      </div>
+                      {weekDays.map((day, dayIndex) => {
+                        const isWorkDay = isDayWorkDay(day);
+                        const isWorkHour = isHourInWorkTime(hour);
+                        const isAvailable = isWorkDay && isWorkHour;
+                        const isUnavailable = isTimeSlotUnavailable(day, hour);
+
+                        const cellContent = (
+                          <div
+                            className={cn(
+                              "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors",
+                              !isAvailable && "bg-gray-100",
+                              isAvailable &&
+                                !isUnavailable &&
+                                "bg-green-100 hover:bg-green-300",
+                              isUnavailable && "bg-red-100 hover:bg-red-200"
+                            )}
+                            onClick={() => {
+                              if (isAvailable && !isUnavailable) {
+                                // Green cell - add unavailability
+                                const clickedDate = new Date(day);
+                                clickedDate.setHours(hour, 0, 0, 0);
+                                setUnavailableStart(clickedDate);
+                                const endDate = new Date(clickedDate);
+                                endDate.setHours(hour + 1, 0, 0, 0);
+                                setUnavailableEnd(endDate);
+                                setShowAddUnavailable(true);
+                              } else if (!isAvailable && !isWorkDay) {
+                                // Gray cell - add work day
+                                setSelectedGrayCell(day);
+                                setShowAddWorkDay(true);
+                              } else if (isUnavailable) {
+                                // Red cell - manage unavailability
+                                setSelectedRedCell({ date: day, hour });
+                                setShowManageUnavailable(true);
+                              }
+                            }}
+                          >
+                            {isUnavailable && (
+                              <Badge variant="destructive" className="text-xs">
+                                Opptatt
+                              </Badge>
+                            )}
+                          </div>
+                        );
+
+                        // Wrap red cells with tooltip
+                        if (isUnavailable) {
+                          return (
+                            <TooltipProvider key={dayIndex} delayDuration={100}>
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  {cellContent}
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>{getUnavailabilityTooltip(day, hour)}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          );
+                        }
+
+                        return <div key={dayIndex}>{cellContent}</div>;
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 

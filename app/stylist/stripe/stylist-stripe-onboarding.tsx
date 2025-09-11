@@ -152,7 +152,7 @@ export function StylistStripeOnboarding({
 
               <div className="flex flex-col sm:flex-row gap-3">
                 <Button
-                  onClick={() => router.push('/mine-tjenester')}
+                  onClick={() => router.push("/mine-tjenester")}
                   className="flex-1"
                   size="lg"
                 >
@@ -204,7 +204,9 @@ export function StylistStripeOnboarding({
             {stripeAccountStatus && (
               <BlurFade delay={0.15} duration={0.5} inView>
                 <div className="p-4 bg-muted/50 dark:bg-muted/30 rounded-lg border border-muted dark:border-muted">
-                  <h3 className="font-medium mb-3 text-foreground">Nåværende status:</h3>
+                  <h3 className="font-medium mb-3 text-foreground">
+                    Nåværende status:
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                     <div className="flex items-center gap-2">
                       {stripeAccountStatus.details_submitted ? (

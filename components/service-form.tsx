@@ -51,6 +51,7 @@ import {
 import { ServiceCategoryCombobox } from "@/components/service-category-combobox";
 import { ServiceImageCarousel } from "@/components/service-image-carousel";
 import { useUploadServiceImages } from "@/hooks/use-upload-service-images";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   createService,
   updateService,
@@ -178,6 +179,9 @@ export function ServiceForm({
   >(null);
   const [editIncludeValue, setEditIncludeValue] = React.useState("");
   const [editRequirementValue, setEditRequirementValue] = React.useState("");
+
+  // Media query for responsive design
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
 
   const form = useForm<ServiceFormData>({
     resolver: zodResolver(serviceFormSchema),
@@ -561,12 +565,12 @@ export function ServiceForm({
               )}
             />
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <FormField
                 control={form.control}
                 name="price"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex-1">
                     <FormLabel>Pris (kr) *</FormLabel>
                     <FormControl>
                       <Input
@@ -590,7 +594,7 @@ export function ServiceForm({
                 control={form.control}
                 name="duration_minutes"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex-1">
                     <FormLabel>Varighet (minutter) *</FormLabel>
                     <FormControl>
                       <Input
@@ -649,7 +653,7 @@ export function ServiceForm({
               {/* Add new include */}
               <div className="flex gap-2">
                 <Input
-                  placeholder="F.eks. Konsultasjon og fargeråd"
+                  placeholder={isSmallScreen ? "Konsultasjon og råd" : "F.eks. Konsultasjon og fargeråd"}
                   value={newInclude}
                   onChange={(e) => setNewInclude(e.target.value)}
                   onKeyDown={(e) => {
@@ -748,7 +752,7 @@ export function ServiceForm({
               {/* Add new requirement */}
               <div className="flex gap-2">
                 <Input
-                  placeholder="F.eks. Tilgang til vask og strøm"
+                  placeholder={isSmallScreen ? "Tilgang til vask og strøm" : "F.eks. Tilgang til vask og strøm"}
                   value={newRequirement}
                   onChange={(e) => setNewRequirement(e.target.value)}
                   onKeyDown={(e) => {
@@ -1035,12 +1039,12 @@ export function ServiceForm({
                     </AlertDescription>
                   </Alert>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <FormField
                       control={form.control}
                       name="trial_session_price"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex-1">
                           <FormLabel>Prøvetimepris (kr) *</FormLabel>
                           <FormControl>
                             <Input
@@ -1064,7 +1068,7 @@ export function ServiceForm({
                       control={form.control}
                       name="trial_session_duration_minutes"
                       render={({ field }) => (
-                        <FormItem>
+                        <FormItem className="flex-1">
                           <FormLabel>Varighet (minutter) *</FormLabel>
                           <FormControl>
                             <Input

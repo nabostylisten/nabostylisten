@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { isAdmin } from "@/lib/permissions";
-import { getStripeAccountStatus, checkIdentityVerificationStatus } from "@/server/stripe.actions";
+import {
+  getStripeAccountStatus,
+  checkIdentityVerificationStatus,
+} from "@/server/stripe.actions";
 import { StylistStripeOnboarding } from "./stylist-stripe-onboarding";
 import { StylistIdentityVerification } from "@/components/stylist-identity-verification";
 
@@ -38,7 +41,9 @@ export default async function StylistStripePage() {
   // Get stylist details to check for Stripe account and identity verification
   const { data: stylistDetails, error: stylistError } = await supabase
     .from("stylist_details")
-    .select("*, stripe_verification_session_id, identity_verification_completed_at")
+    .select(
+      "*, stripe_verification_session_id, identity_verification_completed_at"
+    )
     .eq("profile_id", user.id)
     .single();
 
@@ -63,7 +68,8 @@ export default async function StylistStripePage() {
         stripeAccountStatus = statusResult.data;
 
         // Check if basic Stripe onboarding is complete
-        const basicStripeComplete = statusResult.data.charges_enabled &&
+        const basicStripeComplete =
+          statusResult.data.charges_enabled &&
           statusResult.data.details_submitted &&
           statusResult.data.payouts_enabled;
 
@@ -80,51 +86,64 @@ export default async function StylistStripePage() {
   // Check identity verification status from Stripe (source of truth)
   let identityVerificationComplete = false;
   let identityVerificationStatus = null;
-  
+
   if (stylistDetails.stripe_verification_session_id) {
     const verificationResult = await checkIdentityVerificationStatus();
     identityVerificationStatus = verificationResult.data?.status;
-    
+
     // Update database if Stripe says verification is complete but DB doesn't reflect it
-    if (identityVerificationStatus === 'verified' && !stylistDetails.identity_verification_completed_at) {
+    if (
+      identityVerificationStatus === "verified" &&
+      !stylistDetails.identity_verification_completed_at
+    ) {
       const { error: updateError } = await supabase
         .from("stylist_details")
         .update({
           identity_verification_completed_at: new Date().toISOString(),
         })
         .eq("profile_id", user.id);
-        
+
       if (!updateError) {
         identityVerificationComplete = true;
       }
-    } else if (identityVerificationStatus === 'verified') {
+    } else if (identityVerificationStatus === "verified") {
       identityVerificationComplete = true;
     }
   }
 
   // Check if basic Stripe onboarding is complete but identity verification is needed
-  if (!needsOnboarding && stripeAccountStatus?.payouts_enabled && !identityVerificationComplete) {
+  if (
+    !needsOnboarding &&
+    stripeAccountStatus?.payouts_enabled &&
+    !identityVerificationComplete
+  ) {
     // Show identity verification step
     return (
-      <StylistIdentityVerification
-        userId={user.id}
-        hasVerificationSession={!!stylistDetails.stripe_verification_session_id}
-      />
+      <div className="pt-12">
+        <StylistIdentityVerification
+          userId={user.id}
+          hasVerificationSession={
+            !!stylistDetails.stripe_verification_session_id
+          }
+        />
+      </div>
     );
   }
 
   // Determine if completely done (both Stripe and identity verification)
   const isCompletelyDone = !needsOnboarding && identityVerificationComplete;
-  
+
   // Show regular Stripe onboarding if not complete, or success screen if everything is done
   return (
-    <StylistStripeOnboarding
-      userId={user.id}
-      userName={profile.full_name || undefined}
-      needsOnboarding={needsOnboarding}
-      stripeAccountId={stylistDetails.stripe_account_id}
-      stripeAccountStatus={stripeAccountStatus}
-      isCompletelyDone={isCompletelyDone}
-    />
+    <div className="pt-12">
+      <StylistStripeOnboarding
+        userId={user.id}
+        userName={profile.full_name || undefined}
+        needsOnboarding={needsOnboarding}
+        stripeAccountId={stylistDetails.stripe_account_id}
+        stripeAccountStatus={stripeAccountStatus}
+        isCompletelyDone={isCompletelyDone}
+      />
+    </div>
   );
 }

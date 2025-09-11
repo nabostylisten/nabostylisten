@@ -47,5 +47,9 @@ export default async function StylistStripeReturnPage() {
 
   // All authorization checks passed, render client component
   // The slow Stripe API calls will happen client-side with proper loading states
-  return <StripeReturnContent />;
+  return (
+    <div className="px-4 pt-12">
+      <StripeReturnContent />
+    </div>
+  );
 }

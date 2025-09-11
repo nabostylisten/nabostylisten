@@ -442,7 +442,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
   return (
     <>
       <BlurFade delay={0.1} duration={0.5} inView>
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <Scissors className="w-8 h-8" />
             <div>
@@ -454,7 +454,7 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
           </div>
           <Button
             onClick={handleCreateService}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 sm:flex-shrink-0"
             disabled={isCheckingStripe || !isStripeFullyOnboarded}
           >
             {isCheckingStripe ? (
@@ -476,37 +476,37 @@ export function ServicesPageClient({ profileId }: ServicesPageClientProps) {
       <BlurFade delay={0.15} duration={0.5} inView>
         <Card className="mb-6">
           <CardContent className="p-6 space-y-4">
-            {/* Search and Sort Row */}
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Søk etter tjeneste..."
-                  className="pl-10"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                />
-              </div>
-              <div className="md:w-48">
-                <Select
-                  value={sortBy}
-                  onValueChange={(value) =>
-                    setSortBy(value as ServiceFilters["sortBy"])
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sorter etter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Nyeste først</SelectItem>
-                    <SelectItem value="price_asc">Lavest pris først</SelectItem>
-                    <SelectItem value="price_desc">
-                      Høyest pris først
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            {/* Sorting Row */}
+            <div>
+              <Select
+                value={sortBy}
+                onValueChange={(value) =>
+                  setSortBy(value as ServiceFilters["sortBy"])
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Sorter etter" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Nyeste først</SelectItem>
+                  <SelectItem value="price_asc">Lavest pris først</SelectItem>
+                  <SelectItem value="price_desc">
+                    Høyest pris først
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Search Row */}
+            <div className="relative">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Søk etter tjeneste..."
+                className="pl-10"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+              />
             </div>
 
             {/* Filters Row */}

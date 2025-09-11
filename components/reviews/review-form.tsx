@@ -109,10 +109,10 @@ const TruncatedDropzoneContent = ({ files }: { files: File[] }) => {
         <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
           <ImageIcon className="w-8 h-8 text-muted-foreground" />
         </div>
-        <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+        <p className="my-2 w-full break-words text-wrap font-medium text-sm">
           Dra og slipp bilder her, eller klikk for å velge
         </p>
-        <p className="w-full text-wrap text-muted-foreground text-xs">
+        <p className="w-full text-wrap break-words text-muted-foreground text-xs">
           Maks 5 bilder, kun bildefiler
         </p>
       </div>
@@ -125,14 +125,14 @@ const TruncatedDropzoneContent = ({ files }: { files: File[] }) => {
       <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
         <UploadIcon size={16} />
       </div>
-      <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+      <p className="my-2 w-full break-words text-wrap font-medium text-sm">
         {files.length > maxLabelItems
           ? `${new Intl.ListFormat("nb-NO").format(
               files.slice(0, maxLabelItems).map((file) => truncateFilename(file.name))
             )} og ${files.length - maxLabelItems} flere`
           : new Intl.ListFormat("nb-NO").format(files.map((file) => truncateFilename(file.name)))}
       </p>
-      <p className="w-full text-wrap text-muted-foreground text-xs">
+      <p className="w-full text-wrap break-words text-muted-foreground text-xs">
         Dra og slipp eller klikk for å erstatte
       </p>
     </div>
@@ -328,10 +328,10 @@ export function ReviewForm({
       <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
         {/* Service and stylist info */}
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-base sm:text-lg font-semibold break-words">
             Vurder {stylistName} for tjenesten
           </h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs sm:text-sm text-muted-foreground break-words">
             {serviceTitles.length > 0
               ? serviceTitles.length === 1
                 ? serviceTitles[0]
@@ -358,7 +358,7 @@ export function ReviewForm({
                   ))}
                 </Rating>
               </FormControl>
-              <FormDescription>
+              <FormDescription className="break-words">
                 Klikk på stjernene for å gi en vurdering fra 1 til 5
               </FormDescription>
               <FormMessage />
@@ -380,7 +380,7 @@ export function ReviewForm({
                   {...field}
                 />
               </FormControl>
-              <FormDescription>
+              <FormDescription className="break-words">
                 Valgfritt: Del dine tanker om tjenesten og stylisten
               </FormDescription>
               <FormMessage />
@@ -392,10 +392,10 @@ export function ReviewForm({
         {existingImages.length > 0 && (
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <label className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 break-words">
                 Eksisterende bilder
               </label>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">
                 Bilder du har lastet opp tidligere
               </p>
             </div>
@@ -467,10 +467,10 @@ export function ReviewForm({
         {/* New Image upload */}
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            <label className="text-xs sm:text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 break-words">
               {existingImages.length > 0 ? "Last opp flere bilder" : "Bilder"}
             </label>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">
               Last opp bilder av resultatet (valgfritt)
             </p>
           </div>
@@ -493,10 +493,10 @@ export function ReviewForm({
                   <div className="flex size-8 items-center justify-center rounded-md bg-muted text-muted-foreground">
                     <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
                   </div>
-                  <p className="my-2 w-full truncate text-wrap font-medium text-sm">
+                  <p className="my-2 w-full break-words text-wrap font-medium text-sm">
                     Behandler bilder...
                   </p>
-                  <p className="w-full truncate text-wrap text-muted-foreground text-xs">
+                  <p className="w-full break-words text-wrap text-muted-foreground text-xs">
                     Komprimerer og validerer filer
                   </p>
                 </div>
@@ -507,19 +507,19 @@ export function ReviewForm({
           
           {uploadedFiles.length > 0 && (
             <div className="mt-4 space-y-2">
-              <p className="text-sm font-medium">
+              <p className="text-xs sm:text-sm font-medium break-words">
                 {uploadedFiles.length} bilde(r) klar for opplasting:
               </p>
               <div className="flex flex-wrap gap-2">
                 {uploadedFiles.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-2 bg-muted px-3 py-1 rounded-md text-sm"
+                    className="flex items-center gap-2 bg-muted px-2 py-1 rounded-md text-xs sm:text-sm min-w-0"
                   >
-                    <span className="truncate max-w-[200px]">
-                      {truncateFilename(file.name, 30)}
+                    <span className="break-words min-w-0 flex-1">
+                      {truncateFilename(file.name, 20)}
                     </span>
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground flex-shrink-0">
                       {(file.size / 1024 / 1024).toFixed(1)}MB
                     </span>
                     <button
@@ -544,26 +544,29 @@ export function ReviewForm({
 
         {/* Action buttons */}
         <div className="space-y-4 pt-4">
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={onCancel}
               disabled={isLoading}
+              className="w-full sm:w-auto"
             >
               Avbryt
             </Button>
-            <Button type="submit" disabled={isLoading} className="flex-1">
+            <Button type="submit" disabled={isLoading} className="w-full sm:flex-1">
               {isLoading && <Spinner className="w-4 h-4 mr-2" />}
-              {reviewMutation.isPending
-                ? existingReview
-                  ? "Oppdaterer anmeldelse..."
-                  : "Oppretter anmeldelse..."
-                : uploadImagesMutation.isUploading
-                  ? "Laster opp bilder..."
-                  : existingReview
-                    ? "Oppdater anmeldelse"
-                    : "Publiser anmeldelse"}
+              <span className="break-words">
+                {reviewMutation.isPending
+                  ? existingReview
+                    ? "Oppdaterer anmeldelse..."
+                    : "Oppretter anmeldelse..."
+                  : uploadImagesMutation.isUploading
+                    ? "Laster opp bilder..."
+                    : existingReview
+                      ? "Oppdater anmeldelse"
+                      : "Publiser anmeldelse"}
+              </span>
             </Button>
           </div>
 
@@ -586,10 +589,10 @@ export function ReviewForm({
                     Slett anmeldelse
                   </Button>
                 </AlertDialogTrigger>
-                <AlertDialogContent>
+                <AlertDialogContent className="w-[calc(100vw-2rem)] max-w-[425px]">
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Slett anmeldelse</AlertDialogTitle>
-                    <AlertDialogDescription>
+                    <AlertDialogTitle className="break-words">Slett anmeldelse</AlertDialogTitle>
+                    <AlertDialogDescription className="break-words">
                       Er du sikker på at du vil slette denne anmeldelsen? Denne
                       handlingen kan ikke angres.
                     </AlertDialogDescription>

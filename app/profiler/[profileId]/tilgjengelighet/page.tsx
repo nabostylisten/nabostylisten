@@ -38,7 +38,7 @@ export default async function TilgjengelighetPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-12">
         <div className="max-w-6xl mx-auto w-full">
           <BlurFade delay={0.1} duration={0.5} inView>
             <div className="flex items-center gap-3 mb-6">
@@ -56,7 +56,8 @@ export default async function TilgjengelighetPage({
             <Alert className="mb-6">
               <Info className="h-4 w-4" />
               <AlertDescription>
-                Kalenderen er ikke optimalisert for mobile enheter. For beste brukeropplevelse, anbefaler vi å bruke en datamaskin.
+                Kalenderen er ikke optimalisert for mobile enheter. For beste
+                brukeropplevelse, anbefaler vi å bruke en datamaskin.
               </AlertDescription>
             </Alert>
           </BlurFade>

@@ -306,6 +306,7 @@ export function BookingDetailsContent({
                         customer_id: booking.customer_id,
                         stylist_id: booking.stylist_id,
                         start_time: booking.start_time,
+                        end_time: booking.end_time,
                         total_price: booking.total_price,
                         status: booking.status,
                       }}

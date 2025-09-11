@@ -30,10 +30,12 @@ export default async function ChatPage({ params }: ChatPageProps) {
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <ChatPageContent 
-        profileId={profileId} 
-        userRole={profile?.role === "stylist" ? "stylist" : "customer"} 
-      />
+      <div className="pt-8 sm:pt-12">
+        <ChatPageContent
+          profileId={profileId}
+          userRole={profile?.role === "stylist" ? "stylist" : "customer"}
+        />
+      </div>
     </ProfileLayout>
   );
 }

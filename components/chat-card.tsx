@@ -71,13 +71,13 @@ export function ChatCard({
       className={`hover:shadow-md transition-shadow ${unreadCount > 0 ? "border-primary/50 bg-primary/5" : ""}`}
     >
       <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-start gap-4">
           <div className="flex items-start gap-3 flex-1">
             <div className="mt-1">
               <MessageCircle className="w-5 h-5 text-muted-foreground" />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-2 mb-1 flex-wrap">
                 <User className="w-4 h-4 text-muted-foreground" />
                 <span
                   className={`text-sm ${unreadCount > 0 ? "font-semibold" : "font-medium"}`}
@@ -93,9 +93,9 @@ export function ChatCard({
               </div>
 
               <div className="text-sm text-muted-foreground mb-2">
-                <div className="flex items-center gap-1 mb-1">
+                <div className="flex items-center gap-1 mb-1 flex-wrap">
                   <Calendar className="w-3 h-3" />
-                  <span>
+                  <span className="break-words">
                     {new Date(bookingDate).toLocaleDateString("nb-NO", {
                       day: "numeric",
                       month: "long",
@@ -107,11 +107,11 @@ export function ChatCard({
                 </div>
 
                 {serviceTitles.length > 0 && (
-                  <div className="text-xs">{serviceTitles.join(", ")}</div>
+                  <div className="text-xs break-words">{serviceTitles.join(", ")}</div>
                 )}
               </div>
 
-              <div className="flex items-center gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3 flex-wrap">
                 <Badge
                   variant={getStatusVariant(bookingStatus)}
                   className="text-xs"
@@ -125,15 +125,16 @@ export function ChatCard({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex sm:flex-col gap-2 sm:shrink-0">
             <Button
               size="sm"
               asChild
               variant={unreadCount > 0 ? "default" : "outline"}
+              className="w-full sm:w-auto"
             >
-              <Link href={`/bookinger/${bookingId}/chat`}>
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Åpne chat
+              <Link href={`/bookinger/${bookingId}/chat`} className="flex items-center justify-center gap-2">
+                <MessageCircle className="w-4 h-4" />
+                <span className="sm:inline">Åpne chat</span>
               </Link>
             </Button>
           </div>

@@ -110,11 +110,9 @@ export function MyBookingsList({
   const bookings = bookingsResponse?.data || [];
   const total = bookingsResponse?.total || 0;
   const totalPages = bookingsResponse?.totalPages || 0;
-  const hasActiveFilters = (filters.serviceIds && filters.serviceIds.length > 0) ||
+  const hasActiveFilters =
+    (filters.serviceIds && filters.serviceIds.length > 0) ||
     (filters.stylistIds && filters.stylistIds.length > 0);
-
-  console.log(bookings);
-  console.log(bookingsResponse);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

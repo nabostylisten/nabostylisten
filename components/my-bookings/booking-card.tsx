@@ -123,32 +123,33 @@ export function BookingCard({
       <CardContent className="p-6">
         <div className="space-y-4">
           {/* Header */}
-          <div className="flex justify-between items-start">
-            <div className="space-y-1">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+            <div className="space-y-1 flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="font-semibold text-lg break-words">
                   {services.length > 0 ? services[0]?.title : "Booking"}
                   {services.length > 1 && ` +${services.length - 1} til`}
                 </h3>
                 {hasChat && (
-                  <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                  <MessageSquare className="w-4 h-4 text-muted-foreground flex-shrink-0" />
                 )}
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <User className="w-4 h-4" />
-                <span className="text-sm">
+                <User className="w-4 h-4 flex-shrink-0" />
+                <span className="text-sm truncate">
                   {booking.stylist?.full_name || "Ukjent stylist"}
                 </span>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
               {booking.is_trial_session && (
                 <Badge
                   variant="outline"
                   className="flex items-center gap-1 text-purple-600 bg-purple-50/30 border-purple-200 dark:text-purple-400 dark:bg-purple-900/30 dark:border-purple-800"
                 >
                   <TestTube className="w-4 h-4" />
-                  Prøvetime
+                  <span className="hidden xs:inline">Prøvetime</span>
+                  <span className="xs:hidden">Prøve</span>
                 </Badge>
               )}
               {!booking.is_trial_session && booking.trial_booking_id && (
@@ -157,7 +158,8 @@ export function BookingCard({
                   className="flex items-center gap-1 text-blue-600 bg-blue-50/30 border-blue-200 dark:text-blue-400 dark:bg-blue-900/30 dark:border-blue-800"
                 >
                   <TestTube className="w-4 h-4" />
-                  Har prøvetime
+                  <span className="hidden xs:inline">Har prøvetime</span>
+                  <span className="xs:hidden">Prøve</span>
                 </Badge>
               )}
               {getStatusBadge(booking.status)}
@@ -333,7 +335,7 @@ export function BookingCard({
           )}
 
           {/* Footer */}
-          <div className="flex justify-between items-center pt-2 border-t">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 pt-2 border-t">
             <div className="text-lg font-semibold">
               <BookingPricingDisplay
                 booking={{
@@ -350,49 +352,55 @@ export function BookingCard({
                 options={{ showDiscountCode: false }}
               />
             </div>
-            <div className="flex gap-2">
-              {/* Actions dropdown for both customers and stylists */}
-              <BookingActionsDropdown
-                booking={booking}
-                currentUserId={currentUserId}
-                userRole={userRole}
-                serviceName={services[0]?.title || "Booking"}
-                customerName={booking.customer?.full_name || "Kunde"}
-                onStatusDialogOpen={() => setIsStatusDialogOpen(true)}
-              />
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               {/* Review button for completed bookings (customers only) */}
               {userRole === "customer" && booking.status === "completed" && (
                 <Button
                   variant={existingReview ? "outline" : "default"}
                   size="sm"
                   onClick={() => setIsReviewDialogOpen(true)}
+                  className="w-full sm:w-auto"
                 >
                   {existingReview ? (
                     <>
                       <Edit className="w-4 h-4 mr-2" />
-                      Endre anmeldelse
+                      <span className="hidden xs:inline">Endre anmeldelse</span>
+                      <span className="xs:hidden">Endre</span>
                     </>
                   ) : (
                     <>
                       <Star className="w-4 h-4 mr-2" />
-                      Gi anmeldelse
+                      <span className="hidden xs:inline">Gi anmeldelse</span>
+                      <span className="xs:hidden">Anmeld</span>
                     </>
                   )}
                 </Button>
               )}
-              <Link
-                href={`/bookinger/${booking.id}`}
-                className={cn(
-                  buttonVariants({
-                    variant: "outline",
-                    size: "sm",
-                  }),
-                  "flex items-center gap-2"
-                )}
-              >
-                Se detaljer
-                <ChevronRight className="w-4 h-4" />
-              </Link>
+              <div className="flex gap-2">
+                {/* Actions dropdown for both customers and stylists */}
+                <BookingActionsDropdown
+                  booking={booking}
+                  currentUserId={currentUserId}
+                  userRole={userRole}
+                  serviceName={services[0]?.title || "Booking"}
+                  customerName={booking.customer?.full_name || "Kunde"}
+                  onStatusDialogOpen={() => setIsStatusDialogOpen(true)}
+                />
+                <Link
+                  href={`/bookinger/${booking.id}`}
+                  className={cn(
+                    buttonVariants({
+                      variant: "outline",
+                      size: "sm",
+                    }),
+                    "flex items-center gap-2 flex-1 sm:flex-initial justify-center"
+                  )}
+                >
+                  <span className="hidden xs:inline">Se detaljer</span>
+                  <span className="xs:hidden">Detaljer</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Link>
+              </div>
             </div>
           </div>
         </div>

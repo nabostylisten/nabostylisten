@@ -108,24 +108,26 @@ export function MyBookingsPageContent({
         {userRole === "stylist" && (
           <BlurFade delay={0.2} duration={0.5} inView>
             <div className="mb-6">
-              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-fit">
+              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-full sm:w-fit">
                 <Button
                   variant={stylistMode === "personal" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setStylistMode("personal")}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 flex-1 sm:flex-initial"
                 >
                   <User className="w-4 h-4" />
-                  Mine bookinger
+                  <span className="hidden xs:inline">Mine bookinger</span>
+                  <span className="xs:hidden">Mine</span>
                 </Button>
                 <Button
                   variant={stylistMode === "services" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setStylistMode("services")}
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-2 flex-1 sm:flex-initial"
                 >
                   <Briefcase className="w-4 h-4" />
-                  Mine kunder
+                  <span className="hidden xs:inline">Mine kunder</span>
+                  <span className="xs:hidden">Kunder</span>
                 </Button>
               </div>
             </div>
@@ -146,7 +148,7 @@ export function MyBookingsPageContent({
             onValueChange={(value) => setActiveTab(value as BookingStatus)}
             className="space-y-6"
           >
-            <TabsList className="grid w-full grid-cols-4 max-w-2xl">
+            <TabsList className="flex flex-col sm:grid sm:grid-cols-4 w-full max-w-2xl gap-1 sm:gap-0 h-auto sm:h-10">
               <TabsTrigger value="pending" className="flex items-center gap-2">
                 <AlertTriangle className="w-4 h-4" />
                 <span>Venter</span>

@@ -93,10 +93,10 @@ export default function AffiliateTab() {
 
       <BlurFade delay={0.15} duration={0.5} inView>
         <Tabs defaultValue="applications" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="applications">Søknader</TabsTrigger>
-            <TabsTrigger value="codes">Partnerkoder</TabsTrigger>
-            <TabsTrigger value="commissions">Provisjoner</TabsTrigger>
+          <TabsList className="flex flex-col sm:grid sm:grid-cols-3 w-full gap-1 sm:gap-0 h-auto sm:h-10 p-1">
+            <TabsTrigger value="applications" className="w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">Søknader</TabsTrigger>
+            <TabsTrigger value="codes" className="w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">Partnerkoder</TabsTrigger>
+            <TabsTrigger value="commissions" className="w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">Provisjoner</TabsTrigger>
           </TabsList>
           <TabsContent value="applications" className="mt-6">
             <AffiliateApplicationsSubTab />

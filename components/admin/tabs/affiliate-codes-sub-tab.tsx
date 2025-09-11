@@ -48,8 +48,8 @@ export function AffiliateCodesSubTab() {
 
   const handleDeactivateCode = async (codeId: string) => {
     const actionKey = `deactivate-${codeId}`;
-    setLoadingActions(prev => new Set(prev).add(actionKey));
-    
+    setLoadingActions((prev) => new Set(prev).add(actionKey));
+
     try {
       const result = await deactivateAffiliateCode(codeId);
       if (result.error) {
@@ -62,7 +62,7 @@ export function AffiliateCodesSubTab() {
     } catch (error) {
       toast.error("En uventet feil oppstod");
     } finally {
-      setLoadingActions(prev => {
+      setLoadingActions((prev) => {
         const next = new Set(prev);
         next.delete(actionKey);
         return next;
@@ -72,8 +72,8 @@ export function AffiliateCodesSubTab() {
 
   const handleActivateCode = async (codeId: string) => {
     const actionKey = `activate-${codeId}`;
-    setLoadingActions(prev => new Set(prev).add(actionKey));
-    
+    setLoadingActions((prev) => new Set(prev).add(actionKey));
+
     try {
       const result = await reactivateAffiliateCode(codeId);
       if (result.error) {
@@ -86,7 +86,7 @@ export function AffiliateCodesSubTab() {
     } catch (error) {
       toast.error("En uventet feil oppstod");
     } finally {
-      setLoadingActions(prev => {
+      setLoadingActions((prev) => {
         const next = new Set(prev);
         next.delete(actionKey);
         return next;
@@ -123,7 +123,7 @@ export function AffiliateCodesSubTab() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row gap-2 items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold">Partnerkoder</h3>
           <p className="text-sm text-muted-foreground">
@@ -138,7 +138,7 @@ export function AffiliateCodesSubTab() {
 
       <div className="grid gap-4">
         {isLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, index) => (
               <Card key={index}>
                 <CardContent className="p-6">
@@ -172,9 +172,9 @@ export function AffiliateCodesSubTab() {
                       <Skeleton className="h-4 w-18" />
                     </div>
 
-                    <div className="flex gap-2">
-                      <Skeleton className="h-8 flex-1" />
-                      <Skeleton className="h-8 flex-1" />
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Skeleton className="h-8 w-full sm:flex-1" />
+                      <Skeleton className="h-8 w-full sm:flex-1" />
                     </div>
                   </div>
                 </CardContent>
@@ -192,7 +192,7 @@ export function AffiliateCodesSubTab() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {codes?.data?.map((code: AffiliateCode) => (
               <Card key={code.id}>
                 <CardContent className="p-6">
@@ -232,20 +232,20 @@ export function AffiliateCodesSubTab() {
                     {/* Expiration info */}
                     {code.expires_at && (
                       <div>
-                        <p className="text-muted-foreground text-sm">
-                          Utløper
-                        </p>
+                        <p className="text-muted-foreground text-sm">Utløper</p>
                         <p className="text-sm font-medium">
-                          {new Date(code.expires_at).toLocaleDateString("no-NO")}
+                          {new Date(code.expires_at).toLocaleDateString(
+                            "no-NO"
+                          )}
                         </p>
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
                       <Button
                         variant="outline"
                         size="sm"
-                        className="flex-1"
+                        className="w-full sm:flex-1"
                         onClick={() => handleEditCode(code)}
                       >
                         <Edit className="w-4 h-4 mr-2" />
@@ -255,27 +255,43 @@ export function AffiliateCodesSubTab() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1"
+                          className="w-full sm:flex-1"
                           onClick={() => handleDeactivateCode(code.id)}
-                          disabled={loadingActions.has(`deactivate-${code.id}`) || loadingActions.has(`activate-${code.id}`)}
+                          disabled={
+                            loadingActions.has(`deactivate-${code.id}`) ||
+                            loadingActions.has(`activate-${code.id}`)
+                          }
                         >
                           {loadingActions.has(`deactivate-${code.id}`) && (
-                            <Spinner className="w-4 h-4 mr-2" variant="default" />
+                            <Spinner
+                              className="w-4 h-4 mr-2"
+                              variant="default"
+                            />
                           )}
-                          {loadingActions.has(`deactivate-${code.id}`) ? "Deaktiverer..." : "Deaktiver"}
+                          {loadingActions.has(`deactivate-${code.id}`)
+                            ? "Deaktiverer..."
+                            : "Deaktiver"}
                         </Button>
                       ) : (
                         <Button
                           variant="outline"
                           size="sm"
-                          className="flex-1"
+                          className="w-full sm:flex-1"
                           onClick={() => handleActivateCode(code.id)}
-                          disabled={loadingActions.has(`deactivate-${code.id}`) || loadingActions.has(`activate-${code.id}`)}
+                          disabled={
+                            loadingActions.has(`deactivate-${code.id}`) ||
+                            loadingActions.has(`activate-${code.id}`)
+                          }
                         >
                           {loadingActions.has(`activate-${code.id}`) && (
-                            <Spinner className="w-4 h-4 mr-2" variant="default" />
+                            <Spinner
+                              className="w-4 h-4 mr-2"
+                              variant="default"
+                            />
                           )}
-                          {loadingActions.has(`activate-${code.id}`) ? "Aktiverer..." : "Aktiver"}
+                          {loadingActions.has(`activate-${code.id}`)
+                            ? "Aktiverer..."
+                            : "Aktiver"}
                         </Button>
                       )}
                     </div>

@@ -255,14 +255,14 @@ export function AffiliateApplicationsSubTab() {
             Administrer søknader om å bli partner
           </p>
         </div>
-        <div className="flex gap-2">
-          <div className="relative">
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Søk etter navn eller e-post..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 w-64"
+              className="pl-10 w-full sm:w-64"
             />
           </div>
           <select
@@ -272,7 +272,7 @@ export function AffiliateApplicationsSubTab() {
                 e.target.value as "all" | "pending" | "approved" | "rejected"
               )
             }
-            className="px-3 py-2 border border-input rounded-md text-sm bg-background"
+            className="px-3 py-2 border border-input rounded-md text-sm bg-background w-full sm:w-auto"
           >
             <option value="all">Alle statuser</option>
             <option value="pending">Venter</option>
@@ -288,7 +288,7 @@ export function AffiliateApplicationsSubTab() {
             {Array.from({ length: 5 }).map((_, index) => (
               <Card key={index}>
                 <CardContent className="p-6">
-                  <div className="flex items-start justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="space-y-2">
                       <div className="flex items-center gap-3">
                         <Skeleton className="h-5 w-32" />
@@ -298,10 +298,10 @@ export function AffiliateApplicationsSubTab() {
                       <Skeleton className="h-3 w-24" />
                     </div>
 
-                    <div className="flex gap-2">
-                      <Skeleton className="h-8 w-20" />
-                      <Skeleton className="h-8 w-24" />
-                      <Skeleton className="h-8 w-20" />
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                      <Skeleton className="h-8 w-full sm:w-20" />
+                      <Skeleton className="h-8 w-full sm:w-24" />
+                      <Skeleton className="h-8 w-full sm:w-20" />
                     </div>
                   </div>
                 </CardContent>
@@ -326,7 +326,7 @@ export function AffiliateApplicationsSubTab() {
           filteredApplications.map((app) => (
             <Card key={app.id}>
               <CardContent className="p-6">
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                   <div className="space-y-2">
                     <div className="flex items-center gap-3">
                       <h4 className="font-semibold">{app.full_name}</h4>
@@ -339,11 +339,12 @@ export function AffiliateApplicationsSubTab() {
                     </p>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => handleViewDetails(app.id)}
+                      className="w-full sm:w-auto"
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       Detaljer
@@ -358,6 +359,7 @@ export function AffiliateApplicationsSubTab() {
                             loadingActions.has(`approve-${app.id}`) ||
                             loadingActions.has(`reject-${app.id}`)
                           }
+                          className="w-full sm:w-auto"
                         >
                           {loadingActions.has(`approve-${app.id}`) ? (
                             <Loader className="w-4 h-4 mr-1 animate-spin" />
@@ -376,6 +378,7 @@ export function AffiliateApplicationsSubTab() {
                             loadingActions.has(`approve-${app.id}`) ||
                             loadingActions.has(`reject-${app.id}`)
                           }
+                          className="w-full sm:w-auto"
                         >
                           {loadingActions.has(`reject-${app.id}`) ? (
                             <Loader className="w-4 h-4 mr-1 animate-spin" />
@@ -395,6 +398,7 @@ export function AffiliateApplicationsSubTab() {
                           handleStatusChange(app.id, app.full_name, app.status)
                         }
                         disabled={loadingActions.has(`change-${app.id}`)}
+                        className="w-full sm:w-auto"
                       >
                         {loadingActions.has(`change-${app.id}`) ? (
                           <Loader className="w-4 h-4 mr-1 animate-spin" />

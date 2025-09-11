@@ -49,13 +49,13 @@ export default async function ProfilePage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile.role}>
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-12">
         <div className="max-w-2xl mx-auto w-full">
           <BlurFade delay={0.1} duration={0.5} inView>
-            <ProfileForm 
-              profile={profile} 
+            <ProfileForm
+              profile={profile}
               stylistDetails={stylistDetails}
-              isOwner={isOwner} 
+              isOwner={isOwner}
             />
           </BlurFade>
         </div>

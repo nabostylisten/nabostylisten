@@ -128,7 +128,7 @@ export function ProfileAddresses() {
     <>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <MapPin className="h-5 w-5" />
@@ -138,7 +138,7 @@ export function ProfileAddresses() {
                 Administrer dine leveringsadresser for bookinger
               </CardDescription>
             </div>
-            <Button onClick={() => setShowAddDialog(true)} size="sm">
+            <Button onClick={() => setShowAddDialog(true)} size="sm" className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Legg til adresse
             </Button>

@@ -172,15 +172,15 @@ export function ProfileForm({
   return (
     <>
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:justify-between sm:items-center mb-6">
         <div className="flex items-center gap-4">
           <CurrentUserAvatar
             className="w-16 h-16"
             isEditing={isOwner && isEditing}
           />
           <div>
-            <h1 className="text-3xl font-bold">Min profil</h1>
-            <p className="text-muted-foreground mt-1">
+            <h1 className="text-2xl sm:text-3xl font-bold">Min profil</h1>
+            <p className="text-muted-foreground mt-1 text-sm sm:text-base">
               {isOwner
                 ? "Administrer din personlige informasjon"
                 : "Profilinformasjon"}
@@ -188,21 +188,22 @@ export function ProfileForm({
           </div>
         </div>
         {isOwner && !isEditing ? (
-          <Button onClick={handleEdit} variant="outline" size="sm">
+          <Button onClick={handleEdit} variant="outline" size="sm" className="w-full sm:w-auto">
             <Edit className="w-4 h-4 mr-2" />
             Endre profil
           </Button>
         ) : isOwner && isEditing ? (
-          <div className="flex gap-2">
+          <div className="flex gap-2 w-full sm:w-auto">
             <Button
               onClick={form.handleSubmit(onSubmit)}
               size="sm"
               disabled={updateProfileMutation.isPending}
+              className="flex-1 sm:flex-initial"
             >
               <Save className="w-4 h-4 mr-2" />
               Lagre
             </Button>
-            <Button onClick={handleCancel} variant="outline" size="sm">
+            <Button onClick={handleCancel} variant="outline" size="sm" className="flex-1 sm:flex-initial">
               <X className="w-4 h-4 mr-2" />
               Avbryt
             </Button>

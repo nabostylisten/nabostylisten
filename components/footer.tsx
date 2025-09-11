@@ -31,9 +31,9 @@ export const Footer = () => {
     <footer className="bg-background border-t">
       <div className="w-full max-w-none mx-auto px-6 lg:px-12 py-12">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="col-span-2 md:col-span-1">
+          <div className="sm:col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center mb-4">
               <h1 className="font-bold text-xl text-primary">Nabostylisten</h1>
             </Link>

@@ -32,7 +32,7 @@ export default async function MineBookingerPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <div className="space-y-6">
+      <div className="space-y-6 pt-12">
         <BlurFade delay={0.1} duration={0.5} inView>
           <MyBookingsPageContent
             userId={profileId}

@@ -31,10 +31,12 @@ const addressFormSchema = z.object({
   country: z.string().min(1, "Land er påkrevet"),
   entry_instructions: z.string().optional(),
   is_primary: z.boolean(),
-  location: z.object({
-    lat: z.number(),
-    lng: z.number(),
-  }).optional(),
+  location: z
+    .object({
+      lat: z.number(),
+      lng: z.number(),
+    })
+    .optional(),
 });
 
 type Address = Database["public"]["Tables"]["addresses"]["Row"];
@@ -124,7 +126,8 @@ export function AddressDialog({
   });
 
   const updateAddressMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) => updateAddress(id, data),
+    mutationFn: ({ id, data }: { id: string; data: any }) =>
+      updateAddress(id, data),
     onSuccess: (result) => {
       if (result.error) {
         toast.error(result.error);
@@ -159,7 +162,7 @@ export function AddressDialog({
       entry_instructions: values.entry_instructions || undefined,
       is_primary: values.is_primary,
       // If we have coordinates, format them for PostGIS
-      location: values.location 
+      location: values.location
         ? (`POINT(${values.location.lng} ${values.location.lat})` as any)
         : undefined,
     };
@@ -173,17 +176,18 @@ export function AddressDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] overflow-y-scroll max-h-screen">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            {actualMode === "update" ? "Rediger adresse" : "Legg til ny adresse"}
+            {actualMode === "update"
+              ? "Rediger adresse"
+              : "Legg til ny adresse"}
           </DialogTitle>
           <DialogDescription>
-            {actualMode === "update" 
-              ? "Oppdater adresseinformasjonen." 
-              : "Legg til en ny adresse som kan brukes for bookinger og leveranser."
-            }
+            {actualMode === "update"
+              ? "Oppdater adresseinformasjonen."
+              : "Legg til en ny adresse som kan brukes for bookinger og leveranser."}
           </DialogDescription>
         </DialogHeader>
 
@@ -201,10 +205,13 @@ export function AddressDialog({
                 Avbryt
               </Button>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting 
-                  ? (actualMode === "update" ? "Oppdaterer..." : "Lagrer...") 
-                  : (actualMode === "update" ? "Oppdater adresse" : "Legg til adresse")
-                }
+                {isSubmitting
+                  ? actualMode === "update"
+                    ? "Oppdaterer..."
+                    : "Lagrer..."
+                  : actualMode === "update"
+                    ? "Oppdater adresse"
+                    : "Legg til adresse"}
               </Button>
             </DialogFooter>
           </form>
@@ -213,4 +220,3 @@ export function AddressDialog({
     </Dialog>
   );
 }
-

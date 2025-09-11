@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Home, Building } from "lucide-react";
 import type { MapboxSuggestion } from "@/types";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   FormControl,
   FormDescription,
@@ -39,6 +40,7 @@ interface AddressFormProps {
 
 export function AddressForm({ form }: AddressFormProps) {
   const [addressFieldsLocked, setAddressFieldsLocked] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   // Watch for changes in the full address field
   const fullAddress = form.watch("fullAddress");
@@ -81,27 +83,29 @@ export function AddressForm({ form }: AddressFormProps) {
           <FormItem>
             <FormLabel>Kallenavn (valgfritt)</FormLabel>
             <FormControl>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => field.onChange("Hjemme")}
-                  className="gap-1"
-                >
-                  <Home className="h-4 w-4" />
-                  Hjemme
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => field.onChange("Jobb")}
-                  className="gap-1"
-                >
-                  <Building className="h-4 w-4" />
-                  Jobb
-                </Button>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => field.onChange("Hjemme")}
+                    className="gap-1 flex-1 sm:flex-initial"
+                  >
+                    <Home className="h-4 w-4" />
+                    Hjemme
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => field.onChange("Jobb")}
+                    className="gap-1 flex-1 sm:flex-initial"
+                  >
+                    <Building className="h-4 w-4" />
+                    Jobb
+                  </Button>
+                </div>
                 <Input
                   placeholder="Eller skriv inn eget..."
                   {...field}
@@ -169,7 +173,7 @@ export function AddressForm({ form }: AddressFormProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="street_address"
@@ -207,7 +211,7 @@ export function AddressForm({ form }: AddressFormProps) {
         />
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <FormField
           control={form.control}
           name="city"
@@ -256,6 +260,7 @@ export function AddressForm({ form }: AddressFormProps) {
                 placeholder="F.eks. 'Ring på dørklokka', 'Bruk sideinngangen', 'Portkodenummer 1234', etc."
                 {...field}
                 value={field.value || ""}
+                className="min-h-[120px] sm:min-h-[80px]"
               />
             </FormControl>
             <FormDescription>

@@ -299,6 +299,30 @@ Always respect light and dark mode when using colors. Use Tailwind's color syste
 - Test color combinations in both light and dark modes
 - Follow the established pattern consistently across the application
 
+### Dialog Overflow Handling
+
+For dialogs with long content that might exceed viewport height, use these classes on `DialogContent`:
+
+```tsx
+// For responsive dialogs with scroll capability
+<DialogContent className="sm:max-w-[500px] overflow-y-scroll max-h-screen">
+  {/* Dialog content */}
+</DialogContent>
+```
+
+**Key Classes**:
+- `overflow-y-scroll` - Enables vertical scrolling when content overflows
+- `max-h-screen` - Limits dialog height to screen height
+- `sm:max-w-[500px]` - Responsive width control
+
+**When to Use**:
+- Forms with many fields (like address forms)
+- Dialogs with dynamic content that might grow
+- Mobile-first responsive dialogs
+- Any dialog where content height is unpredictable
+
+**Alternative Approach**: For complex layouts, you can use ScrollArea component, but the overflow classes are simpler and more reliable for most use cases.
+
 ### Loading States
 
 - Use `Spinner` component from `components/ui/kibo-ui/spinner/index.tsx`

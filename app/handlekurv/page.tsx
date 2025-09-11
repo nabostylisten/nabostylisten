@@ -149,7 +149,7 @@ export default function CartPage() {
       <div className="min-h-screen pt-20 px-6 lg:px-12">
         <div className="max-w-4xl mx-auto">
           <BlurFade duration={0.5} inView>
-            <div className="flex items-center gap-4 mb-8">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
               <Button variant="ghost" onClick={() => router.back()}>
                 <ArrowLeft className="w-4 h-4 mr-2" />
                 Tilbake
@@ -212,7 +212,7 @@ export default function CartPage() {
     <div className="min-h-screen pt-20 px-6 lg:px-12">
       <div className="max-w-4xl mx-auto">
         <BlurFade duration={0.5} inView>
-          <div className="flex items-center gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-8">
             <Button variant="ghost" onClick={() => router.back()}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Tilbake

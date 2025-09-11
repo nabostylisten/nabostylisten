@@ -79,10 +79,12 @@ export function RecurringExceptionDialog({
   if (showReschedule) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] sm:max-h-[80vh] overflow-y-auto p-4 sm:p-6">
           <DialogHeader>
-            <DialogTitle>Flytt denne forekomsten</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-lg sm:text-xl">
+              Flytt denne forekomsten
+            </DialogTitle>
+            <DialogDescription className="text-sm break-words">
               Flytt "{recurringTitle}" for{" "}
               {format(selectedDate, "PPP", { locale: nb })}
             </DialogDescription>
@@ -104,11 +106,13 @@ export function RecurringExceptionDialog({
             />
           </div>
 
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setShowReschedule(false)}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => setShowReschedule(false)} className="w-full sm:w-auto">
               Tilbake
             </Button>
-            <Button onClick={handleRescheduleSubmit}>Flytt forekomst</Button>
+            <Button onClick={handleRescheduleSubmit} className="w-full sm:w-auto">
+              Flytt forekomst
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -117,10 +121,12 @@ export function RecurringExceptionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-[95vw] sm:max-w-md max-h-[90vh] sm:max-h-[80vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Administrer gjentakende utilgjengelighet</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">
+            Administrer gjentakende utilgjengelighet
+          </DialogTitle>
+          <DialogDescription className="text-sm break-words">
             <span className="font-semibold">{recurringTitle}</span> -{" "}
             {format(selectedDate, "PPP", { locale: nb })} kl.{" "}
             {selectedHour.toString().padStart(2, "0")}:00
@@ -135,11 +141,11 @@ export function RecurringExceptionDialog({
           <div className="flex flex-col gap-2">
             <Button
               variant="outline"
-              className="w-full justify-start text-left p-4 h-auto"
+              className="w-full justify-start text-left p-3 sm:p-4 h-auto"
               onClick={handleCancelInstance}
             >
               <div className="space-y-1">
-                <div className="font-medium">Avlys kun denne forekomsten</div>
+                <div className="font-medium text-sm sm:text-base">Avlys kun denne forekomsten</div>
                 <div className="text-xs text-muted-foreground">
                   Gjør denne tiden tilgjengelig, men behold den gjentakende
                   serien
@@ -149,11 +155,11 @@ export function RecurringExceptionDialog({
 
             <Button
               variant="outline"
-              className="w-full justify-start text-left p-4 h-auto"
+              className="w-full justify-start text-left p-3 sm:p-4 h-auto"
               onClick={handleShowReschedule}
             >
               <div className="space-y-1">
-                <div className="font-medium">Flytt kun denne forekomsten</div>
+                <div className="font-medium text-sm sm:text-base">Flytt kun denne forekomsten</div>
                 <div className="text-xs text-muted-foreground">
                   Flytt denne forekomsten til en annen tid
                 </div>
@@ -162,11 +168,11 @@ export function RecurringExceptionDialog({
 
             <Button
               variant="outline"
-              className="w-full justify-start text-left p-4 h-auto"
+              className="w-full justify-start text-left p-3 sm:p-4 h-auto"
               onClick={handleEditSeries}
             >
               <div className="space-y-1">
-                <div className="font-medium">Rediger hele serien</div>
+                <div className="font-medium text-sm sm:text-base">Rediger hele serien</div>
                 <div className="text-xs text-muted-foreground">
                   Endre eller slett den gjentakende utilgjengeligheiten
                 </div>
@@ -175,8 +181,8 @@ export function RecurringExceptionDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Avbryt
           </Button>
         </DialogFooter>

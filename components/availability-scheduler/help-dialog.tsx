@@ -26,72 +26,87 @@ const helpFaqs = [
   {
     id: "1",
     question: "Hva viser kalenderoversikten?",
-    answer: "Kalenderoversikten viser en ukevis kalender med alle dager og timer. Du kan navigere mellom uker ved å bruke pil-knappene eller velge en spesifikk dato. Hver time vises som en rute som er fargekodet basert på din tilgjengelighet.",
+    answer:
+      "Kalenderoversikten viser en ukevis kalender med alle dager og timer. Du kan navigere mellom uker ved å bruke pil-knappene eller velge en spesifikk dato. Hver time vises som en rute som er fargekodet basert på din tilgjengelighet.",
   },
   {
-    id: "2", 
+    id: "2",
     question: "Hva betyr de forskjellige fargene på cellene?",
-    answer: "Grønne celler = Tilgjengelig for booking (arbeidsdag + arbeidstid + ikke utilgjengelig). Røde celler = Utilgjengelig (markert som opptatt eller gjentakende mønster). Grå celler = Ikke arbeidsdag eller utenfor arbeidstid.",
+    answer:
+      "Grønne celler = Tilgjengelig for booking (arbeidsdag + arbeidstid + ikke utilgjengelig). Røde celler = Utilgjengelig (markert som opptatt eller gjentakende mønster). Grå celler = Ikke arbeidsdag eller utenfor arbeidstid.",
   },
   {
     id: "3",
     question: "Hvordan navigerer jeg mellom uker?",
-    answer: "Du kan bruke pilknappene til høyre og venstre for å gå til neste eller forrige uke. Klikk på 'I dag' for å hoppe tilbake til inneværende uke. Du kan også bruke datovelgeren for å hoppe til en spesifikk dato eller uke.",
+    answer:
+      "Du kan bruke pilknappene til høyre og venstre for å gå til neste eller forrige uke. Klikk på 'I dag' for å hoppe tilbake til inneværende uke. Du kan også bruke datovelgeren for å hoppe til en spesifikk dato eller uke.",
   },
   {
     id: "4",
     question: "Hvordan setter jeg opp mine arbeidsdager og arbeidstider?",
-    answer: "Klikk på 'Innstillinger'-knappen for å åpne arbeidsinnstillinger. Her kan du velge hvilke dager du arbeider (mandag til søndag) og sette start- og sluttider for arbeidsdagen. Disse innstillingene gjelder for alle valgte arbeidsdager.",
+    answer:
+      "Klikk på 'Innstillinger'-knappen for å åpne arbeidsinnstillinger. Her kan du velge hvilke dager du arbeider (mandag til søndag) og sette start- og sluttider for arbeidsdagen. Disse innstillingene gjelder for alle valgte arbeidsdager.",
   },
   {
     id: "5",
     question: "Hva er gjentakende utilgjengelighet?",
-    answer: "Gjentakende utilgjengelighet lar deg opprette regelmessige mønstre for når du ikke er tilgjengelig, som for eksempel lunsjpauser, møter eller andre faste forpliktelser. Du kan sette tittel, tidspunkt og hvor ofte det gjentas (daglig, ukentlig, månedlig osv.).",
+    answer:
+      "Gjentakende utilgjengelighet lar deg opprette regelmessige mønstre for når du ikke er tilgjengelig, som for eksempel lunsjpauser, møter eller andre faste forpliktelser. Du kan sette tittel, tidspunkt og hvor ofte det gjentas (daglig, ukentlig, månedlig osv.).",
   },
   {
     id: "6",
     question: "Hvordan oppretter jeg gjentakende utilgjengelighet?",
-    answer: "Klikk på 'Gjentakende'-knappen i toppen av kalenderen. Fyll ut skjemaet med tittel (f.eks. 'Lunsj'), velg tidspunkt, gjentakelsesmønster og startdato. Du kan også sette en sluttdato hvis ønskelig. Mønsteret vil automatisk vises i kalenderen.",
+    answer:
+      "Klikk på 'Gjentakende'-knappen i toppen av kalenderen. Fyll ut skjemaet med tittel (f.eks. 'Lunsj'), velg tidspunkt, gjentakelsesmønster og startdato. Du kan også sette en sluttdato hvis ønskelig. Mønsteret vil automatisk vises i kalenderen.",
   },
   {
     id: "7",
     question: "Hva skjer når jeg klikker på en grønn celle?",
-    answer: "Når du klikker på en grønn (tilgjengelig) celle, åpnes en dialog hvor du kan markere den tiden som utilgjengelig. Du kan sette start- og sluttid samt legge til en valgfri årsak som 'Ferie' eller 'Legetime'.",
+    answer:
+      "Når du klikker på en grønn (tilgjengelig) celle, åpnes en dialog hvor du kan markere den tiden som utilgjengelig. Du kan sette start- og sluttid samt legge til en valgfri årsak som 'Ferie' eller 'Legetime'.",
   },
   {
-    id: "8", 
+    id: "8",
     question: "Hva skjer når jeg klikker på en rød celle?",
-    answer: "Når du klikker på en rød (utilgjengelig) celle, får du forskjellige alternativer avhengig av hva som gjør cellen rød. For engangs-utilgjengelighet kan du fjerne den eller endre arbeidsdag. For gjentakende mønstre får du avanserte alternativer for å administrere serien.",
+    answer:
+      "Når du klikker på en rød (utilgjengelig) celle, får du forskjellige alternativer avhengig av hva som gjør cellen rød. For engangs-utilgjengelighet kan du fjerne den eller endre arbeidsdag. For gjentakende mønstre får du avanserte alternativer for å administrere serien.",
   },
   {
     id: "9",
     question: "Hvilke alternativer har jeg for gjentakende mønstre?",
-    answer: "For gjentakende mønstre har du tre hovedalternativer: 1) Avlys kun denne forekomsten (gjør denne tiden tilgjengelig uten å påvirke resten av serien), 2) Flytt kun denne forekomsten (flytt til annen tid), 3) Rediger hele serien (endre eller slett det hele gjentakende mønsteret).",
+    answer:
+      "For gjentakende mønstre har du tre hovedalternativer: 1) Avlys kun denne forekomsten (gjør denne tiden tilgjengelig uten å påvirke resten av serien), 2) Flytt kun denne forekomsten (flytt til annen tid), 3) Rediger hele serien (endre eller slett det hele gjentakende mønsteret).",
   },
   {
     id: "10",
     question: "Hvordan kan jeg avlyse eller flytte en enkelt forekomst?",
-    answer: "Klikk på den røde cellen som tilhører et gjentakende mønster, velg 'Avlys kun denne forekomsten' for å gjøre tiden tilgjengelig, eller 'Flytt kun denne forekomsten' for å velge ny tid med dato- og tidsvelgere. Den opprinnelige serien fortsetter normalt.",
+    answer:
+      "Klikk på den røde cellen som tilhører et gjentakende mønster, velg 'Avlys kun denne forekomsten' for å gjøre tiden tilgjengelig, eller 'Flytt kun denne forekomsten' for å velge ny tid med dato- og tidsvelgere. Den opprinnelige serien fortsetter normalt.",
   },
   {
     id: "11",
     question: "Hvordan redigerer eller sletter jeg en hel gjentakende serie?",
-    answer: "Klikk på en rød celle fra serien og velg 'Rediger hele serien'. Du får en dialog med alle innstillingene forhåndsutfylt hvor du kan endre tittel, tider, mønster eller datoer. Du kan også slette hele serien med alle unntak ved å klikke 'Slett serie'.",
+    answer:
+      "Klikk på en rød celle fra serien og velg 'Rediger hele serien'. Du får en dialog med alle innstillingene forhåndsutfylt hvor du kan endre tittel, tider, mønster eller datoer. Du kan også slette hele serien med alle unntak ved å klikke 'Slett serie'.",
   },
   {
     id: "12",
     question: "Hva skjer når jeg klikker på en grå celle?",
-    answer: "Grå celler representerer dager eller timer som ikke er en del av din arbeidsplan. Hvis du klikker på en grå celle på en dag du ikke arbeider, får du muligheten til å legge til den dagen som arbeidsdag.",
+    answer:
+      "Grå celler representerer dager eller timer som ikke er en del av din arbeidsplan. Hvis du klikker på en grå celle på en dag du ikke arbeider, får du muligheten til å legge til den dagen som arbeidsdag.",
   },
   {
     id: "13",
     question: "Kan jeg se informasjon om hvorfor en celle er rød?",
-    answer: "Ja! Hold musen over en rød celle for å se tooltip-informasjon som forklarer hvorfor den er utilgjengelig. Dette kan være årsaken til engangs-utilgjengelighet, tittelen på gjentakende mønstre, eller informasjon om flyttede forekomster.",
+    answer:
+      "Ja! Hold musen over en rød celle for å se tooltip-informasjon som forklarer hvorfor den er utilgjengelig. Dette kan være årsaken til engangs-utilgjengelighet, tittelen på gjentakende mønstre, eller informasjon om flyttede forekomster.",
   },
   {
     id: "14",
-    question: "Hvordan påvirker mine tilgjengelighetsinnstillinger kundenes booking?",
-    answer: "Kunder kan kun booke tider som vises som grønne i din kalender. Systemet beregner tilgjengelige tidslukker basert på arbeidsdager, arbeidstider, engangs-utilgjengelighet og gjentakende mønstre (inkludert unntak). Endringer vises øyeblikkelig for kunder.",
+    question:
+      "Hvordan påvirker mine tilgjengelighetsinnstillinger kundenes booking?",
+    answer:
+      "Kunder kan kun booke tider som vises som grønne i din kalender. Systemet beregner tilgjengelige tidslukker basert på arbeidsdager, arbeidstider, engangs-utilgjengelighet og gjentakende mønstre (inkludert unntak). Endringer vises øyeblikkelig for kunder.",
   },
 ];
 
@@ -115,11 +130,16 @@ export function HelpDialog({ open, onOpenChange }: HelpDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-2xl lg:max-w-4xl max-h-[90vh] sm:max-h-[80vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle className="text-2xl">Hvordan bruke tilgjengelighetsplanleggeren</DialogTitle>
+          <DialogTitle className="text-base sm:text-lg lg:text-2xl leading-tight">
+            <span className="block sm:hidden">Hjelp</span>
+            <span className="hidden sm:block hyphens-manual">
+              Hvordan bruke tilgjengelighets&shy;planleggeren
+            </span>
+          </DialogTitle>
         </DialogHeader>
-        
+
         <div className="space-y-6">
           {/* Search */}
           <div className="relative">

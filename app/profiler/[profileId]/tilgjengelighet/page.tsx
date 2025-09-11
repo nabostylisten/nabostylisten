@@ -38,8 +38,8 @@ export default async function TilgjengelighetPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-12">
-        <div className="max-w-6xl mx-auto w-full">
+      <div className="flex flex-1 flex-col gap-4 p-2 sm:p-4 pt-12">
+        <div className="max-w-6xl mx-auto w-full px-2 sm:px-0">
           <BlurFade delay={0.1} duration={0.5} inView>
             <div className="flex items-center gap-3 mb-6">
               <Calendar className="w-8 h-8" />
@@ -53,11 +53,10 @@ export default async function TilgjengelighetPage({
           </BlurFade>
 
           <BlurFade delay={0.15} duration={0.5} inView>
-            <Alert className="mb-6">
-              <Info className="h-4 w-4" />
+            <Alert className="mb-6 flex gap-2 md:hidden">
               <AlertDescription>
-                Kalenderen er ikke optimalisert for mobile enheter. For beste
-                brukeropplevelse, anbefaler vi å bruke en datamaskin.
+                For små skjermer vises kun dagsoversikt. Bruk større skjerm for
+                ukeoversikt med alle 7 dager.
               </AlertDescription>
             </Alert>
           </BlurFade>

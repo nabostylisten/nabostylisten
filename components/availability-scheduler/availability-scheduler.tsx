@@ -10,6 +10,8 @@ import {
   eachDayOfInterval,
   addWeeks,
   subWeeks,
+  addDays,
+  subDays,
   isSameDay,
   isWithinInterval,
 } from "date-fns";
@@ -113,6 +115,7 @@ export function AvailabilityScheduler({
 }: AvailabilitySchedulerProps) {
   const queryClient = useQueryClient();
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [currentDay, setCurrentDay] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [showSettings, setShowSettings] = useState(false);
   const [showAddUnavailable, setShowAddUnavailable] = useState(false);
@@ -732,7 +735,16 @@ export function AvailabilityScheduler({
 
   const handlePreviousWeek = () => setCurrentWeek((prev) => subWeeks(prev, 1));
   const handleNextWeek = () => setCurrentWeek((prev) => addWeeks(prev, 1));
-  const handleToday = () => setCurrentWeek(new Date());
+  const handleToday = () => {
+    const today = new Date();
+    setCurrentWeek(today);
+    setCurrentDay(today);
+  };
+
+  // Day navigation for mobile
+  const handlePreviousDay = () => setCurrentDay((prev) => subDays(prev, 1));
+  const handleNextDay = () => setCurrentDay((prev) => addDays(prev, 1));
+  const handleTodayDay = () => setCurrentDay(new Date());
 
   const handleSaveSettings = () => {
     updateRulesMutation.mutate({ workDays, startTime, endTime });
@@ -784,16 +796,17 @@ export function AvailabilityScheduler({
       {/* Header with controls */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Tilgjengelighet
             </CardTitle>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setShowHelp(true)}
+                className="w-full sm:w-auto"
               >
                 <HelpCircle className="w-4 h-4 mr-2" />
                 Hjelp
@@ -802,6 +815,7 @@ export function AvailabilityScheduler({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowRecurringDialog(true)}
+                className="w-full sm:w-auto"
               >
                 <Repeat className="w-4 h-4 mr-2" />
                 Gjentakende
@@ -810,6 +824,7 @@ export function AvailabilityScheduler({
                 variant="outline"
                 size="sm"
                 onClick={() => setShowSettings(true)}
+                className="w-full sm:w-auto"
               >
                 <Settings className="w-4 h-4 mr-2" />
                 Innstillinger
@@ -818,9 +833,68 @@ export function AvailabilityScheduler({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Week navigation */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
+          {/* Mobile Day Navigation - Only visible on mobile */}
+          <div className="block sm:hidden">
+            <div className="space-y-3">
+              {/* Day switcher buttons */}
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePreviousDay}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" onClick={handleTodayDay} size="sm">
+                  I dag
+                </Button>
+                <Button variant="outline" size="icon" onClick={handleNextDay}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+              
+              {/* Current date display */}
+              <div className="text-center">
+                <h3 className="text-base font-semibold">
+                  {format(currentDay, "EEEE", { locale: nb })}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {format(currentDay, "d. MMMM yyyy", { locale: nb })}
+                </p>
+              </div>
+              
+              {/* Date picker */}
+              <div className="flex justify-center">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Velg dato
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      captionLayout="dropdown"
+                      selected={currentDay}
+                      onSelect={(date) => {
+                        if (date) {
+                          setCurrentDay(date);
+                        }
+                      }}
+                      weekStartsOn={1}
+                      startMonth={new Date(new Date().getFullYear() - 2, 0)}
+                      endMonth={new Date(new Date().getFullYear() + 2, 11)}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Week Navigation - Hidden on mobile */}
+          <div className="hidden sm:flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="flex items-center gap-2 order-2 sm:order-1">
               <Button
                 variant="outline"
                 size="icon"
@@ -828,19 +902,19 @@ export function AvailabilityScheduler({
               >
                 <ChevronLeft className="w-4 h-4" />
               </Button>
-              <Button variant="outline" onClick={handleToday}>
+              <Button variant="outline" onClick={handleToday} size="sm">
                 I dag
               </Button>
               <Button variant="outline" size="icon" onClick={handleNextWeek}>
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="text-right">
-                <h3 className="text-lg font-semibold">
+            <div className="flex flex-col sm:flex-row items-center gap-2 order-1 sm:order-2">
+              <div className="text-center sm:text-right">
+                <h3 className="text-base sm:text-lg font-semibold">
                   Uke {format(currentWeek, "w, yyyy")}
                 </h3>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-xs sm:text-sm text-muted-foreground">
                   {format(currentWeek, "MMMM yyyy", { locale: nb })}
                 </p>
               </div>
@@ -848,7 +922,8 @@ export function AvailabilityScheduler({
                 <PopoverTrigger asChild>
                   <Button variant="outline" size="sm">
                     <Calendar className="w-4 h-4 mr-2" />
-                    Velg dato
+                    <span className="hidden sm:inline">Velg dato</span>
+                    <span className="sm:hidden">Dato</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -871,21 +946,110 @@ export function AvailabilityScheduler({
             </div>
           </div>
 
-          {/* Weekly calendar view */}
-          <div className="border rounded-lg overflow-hidden">
-            {/* Scrollable container for both X and Y axis */}
-            <div className="overflow-auto max-h-[600px] touch-pan-x touch-pan-y">
-              <div className="min-w-[800px]">
+          {/* Mobile Day View - Only visible on mobile */}
+          <div className="block sm:hidden border rounded-lg overflow-hidden">
+            <div className="overflow-y-auto max-h-[70vh]">
+              {/* Day Header */}
+              <div className="bg-muted sticky top-0 z-10 flex">
+                <div className="p-2 border-r pt-4 bg-muted w-[80px] flex-shrink-0">
+                  <Clock className="w-4 h-4 mx-auto" />
+                </div>
+                <div className="p-2 text-center bg-muted flex-1 border-r">
+                  <div className="text-xs text-muted-foreground">
+                    {format(currentDay, "EEE", { locale: nb })}
+                  </div>
+                  <div className="text-sm font-medium">{format(currentDay, "d")}</div>
+                </div>
+              </div>
+
+              {/* Hour slots for single day */}
+              <div>
+                {getAllHours().map((hour) => {
+                  const isWorkDay = isDayWorkDay(currentDay);
+                  const isWorkHour = isHourInWorkTime(hour);
+                  const isAvailable = isWorkDay && isWorkHour;
+                  const isUnavailable = isTimeSlotUnavailable(currentDay, hour);
+
+                  const cellContent = (
+                    <div className="flex">
+                      <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50 w-[80px] flex-shrink-0">
+                        {`${hour.toString().padStart(2, "0")}:00`}
+                      </div>
+                      <div
+                        className={cn(
+                          "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors flex-1",
+                          !isAvailable && "bg-gray-100",
+                          isAvailable &&
+                            !isUnavailable &&
+                            "bg-green-100 hover:bg-green-300",
+                          isUnavailable && "bg-red-100 hover:bg-red-200"
+                        )}
+                        onClick={() => {
+                          if (isAvailable && !isUnavailable) {
+                            // Green cell - add unavailability
+                            const clickedDate = new Date(currentDay);
+                            clickedDate.setHours(hour, 0, 0, 0);
+                            setUnavailableStart(clickedDate);
+                            const endDate = new Date(clickedDate);
+                            endDate.setHours(hour + 1, 0, 0, 0);
+                            setUnavailableEnd(endDate);
+                            setShowAddUnavailable(true);
+                          } else if (!isAvailable && !isWorkDay) {
+                            // Gray cell - add work day
+                            setSelectedGrayCell(currentDay);
+                            setShowAddWorkDay(true);
+                          } else if (isUnavailable) {
+                            // Red cell - manage unavailability
+                            setSelectedRedCell({ date: currentDay, hour });
+                            setShowManageUnavailable(true);
+                          }
+                        }}
+                      >
+                        {isUnavailable && (
+                          <Badge variant="destructive" className="text-xs">
+                            Opptatt
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  );
+
+                  // Wrap red cells with tooltip
+                  if (isUnavailable) {
+                    return (
+                      <TooltipProvider key={hour} delayDuration={100}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            {cellContent}
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>{getUnavailabilityTooltip(currentDay, hour)}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  }
+
+                  return <div key={hour}>{cellContent}</div>;
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Week View - Hidden on mobile */}
+          <div className="hidden sm:block border rounded-lg overflow-hidden">
+            <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
+              <div className="min-w-[640px] w-full">
                 {/* Header */}
-                <div className="grid grid-cols-8 bg-muted">
-                  <div className="p-2 border-r pt-4">
+                <div className="flex bg-muted sticky top-0 z-10">
+                  <div className="p-2 border-r pt-4 bg-muted w-[80px] flex-shrink-0 sticky left-0 z-20">
                     <Clock className="w-4 h-4 mx-auto" />
                   </div>
                   {weekDays.map((day, index) => (
                     <div
                       key={index}
                       className={cn(
-                        "p-2 text-center border-r last:border-r-0",
+                        "p-2 text-center border-r last:border-r-0 bg-muted flex-1 min-w-[80px]",
                         isSameDay(day, new Date()) && "bg-primary/10 font-semibold"
                       )}
                     >
@@ -900,8 +1064,8 @@ export function AvailabilityScheduler({
                 {/* Hour slots */}
                 <div>
                   {getAllHours().map((hour) => (
-                    <div key={hour} className="grid grid-cols-8">
-                      <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50">
+                    <div key={hour} className="flex">
+                      <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50 w-[80px] flex-shrink-0 sticky left-0 z-10">
                         {`${hour.toString().padStart(2, "0")}:00`}
                       </div>
                       {weekDays.map((day, dayIndex) => {
@@ -913,7 +1077,7 @@ export function AvailabilityScheduler({
                         const cellContent = (
                           <div
                             className={cn(
-                              "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors",
+                              "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors flex-1 min-w-[80px]",
                               !isAvailable && "bg-gray-100",
                               isAvailable &&
                                 !isUnavailable &&
@@ -965,7 +1129,7 @@ export function AvailabilityScheduler({
                           );
                         }
 
-                        return <div key={dayIndex}>{cellContent}</div>;
+                        return cellContent;
                       })}
                     </div>
                   ))}
@@ -975,7 +1139,7 @@ export function AvailabilityScheduler({
           </div>
 
           {/* Legend */}
-          <div className="flex gap-6 text-sm">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-green-100 border-2 border-green-200 rounded" />
               <span className="font-medium">Tilgjengelig</span>

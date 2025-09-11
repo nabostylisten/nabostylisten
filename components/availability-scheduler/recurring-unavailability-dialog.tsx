@@ -78,9 +78,11 @@ export function RecurringUnavailabilityDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-[95vw] sm:max-w-lg max-h-[90vh] sm:max-h-[80vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Gjentakende utilgjengelighet</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">
+            Gjentakende utilgjengelighet
+          </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
@@ -94,7 +96,7 @@ export function RecurringUnavailabilityDialog({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Fra klokkeslett</Label>
               <Select value={startTime} onValueChange={setStartTime}>
@@ -168,13 +170,15 @@ export function RecurringUnavailabilityDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
             <div>
               <Label>Start dato</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    {format(startDate, "PPP", { locale: nb })}
+                  <Button variant="outline" className="w-full justify-start text-left">
+                    <span className="truncate">
+                      {format(startDate, "PPP", { locale: nb })}
+                    </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -192,8 +196,10 @@ export function RecurringUnavailabilityDialog({
               <Label>Slutt dato (valgfritt)</Label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
-                    {endDate ? format(endDate, "PPP", { locale: nb }) : "Ingen slutt"}
+                  <Button variant="outline" className="w-full justify-start text-left">
+                    <span className="truncate">
+                      {endDate ? format(endDate, "PPP", { locale: nb }) : "Ingen slutt"}
+                    </span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
@@ -209,11 +215,11 @@ export function RecurringUnavailabilityDialog({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
             Avbryt
           </Button>
-          <Button onClick={handleSubmit} disabled={!title.trim()}>
+          <Button onClick={handleSubmit} disabled={!title.trim()} className="w-full sm:w-auto">
             Legg til
           </Button>
         </DialogFooter>

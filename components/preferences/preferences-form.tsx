@@ -293,21 +293,21 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {[...Array(3)].map((_, i) => (
           <BlurFade key={i} delay={i * 0.1} duration={0.5} inView>
             <Card>
-              <CardHeader>
-                <div className="h-6 w-48 bg-muted rounded animate-pulse" />
+              <CardHeader className="pb-3 sm:pb-6">
+                <div className="h-5 sm:h-6 w-32 sm:w-48 bg-muted rounded animate-pulse" />
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3 sm:space-y-4">
                 {[...Array(2)].map((_, j) => (
-                  <div key={j} className="flex items-center justify-between">
-                    <div className="space-y-2">
-                      <div className="h-4 w-32 bg-muted rounded animate-pulse" />
-                      <div className="h-3 w-64 bg-muted rounded animate-pulse" />
+                  <div key={j} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+                    <div className="space-y-1.5 sm:space-y-2 flex-1 min-w-0">
+                      <div className="h-3.5 sm:h-4 w-24 sm:w-32 bg-muted rounded animate-pulse" />
+                      <div className="h-3 w-full max-w-48 sm:max-w-64 bg-muted rounded animate-pulse" />
                     </div>
-                    <div className="h-6 w-12 bg-muted rounded animate-pulse" />
+                    <div className="h-5 sm:h-6 w-10 sm:w-12 bg-muted rounded animate-pulse shrink-0 self-start sm:self-center" />
                   </div>
                 ))}
               </CardContent>

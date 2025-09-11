@@ -30,7 +30,7 @@ export default async function InntekterPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile?.role}>
-      <div className="p-4 pt-12">
+      <div className="pt-12">
         <StylistRevenueDashboard
           userId={profileId}
           userName={profile?.full_name || undefined}

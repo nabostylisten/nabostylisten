@@ -247,20 +247,20 @@ export function AffiliatePerformanceOverview({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Ytelsessammendrag</CardTitle>
+        <CardTitle className="hyphens-manual">Ytelses&shy;sammendrag</CardTitle>
         <CardDescription>
           {activeCodeSince && `Aktiv siden ${daysSinceActive} dager`}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4">
             <div className="text-center p-4 bg-muted/50 rounded-lg">
               <div className="text-2xl font-bold text-primary">
                 {conversionRate.toFixed(1)}%
               </div>
-              <div className="text-sm text-muted-foreground">
-                Konverteringsrate
+              <div className="text-sm text-muted-foreground hyphens-manual">
+                Konverterings&shy;rate
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 {conversionRate > 5
@@ -288,12 +288,12 @@ export function AffiliatePerformanceOverview({
           </div>
 
           <div className="space-y-2">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1 sm:gap-0">
               <span className="text-sm text-muted-foreground">
                 Måloppnåelse
               </span>
-              <span className="text-sm font-medium">
-                {conversionCount}/10 bookinger denne måneden
+              <span className="text-sm font-medium hyphens-manual">
+                {conversionCount}/10 bookinger denne måned&shy;en
               </span>
             </div>
             <div className="w-full bg-muted rounded-full h-2">
@@ -308,17 +308,17 @@ export function AffiliatePerformanceOverview({
 
           {conversionCount === 0 && clickCount > 0 && (
             <div className="text-center p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="text-sm text-amber-800">
+              <div className="text-sm text-amber-800 hyphens-manual">
                 Du har fått klikk, men ingen bookinger ennå. Fortsett å dele
-                partnerkoden din!
+                partner&shy;koden din!
               </div>
             </div>
           )}
 
           {clickCount === 0 && (
             <div className="text-center p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="text-sm text-blue-800">
-                Start med å dele partnerkoden din for å få dine første klikk og
+              <div className="text-sm text-blue-800 hyphens-manual">
+                Start med å dele partner&shy;koden din for å få dine første klikk og
                 kunder!
               </div>
             </div>

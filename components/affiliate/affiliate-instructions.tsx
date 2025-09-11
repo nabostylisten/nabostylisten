@@ -132,10 +132,14 @@ export function AffiliateInstructions({
   const howItWorksSteps: { content: React.ReactNode }[] = [
     {
       content: (
-        <>
-          Kunden klikker på lenken din eller bruker koden{" "}
-          <code className="bg-muted px-1 rounded">{partnerCode}</code>
-        </>
+        <div className="flex flex-col sm:inline">
+          <span className="sm:inline">
+            Kunden klikker på lenken din eller bruker koden
+          </span>
+          <code className="bg-muted px-1 rounded mt-1 sm:mt-0 sm:ml-1 w-fit">
+            {partnerCode}
+          </code>
+        </div>
       ),
     },
     {

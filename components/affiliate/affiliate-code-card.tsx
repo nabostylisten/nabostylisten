@@ -179,7 +179,7 @@ export function AffiliateCodeCard({
         {/* Partner Code */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Partnerkode</label>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="flex-1 px-3 py-2 bg-muted rounded-md font-mono text-lg tracking-wider">
               {affiliateCode.link_code}
             </div>
@@ -187,7 +187,7 @@ export function AffiliateCodeCard({
               variant="outline"
               size="sm"
               onClick={copyCode}
-              className="flex items-center space-x-1"
+              className="flex items-center justify-center gap-1 w-full sm:w-auto"
             >
               {copiedCode ? (
                 <Check className="w-4 h-4" />
@@ -202,7 +202,7 @@ export function AffiliateCodeCard({
         {/* Partner Link */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Partnerlenke</label>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2">
             <div className="flex-1 px-3 py-2 bg-muted rounded-md text-sm break-all">
               {partnerLink}
             </div>
@@ -210,7 +210,7 @@ export function AffiliateCodeCard({
               variant="outline"
               size="sm"
               onClick={copyLink}
-              className="flex items-center space-x-1"
+              className="flex items-center justify-center gap-1 w-full sm:w-auto"
             >
               {copiedLink ? (
                 <Check className="w-4 h-4" />
@@ -266,7 +266,7 @@ export function AffiliateCodeCard({
             <Share2 className="w-4 h-4" />
             Del på sosiale medier
           </label>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col sm:grid sm:grid-cols-3 gap-2">
             <Button
               variant="outline"
               size="sm"

@@ -35,10 +35,12 @@ export default async function PartnerDashboardPage({
 
   return (
     <ProfileLayout profileId={profileId} userRole={profile.role}>
-      <PartnerDashboardClient
-        profileId={profileId}
-        fullName={profile.full_name || ""}
-      />
+      <div className="pt-12">
+        <PartnerDashboardClient
+          profileId={profileId}
+          fullName={profile.full_name || ""}
+        />
+      </div>
     </ProfileLayout>
   );
 }

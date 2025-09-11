@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCartStore } from "@/stores/cart.store";
 import { useBookingStore } from "@/stores/booking.store";
-import { ArrowLeft, Clock, User, AlertCircle } from "lucide-react";
+import { ArrowLeft, Clock, User, AlertCircle, Info } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BookingStepper, OrderSummary } from "@/components/booking";
@@ -354,12 +354,16 @@ export default function BookingPage() {
     <div className="min-h-screen pt-20 px-6 lg:px-12">
       <div className="max-w-6xl mx-auto">
         <BlurFade duration={0.5} inView>
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" onClick={() => router.back()}>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-8">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="w-fit"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Tilbake
             </Button>
-            <h1 className="text-3xl font-bold">Booking</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Booking</h1>
           </div>
         </BlurFade>
 
@@ -425,6 +429,17 @@ export default function BookingPage() {
                   </div>
                 </CardContent>
               </Card>
+            </BlurFade>
+
+            {/* Mobile Booking Info */}
+            <BlurFade delay={0.12} duration={0.5} inView>
+              <Alert className="mb-6 flex gap-2 md:hidden">
+                <AlertDescription>
+                  For små skjermer vises kun dagsoversikt av kalenderen. Bruk
+                  større skjerm for ukeoversikt eller bytt til listevisning for
+                  enklere navigering.
+                </AlertDescription>
+              </Alert>
             </BlurFade>
 
             {/* Booking Stepper */}

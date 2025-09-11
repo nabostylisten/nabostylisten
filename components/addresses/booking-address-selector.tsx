@@ -11,6 +11,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAddress } from "@/server/addresses.actions";
 import { getStylistProfileWithServices } from "@/server/profile.actions";
 import type { Database } from "@/types/database.types";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 type Address = Database["public"]["Tables"]["addresses"]["Row"];
 
@@ -39,6 +40,7 @@ export function BookingAddressSelector({
 }: BookingAddressSelectorProps) {
   const [manualAddress, setManualAddress] = useState("");
   const [useManualAddress, setUseManualAddress] = useState(false);
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
 
   // Fetch selected address details
   const { data: addressData } = useQuery({
@@ -121,7 +123,9 @@ export function BookingAddressSelector({
               <AddressCombobox
                 value={selectedAddressId}
                 onSelect={handleAddressSelect}
-                placeholder="Velg eller legg til adresse"
+                placeholder={
+                  isSmallScreen ? "Adresse" : "Velg eller legg til adresse"
+                }
               />
             </div>
 

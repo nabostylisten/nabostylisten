@@ -23,7 +23,10 @@ import { TrialSessionStep } from "@/components/booking/trial-session-step";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { useBookingStore } from "@/stores/booking.store";
-import { formatCurrency, getBookingBreakdown } from "@/lib/booking-calculations";
+import {
+  formatCurrency,
+  getBookingBreakdown,
+} from "@/lib/booking-calculations";
 import { getStylistProfileWithServices } from "@/server/profile.actions";
 import { useQuery } from "@tanstack/react-query";
 
@@ -99,7 +102,7 @@ export function BookingStepper({
   cartItems,
   onComplete,
 }: BookingStepperProps) {
-  const isMobile = useMediaQuery("(max-width: 768px)");
+  const isLargeScreen = useMediaQuery("(min-width: 768px)");
   const {
     currentStep,
     bookingData,
@@ -121,7 +124,9 @@ export function BookingStepper({
   });
 
   const stylistProfile = stylistData?.data?.profile;
-  const stylistPrimaryAddress = stylistProfile?.addresses?.find((addr: any) => addr.is_primary);
+  const stylistPrimaryAddress = stylistProfile?.addresses?.find(
+    (addr: any) => addr.is_primary
+  );
 
   // Create stepper dynamically based on trial session availability
   const { Stepper } = React.useMemo(() => {
@@ -187,49 +192,79 @@ export function BookingStepper({
 
       <Stepper.Provider
         className="space-y-6"
-        variant={isMobile ? "vertical" : "horizontal"}
+        variant="horizontal"
+        labelOrientation={isLargeScreen ? "horizontal" : "vertical"}
       >
         {({ methods }) => (
           <>
-            <Stepper.Navigation>
-              {methods.all.map((step) => (
-                <Stepper.Step
-                  key={step.id}
-                  of={step.id}
-                  onClick={() => {
-                    if (isStepAccessible(step.id)) {
-                      methods.goTo(step.id);
+            {/* Compact mobile navigation or full desktop navigation */}
+            <div className={!isLargeScreen ? "mb-6" : ""}>
+              <Stepper.Navigation>
+                {methods.all.map((step) => (
+                  <Stepper.Step
+                    key={step.id}
+                    of={step.id}
+                    onClick={() => {
+                      if (isStepAccessible(step.id)) {
+                        methods.goTo(step.id);
+                      }
+                    }}
+                    icon={step.icon}
+                    disabled={!isStepAccessible(step.id)}
+                    className={
+                      !isLargeScreen
+                        ? "data-[label-orientation=vertical]:gap-2"
+                        : ""
                     }
-                  }}
-                  icon={step.icon}
-                  disabled={!isStepAccessible(step.id)}
-                >
-                  <Stepper.Title className="text-xs">
-                    {step.title}
-                  </Stepper.Title>
-                  <Stepper.Description className="text-xs">
-                    {step.description}
-                  </Stepper.Description>
-                  {isMobile &&
-                    methods.when(step.id, () => (
-                      <div className="mt-4">{renderStepContent(step.id)}</div>
-                    ))}
-                </Stepper.Step>
-              ))}
-            </Stepper.Navigation>
+                  >
+                    {isLargeScreen && (
+                      <>
+                        <Stepper.Title className="text-xs">
+                          {step.title}
+                        </Stepper.Title>
+                        <Stepper.Description className="text-xs">
+                          {step.description}
+                        </Stepper.Description>
+                      </>
+                    )}
+                  </Stepper.Step>
+                ))}
+              </Stepper.Navigation>
 
-            {!isMobile &&
-              methods.switch({
-                "time-selection": () => renderStepContent("time-selection"),
-                ...(hasTrialSession
-                  ? {
-                      "trial-session": () => renderStepContent("trial-session"),
-                    }
-                  : {}),
-                "location-details": () => renderStepContent("location-details"),
-                "message-discount": () => renderStepContent("message-discount"),
-                payment: () => renderStepContent("payment"),
-              })}
+              {/* Small/Medium screens: Show current step info below navigation */}
+              {!isLargeScreen && (
+                <div className="mt-4 text-center px-4">
+                  {(() => {
+                    const currentStepData = createStepperSteps(
+                      hasTrialSession || false
+                    ).find((step) => step.id === methods.current.id);
+                    return currentStepData ? (
+                      <>
+                        <h3 className="text-lg font-semibold">
+                          {currentStepData.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {currentStepData.description}
+                        </p>
+                      </>
+                    ) : null;
+                  })()}
+                </div>
+              )}
+            </div>
+
+            {/* Content area - same for both mobile and desktop */}
+            {methods.switch({
+              "time-selection": () => renderStepContent("time-selection"),
+              ...(hasTrialSession
+                ? {
+                    "trial-session": () => renderStepContent("trial-session"),
+                  }
+                : {}),
+              "location-details": () => renderStepContent("location-details"),
+              "message-discount": () => renderStepContent("message-discount"),
+              payment: () => renderStepContent("payment"),
+            })}
 
             <Stepper.Controls>
               <Button
@@ -406,14 +441,20 @@ export function BookingStepper({
       case "payment":
         // Calculate breakdown using common utilities
         const bookingItems = [{ price: serviceAmountNOK, quantity: 1 }];
-        const trialSessionData = (bookingData.wantsTrialSession && trialSessionPrice) ? { price: trialSessionPrice } : null;
-        const appliedDiscountData = bookingData.appliedDiscount ? {
-          discountAmount: bookingData.appliedDiscount.discountAmount,
-          code: bookingData.appliedDiscount.code,
-          wasLimitedByMaxOrderAmount: bookingData.appliedDiscount.wasLimitedByMaxOrderAmount,
-          maxOrderAmountNOK: bookingData.appliedDiscount.maxOrderAmountNOK,
-        } : null;
-        
+        const trialSessionData =
+          bookingData.wantsTrialSession && trialSessionPrice
+            ? { price: trialSessionPrice }
+            : null;
+        const appliedDiscountData = bookingData.appliedDiscount
+          ? {
+              discountAmount: bookingData.appliedDiscount.discountAmount,
+              code: bookingData.appliedDiscount.code,
+              wasLimitedByMaxOrderAmount:
+                bookingData.appliedDiscount.wasLimitedByMaxOrderAmount,
+              maxOrderAmountNOK: bookingData.appliedDiscount.maxOrderAmountNOK,
+            }
+          : null;
+
         const breakdown = getBookingBreakdown({
           items: bookingItems,
           trialSession: trialSessionData,
@@ -471,7 +512,9 @@ export function BookingStepper({
                           Hos stylisten
                           {stylistPrimaryAddress && (
                             <span className="block text-muted-foreground">
-                              {stylistPrimaryAddress.street_address}, {stylistPrimaryAddress.postal_code} {stylistPrimaryAddress.city}
+                              {stylistPrimaryAddress.street_address},{" "}
+                              {stylistPrimaryAddress.postal_code}{" "}
+                              {stylistPrimaryAddress.city}
                             </span>
                           )}
                         </span>
@@ -480,7 +523,12 @@ export function BookingStepper({
                           Hjemme hos deg
                           {bookingData.customerAddressDetails && (
                             <span className="block text-muted-foreground">
-                              {bookingData.customerAddressDetails.street_address}, {bookingData.customerAddressDetails.postal_code} {bookingData.customerAddressDetails.city}
+                              {
+                                bookingData.customerAddressDetails
+                                  .street_address
+                              }
+                              , {bookingData.customerAddressDetails.postal_code}{" "}
+                              {bookingData.customerAddressDetails.city}
                             </span>
                           )}
                         </span>
@@ -523,14 +571,15 @@ export function BookingStepper({
                     )}
                     <div className="pt-2 border-t border-border">
                       <p className="text-sm font-medium">
-                        <strong>Totalt:</strong>{" "}
-                        {breakdown.formattedFinalTotal}
+                        <strong>Totalt:</strong> {breakdown.formattedFinalTotal}
                         {bookingData.appliedDiscount && (
                           <span className="text-muted-foreground">
                             {" "}
                             ({breakdown.formattedServiceSubtotal}
-                            {breakdown.hasTrialSession && ` + ${breakdown.formattedTrialSessionAmount} prøvetime`}
-                            {breakdown.hasDiscount && ` - ${breakdown.formattedDiscountAmount} rabatt`}
+                            {breakdown.hasTrialSession &&
+                              ` + ${breakdown.formattedTrialSessionAmount} prøvetime`}
+                            {breakdown.hasDiscount &&
+                              ` - ${breakdown.formattedDiscountAmount} rabatt`}
                             )
                           </span>
                         )}

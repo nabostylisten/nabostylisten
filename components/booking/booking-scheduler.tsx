@@ -9,6 +9,8 @@ import {
   eachDayOfInterval,
   addWeeks,
   subWeeks,
+  addDays,
+  subDays,
   isSameDay,
 } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -30,6 +32,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { BookingSchedulerSkeleton } from "@/components/booking/booking-scheduler-skeleton";
 import { BookingHelpDialog } from "@/components/booking/booking-help-dialog";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import type { Database } from "@/types/database.types";
 import {
   getAvailabilityRules,
@@ -70,9 +73,9 @@ export function BookingScheduler({
   customTimeSlotValidator,
 }: BookingSchedulerProps) {
   const [currentWeek, setCurrentWeek] = useState(new Date());
+  const [currentDay, setCurrentDay] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
   const [showHelp, setShowHelp] = useState(false);
-
   // Calculate required duration slots (round up to nearest hour)
   const requiredHours = Math.ceil(serviceDurationMinutes / 60);
 
@@ -259,7 +262,7 @@ export function BookingScheduler({
       const now = new Date();
       const slotStart = new Date(date);
       slotStart.setHours(hour, 0, 0, 0);
-      
+
       if (slotStart <= now) {
         return false;
       }
@@ -286,7 +289,12 @@ export function BookingScheduler({
 
       return true;
     },
-    [requiredHours, isHourInWorkTime, isTimeSlotUnavailable, customTimeSlotValidator]
+    [
+      requiredHours,
+      isHourInWorkTime,
+      isTimeSlotUnavailable,
+      customTimeSlotValidator,
+    ]
   );
 
   // Check if a time slot is part of the current selection
@@ -343,7 +351,7 @@ export function BookingScheduler({
     const endOfNewWeek = endOfWeek(newWeek, { weekStartsOn: 1 });
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     return endOfNewWeek >= today;
   }, [currentWeek]);
 
@@ -352,15 +360,24 @@ export function BookingScheduler({
     const endOfNewWeek = endOfWeek(newWeek, { weekStartsOn: 1 });
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     // Only allow going back if the end of the new week is not before today
     if (endOfNewWeek >= today) {
       setCurrentWeek(newWeek);
     }
   };
-  
+
   const handleNextWeek = () => setCurrentWeek((prev) => addWeeks(prev, 1));
-  const handleToday = () => setCurrentWeek(new Date());
+  const handleToday = () => {
+    const today = new Date();
+    setCurrentWeek(today);
+    setCurrentDay(today);
+  };
+
+  // Day navigation for mobile
+  const handlePreviousDay = () => setCurrentDay((prev) => subDays(prev, 1));
+  const handleNextDay = () => setCurrentDay((prev) => addDays(prev, 1));
+  const handleTodayDay = () => setCurrentDay(new Date());
 
   const handleTimeSlotClick = (date: Date, hour: number) => {
     if (!isDayWorkDay(date) || !isHourInWorkTime(hour)) return;
@@ -384,21 +401,19 @@ export function BookingScheduler({
       {/* Header with controls */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-center md:items-start gap-2 justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Velg tidspunkt
             </CardTitle>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowHelp(true)}
-              >
-                <HelpCircle className="w-4 h-4 mr-2" />
-                Hjelp
-              </Button>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowHelp(true)}
+            >
+              <HelpCircle className="w-4 h-4 mr-2" />
+              Hjelp
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -414,8 +429,71 @@ export function BookingScheduler({
             </div>
           </div>
 
-          {/* Week navigation */}
-          <div className="flex items-center justify-between">
+          {/* Calendar View Navigation */}
+          {/* Mobile Day Navigation - Only visible on mobile */}
+          <div className="block sm:hidden">
+            <div className="space-y-3">
+              {/* Day switcher buttons */}
+              <div className="flex items-center justify-center gap-2">
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handlePreviousDay}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+                <Button variant="outline" onClick={handleTodayDay} size="sm">
+                  I dag
+                </Button>
+                <Button variant="outline" size="icon" onClick={handleNextDay}>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
+
+              {/* Current date display */}
+              <div className="text-center">
+                <h3 className="text-base font-semibold">
+                  {format(currentDay, "EEEE", { locale: nb })}
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  {format(currentDay, "d. MMMM yyyy", { locale: nb })}
+                </p>
+              </div>
+
+              {/* Date picker */}
+              <div className="flex justify-center">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Velg dato
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <CalendarComponent
+                      mode="single"
+                      captionLayout="dropdown"
+                      selected={currentDay}
+                      onSelect={(date) => {
+                        if (date) {
+                          setCurrentDay(date);
+                        }
+                      }}
+                      weekStartsOn={1}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today;
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Week Navigation - Hidden on mobile */}
+          <div className="hidden sm:flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
@@ -470,8 +548,129 @@ export function BookingScheduler({
             </div>
           </div>
 
-          {/* Weekly calendar view */}
-          <div className="border rounded-lg overflow-hidden">
+          {/* Calendar Views */}
+          {/* Mobile Day View - Only visible on mobile */}
+          <div className="block sm:hidden border rounded-lg overflow-hidden">
+            <div className="overflow-y-auto max-h-[70vh]">
+              {/* Day Header */}
+              <div className="bg-muted sticky top-0 z-10 flex">
+                <div className="p-2 border-r pt-4 bg-muted w-[80px] flex-shrink-0">
+                  <Clock className="w-4 h-4 mx-auto" />
+                </div>
+                <div className="p-2 text-center bg-muted flex-1 border-r">
+                  <div className="text-xs text-muted-foreground">
+                    {format(currentDay, "EEE", { locale: nb })}
+                  </div>
+                  <div className="text-sm font-medium">
+                    {format(currentDay, "d")}
+                  </div>
+                </div>
+              </div>
+
+              {/* Hour slots for single day */}
+              <div>
+                {getDisplayHours().map((hour) => {
+                  const isWorkDay = isDayWorkDay(currentDay);
+                  const isWorkHour = isHourInWorkTime(hour);
+                  const isAvailable = isWorkDay && isWorkHour;
+                  const isUnavailable = isTimeSlotUnavailable(currentDay, hour);
+
+                  // Check if the time slot is in the past
+                  const now = new Date();
+                  const slotStart = new Date(currentDay);
+                  slotStart.setHours(hour, 0, 0, 0);
+                  const isPast = slotStart <= now;
+
+                  const canSelect = canSelectTimeSlot(currentDay, hour);
+                  const isSelected = isSlotSelected(currentDay, hour);
+                  const isCurrentBooking = isSlotCurrentBooking(
+                    currentDay,
+                    hour
+                  );
+
+                  // Check if custom validator rejects this slot
+                  const isCustomValidatorRejected =
+                    customTimeSlotValidator &&
+                    !customTimeSlotValidator(currentDay, hour);
+
+                  // Determine if slot is effectively unavailable (past, explicitly unavailable, not work time, or custom validator rejects)
+                  const isEffectivelyUnavailable =
+                    !isAvailable ||
+                    isUnavailable ||
+                    isPast ||
+                    isCustomValidatorRejected;
+
+                  // Check if it's available but can't be selected due to insufficient consecutive hours
+                  // (but not rejected by custom validator - those should be gray, not yellow)
+                  const hasInsufficientTime =
+                    isAvailable &&
+                    !isUnavailable &&
+                    !isPast &&
+                    !isCustomValidatorRejected &&
+                    !canSelect;
+
+                  return (
+                    <div key={hour} className="flex">
+                      <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50 w-[80px] flex-shrink-0">
+                        {`${hour.toString().padStart(2, "0")}:00`}
+                      </div>
+                      <div
+                        className={cn(
+                          "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors flex-1",
+                          isEffectivelyUnavailable &&
+                            !isCurrentBooking &&
+                            "bg-gray-100 cursor-not-allowed",
+                          isAvailable &&
+                            !isUnavailable &&
+                            !isPast &&
+                            canSelect &&
+                            !isCurrentBooking &&
+                            "bg-green-100 hover:bg-green-200",
+                          hasInsufficientTime &&
+                            !isCurrentBooking &&
+                            "bg-yellow-100 cursor-not-allowed",
+                          isCurrentBooking &&
+                            "bg-purple-200 border-purple-500 cursor-not-allowed",
+                          isSelected &&
+                            "bg-blue-200 animate-pulse border-blue-400"
+                        )}
+                        onClick={() => {
+                          if (
+                            isAvailable &&
+                            !isUnavailable &&
+                            !isPast &&
+                            canSelect &&
+                            !isCurrentBooking
+                          ) {
+                            handleTimeSlotClick(currentDay, hour);
+                          }
+                        }}
+                      >
+                        {isSelected && (
+                          <div className="text-xs font-medium text-blue-700">
+                            Valgt
+                          </div>
+                        )}
+                        {isCurrentBooking && (
+                          <div className="text-xs font-medium text-purple-700">
+                            Nåværende
+                          </div>
+                        )}
+                        {hasInsufficientTime && !isCurrentBooking && (
+                          <div className="text-xs text-yellow-700">
+                            For kort tid
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {/* Desktop Week View - Hidden on mobile */}
+          <div className="hidden sm:block border rounded-lg overflow-hidden">
             <div className="grid grid-cols-8 bg-muted">
               <div className="p-2 border-r pt-4">
                 <Clock className="w-4 h-4 mx-auto" />
@@ -504,33 +703,46 @@ export function BookingScheduler({
                     const isWorkHour = isHourInWorkTime(hour);
                     const isAvailable = isWorkDay && isWorkHour;
                     const isUnavailable = isTimeSlotUnavailable(day, hour);
-                    
+
                     // Check if the time slot is in the past
                     const now = new Date();
                     const slotStart = new Date(day);
                     slotStart.setHours(hour, 0, 0, 0);
                     const isPast = slotStart <= now;
-                    
+
                     const canSelect = canSelectTimeSlot(day, hour);
                     const isSelected = isSlotSelected(day, hour);
                     const isCurrentBooking = isSlotCurrentBooking(day, hour);
 
                     // Check if custom validator rejects this slot
-                    const isCustomValidatorRejected = customTimeSlotValidator && !customTimeSlotValidator(day, hour);
-                    
+                    const isCustomValidatorRejected =
+                      customTimeSlotValidator &&
+                      !customTimeSlotValidator(day, hour);
+
                     // Determine if slot is effectively unavailable (past, explicitly unavailable, not work time, or custom validator rejects)
-                    const isEffectivelyUnavailable = !isAvailable || isUnavailable || isPast || isCustomValidatorRejected;
-                    
+                    const isEffectivelyUnavailable =
+                      !isAvailable ||
+                      isUnavailable ||
+                      isPast ||
+                      isCustomValidatorRejected;
+
                     // Check if it's available but can't be selected due to insufficient consecutive hours
                     // (but not rejected by custom validator - those should be gray, not yellow)
-                    const hasInsufficientTime = isAvailable && !isUnavailable && !isPast && !isCustomValidatorRejected && !canSelect;
+                    const hasInsufficientTime =
+                      isAvailable &&
+                      !isUnavailable &&
+                      !isPast &&
+                      !isCustomValidatorRejected &&
+                      !canSelect;
 
                     return (
                       <div
                         key={dayIndex}
                         className={cn(
                           "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors",
-                          isEffectivelyUnavailable && !isCurrentBooking && "bg-gray-100 cursor-not-allowed",
+                          isEffectivelyUnavailable &&
+                            !isCurrentBooking &&
+                            "bg-gray-100 cursor-not-allowed",
                           isAvailable &&
                             !isUnavailable &&
                             !isPast &&
@@ -567,12 +779,11 @@ export function BookingScheduler({
                             Nåværende
                           </div>
                         )}
-                        {hasInsufficientTime &&
-                          !isCurrentBooking && (
-                            <div className="text-xs text-yellow-700">
-                              For kort tid
-                            </div>
-                          )}
+                        {hasInsufficientTime && !isCurrentBooking && (
+                          <div className="text-xs text-yellow-700">
+                            For kort tid
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -582,7 +793,7 @@ export function BookingScheduler({
           </div>
 
           {/* Legend */}
-          <div className="flex gap-6 text-sm flex-wrap">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-6 text-sm">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-green-100 border-2 border-green-200 rounded" />
               <span className="font-medium">Kan bookes</span>

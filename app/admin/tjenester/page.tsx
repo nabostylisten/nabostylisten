@@ -37,7 +37,7 @@ export default async function AdminTjenesterPage() {
 
   return (
     <AdminLayout>
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-4 py-12">
         <BlurFade delay={0.1} duration={0.5} inView>
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Tjenestekategorier</h1>
@@ -60,7 +60,9 @@ export default async function AdminTjenesterPage() {
                     1
                   </span>
                   <span>
-                    <strong>Opprett hovedkategorier</strong> (f.eks. "Hår", "Negler", "Sminke") ved å klikke "Ny kategori" og la "Overordnet kategori" stå tom
+                    <strong>Opprett hovedkategorier</strong> (f.eks. "Hår",
+                    "Negler", "Sminke") ved å klikke "Ny kategori" og la
+                    "Overordnet kategori" stå tom
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -68,7 +70,9 @@ export default async function AdminTjenesterPage() {
                     2
                   </span>
                   <span>
-                    <strong>Opprett underkategorier</strong> ved å velge en hovedkategori som "Overordnet kategori" (f.eks. "Klipp" under "Hår")
+                    <strong>Opprett underkategorier</strong> ved å velge en
+                    hovedkategori som "Overordnet kategori" (f.eks. "Klipp"
+                    under "Hår")
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -76,7 +80,8 @@ export default async function AdminTjenesterPage() {
                     3
                   </span>
                   <span>
-                    <strong>Rediger</strong> kategorier ved å klikke på blyant-ikonet
+                    <strong>Rediger</strong> kategorier ved å klikke på
+                    blyant-ikonet
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -84,7 +89,8 @@ export default async function AdminTjenesterPage() {
                     4
                   </span>
                   <span>
-                    <strong>Slett</strong> kategorier ved å klikke på søppelbøtte-ikonet (sletter også alle underkategorier)
+                    <strong>Slett</strong> kategorier ved å klikke på
+                    søppelbøtte-ikonet (sletter også alle underkategorier)
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -92,7 +98,8 @@ export default async function AdminTjenesterPage() {
                     5
                   </span>
                   <span>
-                    Bruk "Utvid alle" / "Skjul alle" for å navigere i kategoritreet
+                    Bruk "Utvid alle" / "Skjul alle" for å navigere i
+                    kategoritreet
                   </span>
                 </li>
               </ol>

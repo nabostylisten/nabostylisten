@@ -103,15 +103,15 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
   return (
     <div>
       <div
-        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors"
+        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors gap-3 sm:gap-0"
         style={{ marginLeft: `${indentLevel}px` }}
       >
-        <div className="flex items-center gap-3 flex-1">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
           {hasChildren && (
             <Button
               variant="ghost"
               size="sm"
-              className="p-0 h-6 w-6"
+              className="p-0 h-6 w-6 flex-shrink-0"
               onClick={() => onToggleExpanded(category.id)}
             >
               {isExpanded ? (
@@ -121,29 +121,31 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
               )}
             </Button>
           )}
-          <div className="flex-1">
-            <div className="flex items-center gap-2">
-              <h3 className="font-medium">{category.name}</h3>
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-medium break-words">{category.name}</h3>
               {hasChildren && (
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary" className="text-xs flex-shrink-0">
                   {category.children.length} underkategorier
                 </Badge>
               )}
             </div>
             {category.description && (
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-muted-foreground mt-1 break-words">
                 {category.description}
               </p>
             )}
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="ghost" size="sm" onClick={() => onEdit(category)}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-start flex-shrink-0">
+          <Button variant="outline" size="sm" onClick={() => onEdit(category)} className="flex items-center gap-2 justify-center w-full sm:w-auto">
             <Edit className="w-4 h-4" />
+            <span>Rediger</span>
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => onDelete(category)}>
+          <Button variant="outline" size="sm" onClick={() => onDelete(category)} className="flex items-center gap-2 justify-center w-full sm:w-auto">
             <Trash2 className="w-4 h-4" />
+            <span>Slett</span>
           </Button>
         </div>
       </div>
@@ -299,23 +301,25 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
     <>
       <div className="space-y-6">
         {/* Header with actions */}
-        <div className="flex items-center justify-between">
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="flex flex-col sm:flex-row gap-2">
             <Button
               onClick={handleCreateCategory}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto justify-center"
             >
               <Plus className="w-4 h-4" />
               Ny kategori
             </Button>
-            <Button variant="outline" onClick={expandAll}>
-              Utvid alle
-            </Button>
-            <Button variant="outline" onClick={collapseAll}>
-              Skjul alle
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={expandAll} className="flex-1 sm:flex-initial">
+                Utvid alle
+              </Button>
+              <Button variant="outline" onClick={collapseAll} className="flex-1 sm:flex-initial">
+                Skjul alle
+              </Button>
+            </div>
           </div>
-          <div className="text-sm text-muted-foreground">
+          <div className="text-sm text-muted-foreground text-center sm:text-right">
             {categories.length} kategorier totalt
           </div>
         </div>
@@ -354,20 +358,20 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
           // Loading skeleton matching the category layout
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((index) => (
-              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3 flex-1">
-                  <Skeleton className="h-6 w-6" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
+              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-3 sm:gap-0">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <Skeleton className="h-6 w-6 flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Skeleton className="h-5 w-32" />
-                      {index % 2 === 0 && <Skeleton className="h-4 w-24" />}
+                      {index % 2 === 0 && <Skeleton className="h-4 w-24 flex-shrink-0" />}
                     </div>
                     {index % 3 === 0 && <Skeleton className="h-4 w-48 mt-1" />}
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Skeleton className="h-8 w-8" />
-                  <Skeleton className="h-8 w-8" />
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-start flex-shrink-0">
+                  <Skeleton className="h-8 w-full sm:w-20" />
+                  <Skeleton className="h-8 w-full sm:w-16" />
                 </div>
               </div>
             ))}

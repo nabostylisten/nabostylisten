@@ -271,7 +271,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                 <CardTitle>Din stylist</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center sm:items-start gap-4">
                   <Avatar className="w-16 h-16">
                     <AvatarFallback>
                       {service.profiles?.full_name
@@ -280,15 +280,15 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                         .join("") || "?"}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-semibold text-lg">
+                  <div className="flex-1 w-full text-center sm:text-left">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1 justify-center sm:justify-start">
+                      <h3 className="font-semibold text-lg leading-tight">
                         {service.profiles?.full_name || "Ukjent stylist"}
                       </h3>
                       {!stylistRatingError &&
                         stylistRating &&
                         stylistRating.total_reviews > 0 && (
-                          <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1 justify-center sm:justify-start">
                             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                             <span className="text-sm font-medium">
                               {stylistRating.average_rating}
@@ -300,11 +300,11 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                         )}
                     </div>
                     {stylistDetails?.bio && (
-                      <p className="text-sm text-muted-foreground mt-1">
+                      <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
                         {stylistDetails.bio}
                       </p>
                     )}
-                    <div className="flex items-center gap-2 mt-2">
+                    <div className="flex flex-wrap items-center gap-2 mt-2 justify-center sm:justify-start">
                       {stylistDetails?.can_travel && (
                         <Badge variant="outline" className="text-xs">
                           Reiser til deg
@@ -317,7 +317,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                       )}
                     </div>
                   </div>
-                  <Button variant="outline" asChild>
+                  <Button variant="outline" asChild className="w-full sm:w-auto">
                     <Link href={`/profiler/${service.profiles?.id}`}>
                       <User className="w-4 h-4 mr-2" />
                       Se profil
@@ -369,8 +369,8 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
             {/* Reviews */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span>Anmeldelser</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <CardTitle className="text-xl">Anmeldelser</CardTitle>
                   {!reviewStatsError &&
                     reviewStats &&
                     reviewStats.total_reviews > 0 && (
@@ -390,7 +390,7 @@ async function ServiceDetailContent({ serviceId }: { serviceId: string }) {
                         </span>
                       </div>
                     )}
-                </CardTitle>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {reviewsError ? (

@@ -26,6 +26,7 @@ import {
   Facebook,
   Youtube,
   Link as LucideLink,
+  Home,
 } from "lucide-react";
 import { FaTiktok, FaSnapchatGhost } from "react-icons/fa";
 import Link from "next/link";
@@ -60,16 +61,24 @@ export function StylistPublicProfile({
     return `${hours}t ${remainingMinutes}min`;
   };
 
+  // Format locations
+  const formatLocations = (atCustomerPlace: boolean, atStylistPlace: boolean) => {
+    const locations = [];
+    if (atCustomerPlace) locations.push("Hjemme");
+    if (atStylistPlace) locations.push("Hos stylist");
+    return locations.join(" • ");
+  };
+
   return (
-    <div className="min-h-screen pt-20 pb-12">
-      <div className="container mx-auto px-6 lg:px-12">
-        <div className="grid lg:grid-cols-3 gap-12">
+    <div className="min-h-screen pt-16 sm:pt-20 pb-8 sm:pb-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-12">
+        <div className="grid lg:grid-cols-3 gap-6 md:gap-8 lg:gap-12">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6 md:space-y-8">
             {/* Hero Section */}
             <BlurFade delay={0.1} duration={0.5} inView>
-              <div className="flex flex-col md:flex-row gap-6">
-                <Avatar className="w-32 h-32 mx-auto md:mx-0">
+              <div className="flex flex-col md:flex-row gap-4 md:gap-6">
+                <Avatar className="w-24 h-24 sm:w-32 sm:h-32 mx-auto md:mx-0 flex-shrink-0">
                   <AvatarImage src={profile.avatarUrl ?? undefined} />
                   <AvatarFallback className="text-2xl">
                     {profile.full_name
@@ -79,10 +88,10 @@ export function StylistPublicProfile({
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex-1 text-center md:text-left">
-                  <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+                  <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2">
                     {profile.full_name}
                   </h1>
-                  <div className="flex flex-wrap justify-center md:justify-start items-center gap-4 mb-4">
+                  <div className="flex flex-wrap justify-center md:justify-start items-center gap-3 sm:gap-4 mb-4">
                     {stats.averageRating && (
                       <div className="flex items-center gap-2">
                         <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -101,7 +110,7 @@ export function StylistPublicProfile({
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-4">
+                  <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-3 sm:mb-4">
                     {stylistDetails?.can_travel && (
                       <Badge variant="secondary">Reiser til deg</Badge>
                     )}
@@ -110,7 +119,7 @@ export function StylistPublicProfile({
                     )}
                   </div>
                   {stylistDetails?.bio && (
-                    <p className="text-muted-foreground leading-relaxed">
+                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                       {stylistDetails.bio}
                     </p>
                   )}
@@ -129,7 +138,7 @@ export function StylistPublicProfile({
                       kompleksitet
                     </CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 sm:space-y-6">
                     {services.map((service, index) => (
                       <BlurFade
                         key={service.id}
@@ -137,32 +146,30 @@ export function StylistPublicProfile({
                         duration={0.5}
                       >
                         <div>
-                          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                          <div className="flex flex-col gap-4">
                             <div className="flex-1">
-                              <h3 className="font-semibold">{service.title}</h3>
-                              <p className="text-muted-foreground mb-2">
+                              <h3 className="font-semibold text-base sm:text-lg">
+                                {service.title}
+                              </h3>
+                              <p className="text-sm sm:text-base text-muted-foreground mb-2">
                                 {service.description}
                               </p>
-                              <div className="flex items-center gap-4 text-sm">
+                              <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm">
                                 <div className="flex items-center gap-1">
                                   <Clock className="w-4 h-4 text-muted-foreground" />
                                   {formatDuration(service.duration_minutes)}
                                 </div>
-                                {service.at_customer_place && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Hjemme
-                                  </Badge>
-                                )}
-                                {service.at_stylist_place && (
-                                  <Badge variant="outline" className="text-xs">
-                                    Hos stylist
-                                  </Badge>
+                                {(service.at_customer_place || service.at_stylist_place) && (
+                                  <div className="flex items-center gap-1">
+                                    <Home className="w-4 h-4 text-muted-foreground" />
+                                    {formatLocations(service.at_customer_place, service.at_stylist_place)}
+                                  </div>
                                 )}
                               </div>
                             </div>
-                            <div className="flex items-center gap-4">
-                              <div className="text-right">
-                                <div className="font-semibold text-lg">
+                            <div className="flex flex-col gap-3 sm:gap-4">
+                              <div className="text-left">
+                                <div className="font-semibold text-lg sm:text-xl">
                                   Fra {service.price} {service.currency}
                                 </div>
                               </div>
@@ -170,11 +177,12 @@ export function StylistPublicProfile({
                                 service={service}
                                 stylist={profile}
                                 size="sm"
+                                className="self-start"
                               />
                             </div>
                           </div>
                           {index < services.length - 1 && (
-                            <Separator className="mt-6" />
+                            <Separator className="mt-4 sm:mt-6" />
                           )}
                         </div>
                       </BlurFade>
@@ -191,7 +199,7 @@ export function StylistPublicProfile({
                   <CardHeader>
                     <CardTitle>Anmeldelser ({stats.totalReviews})</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 sm:space-y-6">
                     {reviews.map((review, index) => (
                       <BlurFade
                         key={review.id}
@@ -200,14 +208,14 @@ export function StylistPublicProfile({
                       >
                         <div>
                           <div className="flex items-start gap-3">
-                            <Avatar className="w-10 h-10">
+                            <Avatar className="w-8 h-8 sm:w-10 sm:h-10 flex-shrink-0">
                               <AvatarFallback className="text-sm">
                                 {review.profiles?.full_name?.[0] || "?"}
                               </AvatarFallback>
                             </Avatar>
                             <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="font-medium">
+                              <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-1">
+                                <span className="font-medium text-sm sm:text-base">
                                   {review.profiles?.full_name || "Anonym"}
                                 </span>
                                 <div className="flex">
@@ -229,7 +237,7 @@ export function StylistPublicProfile({
                                 )}
                               </div>
                               {review.comment && (
-                                <p className="text-muted-foreground mb-1">
+                                <p className="text-sm sm:text-base text-muted-foreground mb-1">
                                   {review.comment}
                                 </p>
                               )}
@@ -241,7 +249,7 @@ export function StylistPublicProfile({
                             </div>
                           </div>
                           {index < reviews.length - 1 && (
-                            <Separator className="mt-6" />
+                            <Separator className="mt-4 sm:mt-6" />
                           )}
                         </div>
                       </BlurFade>
@@ -254,21 +262,6 @@ export function StylistPublicProfile({
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
-            {/* Contact Card */}
-            <BlurFade delay={0.1} duration={0.5} inView>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Kontakt {profile.full_name}</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <Button variant="outline" size="lg" className="w-full">
-                    <MessageCircle className="w-4 h-4 mr-2" />
-                    Send melding
-                  </Button>
-                </CardContent>
-              </Card>
-            </BlurFade>
-
             {/* Info Card */}
             {stylistDetails && (
               <BlurFade delay={0.15} duration={0.5} inView>

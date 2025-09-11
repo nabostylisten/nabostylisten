@@ -12,23 +12,18 @@ export function ServiceDetailSkeleton() {
             {/* Hero Section */}
             <div>
               <Skeleton className="aspect-video rounded-lg mb-6" />
-              <div className="flex flex-wrap items-center gap-4 mb-4">
-                <Skeleton className="h-8 w-24" />
+              <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
+                <Skeleton className="h-8 w-20 sm:w-24" />
                 <div className="flex items-center gap-2">
-                  <Skeleton className="w-5 h-5" />
-                  <Skeleton className="h-4 w-8" />
-                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="w-4 h-4" />
+                  <Skeleton className="h-4 w-16 sm:w-20" />
                 </div>
                 <div className="flex items-center gap-2">
                   <Skeleton className="w-4 h-4" />
-                  <Skeleton className="h-4 w-20" />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Skeleton className="w-4 h-4" />
-                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-12 sm:w-16" />
                 </div>
               </div>
-              <Skeleton className="h-10 w-3/4 mb-4" />
+              <Skeleton className="h-8 sm:h-10 w-full sm:w-3/4 mb-4" />
               <div className="space-y-2">
                 <Skeleton className="h-4 w-full" />
                 <Skeleton className="h-4 w-5/6" />
@@ -42,11 +37,11 @@ export function ServiceDetailSkeleton() {
                 <Skeleton className="h-6 w-24" />
               </CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col items-center sm:items-start gap-4">
                   <Skeleton className="w-16 h-16 rounded-full" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-5 w-32" />
-                    <div className="flex items-center gap-4">
+                  <div className="flex-1 w-full space-y-2 text-center sm:text-left">
+                    <Skeleton className="h-5 w-32 mx-auto sm:mx-0" />
+                    <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 justify-center sm:justify-start">
                       <div className="flex items-center gap-1">
                         <Skeleton className="w-4 h-4" />
                         <Skeleton className="h-4 w-16" />
@@ -54,7 +49,7 @@ export function ServiceDetailSkeleton() {
                       <Skeleton className="h-4 w-20" />
                     </div>
                   </div>
-                  <Skeleton className="h-9 w-24" />
+                  <Skeleton className="h-9 w-full sm:w-24" />
                 </div>
               </CardContent>
             </Card>
@@ -93,7 +88,13 @@ export function ServiceDetailSkeleton() {
             {/* Reviews */}
             <Card>
               <CardHeader>
-                <Skeleton className="h-6 w-36" />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <Skeleton className="h-6 w-24" />
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="w-4 h-4" />
+                    <Skeleton className="h-4 w-16" />
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {Array.from({ length: 2 }).map((_, index) => (

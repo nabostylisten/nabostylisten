@@ -30,9 +30,8 @@ export default async function MoveBookingPage({
     .single();
 
   // Get booking details
-  const { data: booking, error: bookingError } = await getBookingDetails(
-    bookingId
-  );
+  const { data: booking, error: bookingError } =
+    await getBookingDetails(bookingId);
 
   if (bookingError || !booking) {
     redirect("/404");
@@ -53,12 +52,13 @@ export default async function MoveBookingPage({
   // Calculate total service duration from booking services
   const totalDuration = booking.total_duration_minutes || 60;
 
-  const services = booking.booking_services?.map((bs) => bs.service).filter(Boolean) || [];
+  const services =
+    booking.booking_services?.map((bs) => bs.service).filter(Boolean) || [];
   const serviceTitles = services.map((s) => s?.title || "").filter(Boolean);
 
   return (
     <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-12">
         <BlurFade delay={0.15} duration={0.5} inView>
           <MoveBookingContent
             bookingId={bookingId}

@@ -246,12 +246,13 @@ export function PaymentsDataTable() {
                   onChange={(event) => setGlobalFilter(event.target.value)}
                   className="max-w-sm"
                 />
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={handleRefreshStripeData}
                     disabled={isRefetching}
+                    className="w-full sm:w-auto"
                   >
                     <RefreshCcw
                       className={cn(
@@ -261,13 +262,13 @@ export function PaymentsDataTable() {
                     />
                     Oppdater
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleExportCSV}>
+                  <Button variant="outline" size="sm" onClick={handleExportCSV} className="w-full sm:w-auto">
                     <Download className="h-4 w-4 mr-2" />
                     Eksporter CSV
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline">
+                      <Button variant="outline" className="w-full sm:w-auto">
                         <Settings2 className="mr-2 h-4 w-4" />
                         Kolonner
                       </Button>
@@ -347,8 +348,8 @@ export function PaymentsDataTable() {
                   </TableBody>
                 </Table>
               </div>
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
-                <div className="text-sm text-muted-foreground text-center sm:text-left">
+              <div className="flex flex-col gap-4 py-4">
+                <div className="text-sm text-muted-foreground text-center">
                   Viser{" "}
                   {table.getState().pagination.pageIndex *
                     table.getState().pagination.pageSize +
@@ -361,46 +362,56 @@ export function PaymentsDataTable() {
                   )}{" "}
                   av {filteredData.length} betaling(er).
                 </div>
-                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-end">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.setPageIndex(0)}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    Første
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    Forrige
-                  </Button>
-                  <span className="flex items-center gap-1">
-                    Side{" "}
-                    <strong>
-                      {table.getState().pagination.pageIndex + 1} av{" "}
-                      {table.getPageCount()}
-                    </strong>
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                  >
-                    Neste
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                    disabled={!table.getCanNextPage()}
-                  >
-                    Siste
-                  </Button>
+                <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.setPageIndex(0)}
+                      disabled={!table.getCanPreviousPage()}
+                      className="min-w-[60px]"
+                    >
+                      Første
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                      className="min-w-[60px]"
+                    >
+                      Forrige
+                    </Button>
+                  </div>
+                  <div className="flex items-center justify-center min-w-0">
+                    <span className="text-sm text-center whitespace-nowrap">
+                      Side{" "}
+                      <strong>
+                        {table.getState().pagination.pageIndex + 1} av{" "}
+                        {table.getPageCount()}
+                      </strong>
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                      className="min-w-[60px]"
+                    >
+                      Neste
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                      disabled={!table.getCanNextPage()}
+                      className="min-w-[60px]"
+                    >
+                      Siste
+                    </Button>
+                  </div>
                 </div>
               </div>
             </>

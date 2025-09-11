@@ -447,17 +447,21 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
                     </p>
 
                     {descendantCount > 0 && (
-                      <div className="p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                        <p className="text-orange-800 font-medium flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4" /> Advarsel: Denne
-                          handlingen vil slette{" "}
-                          <span className="font-bold">
-                            {totalCategories} kategorier
-                          </span>{" "}
-                          totalt:
+                      <div className="p-3 bg-orange-50 dark:bg-orange-950/30 border border-orange-200 dark:border-orange-800 rounded-lg">
+                        <p className="text-orange-800 dark:text-orange-200 font-medium flex flex-col sm:flex-row sm:items-center gap-2">
+                          <span className="flex items-center gap-2 flex-shrink-0">
+                            <AlertTriangle className="w-4 h-4" /> Advarsel:
+                          </span>
+                          <span className="break-words">
+                            Denne handlingen vil slette{" "}
+                            <span className="font-bold">
+                              {totalCategories} kategorier
+                            </span>{" "}
+                            totalt:
+                          </span>
                         </p>
-                        <ul className="mt-2 text-sm text-orange-700">
-                          <li>• 1 hovedkategori ({categoryToDelete.name})</li>
+                        <ul className="mt-2 text-sm text-orange-700 dark:text-orange-300 space-y-1">
+                          <li className="break-words">• 1 hovedkategori ({categoryToDelete.name})</li>
                           <li>• {descendantCount} underkategorier</li>
                         </ul>
                       </div>

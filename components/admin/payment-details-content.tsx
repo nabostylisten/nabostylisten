@@ -8,17 +8,17 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  ArrowLeft, 
-  User, 
-  MapPin, 
-  CreditCard, 
-  Clock, 
+import {
+  ArrowLeft,
+  User,
+  MapPin,
+  CreditCard,
+  Clock,
   MessageSquare,
   Star,
   FileText,
   ExternalLink,
-  Copy
+  Copy,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -32,19 +32,19 @@ interface PaymentDetailsContentProps {
 function getStatusColor(status: string) {
   switch (status) {
     case "succeeded":
-      return "bg-green-100 text-green-800 border-green-200";
+      return "bg-green-50 dark:bg-green-950/30 text-green-800 dark:text-green-200 border-green-200 dark:border-green-800";
     case "processing":
     case "requires_capture":
     case "requires_confirmation":
     case "requires_action":
     case "requires_payment_method":
-      return "bg-yellow-100 text-yellow-800 border-yellow-200";
+      return "bg-yellow-50 dark:bg-yellow-950/30 text-yellow-800 dark:text-yellow-200 border-yellow-200 dark:border-yellow-800";
     case "cancelled":
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700";
     case "pending":
-      return "bg-blue-100 text-blue-800 border-blue-200";
+      return "bg-blue-50 dark:bg-blue-950/30 text-blue-800 dark:text-blue-200 border-blue-200 dark:border-blue-800";
     default:
-      return "bg-gray-100 text-gray-800 border-gray-200";
+      return "bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 border-gray-200 dark:border-gray-700";
   }
 }
 
@@ -74,7 +74,7 @@ function PaymentOverviewSkeleton() {
           <Skeleton className="h-4 w-16" />
           <Skeleton className="h-6 w-20" />
         </div>
-        
+
         <div className="grid grid-cols-2 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i}>
@@ -106,13 +106,16 @@ function BookingDetailsSkeleton() {
             </div>
           ))}
         </div>
-        
+
         <Separator />
         <div>
           <Skeleton className="h-5 w-20 mb-2" />
           <div className="space-y-2">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="bg-gray-50 p-3 rounded-lg">
+              <div
+                key={i}
+                className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg"
+              >
                 <div className="flex justify-between items-start">
                   <div className="space-y-1">
                     <Skeleton className="h-5 w-48" />
@@ -168,9 +171,9 @@ function StripeDetailsSkeleton() {
             </div>
           ))}
         </div>
-        
+
         <Separator />
-        
+
         <div className="space-y-2">
           <div className="flex justify-between items-center">
             <Skeleton className="h-4 w-32" />
@@ -207,15 +210,17 @@ function LoadingSkeleton() {
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4">
       <BlurFade duration={0.5} inView>
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <Button variant="outline" size="sm" asChild className="w-fit">
             <Link href="/admin/betalinger">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Tilbake
             </Link>
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Betalingsdetaljer</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Betalingsdetaljer
+            </h1>
             <div className="mt-1">
               <Skeleton className="h-4 w-64" />
             </div>
@@ -229,7 +234,7 @@ function LoadingSkeleton() {
           <BlurFade delay={0.1} duration={0.5} inView>
             <PaymentOverviewSkeleton />
           </BlurFade>
-          
+
           <BlurFade delay={0.15} duration={0.5} inView>
             <BookingDetailsSkeleton />
           </BlurFade>
@@ -240,15 +245,15 @@ function LoadingSkeleton() {
           <BlurFade delay={0.1} duration={0.5} inView>
             <UserInfoSkeleton title="Kunde" />
           </BlurFade>
-          
+
           <BlurFade delay={0.15} duration={0.5} inView>
             <UserInfoSkeleton title="Stylist" />
           </BlurFade>
-          
+
           <BlurFade delay={0.2} duration={0.5} inView>
             <StripeDetailsSkeleton />
           </BlurFade>
-          
+
           <BlurFade delay={0.25} duration={0.5} inView>
             <ImportantDatesSkeleton />
           </BlurFade>
@@ -258,7 +263,9 @@ function LoadingSkeleton() {
   );
 }
 
-export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps) {
+export function PaymentDetailsContent({
+  paymentId,
+}: PaymentDetailsContentProps) {
   const {
     data: response,
     isLoading,
@@ -280,25 +287,29 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
 
   if (error || !response?.data) {
     return (
-      <div className="container max-w-7xl mx-auto py-8 px-4">
+      <div className="container max-w-7xl mx-auto py-12 px-4">
         <BlurFade duration={0.5} inView>
-          <div className="mb-6 flex items-center gap-4">
-            <Button variant="outline" size="sm" asChild>
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+            <Button variant="outline" size="sm" asChild className="w-fit">
               <Link href="/admin/betalinger">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Tilbake
               </Link>
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Betalingsdetaljer</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">
+                Betalingsdetaljer
+              </h1>
             </div>
           </div>
         </BlurFade>
-        
+
         <Card>
           <CardContent className="py-12 text-center">
             <p className="text-muted-foreground">
-              {error ? "Kunne ikke laste betalingsdetaljer" : "Betaling ikke funnet"}
+              {error
+                ? "Kunne ikke laste betalingsdetaljer"
+                : "Betaling ikke funnet"}
             </p>
           </CardContent>
         </Card>
@@ -309,20 +320,20 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
   const payment = response.data;
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4">
+    <div className="container max-w-7xl mx-auto py-12 px-4">
       <BlurFade duration={0.5} inView>
-        <div className="mb-6 flex items-center gap-4">
-          <Button variant="outline" size="sm" asChild>
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-center gap-4">
+          <Button variant="outline" size="sm" asChild className="w-fit">
             <Link href="/admin/betalinger">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Tilbake
             </Link>
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Betalingsdetaljer</h1>
-            <p className="text-muted-foreground">
-              ID: {payment.id}
-            </p>
+          <div className="min-w-0 flex-1">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight break-words">
+              Betalingsdetaljer
+            </h1>
+            <p className="text-muted-foreground break-all">ID: {payment.id}</p>
           </div>
         </div>
       </BlurFade>
@@ -346,32 +357,61 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                     {payment.status}
                   </Badge>
                 </div>
-                
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Originalbeløp</p>
-                    <p className="font-medium">{formatCurrency(payment.original_amount, payment.currency)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Originalbeløp
+                    </p>
+                    <p className="font-medium">
+                      {formatCurrency(
+                        payment.original_amount,
+                        payment.currency
+                      )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Rabatt</p>
-                    <p className="font-medium">{formatCurrency(payment.discount_amount, payment.currency)}</p>
+                    <p className="font-medium">
+                      {formatCurrency(
+                        payment.discount_amount,
+                        payment.currency
+                      )}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Totalbeløp</p>
-                    <p className="font-semibold text-lg">{formatCurrency(payment.final_amount, payment.currency)}</p>
+                    <p className="font-semibold text-lg">
+                      {formatCurrency(payment.final_amount, payment.currency)}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Plattformavgift</p>
-                    <p className="font-medium">{formatCurrency(payment.platform_fee, payment.currency)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Plattformavgift
+                    </p>
+                    <p className="font-medium">
+                      {formatCurrency(payment.platform_fee, payment.currency)}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-sm text-muted-foreground">Stylist utbetaling</p>
-                    <p className="font-medium">{formatCurrency(payment.stylist_payout, payment.currency)}</p>
+                    <p className="text-sm text-muted-foreground">
+                      Stylist utbetaling
+                    </p>
+                    <p className="font-medium">
+                      {formatCurrency(payment.stylist_payout, payment.currency)}
+                    </p>
                   </div>
                   {payment.affiliate_commission > 0 && (
                     <div>
-                      <p className="text-sm text-muted-foreground">Affiliate kommisjon</p>
-                      <p className="font-medium">{formatCurrency(payment.affiliate_commission, payment.currency)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Affiliate kommisjon
+                      </p>
+                      <p className="font-medium">
+                        {formatCurrency(
+                          payment.affiliate_commission,
+                          payment.currency
+                        )}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -379,11 +419,20 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                 {payment.refunded_amount > 0 && (
                   <>
                     <Separator />
-                    <div className="bg-red-50 p-3 rounded-lg border border-red-200">
-                      <p className="text-sm font-medium text-red-800">Refundert beløp</p>
-                      <p className="text-red-700">{formatCurrency(payment.refunded_amount, payment.currency)}</p>
+                    <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-lg border border-red-200 dark:border-red-800">
+                      <p className="text-sm font-medium text-red-800 dark:text-red-200">
+                        Refundert beløp
+                      </p>
+                      <p className="text-red-700 dark:text-red-300">
+                        {formatCurrency(
+                          payment.refunded_amount,
+                          payment.currency
+                        )}
+                      </p>
                       {payment.refund_reason && (
-                        <p className="text-xs text-red-600 mt-1">Grunn: {payment.refund_reason}</p>
+                        <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                          Grunn: {payment.refund_reason}
+                        </p>
                       )}
                     </div>
                   </>
@@ -405,15 +454,21 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-muted-foreground">Starttid</p>
-                    <p className="font-medium">{formatDateTime(payment.booking.start_time)}</p>
+                    <p className="font-medium">
+                      {formatDateTime(payment.booking.start_time)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Sluttid</p>
-                    <p className="font-medium">{formatDateTime(payment.booking.end_time)}</p>
+                    <p className="font-medium">
+                      {formatDateTime(payment.booking.end_time)}
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Varighet</p>
-                    <p className="font-medium">{payment.booking.total_duration_minutes} minutter</p>
+                    <p className="font-medium">
+                      {payment.booking.total_duration_minutes} minutter
+                    </p>
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Status</p>
@@ -429,16 +484,22 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                   <p className="text-sm font-medium mb-2">Tjenester</p>
                   <div className="space-y-2">
                     {payment.booking.services.map((service) => (
-                      <div key={service.id} className="bg-gray-50 p-3 rounded-lg">
+                      <div key={service.id}>
                         <div className="flex justify-between items-start">
                           <div>
                             <p className="font-medium">{service.title}</p>
                             {service.description && (
-                              <p className="text-sm text-muted-foreground">{service.description}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {service.description}
+                              </p>
                             )}
-                            <p className="text-xs text-muted-foreground">{service.duration_minutes} min</p>
+                            <p className="text-xs text-muted-foreground">
+                              {service.duration_minutes} min
+                            </p>
                           </div>
-                          <p className="font-medium">{formatCurrency(service.price, service.currency)}</p>
+                          <p className="font-medium">
+                            {formatCurrency(service.price, service.currency)}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -454,17 +515,21 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                         <MapPin className="h-4 w-4" />
                         Lokasjon
                       </p>
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="font-medium">
-                          {payment.booking.address.nickname && `${payment.booking.address.nickname} - `}
+                      <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+                        <p className="font-medium break-words">
+                          {payment.booking.address.nickname &&
+                            `${payment.booking.address.nickname} - `}
                           {payment.booking.address.street_address}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {payment.booking.address.postal_code} {payment.booking.address.city}, {payment.booking.address.country}
+                          {payment.booking.address.postal_code}{" "}
+                          {payment.booking.address.city},{" "}
+                          {payment.booking.address.country}
                         </p>
                         {payment.booking.address.entry_instructions && (
                           <p className="text-xs text-muted-foreground mt-1">
-                            Instruksjoner: {payment.booking.address.entry_instructions}
+                            Instruksjoner:{" "}
+                            {payment.booking.address.entry_instructions}
                           </p>
                         )}
                       </div>
@@ -481,8 +546,10 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                         <MessageSquare className="h-4 w-4" />
                         Melding til stylist
                       </p>
-                      <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                        <p className="text-sm">{payment.booking.message_to_stylist}</p>
+                      <div className="bg-blue-50 dark:bg-blue-950/30 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <p className="text-sm text-blue-900 dark:text-blue-100">
+                          {payment.booking.message_to_stylist}
+                        </p>
                       </div>
                     </div>
                   </>
@@ -516,14 +583,18 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                           />
                         ))}
                       </div>
-                      <span className="font-medium">{payment.booking.review.rating}/5</span>
+                      <span className="font-medium">
+                        {payment.booking.review.rating}/5
+                      </span>
                       <span className="text-sm text-muted-foreground">
                         • {formatDateTime(payment.booking.review.created_at)}
                       </span>
                     </div>
                     {payment.booking.review.comment && (
-                      <div className="bg-gray-50 p-3 rounded-lg">
-                        <p className="text-sm">{payment.booking.review.comment}</p>
+                      <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg">
+                        <p className="text-sm">
+                          {payment.booking.review.comment}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -545,11 +616,14 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                 <CardContent>
                   <div className="space-y-3">
                     {payment.booking.booking_notes.map((note) => (
-                      <div key={note.id} className="bg-gray-50 p-4 rounded-lg border">
+                      <div
+                        key={note.id}
+                        className="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-lg border border-gray-200 dark:border-gray-700"
+                      >
                         <div className="flex justify-between items-start mb-2">
                           <div className="flex items-center gap-2">
                             <Badge variant="outline" className="text-xs">
-                              {note.category.replace('_', ' ')}
+                              {note.category.replace("_", " ")}
                             </Badge>
                             {note.customer_visible && (
                               <Badge variant="secondary" className="text-xs">
@@ -569,13 +643,18 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                         )}
                         {note.next_appointment_suggestion && (
                           <p className="text-xs text-muted-foreground">
-                            Neste avtale forslag: {note.next_appointment_suggestion}
+                            Neste avtale forslag:{" "}
+                            {note.next_appointment_suggestion}
                           </p>
                         )}
                         {note.tags.length > 0 && (
                           <div className="flex gap-1 mt-2">
                             {note.tags.map((tag) => (
-                              <Badge key={tag} variant="outline" className="text-xs">
+                              <Badge
+                                key={tag}
+                                variant="outline"
+                                className="text-xs"
+                              >
                                 {tag}
                               </Badge>
                             ))}
@@ -603,10 +682,16 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="font-medium">{payment.booking.customer.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{payment.booking.customer.email}</p>
+                  <p className="font-medium">
+                    {payment.booking.customer.full_name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {payment.booking.customer.email}
+                  </p>
                   {payment.booking.customer.phone_number && (
-                    <p className="text-sm text-muted-foreground">{payment.booking.customer.phone_number}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {payment.booking.customer.phone_number}
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -624,10 +709,16 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="font-medium">{payment.booking.stylist.full_name}</p>
-                  <p className="text-sm text-muted-foreground">{payment.booking.stylist.email}</p>
+                  <p className="font-medium">
+                    {payment.booking.stylist.full_name}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {payment.booking.stylist.email}
+                  </p>
                   {payment.booking.stylist.phone_number && (
-                    <p className="text-sm text-muted-foreground">{payment.booking.stylist.phone_number}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {payment.booking.stylist.phone_number}
+                    </p>
                   )}
                 </div>
               </CardContent>
@@ -648,46 +739,75 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Status</span>
-                      <Badge className={getStatusColor(payment.stripe_data.status)}>
+                      <Badge
+                        className={getStatusColor(payment.stripe_data.status)}
+                      >
                         {payment.stripe_data.status}
                       </Badge>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Beløp</span>
-                      <span>{formatCurrency(payment.stripe_data.amount / 100, payment.stripe_data.currency.toUpperCase())}</span>
+                      <span>
+                        {formatCurrency(
+                          payment.stripe_data.amount / 100,
+                          payment.stripe_data.currency.toUpperCase()
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-muted-foreground">Opprettet</span>
-                      <span>{format(new Date(payment.stripe_data.created * 1000), "dd.MM.yyyy HH:mm")}</span>
+                      <span>
+                        {format(
+                          new Date(payment.stripe_data.created * 1000),
+                          "dd.MM.yyyy HH:mm"
+                        )}
+                      </span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-muted-foreground">Betalingsmåter</span>
-                      <span className="text-xs">{payment.stripe_data.payment_method_types.join(", ")}</span>
+                      <span className="text-muted-foreground">
+                        Betalingsmåter
+                      </span>
+                      <span className="text-xs">
+                        {payment.stripe_data.payment_method_types.join(", ")}
+                      </span>
                     </div>
                   </div>
-                  
+
                   <Separator />
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between items-center text-sm">
-                      <span className="text-muted-foreground">Payment Intent ID</span>
+                      <span className="text-muted-foreground">
+                        Payment Intent ID
+                      </span>
                       <Button
                         variant="ghost"
                         size="sm"
                         className="h-6 px-2"
-                        onClick={() => handleCopyToClipboard(payment.payment_intent_id)}
+                        onClick={() =>
+                          handleCopyToClipboard(payment.payment_intent_id)
+                        }
                       >
                         <Copy className="h-3 w-3" />
                       </Button>
                     </div>
-                    <p className="font-mono text-xs bg-gray-100 p-2 rounded break-all">
+                    <p className="font-mono text-xs bg-muted p-2 rounded break-all">
                       {payment.payment_intent_id}
                     </p>
                   </div>
 
                   {payment.stripe_data.receipt_url && (
-                    <Button variant="outline" size="sm" className="w-full" asChild>
-                      <a href={payment.stripe_data.receipt_url} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      asChild
+                    >
+                      <a
+                        href={payment.stripe_data.receipt_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         <ExternalLink className="h-4 w-4 mr-2" />
                         Vis kvittering
                       </a>
@@ -711,9 +831,15 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                 <CardContent className="space-y-3">
                   <div>
                     <p className="font-medium">{payment.affiliate.full_name}</p>
-                    <p className="text-sm text-muted-foreground">{payment.affiliate.email}</p>
-                    <p className="text-sm font-medium text-green-600">
-                      Kommisjon: {formatCurrency(payment.affiliate_commission, payment.currency)}
+                    <p className="text-sm text-muted-foreground">
+                      {payment.affiliate.email}
+                    </p>
+                    <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                      Kommisjon:{" "}
+                      {formatCurrency(
+                        payment.affiliate_commission,
+                        payment.currency
+                      )}
                     </p>
                   </div>
                 </CardContent>
@@ -731,36 +857,52 @@ export function PaymentDetailsContent({ paymentId }: PaymentDetailsContentProps)
                 <div className="space-y-2 text-sm">
                   <div>
                     <span className="text-muted-foreground">Opprettet</span>
-                    <p className="font-medium">{formatDateTime(payment.created_at)}</p>
+                    <p className="font-medium">
+                      {formatDateTime(payment.created_at)}
+                    </p>
                   </div>
                   {payment.authorized_at && (
                     <div>
                       <span className="text-muted-foreground">Autorisert</span>
-                      <p className="font-medium">{formatDateTime(payment.authorized_at)}</p>
+                      <p className="font-medium">
+                        {formatDateTime(payment.authorized_at)}
+                      </p>
                     </div>
                   )}
                   {payment.captured_at && (
                     <div>
                       <span className="text-muted-foreground">Belastet</span>
-                      <p className="font-medium">{formatDateTime(payment.captured_at)}</p>
+                      <p className="font-medium">
+                        {formatDateTime(payment.captured_at)}
+                      </p>
                     </div>
                   )}
                   {payment.succeeded_at && (
                     <div>
                       <span className="text-muted-foreground">Fullført</span>
-                      <p className="font-medium">{formatDateTime(payment.succeeded_at)}</p>
+                      <p className="font-medium">
+                        {formatDateTime(payment.succeeded_at)}
+                      </p>
                     </div>
                   )}
                   {payment.payout_initiated_at && (
                     <div>
-                      <span className="text-muted-foreground">Utbetaling startet</span>
-                      <p className="font-medium">{formatDateTime(payment.payout_initiated_at)}</p>
+                      <span className="text-muted-foreground">
+                        Utbetaling startet
+                      </span>
+                      <p className="font-medium">
+                        {formatDateTime(payment.payout_initiated_at)}
+                      </p>
                     </div>
                   )}
                   {payment.payout_completed_at && (
                     <div>
-                      <span className="text-muted-foreground">Utbetaling fullført</span>
-                      <p className="font-medium">{formatDateTime(payment.payout_completed_at)}</p>
+                      <span className="text-muted-foreground">
+                        Utbetaling fullført
+                      </span>
+                      <p className="font-medium">
+                        {formatDateTime(payment.payout_completed_at)}
+                      </p>
                     </div>
                   )}
                 </div>

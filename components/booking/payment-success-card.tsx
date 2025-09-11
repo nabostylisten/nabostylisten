@@ -25,17 +25,17 @@ const STATUS_CONTENT_MAP = {
     title: "Betaling fullført!",
     description: "Din betaling er mottatt og booking er bekreftet.",
     icon: CheckCircle,
-    iconColor: "text-chart-2",
-    bgColor: "bg-accent/20",
-    borderColor: "border-accent",
+    iconColor: "text-green-800 dark:text-green-200",
+    bgColor: "bg-green-50 dark:bg-green-950/30",
+    borderColor: "border-green-200 dark:border-green-800",
   },
   requires_capture: {
     title: "Booking bekreftet!",
     description: `Din betaling er autorisert og booking er bekreftet. Kortet ditt blir belastet ${DEFAULT_PLATFORM_CONFIG.payment.captureHoursBeforeAppointment} timer før timen.`,
     icon: CheckCircle,
-    iconColor: "text-chart-2",
-    bgColor: "bg-accent/20",
-    borderColor: "border-accent",
+    iconColor: "text-green-800 dark:text-green-200",
+    bgColor: "bg-green-50 dark:bg-green-950/30",
+    borderColor: "border-green-200 dark:border-green-800",
   },
   processing: {
     title: "Betaling behandles",
@@ -177,7 +177,7 @@ Med vennlig hilsen`);
       <div className="min-h-screen pt-20 px-6 lg:px-12">
         <div className="max-w-2xl mx-auto">
           <BlurFade duration={0.5} inView>
-            <Card className="bg-accent/20 border-accent border-2">
+            <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800 border-2">
               <CardHeader className="text-center pb-6">
                 {/* Icon skeleton */}
                 <div className="mx-auto mb-4 p-3 rounded-full bg-background/80 border">
@@ -319,7 +319,7 @@ Med vennlig hilsen`);
                 <BlurFade delay={0.1} duration={0.5} inView>
                   <div className="bg-card/80 border rounded-lg p-4 space-y-4">
                     <h3 className="font-semibold text-sm text-muted-foreground uppercase tracking-wider">
-                      Bestillingssammendrag
+                      Sammendrag
                     </h3>
 
                     {/* Stylist info */}
@@ -430,7 +430,7 @@ Med vennlig hilsen`);
                       {booking.discount_applied > 0 && (
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Rabatt</span>
-                          <span className="text-chart-2">
+                          <span className="text-green-800 dark:text-green-200">
                             -
                             {booking.discount_applied.toLocaleString("no-NO", {
                               style: "currency",
@@ -446,15 +446,18 @@ Med vennlig hilsen`);
                         <span>
                           {/* Calculate the correct total: subtotal - discount */}
                           {(() => {
-                            const serviceSubtotal = booking.booking_services?.reduce(
-                              (total, bs) => total + (bs.service?.price || 0),
-                              0
-                            ) || 0;
-                            const trialSessionAmount = booking.trial_booking?.total_price || 0;
-                            const subtotal = serviceSubtotal + trialSessionAmount;
+                            const serviceSubtotal =
+                              booking.booking_services?.reduce(
+                                (total, bs) => total + (bs.service?.price || 0),
+                                0
+                              ) || 0;
+                            const trialSessionAmount =
+                              booking.trial_booking?.total_price || 0;
+                            const subtotal =
+                              serviceSubtotal + trialSessionAmount;
                             const discount = booking.discount_applied || 0;
                             const finalTotal = subtotal - discount;
-                            
+
                             return finalTotal.toLocaleString("no-NO", {
                               style: "currency",
                               currency: "NOK",

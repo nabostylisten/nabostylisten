@@ -671,124 +671,128 @@ export function BookingScheduler({
 
           {/* Desktop Week View - Hidden on mobile */}
           <div className="hidden sm:block border rounded-lg overflow-hidden">
-            <div className="grid grid-cols-8 bg-muted">
-              <div className="p-2 border-r pt-4">
-                <Clock className="w-4 h-4 mx-auto" />
-              </div>
-              {weekDays.map((day, index) => (
-                <div
-                  key={index}
-                  className={cn(
-                    "p-2 text-center border-r last:border-r-0",
-                    isSameDay(day, new Date()) && "bg-primary/10 font-semibold"
-                  )}
-                >
-                  <div className="text-xs text-muted-foreground">
-                    {format(day, "EEE", { locale: nb })}
+            <div className="overflow-x-auto overflow-y-auto max-h-[70vh]">
+              <div className="min-w-[640px] w-full">
+                <div className="grid grid-cols-8 bg-muted">
+                  <div className="p-2 border-r pt-4 bg-muted w-[80px] flex-shrink-0 sticky left-0 z-20">
+                    <Clock className="w-4 h-4 mx-auto" />
                   </div>
-                  <div className="text-sm">{format(day, "d")}</div>
-                </div>
-              ))}
+                  {weekDays.map((day, index) => (
+                    <div
+                      key={index}
+                      className={cn(
+                        "p-2 text-center border-r last:border-r-0 bg-muted flex-1 min-w-[80px]",
+                        isSameDay(day, new Date()) && "bg-primary/10 font-semibold"
+                      )}
+                    >
+                      <div className="text-xs text-muted-foreground">
+                        {format(day, "EEE", { locale: nb })}
+                      </div>
+                      <div className="text-sm">{format(day, "d")}</div>
+                    </div>
+                  ))}
             </div>
 
-            {/* Hour slots */}
-            <div className="max-h-[600px] overflow-y-auto">
-              {getDisplayHours().map((hour) => (
-                <div key={hour} className="grid grid-cols-8">
-                  <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50">
-                    {`${hour.toString().padStart(2, "0")}:00`}
-                  </div>
-                  {weekDays.map((day, dayIndex) => {
-                    const isWorkDay = isDayWorkDay(day);
-                    const isWorkHour = isHourInWorkTime(hour);
-                    const isAvailable = isWorkDay && isWorkHour;
-                    const isUnavailable = isTimeSlotUnavailable(day, hour);
+                {/* Hour slots */}
+                <div>
+                  {getDisplayHours().map((hour) => (
+                    <div key={hour} className="flex">
+                      <div className="p-2 text-xs text-center border border-border/40 dark:border-border/20 bg-muted/50 w-[80px] flex-shrink-0 sticky left-0 z-10">
+                        {`${hour.toString().padStart(2, "0")}:00`}
+                      </div>
+                        {weekDays.map((day, dayIndex) => {
+                          const isWorkDay = isDayWorkDay(day);
+                          const isWorkHour = isHourInWorkTime(hour);
+                          const isAvailable = isWorkDay && isWorkHour;
+                          const isUnavailable = isTimeSlotUnavailable(day, hour);
 
-                    // Check if the time slot is in the past
-                    const now = new Date();
-                    const slotStart = new Date(day);
-                    slotStart.setHours(hour, 0, 0, 0);
-                    const isPast = slotStart <= now;
+                          // Check if the time slot is in the past
+                          const now = new Date();
+                          const slotStart = new Date(day);
+                          slotStart.setHours(hour, 0, 0, 0);
+                          const isPast = slotStart <= now;
 
-                    const canSelect = canSelectTimeSlot(day, hour);
-                    const isSelected = isSlotSelected(day, hour);
-                    const isCurrentBooking = isSlotCurrentBooking(day, hour);
+                          const canSelect = canSelectTimeSlot(day, hour);
+                          const isSelected = isSlotSelected(day, hour);
+                          const isCurrentBooking = isSlotCurrentBooking(day, hour);
 
-                    // Check if custom validator rejects this slot
-                    const isCustomValidatorRejected =
-                      customTimeSlotValidator &&
-                      !customTimeSlotValidator(day, hour);
+                          // Check if custom validator rejects this slot
+                          const isCustomValidatorRejected =
+                            customTimeSlotValidator &&
+                            !customTimeSlotValidator(day, hour);
 
-                    // Determine if slot is effectively unavailable (past, explicitly unavailable, not work time, or custom validator rejects)
-                    const isEffectivelyUnavailable =
-                      !isAvailable ||
-                      isUnavailable ||
-                      isPast ||
-                      isCustomValidatorRejected;
+                          // Determine if slot is effectively unavailable (past, explicitly unavailable, not work time, or custom validator rejects)
+                          const isEffectivelyUnavailable =
+                            !isAvailable ||
+                            isUnavailable ||
+                            isPast ||
+                            isCustomValidatorRejected;
 
-                    // Check if it's available but can't be selected due to insufficient consecutive hours
-                    // (but not rejected by custom validator - those should be gray, not yellow)
-                    const hasInsufficientTime =
-                      isAvailable &&
-                      !isUnavailable &&
-                      !isPast &&
-                      !isCustomValidatorRejected &&
-                      !canSelect;
-
-                    return (
-                      <div
-                        key={dayIndex}
-                        className={cn(
-                          "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors",
-                          isEffectivelyUnavailable &&
-                            !isCurrentBooking &&
-                            "bg-gray-100 cursor-not-allowed",
-                          isAvailable &&
-                            !isUnavailable &&
-                            !isPast &&
-                            canSelect &&
-                            !isCurrentBooking &&
-                            "bg-green-100 hover:bg-green-200",
-                          hasInsufficientTime &&
-                            !isCurrentBooking &&
-                            "bg-yellow-100 cursor-not-allowed",
-                          isCurrentBooking &&
-                            "bg-purple-200 border-purple-500 cursor-not-allowed",
-                          isSelected &&
-                            "bg-blue-200 animate-pulse border-blue-400"
-                        )}
-                        onClick={() => {
-                          if (
+                          // Check if it's available but can't be selected due to insufficient consecutive hours
+                          // (but not rejected by custom validator - those should be gray, not yellow)
+                          const hasInsufficientTime =
                             isAvailable &&
                             !isUnavailable &&
                             !isPast &&
-                            canSelect &&
-                            !isCurrentBooking
-                          ) {
-                            handleTimeSlotClick(day, hour);
-                          }
-                        }}
-                      >
-                        {isSelected && (
-                          <div className="text-xs font-medium text-blue-700">
-                            Valgt
-                          </div>
-                        )}
-                        {isCurrentBooking && (
-                          <div className="text-xs font-medium text-purple-700">
-                            Nåværende
-                          </div>
-                        )}
-                        {hasInsufficientTime && !isCurrentBooking && (
-                          <div className="text-xs text-yellow-700">
-                            For kort tid
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
+                            !isCustomValidatorRejected &&
+                            !canSelect;
+
+                          return (
+                            <div
+                              key={dayIndex}
+                              className={cn(
+                                "p-2 border border-border/90 dark:border-border/20 min-h-[60px] cursor-pointer transition-colors flex-1 min-w-[80px]",
+                                isEffectivelyUnavailable &&
+                                  !isCurrentBooking &&
+                                  "bg-gray-100 cursor-not-allowed",
+                                isAvailable &&
+                                  !isUnavailable &&
+                                  !isPast &&
+                                  canSelect &&
+                                  !isCurrentBooking &&
+                                  "bg-green-100 hover:bg-green-200",
+                                hasInsufficientTime &&
+                                  !isCurrentBooking &&
+                                  "bg-yellow-100 cursor-not-allowed",
+                                isCurrentBooking &&
+                                  "bg-purple-200 border-purple-500 cursor-not-allowed",
+                                isSelected &&
+                                  "bg-blue-200 animate-pulse border-blue-400"
+                              )}
+                              onClick={() => {
+                                if (
+                                  isAvailable &&
+                                  !isUnavailable &&
+                                  !isPast &&
+                                  canSelect &&
+                                  !isCurrentBooking
+                                ) {
+                                  handleTimeSlotClick(day, hour);
+                                }
+                              }}
+                            >
+                              {isSelected && (
+                                <div className="text-xs font-medium text-blue-700">
+                                  Valgt
+                                </div>
+                              )}
+                              {isCurrentBooking && (
+                                <div className="text-xs font-medium text-purple-700">
+                                  Nåværende
+                                </div>
+                              )}
+                              {hasInsufficientTime && !isCurrentBooking && (
+                                <div className="text-xs text-yellow-700">
+                                  For kort tid
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </div>
 

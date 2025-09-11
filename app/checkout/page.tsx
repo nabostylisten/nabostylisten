@@ -152,19 +152,19 @@ function PaymentForm({
   }
 
   return (
-    <div className="min-h-screen pt-20 px-6 lg:px-12">
+    <div className="min-h-screen pt-20 px-4 sm:px-6 lg:px-12">
       <div className="max-w-4xl mx-auto">
         <BlurFade duration={0.5} inView>
-          <div className="flex items-center gap-4 mb-8">
-            <Button variant="ghost" onClick={() => router.back()}>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-8">
+            <Button variant="ghost" onClick={() => router.back()} className="self-start">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Tilbake
             </Button>
-            <h1 className="text-3xl font-bold">Betaling</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold">Betaling</h1>
           </div>
         </BlurFade>
 
-        <div className="grid lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
           {/* Order Summary */}
           <div>
             <BlurFade delay={0.1} duration={0.5} inView>

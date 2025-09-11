@@ -108,26 +108,24 @@ export function MyBookingsPageContent({
         {userRole === "stylist" && (
           <BlurFade delay={0.2} duration={0.5} inView>
             <div className="mb-6">
-              <div className="flex items-center gap-2 p-1 bg-muted rounded-lg w-full sm:w-fit">
+              <div className="flex items-center gap-1 p-1 bg-muted rounded-lg w-full sm:w-fit">
                 <Button
                   variant={stylistMode === "personal" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setStylistMode("personal")}
-                  className="flex items-center gap-2 flex-1 sm:flex-initial"
+                  className="flex items-center gap-1 flex-1 sm:flex-initial min-w-0 justify-center text-xs sm:text-sm px-2 sm:px-3"
                 >
-                  <User className="w-4 h-4" />
-                  <span className="hidden xs:inline">Mine bookinger</span>
-                  <span className="xs:hidden">Mine</span>
+                  <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="truncate">Mine</span>
                 </Button>
                 <Button
                   variant={stylistMode === "services" ? "default" : "ghost"}
                   size="sm"
                   onClick={() => setStylistMode("services")}
-                  className="flex items-center gap-2 flex-1 sm:flex-initial"
+                  className="flex items-center gap-1 flex-1 sm:flex-initial min-w-0 justify-center text-xs sm:text-sm px-2 sm:px-3"
                 >
-                  <Briefcase className="w-4 h-4" />
-                  <span className="hidden xs:inline">Mine kunder</span>
-                  <span className="xs:hidden">Kunder</span>
+                  <Briefcase className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                  <span className="truncate">Kunder</span>
                 </Button>
               </div>
             </div>
@@ -148,8 +146,11 @@ export function MyBookingsPageContent({
             onValueChange={(value) => setActiveTab(value as BookingStatus)}
             className="space-y-6"
           >
-            <TabsList className="flex flex-col sm:grid sm:grid-cols-4 w-full max-w-2xl gap-1 sm:gap-0 h-auto sm:h-10">
-              <TabsTrigger value="pending" className="flex items-center gap-2">
+            <TabsList className="flex flex-col sm:grid sm:grid-cols-4 w-full max-w-2xl gap-1 sm:gap-0 h-auto sm:h-10 p-1">
+              <TabsTrigger 
+                value="pending" 
+                className="flex items-center gap-2 w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+              >
                 <AlertTriangle className="w-4 h-4" />
                 <span>Venter</span>
                 {isLoadingCounts ? (
@@ -168,7 +169,7 @@ export function MyBookingsPageContent({
               </TabsTrigger>
               <TabsTrigger
                 value="confirmed"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <CheckCircle className="w-4 h-4" />
                 <span>Bekreftet</span>
@@ -188,7 +189,7 @@ export function MyBookingsPageContent({
               </TabsTrigger>
               <TabsTrigger
                 value="cancelled"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <XCircle className="w-4 h-4" />
                 <span>Avlyst</span>
@@ -202,7 +203,7 @@ export function MyBookingsPageContent({
               </TabsTrigger>
               <TabsTrigger
                 value="completed"
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 w-full justify-center data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
               >
                 <Clock className="w-4 h-4" />
                 <span>Fullført</span>

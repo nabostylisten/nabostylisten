@@ -48,6 +48,7 @@ export default async function BookingChatPage({
       stylist_id,
       status,
       start_time,
+      total_price,
       customer:profiles!customer_id (
         id,
         full_name
@@ -95,15 +96,16 @@ export default async function BookingChatPage({
   if (chatError || !chat) {
     return (
       <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
-        <div className="flex flex-1 flex-col gap-4 p-4">
+        <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4">
           <div className="max-w-4xl mx-auto w-full">
             {/* Header */}
             <BlurFade delay={0.1} duration={0.5} inView>
-              <div className="flex items-center gap-4 mb-6">
-                <Button variant="ghost" size="sm" asChild>
-                  <Link href={`/bookinger/${bookingId}`}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Tilbake til booking
+              <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
+                <Button variant="ghost" size="sm" asChild className="shrink-0">
+                  <Link href={`/bookinger/${bookingId}`} className="flex items-center gap-1 sm:gap-2">
+                    <ArrowLeft className="w-4 h-4" />
+                    <span className="hidden sm:inline">Tilbake til booking</span>
+                    <span className="sm:hidden">Tilbake</span>
                   </Link>
                 </Button>
               </div>
@@ -111,24 +113,24 @@ export default async function BookingChatPage({
 
             {/* Booking Info Card */}
             <BlurFade delay={0.15} duration={0.5} inView>
-              <Card className="mb-6">
-                <CardHeader className="pb-3">
-                  <div className="flex items-center gap-3">
-                    <MessageCircle className="w-6 h-6" />
-                    <div className="flex-1">
-                      <h1 className="text-xl font-semibold">Chat</h1>
+              <Card className="mb-4 sm:mb-6">
+                <CardHeader className="pb-3 px-3 sm:px-6">
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <div className="flex-1 min-w-0">
+                      <h1 className="text-lg sm:text-xl font-semibold">Chat</h1>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-                        <User className="w-4 h-4" />
-                        <span>Med {partner?.full_name || "Ukjent bruker"}</span>
+                        <User className="w-3 h-3 sm:w-4 sm:h-4" />
+                        <span className="truncate">Med {partner?.full_name || "Ukjent bruker"}</span>
                       </div>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="flex flex-wrap items-center gap-4 text-sm">
-                    <div className="flex items-center gap-1">
+                <CardContent className="pt-0 px-3 sm:px-6">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4 text-sm">
+                    <div className="flex items-center gap-1 flex-wrap">
                       <Calendar className="w-4 h-4 text-muted-foreground" />
-                      <span>
+                      <span className="break-words">
                         {new Date(booking.start_time).toLocaleDateString(
                           "nb-NO",
                           {
@@ -143,7 +145,7 @@ export default async function BookingChatPage({
                     </div>
 
                     {serviceTitles.length > 0 && (
-                      <div className="text-muted-foreground">
+                      <div className="text-muted-foreground break-words">
                         {serviceTitles.join(", ")}
                       </div>
                     )}
@@ -156,30 +158,30 @@ export default async function BookingChatPage({
 
             {/* Error Card */}
             <BlurFade delay={0.2} duration={0.5} inView>
-              <Card className="border-red-200 bg-red-50">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-3">
-                    <MessageCircle className="w-6 h-6 text-red-600 mt-1" />
+              <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/30">
+                <CardContent className="p-4 sm:p-6">
+                  <div className="flex flex-col sm:flex-row items-start gap-3">
+                    <MessageCircle className="w-6 h-6 text-red-600 dark:text-red-400 mt-1 shrink-0" />
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-red-900 mb-2">
+                      <h3 className="text-base sm:text-lg font-semibold text-red-900 dark:text-red-200 mb-2">
                         Kan ikke laste chat
                       </h3>
-                      <p className="text-red-700 mb-4">
+                      <p className="text-red-700 dark:text-red-300 mb-4 text-sm sm:text-base">
                         Det oppstod en feil ved lasting av chatten for denne
                         bookingen.
                       </p>
-                      <div className="bg-red-100 border border-red-200 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-red-800 font-mono">
+                      <div className="bg-red-100 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-red-800 dark:text-red-300 font-mono break-words">
                           {chatError || "Chat ikke funnet"}
                         </p>
                       </div>
-                      <div className="flex gap-3">
-                        <Button asChild>
+                      <div className="flex flex-col sm:flex-row gap-3">
+                        <Button asChild className="w-full sm:w-auto">
                           <Link href={`/bookinger/${bookingId}`}>
                             Tilbake til booking
                           </Link>
                         </Button>
-                        <Button variant="outline" asChild>
+                        <Button variant="outline" asChild className="w-full sm:w-auto">
                           <Link href="/bookinger">Se alle bookinger</Link>
                         </Button>
                       </div>
@@ -208,7 +210,7 @@ export default async function BookingChatPage({
 
   return (
     <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4">
         {shouldShowReviewReminder && (
           <BlurFade delay={0.1} duration={0.5} inView>
             <ReviewReminderAlert

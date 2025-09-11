@@ -100,14 +100,14 @@ export function MoveBookingContent({
   return (
     <div className="max-w-4xl mx-auto w-full space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <Button variant="ghost" asChild>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <Button variant="ghost" asChild className="w-full sm:w-auto">
           <Link href={`/bookinger/${bookingId}`}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Tilbake til booking
           </Link>
         </Button>
-        <Button variant="outline" asChild>
+        <Button variant="outline" asChild className="w-full sm:w-auto">
           <Link href={`/bookinger/${bookingId}/chat`}>
             <MessageSquare className="w-4 h-4 mr-2" />
             Åpne chat

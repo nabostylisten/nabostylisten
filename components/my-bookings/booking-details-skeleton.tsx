@@ -8,38 +8,45 @@ import { BlurFade } from "@/components/magicui/blur-fade";
 
 export function BookingDetailsSkeleton() {
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <div className="max-w-4xl mx-auto w-full space-y-6">
+    <div className="flex flex-1 flex-col gap-4">
+      <div className="max-w-4xl mx-auto w-full space-y-4 sm:space-y-6">
         {/* Header */}
         <BlurFade delay={0.1} duration={0.5} inView>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:justify-between">
             <Skeleton className="h-10 w-32" />
+            <Skeleton className="h-10 w-full sm:w-32" />
           </div>
         </BlurFade>
 
         {/* Main Info Card */}
         <BlurFade delay={0.15} duration={0.5} inView>
           <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div className="space-y-2">
-                  <Skeleton className="h-8 w-64" />
-                  <Skeleton className="h-5 w-32" />
+            <CardHeader className="pb-3 px-3 sm:px-6">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                  <div className="space-y-2">
+                    <Skeleton className="h-6 w-32" />
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Skeleton className="h-5 w-5 rounded-full" />
+                    <Skeleton className="h-6 w-20" />
+                    <Skeleton className="h-8 w-24" />
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Skeleton className="h-5 w-5 rounded-full" />
-                  <Skeleton className="h-6 w-20" />
+                <div className="space-y-2">
+                  <Skeleton className="h-8 w-full max-w-md" />
+                  <Skeleton className="h-5 w-48" />
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
               {/* Status Description */}
-              <div className="p-4 bg-muted/50 rounded-lg">
+              <div className="p-3 sm:p-4 bg-muted/50 rounded-lg">
                 <Skeleton className="h-4 w-full" />
               </div>
 
               {/* DateTime and Duration */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
                     <Skeleton className="h-5 w-5" />

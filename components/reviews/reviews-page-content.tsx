@@ -32,8 +32,8 @@ export function ReviewsPageContent({
       <div className="space-y-6">
         <BlurFade delay={0.1} duration={0.5} inView>
           <div className="space-y-2">
-            <h1 className="text-2xl font-bold">Mine anmeldelser</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold break-words">Mine anmeldelser</h1>
+            <p className="text-sm sm:text-base text-muted-foreground break-words">
               Anmeldelser jeg har skrevet for stylister jeg har brukt
             </p>
           </div>
@@ -68,8 +68,8 @@ export function ReviewsPageContent({
     <div className="space-y-6">
       <BlurFade delay={0.1} duration={0.5} inView>
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold">Anmeldelser</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold break-words">Anmeldelser</h1>
+          <p className="text-sm sm:text-base text-muted-foreground break-words hyphens-auto">
             Administrer anmeldelser du har mottatt og skrevet
           </p>
         </div>

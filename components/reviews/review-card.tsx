@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getPublicUrl } from "@/lib/supabase/storage";
 import { ReviewDialog } from "./review-dialog";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 type ReviewCardProps = {
   review: {
@@ -54,6 +55,7 @@ type ReviewCardProps = {
 
 export function ReviewCard({ review, viewType }: ReviewCardProps) {
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   const reviewImages =
     review.media?.filter((m) => m.media_type === "review_image") || [];
@@ -72,79 +74,87 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-6">
-        <div className="flex gap-4">
-          {/* Avatar */}
-          <Avatar className="h-10 w-10">
-            <AvatarFallback>
-              {displayPerson?.full_name?.charAt(0).toUpperCase() || "?"}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="flex-1 space-y-3">
-            {/* Header */}
-            <div className="flex items-start justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="font-medium">
-                    {displayPerson?.full_name || "Ukjent bruker"}
-                  </span>
-                  {viewType === "customer" && (
-                    <Badge variant="outline" className="text-xs">
-                      Stylist
-                    </Badge>
-                  )}
+      <CardContent className="p-3 sm:p-6">
+        {isMobile ? (
+          /* Mobile Layout: Optimized vertical flow */
+          <div className="space-y-3">
+            {/* Mobile Header: Avatar, name, and rating in one row */}
+            <div className="flex items-start gap-3">
+              <Avatar className="h-8 w-8 flex-shrink-0 mt-1">
+                <AvatarFallback className="text-xs">
+                  {displayPerson?.full_name?.charAt(0).toUpperCase() || "?"}
+                </AvatarFallback>
+              </Avatar>
+              
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm break-words leading-tight">
+                        {displayPerson?.full_name || "Ukjent bruker"}
+                      </span>
+                      {viewType === "customer" && (
+                        <Badge variant="outline" className="text-xs flex-shrink-0">
+                          Stylist
+                        </Badge>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">
+                      {format(new Date(review.created_at), "d. MMM yyyy", {
+                        locale: nb,
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Mobile Rating - Compact */}
+                  <div className="flex items-center gap-0.5 flex-shrink-0">
+                    {[...Array(5)].map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`w-3 h-3 ${
+                          i < review.rating
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="text-sm text-muted-foreground">
-                  {format(new Date(review.created_at), "d. MMMM yyyy", {
-                    locale: nb,
-                  })}
-                </div>
-              </div>
-
-              {/* Rating */}
-              <div className="flex items-center gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${
-                      i < review.rating
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
               </div>
             </div>
 
-            {/* Service info */}
+            {/* Mobile Services */}
             {services.length > 0 && (
               <div className="flex flex-wrap gap-1">
-                {services.slice(0, 2).map((service, index) => (
+                {services.slice(0, 3).map((service, index) => (
                   <Badge key={index} variant="secondary" className="text-xs">
                     {service}
                   </Badge>
                 ))}
-                {services.length > 2 && (
+                {services.length > 3 && (
                   <Badge variant="secondary" className="text-xs">
-                    +{services.length - 2}
+                    +{services.length - 3}
                   </Badge>
                 )}
               </div>
             )}
 
-            {/* Comment */}
+            {/* Mobile Comment */}
             {review.comment && (
-              <p className="text-sm leading-relaxed">{review.comment}</p>
+              <div className="bg-muted/30 rounded-lg p-2 border-l-2 border-muted">
+                <p className="text-xs leading-relaxed break-words text-muted-foreground">
+                  {review.comment}
+                </p>
+              </div>
             )}
 
-            {/* Images */}
+            {/* Mobile Images */}
             {reviewImages.length > 0 && (
-              <div className="flex gap-2 flex-wrap">
-                {reviewImages.slice(0, 4).map((image) => (
+              <div className="flex gap-1 flex-wrap">
+                {reviewImages.slice(0, 3).map((image) => (
                   <div
                     key={image.id}
-                    className="relative w-16 h-16 rounded-md overflow-hidden"
+                    className="relative w-16 h-16 rounded-lg overflow-hidden flex-shrink-0"
                   >
                     <Image
                       src={getImageUrl(image.file_path)}
@@ -155,32 +165,151 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
                     />
                   </div>
                 ))}
-                {reviewImages.length > 4 && (
-                  <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center">
-                    <span className="text-xs text-muted-foreground">
-                      +{reviewImages.length - 4}
+                {reviewImages.length > 3 && (
+                  <div className="w-16 h-16 rounded-lg bg-muted flex items-center justify-center">
+                    <span className="text-xs text-muted-foreground font-medium">
+                      +{reviewImages.length - 3}
                     </span>
                   </div>
                 )}
               </div>
             )}
 
-            {/* Footer with actions */}
-            <div className="flex justify-end gap-2 items-center pt-2 border-t">
-              <div className="flex gap-2">
-                {/* Edit button for user's own reviews */}
+            {/* Mobile Actions */}
+            <div className="flex gap-2 pt-2">
+              {viewType === "customer" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsReviewDialogOpen(true)}
+                  className="flex-1 justify-center"
+                >
+                  <Edit className="w-3 h-3 mr-1" />
+                  Rediger
+                </Button>
+              )}
+              {review.booking && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  asChild
+                  className="flex-1 justify-center"
+                >
+                  <Link href={`/bookinger/${review.booking.id}`}>
+                    Booking
+                    <ChevronRight className="w-3 h-3 ml-1" />
+                  </Link>
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : (
+          /* Desktop Layout: Traditional side-by-side */
+          <div className="flex gap-4">
+            {/* Desktop Avatar */}
+            <Avatar className="h-10 w-10">
+              <AvatarFallback>
+                {displayPerson?.full_name?.charAt(0).toUpperCase() || "?"}
+              </AvatarFallback>
+            </Avatar>
+
+            <div className="flex-1 space-y-3">
+              {/* Desktop Header */}
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-medium text-base break-words">
+                      {displayPerson?.full_name || "Ukjent bruker"}
+                    </span>
+                    {viewType === "customer" && (
+                      <Badge variant="outline" className="text-xs flex-shrink-0">
+                        Stylist
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {format(new Date(review.created_at), "d. MMMM yyyy", {
+                      locale: nb,
+                    })}
+                  </div>
+                </div>
+
+                {/* Desktop Rating */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`w-4 h-4 ${
+                        i < review.rating
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop Services */}
+              {services.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {services.slice(0, 2).map((service, index) => (
+                    <Badge key={index} variant="secondary" className="text-xs">
+                      {service}
+                    </Badge>
+                  ))}
+                  {services.length > 2 && (
+                    <Badge variant="secondary" className="text-xs">
+                      +{services.length - 2}
+                    </Badge>
+                  )}
+                </div>
+              )}
+
+              {/* Desktop Comment */}
+              {review.comment && (
+                <p className="text-sm leading-relaxed break-words">{review.comment}</p>
+              )}
+
+              {/* Desktop Images */}
+              {reviewImages.length > 0 && (
+                <div className="flex gap-2 flex-wrap">
+                  {reviewImages.slice(0, 4).map((image) => (
+                    <div
+                      key={image.id}
+                      className="relative w-16 h-16 rounded-md overflow-hidden"
+                    >
+                      <Image
+                        src={getImageUrl(image.file_path)}
+                        alt="Anmeldelse bilde"
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    </div>
+                  ))}
+                  {reviewImages.length > 4 && (
+                    <div className="w-16 h-16 rounded-md bg-muted flex items-center justify-center">
+                      <span className="text-xs text-muted-foreground">
+                        +{reviewImages.length - 4}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Desktop Actions */}
+              <div className="flex justify-end items-center gap-2 pt-2 border-t">
                 {viewType === "customer" && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setIsReviewDialogOpen(true)}
+                    className="flex items-center gap-2"
                   >
-                    <Edit className="w-4 h-4 mr-2" />
+                    <Edit className="w-4 h-4" />
                     Rediger anmeldelse
                   </Button>
                 )}
-              </div>
-              <div className="flex gap-2">
                 {review.booking && (
                   <Link
                     href={`/bookinger/${review.booking.id}`}
@@ -199,7 +328,7 @@ export function ReviewCard({ review, viewType }: ReviewCardProps) {
               </div>
             </div>
           </div>
-        </div>
+        )}
       </CardContent>
 
       {/* Review Dialog for editing/deleting own reviews */}

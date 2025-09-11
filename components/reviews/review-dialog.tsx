@@ -45,12 +45,12 @@ export function ReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[500px] overflow-y-scroll max-h-screen">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl break-words">
             {existingReview ? "Rediger anmeldelse" : "Legg til anmeldelse"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm sm:text-base break-words">
             {existingReview 
               ? "Oppdater din anmeldelse og del din opplevelse"
               : "Del din opplevelse med andre brukere ved å skrive en anmeldelse"

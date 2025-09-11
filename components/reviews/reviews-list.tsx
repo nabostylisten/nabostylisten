@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import type { ReviewFilters } from "@/types";
 
 interface ReviewsListProps {
@@ -68,6 +69,7 @@ export function ReviewsList({
   showFilters = true,
 }: ReviewsListProps) {
   const limit = 6;
+  const isMobile = useMediaQuery("(max-width: 768px)");
 
   // Local filter state
   const [filters, setFilters] = useState<ReviewFilters>({
@@ -187,154 +189,162 @@ export function ReviewsList({
   const isEmpty = !data?.data || data.data.length === 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header with stats */}
       {data?.total ? (
-        <Badge variant="secondary">{data.total} totalt</Badge>
+        <Badge variant="secondary" className="text-xs sm:text-sm">
+          {data.total} totalt
+        </Badge>
       ) : null}
 
       {/* Filters */}
       {showFilters && (
         <div className="space-y-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-              <Input
-                placeholder={`Søk i ${viewType === "stylist" ? "anmeldelser..." : "mine anmeldelser..."}`}
-                value={searchInput}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="pl-10"
-              />
+          <div className="flex flex-col gap-2 sm:gap-4">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              {/* Search */}
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                <Input
+                  placeholder={isMobile ? "Søk..." : `Søk i ${viewType === "stylist" ? "anmeldelser..." : "mine anmeldelser..."}`}
+                  value={searchInput}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
             </div>
 
-            {/* Rating filter */}
-            <Select
-              value={filters.rating?.toString() || "all"}
-              onValueChange={handleRatingFilterChange}
-            >
-              <SelectTrigger className="w-full sm:w-48">
-                <Filter className="w-4 h-4 mr-2" />
-                <SelectValue placeholder="Alle vurderinger" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Alle vurderinger</SelectItem>
-                <SelectItem value="5">5 stjerner</SelectItem>
-                <SelectItem value="4">4 stjerner</SelectItem>
-                <SelectItem value="3">3 stjerner</SelectItem>
-                <SelectItem value="2">2 stjerner</SelectItem>
-                <SelectItem value="1">1 stjerne</SelectItem>
-              </SelectContent>
-            </Select>
+            {/* Second row: Rating and Reviewer filters */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4">
+              {/* Rating filter */}
+              <Select
+                value={filters.rating?.toString() || "all"}
+                onValueChange={handleRatingFilterChange}
+              >
+                <SelectTrigger className="w-full">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder={isMobile ? "Rating" : "Alle vurderinger"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Alle vurderinger</SelectItem>
+                  <SelectItem value="5">5 stjerner</SelectItem>
+                  <SelectItem value="4">4 stjerner</SelectItem>
+                  <SelectItem value="3">3 stjerner</SelectItem>
+                  <SelectItem value="2">2 stjerner</SelectItem>
+                  <SelectItem value="1">1 stjerne</SelectItem>
+                </SelectContent>
+              </Select>
 
-            {/* Reviewer Filter */}
-            <Popover
-              open={reviewerPopoverOpen}
-              onOpenChange={setReviewerPopoverOpen}
-            >
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={reviewerPopoverOpen}
-                  className="w-full sm:w-48 justify-between"
-                >
-                  <div className="flex items-center">
-                    <Users className="mr-2 h-4 w-4" />
-                    {filters.reviewerIds && filters.reviewerIds.length > 0
-                      ? `${filters.reviewerIds.length} valgt`
-                      : viewType === "stylist"
-                        ? "Velg kunder..."
-                        : "Velg stylister..."}
-                  </div>
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-80 p-0" align="start">
-                <Command>
-                  <CommandInput
-                    placeholder={`Søk ${viewType === "stylist" ? "kunder" : "stylister"}...`}
-                  />
-                  <CommandList>
-                    {!reviewers || reviewers.length === 0 ? (
-                      <CommandEmpty>
-                        Ingen {viewType === "stylist" ? "kunder" : "stylister"}{" "}
-                        funnet.
-                      </CommandEmpty>
-                    ) : (
-                      <>
+              {/* Reviewer Filter */}
+              <Popover
+                open={reviewerPopoverOpen}
+                onOpenChange={setReviewerPopoverOpen}
+              >
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={reviewerPopoverOpen}
+                    className="w-full justify-between"
+                  >
+                    <div className="flex items-center">
+                      <Users className="mr-2 h-4 w-4" />
+                      {filters.reviewerIds && filters.reviewerIds.length > 0
+                        ? `${filters.reviewerIds.length} valgt`
+                        : isMobile
+                          ? (viewType === "stylist" ? "Kunder..." : "Stylister...")
+                          : (viewType === "stylist" ? "Velg kunder..." : "Velg stylister...")}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[calc(100vw-2rem)] max-w-sm p-0" align="start">
+                  <Command>
+                    <CommandInput
+                      placeholder={isMobile ? "Søk..." : `Søk ${viewType === "stylist" ? "kunder" : "stylister"}...`}
+                    />
+                    <CommandList>
+                      {!reviewers || reviewers.length === 0 ? (
                         <CommandEmpty>
-                          Ingen{" "}
-                          {viewType === "stylist" ? "kunder" : "stylister"}{" "}
+                          Ingen {viewType === "stylist" ? "kunder" : "stylister"}{" "}
                           funnet.
                         </CommandEmpty>
-                        <CommandGroup>
-                          <ScrollArea className="h-40">
-                            {reviewers.map((reviewer) => {
-                              const isSelected =
-                                filters.reviewerIds?.includes(reviewer.value) ||
-                                false;
-                              return (
-                                <CommandItem
-                                  key={reviewer.value}
-                                  value={reviewer.label}
-                                  onSelect={() =>
-                                    handleReviewerToggle(reviewer.value)
-                                  }
-                                >
-                                  {isSelected ? (
-                                    <Check className={cn("mr-2 h-4 w-4")} />
-                                  ) : (
-                                    <ChevronRight className="mr-2 h-4 w-4" />
-                                  )}
-                                  {reviewer.label}
-                                </CommandItem>
-                              );
-                            })}
-                          </ScrollArea>
-                        </CommandGroup>
-                        <CommandSeparator />
-                        <CommandGroup>
-                          <CommandItem
-                            onSelect={() => {
-                              updateFilters({ reviewerIds: [], page: 1 });
-                              setReviewerPopoverOpen(false);
-                            }}
-                          >
-                            <X className="mr-2 h-4 w-4" />
-                            Fjern alle valgte
-                          </CommandItem>
-                        </CommandGroup>
-                      </>
-                    )}
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                      ) : (
+                        <>
+                          <CommandEmpty>
+                            Ingen{" "}
+                            {viewType === "stylist" ? "kunder" : "stylister"}{" "}
+                            funnet.
+                          </CommandEmpty>
+                          <CommandGroup>
+                            <ScrollArea className="h-40">
+                              {reviewers.map((reviewer) => {
+                                const isSelected =
+                                  filters.reviewerIds?.includes(reviewer.value) ||
+                                  false;
+                                return (
+                                  <CommandItem
+                                    key={reviewer.value}
+                                    value={reviewer.label}
+                                    onSelect={() =>
+                                      handleReviewerToggle(reviewer.value)
+                                    }
+                                  >
+                                    {isSelected ? (
+                                      <Check className={cn("mr-2 h-4 w-4")} />
+                                    ) : (
+                                      <ChevronRight className="mr-2 h-4 w-4" />
+                                    )}
+                                    {reviewer.label}
+                                  </CommandItem>
+                                );
+                              })}
+                            </ScrollArea>
+                          </CommandGroup>
+                          <CommandSeparator />
+                          <CommandGroup>
+                            <CommandItem
+                              onSelect={() => {
+                                updateFilters({ reviewerIds: [], page: 1 });
+                                setReviewerPopoverOpen(false);
+                              }}
+                            >
+                              <X className="mr-2 h-4 w-4" />
+                              Fjern alle valgte
+                            </CommandItem>
+                          </CommandGroup>
+                        </>
+                      )}
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
 
-            {/* Sort */}
-            <Select
-              value={filters.sortBy || "newest"}
-              onValueChange={handleSortChange}
-            >
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Sorter etter" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="newest">Nyeste først</SelectItem>
-                <SelectItem value="oldest">Eldste først</SelectItem>
-                <SelectItem value="highest">Høyest vurdering</SelectItem>
-                <SelectItem value="lowest">Lavest vurdering</SelectItem>
-              </SelectContent>
-            </Select>
+              {/* Sort */}
+              <Select
+                value={filters.sortBy || "newest"}
+                onValueChange={handleSortChange}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder={isMobile ? "Sortering" : "Sorter etter"} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Nyeste først</SelectItem>
+                  <SelectItem value="oldest">Eldste først</SelectItem>
+                  <SelectItem value="highest">Høyest vurdering</SelectItem>
+                  <SelectItem value="lowest">Lavest vurdering</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           {/* Active filters display */}
           {hasActiveFilters && (
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm text-muted-foreground">
+            <div className="space-y-2">
+              <span className="text-xs sm:text-sm text-muted-foreground block">
                 Aktive filtre:
               </span>
+              <div className="flex flex-wrap items-center gap-2">
               {filters.search && filters.search.length > 0 && (
                 <Badge variant="secondary" className="flex items-center gap-1">
                   Søk: {filters.search}
@@ -388,10 +398,12 @@ export function ReviewsList({
                 size="sm"
                 onClick={handleClearFilters}
                 disabled={false}
+                className="text-xs sm:text-sm"
               >
-                <X className="w-4 h-4 mr-2" />
-                Nullstill alle
+                <X className="w-4 h-4 mr-1" />
+                {isMobile ? "Nullstill" : "Nullstill alle"}
               </Button>
+              </div>
             </div>
           )}
         </div>
@@ -405,14 +417,14 @@ export function ReviewsList({
           ))}
         </div>
       ) : isEmpty ? (
-        <div className="text-center py-12">
-          <Star className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-lg font-medium mb-2">
+        <div className="text-center py-8 sm:py-12">
+          <Star className="w-10 h-10 sm:w-12 sm:h-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-base sm:text-lg font-medium mb-2">
             {hasActiveFilters
               ? "Ingen anmeldelser funnet"
               : "Ingen anmeldelser ennå"}
           </h3>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground px-4">
             {hasActiveFilters
               ? "Prøv å justere filtrene dine for å se flere resultater."
               : viewType === "stylist"
@@ -442,7 +454,7 @@ export function ReviewsList({
       {!isLoading && !isEmpty && data.totalPages > 1 && (
         <div className="flex justify-center">
           <Pagination>
-            <PaginationContent>
+            <PaginationContent className="flex-wrap gap-1">
               {(filters.page || 1) > 1 && (
                 <PaginationItem>
                   <PaginationPrevious
@@ -457,8 +469,16 @@ export function ReviewsList({
 
               {Array.from({ length: data.totalPages }, (_, i) => i + 1)
                 .filter((page) => {
-                  // Show current page, first page, last page, and pages around current
+                  // Show fewer pages on mobile
                   const current = filters.page || 1;
+                  if (isMobile) {
+                    return (
+                      page === 1 ||
+                      page === data.totalPages ||
+                      page === current
+                    );
+                  }
+                  // Show current page, first page, last page, and pages around current
                   return (
                     page === 1 ||
                     page === data.totalPages ||

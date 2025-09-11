@@ -133,7 +133,8 @@ export function BookingDetailsContent({
   const { data: reviewResponse } = useQuery({
     queryKey: ["review", bookingId],
     queryFn: () => getReviewByBookingId(bookingId),
-    enabled: bookingResponse?.data?.status === "completed" && userRole === "customer",
+    enabled:
+      bookingResponse?.data?.status === "completed" && userRole === "customer",
   });
 
   if (isLoading) {
@@ -238,21 +239,28 @@ export function BookingDetailsContent({
   const statusInfo = getStatusInfo(booking.status);
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4">
-      <div className="max-w-4xl mx-auto w-full space-y-6">
+    <div className="flex flex-1 flex-col gap-4">
+      <div className="max-w-4xl mx-auto w-full space-y-4 sm:space-y-6">
         {/* Header */}
         <BlurFade delay={0.1} duration={0.5}>
-          <div className="flex items-center justify-between">
-            <Button variant="ghost" asChild>
-              <Link href={`/profiler/${userId}/mine-bookinger`}>
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Tilbake til bookinger
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:justify-between">
+            <Button variant="ghost" asChild className="shrink-0">
+              <Link
+                href={`/profiler/${userId}/mine-bookinger`}
+                className="flex items-center gap-1 sm:gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                <span className="hidden sm:inline">Tilbake til bookinger</span>
+                <span className="sm:hidden">Tilbake</span>
               </Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link href={`/bookinger/${booking.id}/chat`}>
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Åpne chat
+            <Button variant="outline" asChild className="w-full sm:w-auto">
+              <Link
+                href={`/bookinger/${booking.id}/chat`}
+                className="flex items-center justify-center gap-2"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>Åpne chat</span>
               </Link>
             </Button>
           </div>
@@ -261,10 +269,11 @@ export function BookingDetailsContent({
         {/* Main Info Card */}
         <BlurFade delay={0.15} duration={0.5}>
           <Card>
-            <CardHeader>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
+            <CardHeader className="pb-3 px-3 sm:px-6">
+              <div className="flex flex-col gap-4">
+                {/* Badges and Actions Row */}
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                  <div className="flex items-center gap-2 flex-wrap">
                     {booking.is_trial_session && (
                       <Badge
                         variant="outline"
@@ -284,54 +293,68 @@ export function BookingDetailsContent({
                       </Badge>
                     )}
                   </div>
-                  <CardTitle className="text-2xl">
+
+                  <div className="flex items-center flex-col sm:flex-row w-full gap-2 flex-wrap sm:shrink-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      {statusInfo.icon}
+                      {statusInfo.badge}
+                    </div>
+                    {/* Actions dropdown for both customers and stylists */}
+                    <BookingActionsDropdown
+                      booking={{
+                        id: booking.id,
+                        customer_id: booking.customer_id,
+                        stylist_id: booking.stylist_id,
+                        start_time: booking.start_time,
+                        total_price: booking.total_price,
+                        status: booking.status,
+                      }}
+                      currentUserId={userId}
+                      userRole={userRole}
+                      serviceName={services[0]?.title || "Booking"}
+                      customerName={booking.customer?.full_name || "Kunde"}
+                    />
+                    {/* Stylist actions for pending bookings, or admin actions */}
+                    {((userRole === "stylist" &&
+                      booking.status === "pending") ||
+                      userRole === "admin") && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsStatusDialogOpen(true)}
+                        className="text-xs sm:text-sm w-full sm:w-auto"
+                      >
+                        <Settings className="w-4 h-4 mr-1 sm:mr-2" />
+                        <span className="hidden sm:inline">
+                          {userRole === "admin" ? "Admin" : "Administrer"}
+                        </span>
+                        <span className="sm:hidden">Administrer</span>
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Title and Description */}
+                <div className="space-y-2">
+                  <CardTitle className="text-xl sm:text-2xl break-words leading-tight">
                     {booking.is_trial_session ? "Prøvetime: " : ""}
                     {services.length > 0 ? services[0].title : "Booking"}
                     {services.length > 1 &&
                       ` +${services.length - 1} tjenester til`}
                   </CardTitle>
-                  <CardDescription className="text-lg mt-2">
+                  <CardDescription className="text-sm sm:text-lg break-all">
                     Booking ID: {booking.id}
                   </CardDescription>
                 </div>
-                <div className="flex items-center gap-2">
-                  {statusInfo.icon}
-                  {statusInfo.badge}
-                  {/* Actions dropdown for both customers and stylists */}
-                  <BookingActionsDropdown
-                    booking={{
-                      id: booking.id,
-                      customer_id: booking.customer_id,
-                      stylist_id: booking.stylist_id,
-                      start_time: booking.start_time,
-                      total_price: booking.total_price,
-                      status: booking.status,
-                    }}
-                    currentUserId={userId}
-                    userRole={userRole}
-                    serviceName={services[0]?.title || "Booking"}
-                    customerName={booking.customer?.full_name || "Kunde"}
-                  />
-                  {/* Stylist actions for pending bookings, or admin actions */}
-                  {((userRole === "stylist" && booking.status === "pending") ||
-                    userRole === "admin") && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsStatusDialogOpen(true)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      {userRole === "admin" ? "Admin" : "Administrer"}
-                    </Button>
-                  )}
-                </div>
               </div>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-4 sm:space-y-6 px-3 sm:px-6">
               {/* Status Description */}
               {statusInfo.description && (
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <p className="text-sm">{statusInfo.description}</p>
+                <div className="p-3 sm:p-4 bg-muted/50 rounded-lg">
+                  <p className="text-sm break-words">
+                    {statusInfo.description}
+                  </p>
                   {booking.cancelled_at && (
                     <p className="text-xs text-muted-foreground mt-1">
                       Avlyst{" "}
@@ -346,12 +369,12 @@ export function BookingDetailsContent({
               )}
 
               {/* DateTime and Duration */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 gap-4 sm:gap-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-muted-foreground" />
-                    <div>
-                      <div className="font-medium">
+                    <Calendar className="w-5 h-5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium break-words">
                         {format(startTime, "EEEE d. MMMM yyyy", { locale: nb })}
                       </div>
                       <div className="text-sm text-muted-foreground">
@@ -360,8 +383,8 @@ export function BookingDetailsContent({
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-muted-foreground" />
-                    <div>
+                    <Clock className="w-5 h-5 text-muted-foreground shrink-0" />
+                    <div className="min-w-0 flex-1">
                       <div className="font-medium">
                         {format(startTime, "HH:mm")} -{" "}
                         {format(endTime, "HH:mm")}
@@ -377,8 +400,8 @@ export function BookingDetailsContent({
                 {booking.address_id && (
                   <div className="space-y-4">
                     <div className="flex items-start gap-3">
-                      <MapPin className="w-5 h-5 text-muted-foreground mt-0.5" />
-                      <div className="space-y-1">
+                      <MapPin className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
+                      <div className="space-y-1 min-w-0 flex-1">
                         {addressLoading ? (
                           <div className="space-y-1">
                             <Skeleton className="h-4 w-32" />
@@ -388,7 +411,9 @@ export function BookingDetailsContent({
                           <div>
                             <div className="font-medium">Adresse</div>
                             <div className="text-sm text-muted-foreground">
-                              <p>{address.street_address}</p>
+                              <p className="break-words">
+                                {address.street_address}
+                              </p>
                               <p>
                                 {address.postal_code} {address.city}
                               </p>
@@ -618,88 +643,128 @@ export function BookingDetailsContent({
 
                 {/* Social Media Links */}
                 {booking.stylist?.stylist_details && (
-                  <div className="flex gap-2 pt-2">
+                  <div className="grid grid-cols-1 sm:flex sm:flex-wrap gap-2 pt-2">
                     {booking.stylist.stylist_details.instagram_profile && (
-                      <Button variant="outline" size="sm" asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="w-full sm:w-auto"
+                      >
                         <Link
                           href={
                             booking.stylist.stylist_details.instagram_profile
                           }
                           target="_blank"
-                          className="flex gap-2 items-center"
+                          className="flex gap-1 sm:gap-2 items-center justify-center sm:justify-start text-xs sm:text-sm"
                         >
                           <FaInstagram className="w-4 h-4" />
-                          {getSocialMediaDisplayName(
-                            "instagram",
-                            booking.stylist.stylist_details.instagram_profile
-                          )}
+                          <span className="hidden sm:inline">
+                            {getSocialMediaDisplayName(
+                              "instagram",
+                              booking.stylist.stylist_details.instagram_profile
+                            )}
+                          </span>
+                          <span className="sm:hidden">Instagram</span>
                         </Link>
                       </Button>
                     )}
                     {booking.stylist.stylist_details.facebook_profile && (
-                      <Button variant="outline" size="sm" asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="w-full sm:w-auto"
+                      >
                         <Link
                           href={
                             booking.stylist.stylist_details.facebook_profile
                           }
                           target="_blank"
-                          className="flex gap-2 items-center"
+                          className="flex gap-1 sm:gap-2 items-center justify-center sm:justify-start text-xs sm:text-sm"
                         >
                           <Facebook className="w-4 h-4" />
-                          {getSocialMediaDisplayName(
-                            "facebook",
-                            booking.stylist.stylist_details.facebook_profile
-                          )}
+                          <span className="hidden sm:inline">
+                            {getSocialMediaDisplayName(
+                              "facebook",
+                              booking.stylist.stylist_details.facebook_profile
+                            )}
+                          </span>
+                          <span className="sm:hidden">Facebook</span>
                         </Link>
                       </Button>
                     )}
 
                     {booking.stylist.stylist_details.youtube_profile && (
-                      <Button variant="outline" size="sm" asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="w-full sm:w-auto"
+                      >
                         <Link
                           href={booking.stylist.stylist_details.youtube_profile}
                           target="_blank"
-                          className="flex gap-2 items-center"
+                          className="flex gap-1 sm:gap-2 items-center justify-center sm:justify-start text-xs sm:text-sm"
                         >
                           <Youtube className="w-4 h-4" />
-                          {getSocialMediaDisplayName(
-                            "youtube",
-                            booking.stylist.stylist_details.youtube_profile
-                          )}
+                          <span className="hidden sm:inline">
+                            {getSocialMediaDisplayName(
+                              "youtube",
+                              booking.stylist.stylist_details.youtube_profile
+                            )}
+                          </span>
+                          <span className="sm:hidden">YouTube</span>
                         </Link>
                       </Button>
                     )}
 
                     {booking.stylist.stylist_details.tiktok_profile && (
-                      <Button variant="outline" size="sm" asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="w-full sm:w-auto"
+                      >
                         <Link
                           href={booking.stylist.stylist_details.tiktok_profile}
                           target="_blank"
-                          className="flex gap-2 items-center"
+                          className="flex gap-1 sm:gap-2 items-center justify-center sm:justify-start text-xs sm:text-sm"
                         >
                           <FaTiktok className="w-4 h-4" />
-                          {getSocialMediaDisplayName(
-                            "tiktok",
-                            booking.stylist.stylist_details.tiktok_profile
-                          )}
+                          <span className="hidden sm:inline">
+                            {getSocialMediaDisplayName(
+                              "tiktok",
+                              booking.stylist.stylist_details.tiktok_profile
+                            )}
+                          </span>
+                          <span className="sm:hidden">TikTok</span>
                         </Link>
                       </Button>
                     )}
 
                     {booking.stylist.stylist_details.snapchat_profile && (
-                      <Button variant="outline" size="sm" asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="w-full sm:w-auto"
+                      >
                         <Link
                           href={
                             booking.stylist.stylist_details.snapchat_profile
                           }
                           target="_blank"
-                          className="flex gap-2 items-center"
+                          className="flex gap-1 sm:gap-2 items-center justify-center sm:justify-start text-xs sm:text-sm"
                         >
                           <FaSnapchatGhost className="w-4 h-4" />
-                          {getSocialMediaDisplayName(
-                            "snapchat",
-                            booking.stylist.stylist_details.snapchat_profile
-                          )}
+                          <span className="hidden sm:inline">
+                            {getSocialMediaDisplayName(
+                              "snapchat",
+                              booking.stylist.stylist_details.snapchat_profile
+                            )}
+                          </span>
+                          <span className="sm:hidden">Snapchat</span>
                         </Link>
                       </Button>
                     )}
@@ -713,19 +778,21 @@ export function BookingDetailsContent({
         {/* Services */}
         <BlurFade delay={0.25} duration={0.5}>
           <Card>
-            <CardHeader>
-              <CardTitle>Tjenester</CardTitle>
+            <CardHeader className="px-3 sm:px-6">
+              <CardTitle className="text-lg sm:text-xl">Tjenester</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               <div className="space-y-4">
                 {services.map((service, index) => (
                   <div key={service.id} className="space-y-3">
                     {index > 0 && <Separator />}
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h3 className="font-medium">{service.title}</h3>
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-medium break-words">
+                          {service.title}
+                        </h3>
                         {service.description && (
-                          <p className="text-sm text-muted-foreground mt-1">
+                          <p className="text-sm text-muted-foreground mt-1 break-words">
                             {service.description}
                           </p>
                         )}
@@ -733,8 +800,8 @@ export function BookingDetailsContent({
                           <span>{service.duration_minutes} min</span>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-semibold">
+                      <div className="text-left sm:text-right shrink-0">
+                        <div className="font-semibold text-lg sm:text-base">
                           {service.price.toFixed(2)} {service.currency}
                         </div>
                       </div>

@@ -99,7 +99,7 @@ export default async function BookingDetailsPage({
 
   return (
     <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
-      <div className="flex flex-1 flex-col gap-4 p-4">
+      <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4 pt-8 sm:pt-12">
         {shouldShowReviewReminder && (
           <BlurFade delay={0.1} duration={0.5} inView>
             <ReviewReminderAlert

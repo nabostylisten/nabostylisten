@@ -102,9 +102,14 @@ export default async function BookingChatPage({
             <BlurFade delay={0.1} duration={0.5} inView>
               <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
                 <Button variant="ghost" size="sm" asChild className="shrink-0">
-                  <Link href={`/bookinger/${bookingId}`} className="flex items-center gap-1 sm:gap-2">
+                  <Link
+                    href={`/bookinger/${bookingId}`}
+                    className="flex items-center gap-1 sm:gap-2"
+                  >
                     <ArrowLeft className="w-4 h-4" />
-                    <span className="hidden sm:inline">Tilbake til booking</span>
+                    <span className="hidden sm:inline">
+                      Tilbake til booking
+                    </span>
                     <span className="sm:hidden">Tilbake</span>
                   </Link>
                 </Button>
@@ -121,7 +126,9 @@ export default async function BookingChatPage({
                       <h1 className="text-lg sm:text-xl font-semibold">Chat</h1>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
                         <User className="w-3 h-3 sm:w-4 sm:h-4" />
-                        <span className="truncate">Med {partner?.full_name || "Ukjent bruker"}</span>
+                        <span className="truncate">
+                          Med {partner?.full_name || "Ukjent bruker"}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -181,7 +188,11 @@ export default async function BookingChatPage({
                             Tilbake til booking
                           </Link>
                         </Button>
-                        <Button variant="outline" asChild className="w-full sm:w-auto">
+                        <Button
+                          variant="outline"
+                          asChild
+                          className="w-full sm:w-auto"
+                        >
                           <Link href="/bookinger">Se alle bookinger</Link>
                         </Button>
                       </div>
@@ -210,7 +221,7 @@ export default async function BookingChatPage({
 
   return (
     <ProfileLayout profileId={user.id} userRole={userProfile?.role}>
-      <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4">
+      <div className="flex flex-1 flex-col gap-4 p-3 sm:p-4 pt-12">
         {shouldShowReviewReminder && (
           <BlurFade delay={0.1} duration={0.5} inView>
             <ReviewReminderAlert

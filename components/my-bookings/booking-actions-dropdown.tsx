@@ -1,7 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { MoreHorizontal, CalendarCheck, X, Settings, CheckCircle, CheckSquare } from "lucide-react";
+import {
+  MoreHorizontal,
+  CalendarCheck,
+  X,
+  Settings,
+  CheckCircle,
+  CheckSquare,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -59,10 +66,8 @@ export function BookingActionsDropdown({
   // Determine available actions based on role and booking status
   const now = new Date();
   const bookingEndTime = new Date(booking.end_time);
-  
-  const canConfirm =
-    userRole === "stylist" &&
-    booking.status === "pending";
+
+  const canConfirm = userRole === "stylist" && booking.status === "pending";
 
   const canReschedule =
     (userRole === "stylist" || userRole === "admin") &&
@@ -77,7 +82,7 @@ export function BookingActionsDropdown({
     now > bookingEndTime;
 
   const canAdminister =
-    userRole === "stylist" && 
+    userRole === "stylist" &&
     booking.status === "pending" &&
     onStatusDialogOpen;
 
@@ -103,7 +108,7 @@ export function BookingActionsDropdown({
           size="sm"
           onClick={() => setIsCancelDialogOpen(true)}
           disabled={disabled}
-          className="flex gap-2"
+          className="flex gap-2 w-full sm:w-auto"
         >
           <X className="h-4 w-4" />
           Avlys booking
@@ -128,7 +133,7 @@ export function BookingActionsDropdown({
         size="sm"
         onClick={() => router.push(`/bookinger/${booking.id}/flytt`)}
         disabled={disabled}
-        className="flex items-center gap-2"
+        className="flex items-center gap-2 w-full sm:w-auto"
       >
         <CalendarCheck className="h-4 w-4" />
         Flytt booking
@@ -145,7 +150,7 @@ export function BookingActionsDropdown({
             variant="outline"
             size="sm"
             disabled={disabled}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 w-full sm:w-auto"
           >
             <MoreHorizontal className="h-4 w-4" />
             <span>Handlinger</span>

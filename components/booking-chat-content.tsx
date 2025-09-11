@@ -272,7 +272,10 @@ export function BookingChatContent({
       {/* Header */}
       <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
         <Button variant="ghost" size="sm" asChild className="shrink-0">
-          <Link href={`/bookinger/${bookingId}`} className="flex items-center gap-1 sm:gap-2">
+          <Link
+            href={`/bookinger/${bookingId}`}
+            className="flex items-center gap-1 sm:gap-2"
+          >
             <ArrowLeft className="w-4 h-4" />
             <span className="hidden sm:inline">Tilbake til booking</span>
             <span className="sm:hidden">Tilbake</span>
@@ -354,19 +357,17 @@ export function BookingChatContent({
 
       {/* Previous Bookings Alert (only for stylists) */}
       {isCurrentUserStylist && stylistId && customerId && (
-        <div className="px-3 sm:px-0">
-          <PreviousBookingsAlert
-            stylistId={stylistId}
-            customerId={customerId}
-            customerName={partnerName}
-            currentBookingId={bookingId}
-            hasPreviousBookings={hasPreviousBookings}
-          />
-        </div>
+        <PreviousBookingsAlert
+          stylistId={stylistId}
+          customerId={customerId}
+          customerName={partnerName}
+          currentBookingId={bookingId}
+          hasPreviousBookings={hasPreviousBookings}
+        />
       )}
 
       {/* Chat Container */}
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg border shadow-sm overflow-hidden mx-3 sm:mx-0">
+      <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg border shadow-sm overflow-hidden">
         <RealtimeChat
           roomName={`booking-${bookingId}`}
           username={currentUserName}

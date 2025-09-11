@@ -78,7 +78,7 @@ export function TrialSessionCard({
   // Fetch address details if booking has an address_id
   const { data: addressData, isLoading: addressLoading } = useQuery({
     queryKey: ["address", booking.address_id],
-    queryFn: () => booking.address_id ? getAddress(booking.address_id) : null,
+    queryFn: () => (booking.address_id ? getAddress(booking.address_id) : null),
     enabled: !!booking.address_id,
   });
 
@@ -163,7 +163,9 @@ export function TrialSessionCard({
               <span>
                 {(() => {
                   try {
-                    return format(startTime, "EEEE d. MMMM yyyy", { locale: nb });
+                    return format(startTime, "EEEE d. MMMM yyyy", {
+                      locale: nb,
+                    });
                   } catch (error) {
                     return "Ugyldig dato";
                   }
@@ -188,34 +190,36 @@ export function TrialSessionCard({
           </div>
 
           {/* Main Booking Link */}
-          {booking.main_booking && Array.isArray(booking.main_booking) && booking.main_booking.length > 0 && (
-            <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 dark:bg-blue-900/30 dark:border-blue-800">
-              <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">
-                <Calendar className="w-4 h-4" />
-                <span>Hovedseksjon planlagt</span>
+          {booking.main_booking &&
+            Array.isArray(booking.main_booking) &&
+            booking.main_booking.length > 0 && (
+              <div className="bg-blue-50 p-3 rounded-lg border border-blue-200 dark:bg-blue-900/30 dark:border-blue-800">
+                <div className="flex items-center gap-2 text-sm text-blue-800 dark:text-blue-200 font-medium mb-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>Hovedseksjon planlagt</span>
+                </div>
+                <div className="text-sm text-blue-700 dark:text-blue-300">
+                  {(() => {
+                    try {
+                      return format(
+                        new Date(booking.main_booking[0].start_time),
+                        "EEEE d. MMMM yyyy 'kl.' HH:mm",
+                        { locale: nb }
+                      );
+                    } catch (error) {
+                      return "Ugyldig dato";
+                    }
+                  })()}
+                </div>
+                <Link
+                  href={`/bookinger/${booking.main_booking[0].id}`}
+                  className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 underline mt-1 inline-flex items-center gap-1"
+                >
+                  Se hovedseksjon detaljer
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
               </div>
-              <div className="text-sm text-blue-700 dark:text-blue-300">
-                {(() => {
-                  try {
-                    return format(
-                      new Date(booking.main_booking[0].start_time),
-                      "EEEE d. MMMM yyyy 'kl.' HH:mm",
-                      { locale: nb }
-                    );
-                  } catch (error) {
-                    return "Ugyldig dato";
-                  }
-                })()}
-              </div>
-              <Link
-                href={`/bookinger/${booking.main_booking[0].id}`}
-                className="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200 underline mt-1 inline-flex items-center gap-1"
-              >
-                Se hovedseksjon detaljer
-                <ArrowRight className="w-3 h-3" />
-              </Link>
-            </div>
-          )}
+            )}
 
           {/* Location */}
           {booking.address_id && (
@@ -230,7 +234,9 @@ export function TrialSessionCard({
                 ) : address ? (
                   <div className="text-muted-foreground text-xs">
                     <p>{address.street_address}</p>
-                    <p>{address.postal_code} {address.city}</p>
+                    <p>
+                      {address.postal_code} {address.city}
+                    </p>
                   </div>
                 ) : null}
               </div>
@@ -278,7 +284,11 @@ export function TrialSessionCard({
                   discount_applied: booking.discount_applied || 0,
                   is_trial_session: true,
                 }}
-                payment={Array.isArray(booking.payments) ? booking.payments[0] : booking.payments}
+                payment={
+                  Array.isArray(booking.payments)
+                    ? booking.payments[0]
+                    : booking.payments
+                }
                 discount={booking.discount}
                 options={{ showDiscountCode: false, isTrialSession: true }}
               />
@@ -307,7 +317,7 @@ export function TrialSessionCard({
                   )}
                 </Button>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {/* Actions dropdown for both customers and stylists */}
                 <BookingActionsDropdown
                   booking={{
@@ -315,6 +325,7 @@ export function TrialSessionCard({
                     customer_id: booking.customer_id,
                     stylist_id: booking.stylist_id,
                     start_time: booking.start_time,
+                    end_time: booking.end_time,
                     total_price: booking.total_price,
                     status: booking.status,
                   }}

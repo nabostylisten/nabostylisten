@@ -376,7 +376,7 @@ export function BookingCard({
                   )}
                 </Button>
               )}
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 {/* Actions dropdown for both customers and stylists */}
                 <BookingActionsDropdown
                   booking={booking}

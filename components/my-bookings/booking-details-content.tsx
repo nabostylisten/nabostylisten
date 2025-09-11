@@ -39,6 +39,8 @@ import {
   Facebook,
   Youtube,
   Edit,
+  Copy,
+  Check,
 } from "lucide-react";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
@@ -96,6 +98,7 @@ export function BookingDetailsContent({
     useState(false);
   const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
   const [editingNote, setEditingNote] = useState<BookingNote | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const {
     data: bookingResponse,
@@ -238,6 +241,16 @@ export function BookingDetailsContent({
 
   const statusInfo = getStatusInfo(booking.status);
 
+  const handleCopyBookingId = async () => {
+    try {
+      await navigator.clipboard.writeText(booking.id);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy booking ID:", error);
+    }
+  };
+
   return (
     <div className="flex flex-1 flex-col gap-4">
       <div className="max-w-4xl mx-auto w-full space-y-4 sm:space-y-6">
@@ -254,15 +267,35 @@ export function BookingDetailsContent({
                 <span className="sm:hidden">Tilbake</span>
               </Link>
             </Button>
-            <Button variant="outline" asChild className="w-full sm:w-auto">
-              <Link
-                href={`/bookinger/${booking.id}/chat`}
-                className="flex items-center justify-center gap-2"
+            <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyBookingId}
+                className="h-auto p-2 text-sm text-muted-foreground hover:text-foreground w-full sm:w-auto"
               >
-                <MessageSquare className="w-4 h-4" />
-                <span>Åpne chat</span>
-              </Link>
-            </Button>
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 mr-1" />
+                    Kopiert!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3 mr-1" />
+                    Kopier ID
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" asChild className="w-full sm:w-auto">
+                <Link
+                  href={`/bookinger/${booking.id}/chat`}
+                  className="flex items-center justify-center gap-2"
+                >
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Åpne chat</span>
+                </Link>
+              </Button>
+            </div>
           </div>
         </BlurFade>
 
@@ -335,17 +368,14 @@ export function BookingDetailsContent({
                   </div>
                 </div>
 
-                {/* Title and Description */}
-                <div className="space-y-2">
+                {/* Title */}
+                <div>
                   <CardTitle className="text-xl sm:text-2xl break-words leading-tight">
                     {booking.is_trial_session ? "Prøvetime: " : ""}
                     {services.length > 0 ? services[0].title : "Booking"}
                     {services.length > 1 &&
                       ` +${services.length - 1} tjenester til`}
                   </CardTitle>
-                  <CardDescription className="text-sm sm:text-lg break-all">
-                    Booking ID: {booking.id}
-                  </CardDescription>
                 </div>
               </div>
             </CardHeader>
@@ -614,29 +644,36 @@ export function BookingDetailsContent({
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
+                {/* User Avatar - centered on mobile, inline on desktop */}
+                <div className="flex flex-col sm:flex-row sm:items-start gap-4">
+                  <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center mx-auto sm:mx-0 shrink-0">
                     <User className="w-6 h-6 text-muted-foreground" />
                   </div>
-                  <div className="flex-1">
-                    <h3 className="font-medium text-lg">
-                      {booking.stylist?.full_name || "Ukjent stylist"}
-                    </h3>
-                    <div className="space-y-2 mt-2">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Mail className="w-4 h-4" />
-                        <span>{booking.stylist?.email}</span>
+                  <div className="flex-1 w-full space-y-4">
+                    <div className="text-center sm:text-left">
+                      <h3 className="font-medium text-lg">
+                        {booking.stylist?.full_name || "Ukjent stylist"}
+                      </h3>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-2 justify-center sm:justify-start">
+                          <Mail className="w-4 h-4" />
+                          <span className="break-all">{booking.stylist?.email}</span>
+                        </div>
                       </div>
                       {booking.stylist?.phone_number && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Phone className="w-4 h-4" />
-                          <span>{booking.stylist.phone_number}</span>
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-muted-foreground">
+                          <div className="flex items-center gap-2 justify-center sm:justify-start">
+                            <Phone className="w-4 h-4" />
+                            <span>{booking.stylist.phone_number}</span>
+                          </div>
                         </div>
                       )}
                     </div>
                     {booking.stylist?.stylist_details?.bio && (
-                      <div className="mt-3 text-sm">
-                        <p>{booking.stylist.stylist_details.bio}</p>
+                      <div className="text-sm text-center sm:text-left">
+                        <p className="break-words">{booking.stylist.stylist_details.bio}</p>
                       </div>
                     )}
                   </div>
@@ -1072,7 +1109,7 @@ export function BookingDetailsContent({
           <BlurFade delay={0.4} duration={0.5}>
             <Card>
               <CardHeader>
-                <div className="flex justify-between items-center">
+                <div className="flex flex-col sm:flex-row gap-2 justify-between items-center">
                   <CardTitle className="flex items-center gap-2">
                     <FileText className="w-5 h-5" />
                     Bookingnotater

@@ -37,11 +37,12 @@ async function retryWithBackoff<T>(
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       return await operation();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // Only retry on rate limit errors (429) and lock timeout errors
       const isRateLimit = error.statusCode === 429;
       const isLastAttempt = attempt === maxRetries;
-      
+
       if (!isRateLimit || isLastAttempt) {
         throw error;
       }
@@ -50,13 +51,17 @@ async function retryWithBackoff<T>(
       const exponentialDelay = baseDelay * Math.pow(2, attempt);
       const jitter = Math.random() * 0.1 * exponentialDelay; // 10% jitter
       const delay = exponentialDelay + jitter;
-      
-      console.log(`    ⏳ Rate limited, retrying in ${Math.round(delay)}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
+
+      console.log(
+        `    ⏳ Rate limited, retrying in ${Math.round(delay)}ms (attempt ${
+          attempt + 1
+        }/${maxRetries + 1})`,
+      );
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
     }
   }
-  
+
   throw new Error("Should not reach here");
 }
 
@@ -68,20 +73,24 @@ async function processBatches<T, R>(
   delayBetweenBatches = 100,
 ): Promise<R[]> {
   const results: R[] = [];
-  
+
   for (let i = 0; i < items.length; i += batchSize) {
     const batch = items.slice(i, i + batchSize);
-    console.log(`    📦 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(items.length / batchSize)} (${batch.length} items)`);
-    
+    console.log(
+      `    📦 Processing batch ${Math.floor(i / batchSize) + 1}/${
+        Math.ceil(items.length / batchSize)
+      } (${batch.length} items)`,
+    );
+
     const batchResults = await Promise.all(batch.map(processor));
     results.push(...batchResults);
-    
+
     // Small delay between batches to avoid overwhelming the API
     if (i + batchSize < items.length) {
-      await new Promise(resolve => setTimeout(resolve, delayBetweenBatches));
+      await new Promise((resolve) => setTimeout(resolve, delayBetweenBatches));
     }
   }
-  
+
   return results;
 }
 
@@ -150,12 +159,16 @@ async function deleteAllStripeAccounts() {
 
     while (hasMoreAccounts) {
       // List accounts with pagination using Stripe SDK with retry logic
-      const listParams: { limit: number; starting_after?: string } = { limit: 100 };
+      const listParams: { limit: number; starting_after?: string } = {
+        limit: 100,
+      };
       if (startingAfter) {
         listParams.starting_after = startingAfter;
       }
 
-      const accounts = await retryWithBackoff(() => stripe.accounts.list(listParams));
+      const accounts = await retryWithBackoff(() =>
+        stripe.accounts.list(listParams)
+      );
 
       if (!accounts.data || accounts.data.length === 0) {
         console.log("ℹ️  No more Stripe connected accounts found");
@@ -167,19 +180,21 @@ async function deleteAllStripeAccounts() {
       );
 
       // Store the pagination cursor BEFORE deleting accounts
-      const nextCursor = accounts.data.length > 0 ? accounts.data[accounts.data.length - 1].id : undefined;
+      const nextCursor = accounts.data.length > 0
+        ? accounts.data[accounts.data.length - 1].id
+        : undefined;
 
       // Delete accounts in batches to respect rate limits
       const results = await processBatches(accounts.data, async (account) => {
         console.log(
-          `  🗑️  Deleting account: ${account.id} (${
-            account.email || "no email"
-          })`,
+          `  🗑️  Deleting account: ${account.id}`,
         );
 
         try {
           // Delete the account from Stripe with retry logic
-          const deleted = await retryWithBackoff(() => stripe.accounts.del(account.id));
+          const deleted = await retryWithBackoff(() =>
+            stripe.accounts.del(account.id)
+          );
           console.log(
             `    ✅ Stripe deletion result for ${account.id}: ${
               deleted.deleted ? "deleted" : "failed"
@@ -195,15 +210,19 @@ async function deleteAllStripeAccounts() {
             .eq("stripe_account_id", account.id);
 
           if (updateError) {
-            console.log(`    ⚠️  Database clear warning for ${account.id}: ${updateError.message}`);
+            console.log(
+              `    ⚠️  Database clear warning for ${account.id}: ${updateError.message}`,
+            );
           } else {
-            console.log(`    ✅ Cleared account ID ${account.id} from database`);
+            console.log(
+              `    ✅ Cleared account ID ${account.id} from database`,
+            );
           }
 
-          return { 
-            stripeDeleted, 
-            databaseCleared: !updateError, 
-            accountId: account.id 
+          return {
+            stripeDeleted,
+            databaseCleared: !updateError,
+            accountId: account.id,
           };
 
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -220,7 +239,9 @@ async function deleteAllStripeAccounts() {
             (stripeError.message?.includes("No such account") ||
               stripeError.code === "resource_missing")
           ) {
-            console.log(`    ℹ️  Account ${account.id} doesn't exist in Stripe anymore`);
+            console.log(
+              `    ℹ️  Account ${account.id} doesn't exist in Stripe anymore`,
+            );
           } else {
             console.error(
               `    ❌ Failed to delete Stripe account ${account.id}: ${stripeError.message}`,
@@ -234,32 +255,44 @@ async function deleteAllStripeAccounts() {
             .eq("stripe_account_id", account.id);
 
           if (!updateError) {
-            console.log(`    ✅ Cleared account ID ${account.id} from database`);
+            console.log(
+              `    ✅ Cleared account ID ${account.id} from database`,
+            );
           } else {
-            console.log(`    ⚠️  Database clear warning for ${account.id}: ${updateError.message}`);
+            console.log(
+              `    ⚠️  Database clear warning for ${account.id}: ${updateError.message}`,
+            );
           }
 
-          return { 
-            stripeDeleted: false, 
-            databaseCleared: !updateError, 
-            accountId: account.id 
+          return {
+            stripeDeleted: false,
+            databaseCleared: !updateError,
+            accountId: account.id,
           };
         }
       });
 
-      const batchAccountsDeleted = results.filter(r => r.stripeDeleted).length;
-      const batchAccountsCleared = results.filter(r => r.databaseCleared).length;
+      const batchAccountsDeleted = results.filter((r) =>
+        r.stripeDeleted
+      ).length;
+      const batchAccountsCleared = results.filter((r) =>
+        r.databaseCleared
+      ).length;
 
       totalAccountsDeleted += batchAccountsDeleted;
       totalAccountsCleared += batchAccountsCleared;
 
-      console.log(`    📊 Batch complete: ${batchAccountsDeleted} deleted, ${batchAccountsCleared} cleared from DB`);
+      console.log(
+        `    📊 Batch complete: ${batchAccountsDeleted} deleted, ${batchAccountsCleared} cleared from DB`,
+      );
 
       // Check if there are more accounts to fetch
       hasMoreAccounts = accounts.has_more;
       if (hasMoreAccounts && nextCursor) {
         startingAfter = nextCursor;
-        console.log(`    ➡️  Fetching next batch (starting after: ${startingAfter})`);
+        console.log(
+          `    ➡️  Fetching next batch (starting after: ${startingAfter})`,
+        );
       }
     }
 
@@ -280,7 +313,9 @@ async function deleteAllStripeAccounts() {
     }
 
     console.log(`  🎯 TOTAL: Deleted ${totalAccountsDeleted} Stripe accounts`);
-    console.log(`  🎯 TOTAL: Cleared ${totalAccountsCleared} database references`);
+    console.log(
+      `  🎯 TOTAL: Cleared ${totalAccountsCleared} database references`,
+    );
   } catch (error) {
     console.error("❌ Unexpected error in deleteAllStripeAccounts:", error);
   }
@@ -297,12 +332,16 @@ async function deleteAllStripeCustomers() {
 
     while (hasMoreCustomers) {
       // List customers with pagination using Stripe SDK with retry logic
-      const listParams: { limit: number; starting_after?: string } = { limit: 100 };
+      const listParams: { limit: number; starting_after?: string } = {
+        limit: 100,
+      };
       if (startingAfter) {
         listParams.starting_after = startingAfter;
       }
 
-      const customers = await retryWithBackoff(() => stripe.customers.list(listParams));
+      const customers = await retryWithBackoff(() =>
+        stripe.customers.list(listParams)
+      );
 
       if (!customers.data || customers.data.length === 0) {
         console.log("ℹ️  No more Stripe customers found");
@@ -310,117 +349,148 @@ async function deleteAllStripeCustomers() {
       }
 
       // Filter out already deleted customers
-      const activeCustomers = customers.data.filter(customer => !customer.deleted);
-      
+      const activeCustomers = customers.data.filter((customer) =>
+        !customer.deleted
+      );
+
       if (activeCustomers.length === 0) {
         console.log("ℹ️  All customers in this batch are already deleted");
         // Still need to check if there are more pages
         hasMoreCustomers = customers.has_more;
         if (hasMoreCustomers && customers.data.length > 0) {
           startingAfter = customers.data[customers.data.length - 1].id;
-          console.log(`    ➡️  Fetching next batch (starting after: ${startingAfter}) - skipping deleted customers`);
+          console.log(
+            `    ➡️  Fetching next batch (starting after: ${startingAfter}) - skipping deleted customers`,
+          );
           continue;
         } else {
           break;
         }
       }
 
-      console.log(`📋 Found ${activeCustomers.length} active Stripe customers to delete (batch of ${customers.data.length} total)`);
+      console.log(
+        `📋 Found ${activeCustomers.length} active Stripe customers to delete (batch of ${customers.data.length} total)`,
+      );
 
       // Store the pagination cursor BEFORE deleting customers
-      const nextCursor = customers.data.length > 0 ? customers.data[customers.data.length - 1].id : undefined;
+      const nextCursor = customers.data.length > 0
+        ? customers.data[customers.data.length - 1].id
+        : undefined;
 
       // Delete customers in batches to respect rate limits
-      const results = await processBatches(activeCustomers, async (customer) => {
-        console.log(
-          `  🗑️  Deleting customer: ${customer.id} (${
-            customer.email || "no email"
-          })`,
-        );
-
-        try {
-          // Delete the customer from Stripe with retry logic
-          const deleted = await retryWithBackoff(() => stripe.customers.del(customer.id));
+      const results = await processBatches(
+        activeCustomers,
+        async (customer) => {
           console.log(
-            `    ✅ Stripe deletion result for ${customer.id}: ${
-              deleted.deleted ? "deleted" : "failed"
-            }`,
+            `  🗑️  Deleting customer: ${customer.id} (${
+              customer.email || "no email"
+            })`,
           );
 
-          const stripeDeleted = deleted.deleted;
-
-          // Clear from database - find any profiles with this customer ID
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ stripe_customer_id: null })
-            .eq("stripe_customer_id", customer.id);
-
-          if (updateError) {
-            console.log(`    ⚠️  Database clear warning for ${customer.id}: ${updateError.message}`);
-          } else {
-            console.log(`    ✅ Cleared customer ID ${customer.id} from database`);
-          }
-
-          return { 
-            stripeDeleted, 
-            databaseCleared: !updateError, 
-            customerId: customer.id 
-          };
-
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } catch (stripeError: any) {
-          console.log(`    ⚠️  Stripe error details for ${customer.id}:`, {
-            type: stripeError.type,
-            code: stripeError.code,
-            message: stripeError.message,
-          });
-
-          // Customer might already be deleted or doesn't exist
-          if (
-            stripeError.type === "StripeInvalidRequestError" &&
-            (stripeError.message?.includes("No such customer") ||
-              stripeError.code === "resource_missing")
-          ) {
-            console.log(`    ℹ️  Customer ${customer.id} doesn't exist in Stripe anymore`);
-          } else {
-            console.error(
-              `    ❌ Failed to delete Stripe customer ${customer.id}: ${stripeError.message}`,
+          try {
+            // Delete the customer from Stripe with retry logic
+            const deleted = await retryWithBackoff(() =>
+              stripe.customers.del(customer.id)
             );
+            console.log(
+              `    ✅ Stripe deletion result for ${customer.id}: ${
+                deleted.deleted ? "deleted" : "failed"
+              }`,
+            );
+
+            const stripeDeleted = deleted.deleted;
+
+            // Clear from database - find any profiles with this customer ID
+            const { error: updateError } = await supabase
+              .from("profiles")
+              .update({ stripe_customer_id: null })
+              .eq("stripe_customer_id", customer.id);
+
+            if (updateError) {
+              console.log(
+                `    ⚠️  Database clear warning for ${customer.id}: ${updateError.message}`,
+              );
+            } else {
+              console.log(
+                `    ✅ Cleared customer ID ${customer.id} from database`,
+              );
+            }
+
+            return {
+              stripeDeleted,
+              databaseCleared: !updateError,
+              customerId: customer.id,
+            };
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } catch (stripeError: any) {
+            console.log(`    ⚠️  Stripe error details for ${customer.id}:`, {
+              type: stripeError.type,
+              code: stripeError.code,
+              message: stripeError.message,
+            });
+
+            // Customer might already be deleted or doesn't exist
+            if (
+              stripeError.type === "StripeInvalidRequestError" &&
+              (stripeError.message?.includes("No such customer") ||
+                stripeError.code === "resource_missing")
+            ) {
+              console.log(
+                `    ℹ️  Customer ${customer.id} doesn't exist in Stripe anymore`,
+              );
+            } else {
+              console.error(
+                `    ❌ Failed to delete Stripe customer ${customer.id}: ${stripeError.message}`,
+              );
+            }
+
+            // Still try to clear from database
+            const { error: updateError } = await supabase
+              .from("profiles")
+              .update({ stripe_customer_id: null })
+              .eq("stripe_customer_id", customer.id);
+
+            if (!updateError) {
+              console.log(
+                `    ✅ Cleared customer ID ${customer.id} from database`,
+              );
+            } else {
+              console.log(
+                `    ⚠️  Database clear warning for ${customer.id}: ${updateError.message}`,
+              );
+            }
+
+            return {
+              stripeDeleted: false,
+              databaseCleared: !updateError,
+              customerId: customer.id,
+            };
           }
+        },
+      );
 
-          // Still try to clear from database
-          const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ stripe_customer_id: null })
-            .eq("stripe_customer_id", customer.id);
-
-          if (!updateError) {
-            console.log(`    ✅ Cleared customer ID ${customer.id} from database`);
-          } else {
-            console.log(`    ⚠️  Database clear warning for ${customer.id}: ${updateError.message}`);
-          }
-
-          return { 
-            stripeDeleted: false, 
-            databaseCleared: !updateError, 
-            customerId: customer.id 
-          };
-        }
-      });
-
-      const batchCustomersDeleted = results.filter(r => r.stripeDeleted).length;
-      const batchCustomersCleared = results.filter(r => r.databaseCleared).length;
+      const batchCustomersDeleted = results.filter((r) =>
+        r.stripeDeleted
+      ).length;
+      const batchCustomersCleared = results.filter((r) =>
+        r.databaseCleared
+      ).length;
 
       totalCustomersDeleted += batchCustomersDeleted;
       totalCustomersCleared += batchCustomersCleared;
 
-      console.log(`    📊 Batch complete: ${batchCustomersDeleted} deleted, ${batchCustomersCleared} cleared from DB`);
+      console.log(
+        `    📊 Batch complete: ${batchCustomersDeleted} deleted, ${batchCustomersCleared} cleared from DB`,
+      );
 
       // Check if there are more customers to fetch
       hasMoreCustomers = customers.has_more;
       if (hasMoreCustomers && nextCursor) {
         startingAfter = nextCursor;
-        console.log(`    ➡️  Fetching next batch (starting after: ${startingAfter})`);
+        console.log(
+          `    ➡️  Fetching next batch (starting after: ${startingAfter})`,
+        );
       }
     }
 
@@ -440,8 +510,12 @@ async function deleteAllStripeCustomers() {
       );
     }
 
-    console.log(`  🎯 TOTAL: Deleted ${totalCustomersDeleted} Stripe customers`);
-    console.log(`  🎯 TOTAL: Cleared ${totalCustomersCleared} database references`);
+    console.log(
+      `  🎯 TOTAL: Deleted ${totalCustomersDeleted} Stripe customers`,
+    );
+    console.log(
+      `  🎯 TOTAL: Cleared ${totalCustomersCleared} database references`,
+    );
   } catch (error) {
     console.error("❌ Unexpected error in deleteAllStripeCustomers:", error);
   }

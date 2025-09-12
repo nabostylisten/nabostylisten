@@ -3,7 +3,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { applicationsInsertSchema } from "@/schemas/database.schema";
 import type { Database } from "@/types/database.types";
-import { uploadApplicationImage } from "@/server/files.actions";
 import { sendEmail } from "@/lib/resend-utils";
 import { StylistApplicationEmail } from "@/transactional/emails/stylist-application";
 import { ApplicationStatusUpdateEmail } from "@/transactional/emails/application-status-update";
@@ -46,82 +45,6 @@ export interface ApplicationFormData {
     portfolioImageUrls: string[];
 }
 
-/**
- * Upload application portfolio images to Supabase storage and return public URLs
- */
-export async function uploadPortfolioImages(
-    files: File[],
-    applicationId: string,
-) {
-    try {
-        // Use service client to bypass RLS policies for media record creation
-        const serviceSupabase = await createServiceClient();
-
-        // Get current user if authenticated
-        const regularSupabase = await createClient();
-        const { data: { user } } = await regularSupabase.auth.getUser();
-        const userId = user?.id || null;
-
-        // Upload all files to the applications bucket
-        const uploadPromises = files.map(async (file) => {
-            const uploadResult = await uploadApplicationImage({
-                applicationId,
-                file,
-            });
-
-            if (uploadResult.error) {
-                throw new Error(
-                    `Kunne ikke laste opp bilde ${file.name}: ${uploadResult.error}`,
-                );
-            }
-
-            if (!uploadResult.data) {
-                throw new Error(
-                    `Ingen data returnert for opplasting av ${file.name}`,
-                );
-            }
-
-            const imageUrl = uploadResult.data.publicUrl ||
-                uploadResult.data.fullPath;
-
-            // Create media record for this uploaded image using service client
-            const filePath = uploadResult.data.path ||
-                uploadResult.data.fullPath;
-
-            const { error: mediaError } = await serviceSupabase
-                .from("media")
-                .insert({
-                    application_id: applicationId,
-                    file_path: filePath,
-                    media_type: "application_image" as const,
-                    owner_id: userId, // Can be null for unauthenticated applications
-                })
-                .select()
-                .single();
-
-            if (mediaError) {
-                console.error("Failed to create media record:", mediaError);
-                // Don't throw here, image is uploaded successfully
-            }
-
-            return imageUrl;
-        });
-
-        const results = await Promise.all(uploadPromises);
-
-        return {
-            data: results,
-            error: null,
-        };
-    } catch (error) {
-        return {
-            data: null,
-            error: error instanceof Error
-                ? error.message
-                : "En ukjent feil oppstod",
-        };
-    }
-}
 
 /**
  * Get current user's profile data for prepopulating the application form

@@ -6,9 +6,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
 import { useState, useEffect } from "react";
-import { CalendarIcon, Upload } from "lucide-react";
+import { CalendarIcon, Upload, AlertCircle, CheckCircle2 } from "lucide-react";
 import { format } from "date-fns";
 import imageCompression from "browser-image-compression";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/hooks/use-auth";
 
 // UI Components
@@ -43,9 +45,13 @@ import { ApplicationAddressSection } from "@/components/addresses";
 
 import {
   createApplication,
-  uploadPortfolioImages,
   getCurrentUserApplicationData,
 } from "@/server/application.actions";
+import { createMediaRecord } from "@/server/media.actions";
+import {
+  batchCompressAndUpload,
+  compressImage,
+} from "@/lib/file-upload-client";
 import { cn } from "@/lib/utils";
 
 // Service categories - in a real app, these would come from the database
@@ -70,7 +76,7 @@ const applicationFormSchema = z
   .object({
     // Personal information
     fullName: z.string().min(2, "Fullt navn må være minst 2 karakterer"),
-    email: z.string().email("Ugyldig e-postadresse"),
+    email: z.string().email({ message: "Ugyldig e-postadresse" }),
     phoneNumber: z.string().min(8, "Telefonnummer må være minst 8 siffer"),
     birthDate: z.string().min(1, "Fødselsdato er påkrevet"),
 
@@ -139,7 +145,11 @@ export function StylistApplicationForm({
 }: StylistApplicationFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [portfolioImages, setPortfolioImages] = useState<File[]>([]);
+  const [imageErrors, setImageErrors] = useState<Array<{ file: string; error: string }>>([]);
   const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [currentUploadingFile, setCurrentUploadingFile] = useState<string>("");
+  const [successfulUploads, setSuccessfulUploads] = useState<Array<{ file: string; compressionRatio?: number }>>([]);
 
   const { user, profile } = useAuth();
 
@@ -200,24 +210,6 @@ export function StylistApplicationForm({
     }
   }, [prepopulatedData, form]);
 
-  const uploadImagesMutation = useMutation({
-    mutationFn: ({
-      files,
-      applicationId,
-    }: {
-      files: File[];
-      applicationId: string;
-    }) => uploadPortfolioImages(files, applicationId),
-    onError: (error) => {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "En feil oppstod ved opplasting av bilder"
-      );
-      setIsUploadingImages(false);
-      setIsSubmitting(false);
-    },
-  });
 
   const submitApplication = useMutation({
     mutationFn: createApplication,
@@ -260,20 +252,49 @@ export function StylistApplicationForm({
       const applicationId = applicationResult.data.applicationId;
 
       setIsUploadingImages(true);
+      setUploadProgress(0);
 
-      // Then upload the portfolio images using the applicationId
-      const imageUploadResult = await uploadImagesMutation.mutateAsync({
-        files: portfolioImages,
-        applicationId: applicationId,
-      });
+      // Upload portfolio images using client-side upload
+      const uploadResult = await batchCompressAndUpload(
+        portfolioImages,
+        applicationId,
+        (current, total, fileName) => {
+          setCurrentUploadingFile(fileName);
+          setUploadProgress((current / total) * 100);
+        }
+      );
 
-      if (imageUploadResult.error || !imageUploadResult.data) {
-        throw new Error(
-          imageUploadResult.error || "Kunne ikke laste opp bilder"
-        );
+      if (uploadResult.errors.length > 0) {
+        const errorMsg = uploadResult.errors.length === portfolioImages.length 
+          ? "Alle bilder feilet under opplasting"
+          : `${uploadResult.errors.length} av ${portfolioImages.length} bilder feilet`;
+        
+        throw new Error(errorMsg);
+      }
+
+      // Create media records for all successfully uploaded files
+      if (uploadResult.data && uploadResult.data.length > 0) {
+        const mediaRecordPromises = uploadResult.data.map(async (upload) => {
+          const mediaResult = await createMediaRecord({
+            applicationId: applicationId,
+            filePath: upload.path,
+            mediaType: "application_image",
+            ownerId: user?.id,
+          });
+          
+          if (mediaResult.error) {
+            console.warn("Media record creation failed for:", upload.path, mediaResult.error);
+          }
+          
+          return mediaResult;
+        });
+
+        await Promise.all(mediaRecordPromises);
       }
       
       setIsUploadingImages(false);
+      setUploadProgress(0);
+      setCurrentUploadingFile("");
 
       // Success - both application and images are uploaded
       toast.success(
@@ -281,6 +302,8 @@ export function StylistApplicationForm({
       );
       form.reset();
       setPortfolioImages([]);
+      setImageErrors([]);
+      setSuccessfulUploads([]);
       onSuccess?.();
     } catch (error) {
       setIsUploadingImages(false);
@@ -578,8 +601,10 @@ export function StylistApplicationForm({
                 <Dropzone
                   onDrop={async (acceptedFiles) => {
                     const newFiles = [...portfolioImages];
+                    const newErrors: Array<{ file: string; error: string }> = [];
+                    const newSuccesses: Array<{ file: string; compressionRatio?: number }> = [];
 
-                    // Process each file with compression
+                    // Process each file with compression and validation
                     for (const file of acceptedFiles) {
                       if (newFiles.length >= 10) {
                         toast.error("Maksimalt 10 bilder tillatt");
@@ -587,33 +612,49 @@ export function StylistApplicationForm({
                       }
 
                       try {
-                        // Compress the image
-                        const compressedFile = await imageCompression(file, {
-                          maxSizeMB: 15, // Match the max size from the dropzone config
-                          maxWidthOrHeight: 2048,
-                          useWebWorker: true,
-                          fileType: file.type,
+                        // Compress and validate the image
+                        const { compressedFile, error, compressionRatio } = await compressImage(file, {
+                          maxSizeMB: 2, // 2MB limit for better performance
+                          maxWidthOrHeight: 1920,
                         });
 
+                        if (error || !compressedFile) {
+                          newErrors.push({ file: file.name, error: error || "Komprimering feilet" });
+                          continue;
+                        }
+
                         newFiles.push(compressedFile);
+                        newSuccesses.push({ 
+                          file: file.name, 
+                          compressionRatio 
+                        });
                       } catch (compressionError) {
-                        console.error(
-                          "Image compression failed:",
-                          compressionError
-                        );
-                        // If compression fails, use original file
-                        newFiles.push(file);
+                        console.error("Image compression failed:", compressionError);
+                        newErrors.push({ 
+                          file: file.name, 
+                          error: "Komprimering feilet" 
+                        });
                       }
                     }
 
                     setPortfolioImages(newFiles);
+                    setImageErrors(newErrors);
+                    setSuccessfulUploads(prev => [...prev, ...newSuccesses]);
+
+                    // Show feedback to user
+                    if (newSuccesses.length > 0) {
+                      toast.success(`${newSuccesses.length} bilde(r) klargjort for opplasting`);
+                    }
+                    if (newErrors.length > 0) {
+                      toast.error(`${newErrors.length} bilde(r) kunne ikke behandles`);
+                    }
                   }}
                   multiple
                   accept={{
                     "image/*": [".jpg", ".jpeg", ".png", ".webp"],
                   }}
                   maxFiles={10}
-                  maxSize={15 * 1024 * 1024} // 15MB
+                  maxSize={10 * 1024 * 1024} // 10MB initial limit (will be compressed to 2MB)
                   className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer"
                 >
                   <div className="flex flex-col items-center justify-center py-12">
@@ -622,14 +663,52 @@ export function StylistApplicationForm({
                       Dra og slipp bilder her, eller klikk for å velge
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Støttede formater: JPG, PNG, WebP (maks 15MB per bilde)
+                      Støttede formater: JPG, PNG, WebP (komprimeres automatisk til maks 2MB)
                     </p>
                   </div>
                 </Dropzone>
                 <p className="text-sm text-muted-foreground">
                   Last opp 1-10 bilder som viser kvaliteten på arbeidet ditt.
-                  Dette hjelper oss å vurdere søknaden din.
+                  Bilder komprimeres automatisk for optimal ytelse.
                 </p>
+
+                {/* Upload Progress */}
+                {isUploadingImages && (
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                      Laster opp: {currentUploadingFile}
+                    </div>
+                    <Progress value={uploadProgress} className="h-2" />
+                  </div>
+                )}
+
+                {/* Image Validation Errors */}
+                {imageErrors.length > 0 && (
+                  <Alert className="border-red-200 bg-red-50 dark:bg-red-950/30 dark:border-red-800">
+                    <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                    <AlertDescription className="text-red-800 dark:text-red-200">
+                      <div className="space-y-1">
+                        <p className="font-medium">Følgende bilder kunne ikke behandles:</p>
+                        {imageErrors.map((error, index) => (
+                          <div key={index} className="text-sm">
+                            • {error.file}: {error.error}
+                          </div>
+                        ))}
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
+
+                {/* Success feedback */}
+                {successfulUploads.length > 0 && imageErrors.length === 0 && (
+                  <Alert className="border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <AlertDescription className="text-green-800 dark:text-green-200">
+                      {successfulUploads.length} bilde(r) er klare for opplasting. Bilder er automatisk optimalisert for beste ytelse.
+                    </AlertDescription>
+                  </Alert>
+                )}
                 {portfolioImages.length > 0 && (
                   <div className="mt-4">
                     <p className="text-sm text-muted-foreground mb-2">

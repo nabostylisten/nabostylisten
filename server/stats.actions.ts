@@ -80,7 +80,45 @@ export async function getPopularServices(limit: number = 10) {
   const supabase = await createClient();
 
   try {
-    // Fetch services with their reviews and stylist information
+    // First, get all services with reviews by joining through booking_services and bookings
+    const { data: reviewData, error: reviewError } = await supabase
+      .from("reviews")
+      .select(`
+        rating,
+        bookings!inner (
+          id,
+          booking_services!inner (
+            service_id
+          )
+        )
+      `);
+
+    if (reviewError) throw reviewError;
+
+    // Calculate average ratings and review counts for each service
+    const serviceRatings = new Map<string, { total: number; count: number }>();
+
+    if (reviewData) {
+      reviewData.forEach((review) => {
+        const booking = review.bookings;
+        if (booking && booking.booking_services) {
+          booking.booking_services.forEach((bs) => {
+            const serviceId = bs.service_id;
+            if (!serviceRatings.has(serviceId)) {
+              serviceRatings.set(serviceId, { total: 0, count: 0 });
+            }
+            const stats = serviceRatings.get(serviceId)!;
+            stats.total += review.rating;
+            stats.count += 1;
+          });
+        }
+      });
+    }
+
+    // Get services that have reviews, sorted by rating
+    const serviceIdsWithReviews = Array.from(serviceRatings.keys());
+
+    // If no services have reviews, fetch any published services
     const { data: services, error } = await supabase
       .from("services")
       .select(`
@@ -102,52 +140,60 @@ export async function getPopularServices(limit: number = 10) {
         )
       `)
       .eq("is_published", true)
-      .limit(limit);
+      .in(
+        "id",
+        serviceIdsWithReviews.length > 0
+          ? serviceIdsWithReviews
+          : ["00000000-0000-0000-0000-000000000000"],
+      );
 
     if (error) throw error;
 
-    // Fetch reviews for these services
-    const serviceIds = services?.map((s) => s.id) || [];
+    // If we have no services with reviews, get some without reviews
+    let finalServices = services || [];
 
-    if (serviceIds.length === 0) {
-      return { data: [], error: null };
-    }
+    if (serviceIdsWithReviews.length === 0 || finalServices.length < limit) {
+      let additionalServicesQuery = supabase
+        .from("services")
+        .select(`
+          *,
+          profiles!stylist_id (
+            id,
+            full_name
+          ),
+          service_service_categories (
+            service_categories (
+              id,
+              name
+            )
+          ),
+          media (
+            id,
+            file_path,
+            is_preview_image
+          )
+        `)
+        .eq("is_published", true)
+        .limit(limit - finalServices.length);
 
-    // Get bookings with reviews for these services
-    const { data: reviewData } = await supabase
-      .from("bookings")
-      .select(`
-        booking_services!inner (
-          service_id
-        ),
-        reviews (
-          rating
-        )
-      `)
-      .in("booking_services.service_id", serviceIds)
-      .not("reviews", "is", null);
+      // Only exclude services with reviews if there are any
+      if (serviceIdsWithReviews.length > 0) {
+        additionalServicesQuery = additionalServicesQuery.not(
+          "id",
+          "in",
+          `(${serviceIdsWithReviews.join(",")})`,
+        );
+      }
 
-    // Calculate average ratings and review counts for each service
-    const serviceRatings = new Map();
+      const { data: additionalServices } = await additionalServicesQuery;
 
-    if (reviewData) {
-      reviewData.forEach((booking) => {
-        if (booking.reviews && booking.booking_services) {
-          booking.booking_services.forEach((bs) => {
-            const serviceId = bs.service_id;
-            if (!serviceRatings.has(serviceId)) {
-              serviceRatings.set(serviceId, { total: 0, count: 0 });
-            }
-            const stats = serviceRatings.get(serviceId);
-            stats.total += booking.reviews?.rating || 0;
-            stats.count += 1;
-          });
-        }
-      });
+      if (additionalServices) {
+        finalServices = [...finalServices, ...additionalServices];
+      }
     }
 
     // Combine services with their ratings
-    const servicesWithRatings = services?.map((service) => {
+    const servicesWithRatings = finalServices.map((service) => {
       const ratingStats = serviceRatings.get(service.id) ||
         { total: 0, count: 0 };
       return {
@@ -157,14 +203,27 @@ export async function getPopularServices(limit: number = 10) {
           : 0,
         total_reviews: ratingStats.count,
       };
-    }) || [];
+    });
 
-    // Sort by rating (highest first), then by review count
+    // Sort by rating (highest first), then by review count, then by newest
     servicesWithRatings.sort((a, b) => {
-      if (b.average_rating !== a.average_rating) {
+      // First priority: services with reviews come before those without
+      if (a.total_reviews > 0 && b.total_reviews === 0) return -1;
+      if (a.total_reviews === 0 && b.total_reviews > 0) return 1;
+
+      // Second priority: higher average rating
+      if (a.average_rating !== b.average_rating) {
         return b.average_rating - a.average_rating;
       }
-      return b.total_reviews - a.total_reviews;
+
+      // Third priority: more reviews
+      if (a.total_reviews !== b.total_reviews) {
+        return b.total_reviews - a.total_reviews;
+      }
+
+      // Fourth priority: newer services
+      return new Date(b.created_at).getTime() -
+        new Date(a.created_at).getTime();
     });
 
     return {

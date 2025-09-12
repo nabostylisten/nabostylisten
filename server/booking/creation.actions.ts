@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import {
-    createStripePaymentIntent,
+    createFlexibleStripePaymentIntent,
     updateStripePaymentIntentMetadata,
 } from "@/lib/stripe/connect";
 import type { DatabaseTables } from "@/types";
@@ -65,7 +65,7 @@ export async function createBookingWithServices(
             discountPercentage?: number;
             discountAmountNOK?: number;
         } | null = null;
-        
+
         let affiliateData: {
             id: string;
             commissionPercentage: number;
@@ -75,14 +75,15 @@ export async function createBookingWithServices(
         // Handle both discount codes and affiliate codes
         if (input.discountCode || input.affiliateCode) {
             // Use enhanced validation that handles both discount and affiliate codes
-            const { validateDiscountOrAffiliateCode, trackDiscountUsage } = await import(
-                "../discounts.actions"
-            );
+            const { validateDiscountOrAffiliateCode, trackDiscountUsage } =
+                await import(
+                    "../discounts.actions"
+                );
 
             // Prepare cart items for validation
-            const cartItems = input.serviceIds.map(serviceId => ({
+            const cartItems = input.serviceIds.map((serviceId) => ({
                 serviceId,
-                quantity: 1 // Each service in booking is treated as quantity 1
+                quantity: 1, // Each service in booking is treated as quantity 1
             }));
 
             const validationResult = await validateDiscountOrAffiliateCode({
@@ -94,12 +95,16 @@ export async function createBookingWithServices(
 
             if (!validationResult.isValid || validationResult.error) {
                 return {
-                    error: validationResult.error || "Invalid discount or affiliate code",
+                    error: validationResult.error ||
+                        "Invalid discount or affiliate code",
                     data: null,
                 };
             }
 
-            if (validationResult.type === 'discount' && validationResult.discount) {
+            if (
+                validationResult.type === "discount" &&
+                validationResult.discount
+            ) {
                 // Traditional discount code - track usage
                 const trackingResult = await trackDiscountUsage({
                     discountId: validationResult.discount.id,
@@ -113,15 +118,22 @@ export async function createBookingWithServices(
 
                 validatedDiscount = {
                     id: validationResult.discount.id,
-                    discountPercentage: validationResult.discount.discount_percentage || undefined,
-                    discountAmountNOK: validationResult.discountAmount || undefined,
+                    discountPercentage:
+                        validationResult.discount.discount_percentage ||
+                        undefined,
+                    discountAmountNOK: validationResult.discountAmount ||
+                        undefined,
                 };
-            } else if (validationResult.type === 'affiliate' && validationResult.affiliateInfo) {
+            } else if (
+                validationResult.type === "affiliate" &&
+                validationResult.affiliateInfo
+            ) {
                 // Affiliate code - set up commission tracking (no immediate usage tracking)
                 affiliateData = {
                     id: validationResult.affiliateInfo.stylistId,
-                    commissionPercentage: validationResult.affiliateInfo.commissionPercentage,
-                    discountAmount: validationResult.discountAmount
+                    commissionPercentage:
+                        validationResult.affiliateInfo.commissionPercentage,
+                    discountAmount: validationResult.discountAmount,
                 };
             }
         }
@@ -190,7 +202,8 @@ export async function createBookingWithServices(
         // 3. Use the prices calculated by the frontend
         const finalPrice = input.totalPrice; // Final price after discount
         const originalPrice = input.originalTotalPrice; // Original price before discount
-        const discountAmountNOK = (validatedDiscount?.discountAmountNOK || 0) + (affiliateData?.discountAmount || 0);
+        const discountAmountNOK = (validatedDiscount?.discountAmountNOK || 0) +
+            (affiliateData?.discountAmount || 0);
 
         // Calculate platform fee breakdown for payment processing
         const { calculatePlatformFee } = await import(
@@ -202,72 +215,97 @@ export async function createBookingWithServices(
             hasAffiliate: !!affiliateData,
         });
 
-        // Get stylist Stripe account ID for payment processing
-        const { data: stylistDetails, error: stylistError } = await supabase
+        // Get stylist details including verification status for pre-flight checks
+        const { data: stylistDetails } = await supabase
             .from("stylist_details")
-            .select("stripe_account_id")
+            .select("stripe_account_id, identity_verification_completed_at")
             .eq("profile_id", input.stylistId)
             .single();
 
-        let stripePaymentIntentId: string | null = null;
-        let paymentIntentClientSecret: string | null = null;
-        let awaitingPaymentSetup = false;
+        // CRITICAL: Pre-flight verification check
+        // Only verified stylists should be able to receive bookings
+        if (!stylistDetails?.identity_verification_completed_at) {
+            // Notify the stylist about the verification requirement
+            const { notifyStripeOnboardingRequired } = await import(
+                "./notifications.actions"
+            );
 
-        // Check if stylist has Stripe account set up
-        if (!stylistError && stylistDetails?.stripe_account_id) {
-            // Stylist has Stripe setup, proceed with payment intent creation
-            const paymentIntentResult = await createStripePaymentIntent({
-                totalAmountNOK: finalPrice,
-                stylistStripeAccountId: stylistDetails.stripe_account_id,
-                bookingId: `temp_${Date.now()}`, // Temporary ID, will be updated after booking creation
-                customerId: user.id,
+            // Get user profile for notification
+            const { data: profile } = await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", user.id)
+                .single();
+
+            // Send notification to stylist about verification requirement (don't await to avoid blocking)
+            notifyStripeOnboardingRequired({
                 stylistId: input.stylistId,
-                hasAffiliate: !!affiliateData,
-                discountAmountNOK: discountAmountNOK,
-                discountCode: input.discountCode || input.affiliateCode,
+                customerName: profile?.full_name || user.email || "Kunde",
+            }).catch((error) => {
+                console.error(
+                    "Failed to send verification notification emails:",
+                    error,
+                );
             });
 
-            if (paymentIntentResult.error || !paymentIntentResult.data) {
-                // Check if this is a Stripe onboarding error
-                const isOnboardingError =
-                    paymentIntentResult.error?.includes("transfers") ||
-                    paymentIntentResult.error?.includes("capabilities") ||
-                    paymentIntentResult.error?.includes("crypto_transfers") ||
-                    paymentIntentResult.error?.includes("legacy_payments");
-
-                if (isOnboardingError) {
-                    // Even if there's an onboarding error, allow booking creation
-                    console.log("Stripe onboarding incomplete, creating booking without payment intent");
-                    awaitingPaymentSetup = true;
-                } else {
-                    // This is a different error, fail the booking
-                    return {
-                        error: paymentIntentResult.error ||
-                            "Failed to create payment intent",
-                        data: null,
-                    };
-                }
-            } else {
-                stripePaymentIntentId = paymentIntentResult.data.paymentIntentId;
-                paymentIntentClientSecret = paymentIntentResult.data.clientSecret;
-            }
-        } else {
-            // Stylist doesn't have Stripe setup, create booking without payment intent
-            console.log("Stylist has not completed Stripe onboarding, creating booking without payment intent");
-            awaitingPaymentSetup = true;
+            return {
+                error: "Denne stylisten har ikke fullført identitetsverifiseringen og kan ikke motta bestillinger ennå. Stylisten har fått en e-post med instruksjoner for å fullføre verifiseringen. Vennligst prøv igjen senere eller velg en annen stylist.",
+                data: null,
+            };
         }
 
-        // Send notification emails if awaiting payment setup
-        if (awaitingPaymentSetup) {
-            const { notifyStripeOnboardingRequired } = await import("./notifications.actions");
-            
+        let stripePaymentIntentId: string | null = null;
+        let paymentIntentClientSecret: string | null = null;
+        let needsDestinationUpdate = false;
+
+        // ALWAYS create payment intent, regardless of stylist onboarding status
+        const paymentIntentResult = await createFlexibleStripePaymentIntent({
+            totalAmountNOK: finalPrice,
+            stylistStripeAccountId: stylistDetails?.stripe_account_id ||
+                undefined,
+            bookingId: `temp_${Date.now()}`, // Temporary ID, will be updated after booking creation
+            customerId: user.id,
+            stylistId: input.stylistId,
+            hasAffiliate: !!affiliateData,
+            discountAmountNOK: discountAmountNOK,
+            discountCode: input.discountCode || input.affiliateCode,
+        });
+
+        if (paymentIntentResult.error || !paymentIntentResult.data) {
+            return {
+                error: paymentIntentResult.error ||
+                    "Failed to create payment intent",
+                data: null,
+            };
+        }
+
+        stripePaymentIntentId = paymentIntentResult.data.paymentIntentId;
+        paymentIntentClientSecret = paymentIntentResult.data.clientSecret;
+        needsDestinationUpdate =
+            paymentIntentResult.data.needsDestinationUpdate || false;
+
+        // Log whether payment intent needs destination update
+        if (needsDestinationUpdate) {
+            console.log(
+                "Payment intent created without destination - stylist needs to complete onboarding",
+            );
+        } else {
+            console.log("Payment intent created with destination charges");
+        }
+
+        // Send notification emails if stylist needs to complete onboarding
+        if (needsDestinationUpdate) {
+            const { notifyStripeOnboardingRequired } = await import(
+                "./notifications.actions"
+            );
+
             // Get user profile for full name
             const { data: profile } = await supabase
                 .from("profiles")
                 .select("full_name")
                 .eq("id", user.id)
                 .single();
-            
+
             // Trigger notification emails in the background (don't await to avoid blocking user)
             // Send email to stylist and admin about missing Stripe setup
             notifyStripeOnboardingRequired({
@@ -295,7 +333,7 @@ export async function createBookingWithServices(
             total_price: finalPrice,
             total_duration_minutes: input.totalDurationMinutes,
             stripe_payment_intent_id: stripePaymentIntentId,
-            awaiting_payment_setup: awaitingPaymentSetup,
+            needs_destination_update: needsDestinationUpdate,
         };
 
         const { data: booking, error: bookingError } = await supabase
@@ -316,14 +354,15 @@ export async function createBookingWithServices(
 
         // Update PaymentIntent metadata with the real booking ID (only if we have a payment intent)
         if (stripePaymentIntentId) {
-            const metadataUpdateResult = await updateStripePaymentIntentMetadata({
-                paymentIntentId: stripePaymentIntentId,
-                metadata: {
-                    booking_id: booking.id,
-                    customer_id: user.id,
-                    stylist_id: input.stylistId,
-                },
-            });
+            const metadataUpdateResult =
+                await updateStripePaymentIntentMetadata({
+                    paymentIntentId: stripePaymentIntentId,
+                    metadata: {
+                        booking_id: booking.id,
+                        customer_id: user.id,
+                        stylist_id: input.stylistId,
+                    },
+                });
 
             if (metadataUpdateResult.error) {
                 console.error(
@@ -460,7 +499,7 @@ export async function createBookingWithServices(
             console.error("Failed to create chat for booking:", chatError);
         }
 
-        // Create comprehensive payment record only if we have a payment intent
+        // Always create payment record since we always have a payment intent now
         if (stripePaymentIntentId) {
             // Use service client for payment record creation to bypass RLS
             const serviceClient = createServiceClient();
@@ -483,12 +522,16 @@ export async function createBookingWithServices(
                     status: "pending",
                     refunded_amount: 0, // Default to 0, will be updated when refunds occur
                     discount_code: input.discountCode || input.affiliateCode,
-                    discount_percentage: validatedDiscount?.discountPercentage ||
+                    discount_percentage:
+                        validatedDiscount?.discountPercentage ||
                         null,
-                    discount_fixed_amount: validatedDiscount?.discountAmountNOK ||
+                    discount_fixed_amount:
+                        validatedDiscount?.discountAmountNOK ||
                         null, // Fixed discount amount in NOK
                     affiliate_id: affiliateData?.id || null,
-                    affiliate_commission_percentage: affiliateData?.commissionPercentage || null,
+                    affiliate_commission_percentage:
+                        affiliateData?.commissionPercentage || null,
+                    needs_destination_update: needsDestinationUpdate,
                 });
 
             if (paymentError) {
@@ -496,33 +539,12 @@ export async function createBookingWithServices(
                 // Don't fail the booking creation, but log the error
             }
         } else {
-            console.log("No payment intent created - booking is awaiting stylist payment setup");
+            // This should never happen now since we always create payment intent
+            console.error("Unexpected: No payment intent ID after creation");
         }
 
-        // Send customer email notification if booking is awaiting payment setup
-        if (awaitingPaymentSetup && booking) {
-            const { sendBookingAwaitingPaymentEmails } = await import("./notifications.actions");
-            
-            // Get user profile for full name
-            const { data: profile } = await supabase
-                .from("profiles")
-                .select("full_name")
-                .eq("id", user.id)
-                .single();
-            
-            // Send email to customer about booking awaiting payment
-            sendBookingAwaitingPaymentEmails({
-                bookingId: booking.id,
-                customerEmail: user.email || "",
-                customerName: profile?.full_name || user.email || "Kunde",
-                customerProfileId: user.id,
-            }).catch((error) => {
-                console.error(
-                    "Failed to send customer awaiting payment email:",
-                    error,
-                );
-            });
-        }
+        // Note: Customer will always go through payment flow now
+        // No need for special "awaiting payment" emails to customer
 
         // Note: Normal booking request emails are sent after successful payment
         // via the sendPostPaymentEmails function called from checkout success
@@ -540,7 +562,7 @@ export async function createBookingWithServices(
                     platformFeeBreakdown.affiliateCommissionNOK || 0,
                 // Additional breakdown for transparency
                 originalTotalAmountNOK: originalPrice,
-                awaitingPaymentSetup,
+                needsDestinationUpdate,
             },
             error: null,
         };

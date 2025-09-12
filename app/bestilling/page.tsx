@@ -289,30 +289,7 @@ export default function BookingPage() {
       }
 
       if (result.data) {
-        // Check if booking is awaiting payment setup
-        if (result.data.awaitingPaymentSetup) {
-          // Booking created successfully but payment is pending
-          toast.success(
-            "Booking opprettet! Stylisten må fullføre betalingsoppsett før betalingen kan behandles."
-          );
-
-          // Clear cart and booking
-          clearCart();
-          clearBooking();
-
-          if (profile?.id) {
-            // Redirect to a success page showing booking details
-            // Since there's no payment to process, go directly to bookings page
-            router.replace(`/profiler/${profile?.id}/mine-bookinger`);
-          } else if (user?.id) {
-            router.replace(`/profiler/${user?.id}/mine-bookinger`);
-          } else {
-            router.replace(`/tjenester`);
-          }
-          return;
-        }
-
-        // Normal flow - redirect to payment page with client secret
+        // Always redirect to payment page since we always create payment intent
         toast.success("Videresender til betaling...");
 
         if (!result.data.paymentIntentClientSecret) {

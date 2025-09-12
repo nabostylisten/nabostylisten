@@ -2470,7 +2470,6 @@ export type Database = {
       bookings: {
         Row: {
           address_id: string | null
-          awaiting_payment_setup: boolean
           cancellation_reason: string | null
           cancelled_at: string | null
           created_at: string
@@ -2483,6 +2482,7 @@ export type Database = {
           is_trial_session: boolean
           main_booking_id: string | null
           message_to_stylist: string | null
+          needs_destination_update: boolean
           payment_captured_at: string | null
           payout_email_sent_at: string | null
           payout_processed_at: string | null
@@ -2501,7 +2501,6 @@ export type Database = {
         }
         Insert: {
           address_id?: string | null
-          awaiting_payment_setup?: boolean
           cancellation_reason?: string | null
           cancelled_at?: string | null
           created_at?: string
@@ -2514,6 +2513,7 @@ export type Database = {
           is_trial_session?: boolean
           main_booking_id?: string | null
           message_to_stylist?: string | null
+          needs_destination_update?: boolean
           payment_captured_at?: string | null
           payout_email_sent_at?: string | null
           payout_processed_at?: string | null
@@ -2532,7 +2532,6 @@ export type Database = {
         }
         Update: {
           address_id?: string | null
-          awaiting_payment_setup?: boolean
           cancellation_reason?: string | null
           cancelled_at?: string | null
           created_at?: string
@@ -2545,6 +2544,7 @@ export type Database = {
           is_trial_session?: boolean
           main_booking_id?: string | null
           message_to_stylist?: string | null
+          needs_destination_update?: boolean
           payment_captured_at?: string | null
           payout_email_sent_at?: string | null
           payout_processed_at?: string | null
@@ -2917,6 +2917,7 @@ export type Database = {
           discount_percentage: number | null
           final_amount: number
           id: string
+          needs_destination_update: boolean
           original_amount: number
           payment_intent_id: string
           payout_completed_at: string | null
@@ -2946,6 +2947,7 @@ export type Database = {
           discount_percentage?: number | null
           final_amount: number
           id?: string
+          needs_destination_update?: boolean
           original_amount: number
           payment_intent_id: string
           payout_completed_at?: string | null
@@ -2975,6 +2977,7 @@ export type Database = {
           discount_percentage?: number | null
           final_amount?: number
           id?: string
+          needs_destination_update?: boolean
           original_amount?: number
           payment_intent_id?: string
           payout_completed_at?: string | null

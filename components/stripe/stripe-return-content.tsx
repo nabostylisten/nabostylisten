@@ -148,17 +148,18 @@ export function StripeReturnContent() {
     status: stripeAccountStatus,
     isFullyOnboarded,
     profile,
-    stylistDetails,
+    verificationStatus,
   } = stripeData.data;
 
-  // Check if basic Stripe onboarding is complete (separate from identity verification)
-  const basicStripeComplete =
-    stripeAccountStatus?.charges_enabled &&
-    stripeAccountStatus?.details_submitted &&
-    stripeAccountStatus?.payouts_enabled;
+  // Use comprehensive verification status from the centralized utility
+  // This ensures we get accurate status from Stripe API as source of truth
+  const basicStripeComplete = verificationStatus?.stripeAccountStatus
+    ? verificationStatus.stripeAccountStatus.charges_enabled &&
+      verificationStatus.stripeAccountStatus.details_submitted &&
+      verificationStatus.stripeAccountStatus.payouts_enabled
+    : false;
 
-  const identityVerificationComplete =
-    !!stylistDetails?.identity_verification_completed_at;
+  const identityVerificationComplete = verificationStatus?.identityVerificationComplete ?? false;
 
   // Determine status and messaging
   const getStatusContent = () => {

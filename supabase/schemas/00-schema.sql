@@ -264,7 +264,7 @@ CREATE TABLE IF NOT EXISTS public.bookings (
 
     -- Stripe Integration
     stripe_payment_intent_id text,
-    awaiting_payment_setup boolean DEFAULT false NOT NULL, -- Booking is waiting for stylist to complete Stripe onboarding
+    needs_destination_update boolean DEFAULT false NOT NULL, -- Payment intent needs destination update when stylist completes onboarding
     
     -- Payment capture tracking
     payment_captured_at timestamp with time zone, -- When payment was captured
@@ -360,6 +360,7 @@ CREATE TABLE IF NOT EXISTS public.payments (
     -- Stripe-specific tracking
     stripe_application_fee_amount integer NOT NULL, -- Stored in øre for Stripe
     stylist_transfer_id text, -- Stripe Transfer ID for funds transferred to stylist's connected account
+    needs_destination_update boolean DEFAULT false NOT NULL, -- Payment intent needs destination update when stylist completes onboarding
     
     -- Payment status tracking
     status public.payment_status DEFAULT 'pending' NOT NULL,
@@ -1078,6 +1079,8 @@ AS $$
   WHERE 
     -- Service must be published
     s.is_published = true
+    -- CRITICAL: Only include services from verified stylists
+    AND sd.identity_verification_completed_at IS NOT NULL
     -- Search term filtering
     AND (
       search_term IS NULL 
@@ -1232,6 +1235,8 @@ AS $$
     AND gis.st_distance(a.location, gis.st_point(long, lat)::gis.geography) <= (radius_km * 1000)
     -- Service must be published
     AND s.is_published = true
+    -- CRITICAL: Only include services from verified stylists
+    AND sd.identity_verification_completed_at IS NOT NULL
     -- Search term filtering
     AND (
       search_term IS NULL 

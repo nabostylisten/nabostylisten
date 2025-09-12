@@ -773,7 +773,6 @@ export const bookingServicesRelationshipsSchema = z.tuple([
 
 export const bookingsRowSchema = z.object({
   address_id: z.string().nullable(),
-  awaiting_payment_setup: z.boolean(),
   cancellation_reason: z.string().nullable(),
   cancelled_at: z.string().nullable(),
   created_at: z.string(),
@@ -786,6 +785,7 @@ export const bookingsRowSchema = z.object({
   is_trial_session: z.boolean(),
   main_booking_id: z.string().nullable(),
   message_to_stylist: z.string().nullable(),
+  needs_destination_update: z.boolean(),
   payment_captured_at: z.string().nullable(),
   payout_email_sent_at: z.string().nullable(),
   payout_processed_at: z.string().nullable(),
@@ -805,7 +805,6 @@ export const bookingsRowSchema = z.object({
 
 export const bookingsInsertSchema = z.object({
   address_id: z.string().optional().nullable(),
-  awaiting_payment_setup: z.boolean().optional(),
   cancellation_reason: z.string().optional().nullable(),
   cancelled_at: z.string().optional().nullable(),
   created_at: z.string().optional(),
@@ -818,6 +817,7 @@ export const bookingsInsertSchema = z.object({
   is_trial_session: z.boolean().optional(),
   main_booking_id: z.string().optional().nullable(),
   message_to_stylist: z.string().optional().nullable(),
+  needs_destination_update: z.boolean().optional(),
   payment_captured_at: z.string().optional().nullable(),
   payout_email_sent_at: z.string().optional().nullable(),
   payout_processed_at: z.string().optional().nullable(),
@@ -837,7 +837,6 @@ export const bookingsInsertSchema = z.object({
 
 export const bookingsUpdateSchema = z.object({
   address_id: z.string().optional().nullable(),
-  awaiting_payment_setup: z.boolean().optional(),
   cancellation_reason: z.string().optional().nullable(),
   cancelled_at: z.string().optional().nullable(),
   created_at: z.string().optional(),
@@ -850,6 +849,7 @@ export const bookingsUpdateSchema = z.object({
   is_trial_session: z.boolean().optional(),
   main_booking_id: z.string().optional().nullable(),
   message_to_stylist: z.string().optional().nullable(),
+  needs_destination_update: z.boolean().optional(),
   payment_captured_at: z.string().optional().nullable(),
   payout_email_sent_at: z.string().optional().nullable(),
   payout_processed_at: z.string().optional().nullable(),
@@ -1232,6 +1232,7 @@ export const paymentsRowSchema = z.object({
   discount_percentage: z.number().nullable(),
   final_amount: z.number(),
   id: z.string(),
+  needs_destination_update: z.boolean(),
   original_amount: z.number(),
   payment_intent_id: z.string(),
   payout_completed_at: z.string().nullable(),
@@ -1262,6 +1263,7 @@ export const paymentsInsertSchema = z.object({
   discount_percentage: z.number().optional().nullable(),
   final_amount: z.number(),
   id: z.string().optional(),
+  needs_destination_update: z.boolean().optional(),
   original_amount: z.number(),
   payment_intent_id: z.string(),
   payout_completed_at: z.string().optional().nullable(),
@@ -1292,6 +1294,7 @@ export const paymentsUpdateSchema = z.object({
   discount_percentage: z.number().optional().nullable(),
   final_amount: z.number().optional(),
   id: z.string().optional(),
+  needs_destination_update: z.boolean().optional(),
   original_amount: z.number().optional(),
   payment_intent_id: z.string().optional(),
   payout_completed_at: z.string().optional().nullable(),

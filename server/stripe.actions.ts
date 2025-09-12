@@ -18,7 +18,7 @@ import {
   updateStripeCustomer,
 } from "@/lib/stripe/connect";
 import { getPublicUrl } from "@/lib/utils";
-import { canCreateServices } from "@/lib/stylist-onboarding-status";
+import { getStylistVerificationStatus } from "@/lib/stylist-onboarding-status";
 import { stripe } from "@/lib/stripe/config";
 
 // TODO: Implement Stripe-related server actions
@@ -615,43 +615,21 @@ export async function getCurrentUserStripeStatus() {
       };
     }
 
-    const statusResult = await getStripeAccountStatusService({
-      stripeAccountId: stylistDetails.stripe_account_id,
-    });
+    // Use the comprehensive verification status to get accurate information
+    const verificationStatus = await getStylistVerificationStatus(stylistDetails);
 
-    if (statusResult.data) {
-      // Use the new canCreateServices function to determine if fully onboarded
-      const isFullyOnboarded = canCreateServices(
-        statusResult.data,
-        stylistDetails.identity_verification_completed_at,
-      );
-
-      return {
-        data: {
-          stripeAccountId: stylistDetails.stripe_account_id,
-          status: statusResult.data,
-          isFullyOnboarded,
-          profile,
-          stylistDetails,
-        },
-        error: null,
-      };
-    } else {
-      console.error(
-        "Error fetching Stripe account status:",
-        statusResult.error,
-      );
-      return {
-        data: {
-          stripeAccountId: stylistDetails.stripe_account_id,
-          status: null,
-          isFullyOnboarded: false,
-          profile,
-          stylistDetails,
-        },
-        error: "Kunne ikke hente status fra Stripe. Prøv igjen senere.",
-      };
-    }
+    return {
+      data: {
+        stripeAccountId: stylistDetails.stripe_account_id,
+        status: verificationStatus.stripeAccountStatus,
+        isFullyOnboarded: verificationStatus.isFullyVerified,
+        profile,
+        stylistDetails,
+        // Include the comprehensive verification data for enhanced UI logic
+        verificationStatus,
+      },
+      error: null,
+    };
   } catch (error) {
     console.error("Unexpected error in getCurrentUserStripeStatus:", error);
     return {

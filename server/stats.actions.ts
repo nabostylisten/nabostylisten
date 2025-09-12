@@ -119,13 +119,17 @@ export async function getPopularServices(limit: number = 10) {
     const serviceIdsWithReviews = Array.from(serviceRatings.keys());
 
     // If no services have reviews, fetch any published services
+    // IMPORTANT: Only include services from verified stylists
     const { data: services, error } = await supabase
       .from("services")
       .select(`
         *,
         profiles!stylist_id (
           id,
-          full_name
+          full_name,
+          stylist_details!inner (
+            identity_verification_completed_at
+          )
         ),
         service_service_categories (
           service_categories (
@@ -140,6 +144,7 @@ export async function getPopularServices(limit: number = 10) {
         )
       `)
       .eq("is_published", true)
+      .not("profiles.stylist_details.identity_verification_completed_at", "is", null)
       .in(
         "id",
         serviceIdsWithReviews.length > 0
@@ -149,8 +154,11 @@ export async function getPopularServices(limit: number = 10) {
 
     if (error) throw error;
 
-    // If we have no services with reviews, get some without reviews
-    let finalServices = services || [];
+    // If we have no services with reviews, get some without reviews  
+    // Filter to only include services from verified stylists
+    let finalServices = (services || []).filter(service => 
+      service.profiles?.stylist_details?.identity_verification_completed_at
+    );
 
     if (serviceIdsWithReviews.length === 0 || finalServices.length < limit) {
       let additionalServicesQuery = supabase
@@ -159,7 +167,10 @@ export async function getPopularServices(limit: number = 10) {
           *,
           profiles!stylist_id (
             id,
-            full_name
+            full_name,
+            stylist_details!inner (
+              identity_verification_completed_at
+            )
           ),
           service_service_categories (
             service_categories (
@@ -174,6 +185,7 @@ export async function getPopularServices(limit: number = 10) {
           )
         `)
         .eq("is_published", true)
+        .not("profiles.stylist_details.identity_verification_completed_at", "is", null)
         .limit(limit - finalServices.length);
 
       // Only exclude services with reviews if there are any

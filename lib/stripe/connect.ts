@@ -527,11 +527,15 @@ export async function createStripePaymentIntent({
 
     // Validate the amount
     if (!Number.isInteger(finalAmountOre)) {
-      throw new Error(`Amount must be an integer. Got: ${finalAmountOre} (type: ${typeof finalAmountOre})`);
+      throw new Error(
+        `Amount must be an integer. Got: ${finalAmountOre} (type: ${typeof finalAmountOre})`,
+      );
     }
 
     if (finalAmountOre < 50) { // Stripe minimum for NOK is 50 øre
-      throw new Error(`Amount ${finalAmountOre} øre is below Stripe's minimum of 50 øre for NOK`);
+      throw new Error(
+        `Amount ${finalAmountOre} øre is below Stripe's minimum of 50 øre for NOK`,
+      );
     }
 
     // Calculate fees
@@ -650,6 +654,164 @@ export async function captureStripePaymentIntent({
       error: error instanceof Error
         ? error.message
         : "Failed to capture payment",
+    };
+  }
+}
+
+/**
+ * Create a flexible Stripe payment intent that works with or without a destination
+ * This function handles both scenarios:
+ * 1. Stylist has completed onboarding: Creates payment intent with destination charges
+ * 2. Stylist hasn't completed onboarding: Creates payment intent without destination (held in platform account)
+ *
+ * @param totalAmountNOK - The FINAL amount to charge (already includes discount)
+ * @param stylistStripeAccountId - Optional: Stylist's Stripe account ID (if onboarded)
+ * @param bookingId - The booking ID for metadata
+ * @param customerId - Customer's profile ID
+ * @param stylistId - Stylist's profile ID
+ * @param hasAffiliate - Whether this booking has an affiliate
+ * @param affiliateId - Optional: Affiliate's profile ID
+ * @param discountAmountNOK - The discount amount for metadata/tracking only
+ * @param discountCode - The discount code for metadata/tracking only
+ * @param needsDestinationUpdate - Whether this payment intent needs destination update later
+ */
+export async function createFlexibleStripePaymentIntent({
+  totalAmountNOK,
+  stylistStripeAccountId,
+  bookingId,
+  customerId,
+  stylistId,
+  hasAffiliate = false,
+  affiliateId,
+  discountAmountNOK = 0,
+  discountCode,
+}: {
+  totalAmountNOK: number;
+  stylistStripeAccountId?: string; // Optional - may not have if not onboarded
+  bookingId: string;
+  customerId: string;
+  stylistId: string;
+  hasAffiliate?: boolean;
+  affiliateId?: string;
+  discountAmountNOK?: number;
+  discountCode?: string;
+}) {
+  try {
+    console.log("=== FLEXIBLE STRIPE PAYMENT INTENT DEBUG ===");
+    console.log("Input values:", {
+      totalAmountNOK,
+      discountAmountNOK,
+      bookingId,
+      customerId,
+      stylistId,
+      hasStylistAccount: !!stylistStripeAccountId,
+    });
+
+    const finalAmountNOK = totalAmountNOK;
+    const finalAmountOre = Math.round(finalAmountNOK * 100);
+
+    // Validate the amount
+    if (!Number.isInteger(finalAmountOre)) {
+      throw new Error(`Amount must be an integer. Got: ${finalAmountOre}`);
+    }
+    if (finalAmountOre < 50) {
+      throw new Error(
+        `Amount ${finalAmountOre} øre is below Stripe's minimum of 50 øre for NOK`,
+      );
+    }
+
+    // Calculate fees
+    const feeCalculation = calculatePlatformFee({
+      totalAmountNOK: finalAmountNOK,
+      hasAffiliate,
+    });
+
+    const applicationFeeOre = Math.round(feeCalculation.platformFeeNOK * 100);
+
+    // Build metadata
+    const metadata: Record<string, string> = {
+      booking_id: bookingId,
+      customer_id: customerId,
+      stylist_id: stylistId,
+      original_amount_nok: totalAmountNOK.toString(),
+      final_amount_nok: finalAmountNOK.toString(),
+      platform_fee_nok: feeCalculation.platformFeeNOK.toString(),
+      stylist_payout_nok: feeCalculation.stylistPayoutNOK.toString(),
+      // Flag to indicate if this needs destination update later
+      needs_destination_update: (!stylistStripeAccountId).toString(),
+    };
+
+    // Add affiliate information if applicable
+    if (hasAffiliate && affiliateId) {
+      metadata.has_affiliate = "true";
+      metadata.affiliate_id = affiliateId;
+      metadata.affiliate_commission_nok = feeCalculation.affiliateCommissionNOK
+        .toString();
+    }
+
+    // Add discount information if applicable
+    if (discountAmountNOK > 0) {
+      metadata.discount_amount_nok = discountAmountNOK.toString();
+      if (discountCode) {
+        metadata.discount_code = discountCode;
+      }
+    }
+
+    // Build Stripe payment intent configuration
+    const stripePaymentData: Stripe.PaymentIntentCreateParams = {
+      amount: finalAmountOre,
+      currency: DEFAULT_PLATFORM_CONFIG.payment.defaultCurrency.toLowerCase(),
+      capture_method: "manual" as const,
+      metadata,
+      description: `Booking ${bookingId} - Stylist services`,
+    };
+
+    // Only add transfer_data and application_fee if stylist has Stripe account
+    if (stylistStripeAccountId) {
+      stripePaymentData.application_fee_amount = applicationFeeOre;
+      stripePaymentData.transfer_data = {
+        destination: stylistStripeAccountId,
+      };
+      console.log("Creating payment intent WITH destination charges");
+    } else {
+      console.log(
+        "Creating payment intent WITHOUT destination (stylist not onboarded)",
+      );
+      // Payment will be held in platform account until stylist completes onboarding
+      // We'll need to handle the transfer manually later
+    }
+
+    console.log("Stripe API call data:", {
+      amount: stripePaymentData.amount,
+      currency: stripePaymentData.currency,
+      hasDestination: !!stripePaymentData.transfer_data,
+      application_fee_amount: stripePaymentData.application_fee_amount,
+    });
+
+    const paymentIntent = await stripe.paymentIntents.create(stripePaymentData);
+
+    return {
+      data: {
+        paymentIntentId: paymentIntent.id,
+        clientSecret: paymentIntent.client_secret,
+        amountOre: finalAmountOre,
+        amountNOK: finalAmountNOK,
+        applicationFeeOre,
+        applicationFeeNOK: feeCalculation.platformFeeNOK,
+        stylistPayoutNOK: feeCalculation.stylistPayoutNOK,
+        affiliateCommissionNOK: feeCalculation.affiliateCommissionNOK,
+        discountAmountNOK,
+        needsDestinationUpdate: !stylistStripeAccountId,
+      },
+      error: null,
+    };
+  } catch (error) {
+    console.error("Error creating flexible payment intent:", error);
+    return {
+      data: null,
+      error: error instanceof Error
+        ? error.message
+        : "Failed to create payment intent",
     };
   }
 }

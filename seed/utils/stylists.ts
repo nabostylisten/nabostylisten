@@ -4,6 +4,117 @@ import type {
   usersScalars,
 } from "@snaplet/seed";
 
+// Predefined social media URLs for random selection (other platforms not in main schema)
+const OTHER_SOCIAL_MEDIA_URLS = [
+  "https://www.pinterest.com/beautyinspiration",
+  "https://www.linkedin.com/in/professional-stylist",
+  "https://www.behance.net/beautycreative",
+  "https://vimeo.com/beautytutorials",
+  "https://www.twitch.tv/livestyling",
+  "https://discord.gg/beautycommunity",
+  "https://www.clubhouse.com/@beautytalk",
+  "https://www.reddit.com/user/professionalstylist",
+  "https://medium.com/@beautyblogger",
+  "https://www.tumblr.com/beautytrends",
+  "https://www.threads.net/@beautystylist",
+];
+
+// Helper function to get random social media URLs
+function getRandomSocialMediaUrls(count: number = 1): string[] {
+  const shuffled = [...OTHER_SOCIAL_MEDIA_URLS].sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, Math.min(count, shuffled.length));
+}
+
+// Helper function to generate varied social media profiles
+function generateSocialMediaProfiles(
+  stylistName: string,
+  city: string,
+  specialty: string,
+) {
+  const firstName = stylistName.split(" ")[0].toLowerCase();
+  const lastName = stylistName.split(" ")[1].toLowerCase();
+  const cityShort = city.toLowerCase();
+  const randomNum = Math.floor(Math.random() * 999);
+
+  const profiles: {
+    instagram_profile: string | null;
+    facebook_profile: string | null;
+    tiktok_profile: string | null;
+    youtube_profile: string | null;
+    snapchat_profile: string | null;
+    other_social_media_urls: string[];
+  } = {
+    instagram_profile: null,
+    facebook_profile: null,
+    tiktok_profile: null,
+    youtube_profile: null,
+    snapchat_profile: null,
+    other_social_media_urls: [],
+  };
+
+  // Instagram (most stylists have this)
+  if (Math.random() > 0.1) { // 90% chance
+    const instagramHandles = [
+      `${firstName}${lastName}_${specialty}`,
+      `${firstName}_${specialty}_${cityShort}`,
+      `${firstName}${specialty}${randomNum}`,
+      `${firstName}.${lastName}.${specialty}`,
+    ];
+    profiles.instagram_profile = `https://www.instagram.com/${
+      instagramHandles[Math.floor(Math.random() * instagramHandles.length)]
+    }`;
+  }
+
+  // Facebook (about 40% chance)
+  if (Math.random() > 0.6) {
+    const facebookHandles = [
+      `${firstName}${lastName}${specialty}`,
+      `${firstName}.${lastName}.${specialty}`,
+      `${specialty}with${firstName}`,
+    ];
+    profiles.facebook_profile = `https://www.facebook.com/${
+      facebookHandles[Math.floor(Math.random() * facebookHandles.length)]
+    }`;
+  }
+
+  // TikTok (about 30% chance, younger stylists)
+  if (Math.random() > 0.7) {
+    const tiktokHandles = [
+      `${firstName}${specialty}${cityShort}`,
+      `${firstName}_${specialty}_tips`,
+      `${specialty}by${firstName}`,
+    ];
+    profiles.tiktok_profile = `https://www.tiktok.com/@${
+      tiktokHandles[Math.floor(Math.random() * tiktokHandles.length)]
+    }`;
+  }
+
+  // YouTube (about 20% chance)
+  if (Math.random() > 0.8) {
+    const youtubeChannels = [
+      `${firstName}${lastName}Tutorials`,
+      `${specialty}With${firstName}`,
+      `${firstName}${specialty}Channel`,
+    ];
+    profiles.youtube_profile = `https://www.youtube.com/@${
+      youtubeChannels[Math.floor(Math.random() * youtubeChannels.length)]
+    }`;
+  }
+
+  // Snapchat (about 15% chance)
+  if (Math.random() > 0.85) {
+    profiles.snapchat_profile =
+      `https://www.snapchat.com/add/${firstName}${specialty}${randomNum}`;
+  }
+
+  // Other social media (about 25% chance)
+  if (Math.random() > 0.75) {
+    profiles.other_social_media_urls = getRandomSocialMediaUrls(1) || [];
+  }
+
+  return profiles;
+}
+
 /**
  * Creates detailed profiles for stylists including bio, social media, and travel preferences
  * Profiles will exist due to database trigger when users were created
@@ -14,118 +125,77 @@ export async function createStylistDetailedProfiles(
 ) {
   console.log("-- Creating stylist detailed profiles...");
 
-  await seed.stylist_details([
-    // Oslo stylists
-    {
-      profile_id: stylistUsers[0].id, // Maria Hansen
-      bio:
-        "Erfaren frisør med over 10 års erfaring. Spesialiserer meg på moderne klipp og fargeteknikker.",
-      can_travel: true,
-      has_own_place: true,
-      travel_distance_km: 15,
-      instagram_profile: "https://www.instagram.com/mariahansen_hair",
+  // Stylist data with names, cities, and specialties
+  const stylistData = [
+    { name: "Maria Hansen", city: "Oslo", specialty: "hair" },
+    { name: "Sophia Larsen", city: "Oslo", specialty: "lashes" },
+    { name: "Emma Nilsen", city: "Bergen", specialty: "beauty" },
+    { name: "Lisa Berg", city: "Bergen", specialty: "hair" },
+    { name: "Anna Johansen", city: "Trondheim", specialty: "makeup" },
+    { name: "Ingrid Solberg", city: "Trondheim", specialty: "nails" },
+    { name: "Camilla Eriksen", city: "Stavanger", specialty: "hair" },
+    { name: "Thea Andersen", city: "Stavanger", specialty: "lashes" },
+    { name: "Marte Kristiansen", city: "Kristiansand", specialty: "beauty" },
+    { name: "Sara Pedersen", city: "Kristiansand", specialty: "hair" },
+  ];
+
+  const stylistProfiles = stylistData.map((stylist, index) => {
+    const socialMedia = generateSocialMediaProfiles(
+      stylist.name,
+      stylist.city,
+      stylist.specialty,
+    );
+
+    return {
+      profile_id: stylistUsers[index].id,
+      bio: getBioForStylist(stylist.specialty),
+      can_travel: Math.random() > 0.3, // 70% can travel
+      has_own_place: Math.random() > 0.2, // 80% have own place
+      travel_distance_km: Math.random() > 0.3
+        ? Math.floor(Math.random() * 25) + 10
+        : null, // 10-35km
+      instagram_profile: socialMedia.instagram_profile || null,
+      facebook_profile: socialMedia.facebook_profile || null,
+      tiktok_profile: socialMedia.tiktok_profile || null,
+      youtube_profile: socialMedia.youtube_profile || null,
+      snapchat_profile: socialMedia.snapchat_profile || null,
+      other_social_media_urls: socialMedia.other_social_media_urls,
       stripe_account_id: null,
-    },
-    {
-      profile_id: stylistUsers[1].id, // Sophia Larsen
-      bio:
-        "Spesialist på bryn og vipper. Sertifisert lash technician med fokus på naturlige resultater.",
-      can_travel: false,
-      has_own_place: true,
-      travel_distance_km: null,
-      instagram_profile: "https://www.instagram.com/sophialashes",
-      facebook_profile: "https://www.facebook.com/sophialarsenlashes",
-      stripe_account_id: null,
-    },
-    // Bergen stylists
-    {
-      profile_id: stylistUsers[2].id, // Emma Nilsen
-      bio:
-        "Makeup artist og negletekniker. Elsker å skape unike looks for mine kunder!",
-      can_travel: true,
-      has_own_place: false,
-      travel_distance_km: 20,
-      instagram_profile: "https://www.instagram.com/emma_beauty",
-      tiktok_profile: "https://www.tiktok.com/@emmabeautybergen",
-      stripe_account_id: null,
-    },
-    {
-      profile_id: stylistUsers[3].id, // Lisa Berg
-      bio:
-        "Profesjonell hårfrisør og fargeekspert. Brenner for å skape fantastiske frisyrer som passer din stil.",
-      can_travel: true,
-      has_own_place: true,
-      travel_distance_km: 25,
-      instagram_profile: "https://www.instagram.com/lisaberg_hair",
-      stripe_account_id: null,
-    },
-    // Trondheim stylists
-    {
-      profile_id: stylistUsers[4].id, // Anna Johansen
-      bio:
-        "Spesialiserer meg på bryllup og festmakeup. Over 8 års erfaring med å få folk til å skinne!",
-      can_travel: true,
-      has_own_place: true,
-      travel_distance_km: 30,
-      instagram_profile: "https://www.instagram.com/anna_makeup_trondheim",
-      facebook_profile: "https://www.facebook.com/annamakeup",
-      stripe_account_id: null,
-    },
-    {
-      profile_id: stylistUsers[5].id, // Ingrid Solberg
-      bio:
-        "Sertifisert negletekniker med fokus på gel og akryl. Elsker kreative design og nail art!",
-      can_travel: false,
-      has_own_place: true,
-      travel_distance_km: null,
-      instagram_profile: "https://www.instagram.com/ingrid_nails",
-      stripe_account_id: null,
-    },
-    // Stavanger stylists
-    {
-      profile_id: stylistUsers[6].id, // Camilla Eriksen
-      bio:
-        "Hårfrisør med spesialisering innen balayage og moderne fargeteknikker. La meg hjelpe deg finne din perfekte look!",
-      can_travel: true,
-      has_own_place: true,
-      travel_distance_km: 20,
-      instagram_profile: "https://www.instagram.com/camilla_hair_stavanger",
-      tiktok_profile: "https://www.tiktok.com/@camillahair",
-      stripe_account_id: null,
-    },
-    {
-      profile_id: stylistUsers[7].id, // Thea Andersen
-      bio:
-        "Vippeextensions og brynforming er min spesialitet. Fokus på naturlig skjønnhet og holdbare resultater.",
-      can_travel: true,
-      has_own_place: false,
-      travel_distance_km: 15,
-      instagram_profile: "https://www.instagram.com/thea_lashes",
-      stripe_account_id: null,
-    },
-    // Kristiansand stylists
-    {
-      profile_id: stylistUsers[8].id, // Marte Kristiansen
-      bio:
-        "Allsidig stylist med erfaring innen hår, makeup og negler. Jeg hjelper deg å se din beste ut!",
-      can_travel: true,
-      has_own_place: true,
-      travel_distance_km: 25,
-      instagram_profile: "https://www.instagram.com/marte_beauty_krs",
-      youtube_profile: "https://www.youtube.com/channel/UCMarteBeautyKRS",
-      stripe_account_id: null,
-    },
-    {
-      profile_id: stylistUsers[9].id, // Sara Pedersen
-      bio:
-        "Spesialist på festfrisyrer og updos. Perfekt for bryllup, ball og andre spesielle anledninger.",
-      can_travel: true,
-      has_own_place: true,
-      travel_distance_km: 20,
-      instagram_profile: "https://www.instagram.com/sara_hair_kristiansand",
-      stripe_account_id: null,
-    },
-  ]);
+      identity_verification_completed_at: null,
+      stripe_verification_session_id: null,
+    };
+  });
+
+  await seed.stylist_details(stylistProfiles);
+}
+
+// Helper function to generate bios based on specialty
+function getBioForStylist(specialty: string): string {
+  const bios = {
+    hair: [
+      `Erfaren frisør med over 10 års erfaring. Spesialiserer meg på moderne klipp og fargeteknikker.`,
+      `Profesjonell hårfrisør og fargeekspert. Brenner for å skape fantastiske frisyrer som passer din stil.`,
+      `Hårfrisør med spesialisering innen balayage og moderne fargeteknikker. La meg hjelpe deg finne din perfekte look!`,
+      `Spesialist på festfrisyrer og updos. Perfekt for bryllup, ball og andre spesielle anledninger.`,
+    ],
+    lashes: [
+      `Spesialist på bryn og vipper. Sertifisert lash technician med fokus på naturlige resultater.`,
+      `Vippeextensions og brynforming er min spesialitet. Fokus på naturlig skjønnhet og holdbare resultater.`,
+    ],
+    beauty: [
+      `Makeup artist og negletekniker. Elsker å skape unike looks for mine kunder!`,
+      `Allsidig stylist med erfaring innen hår, makeup og negler. Jeg hjelper deg å se din beste ut!`,
+    ],
+    makeup: [
+      `Spesialiserer meg på bryllup og festmakeup. Over 8 års erfaring med å få folk til å skinne!`,
+    ],
+    nails: [
+      `Sertifisert negletekniker med fokus på gel og akryl. Elsker kreative design og nail art!`,
+    ],
+  };
+
+  const specialtyBios = bios[specialty as keyof typeof bios] || bios.beauty;
+  return specialtyBios[Math.floor(Math.random() * specialtyBios.length)];
 }
 
 /**

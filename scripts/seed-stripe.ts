@@ -551,109 +551,181 @@ async function seedStripeAccounts() {
 
     console.log(`📋 Found ${stylists.length} stylists to process`);
 
-    let accountsCreated = 0;
-    let accountsSkipped = 0;
-    let customersCreated = 0;
-    let customersSkipped = 0;
-
-    for (const stylist of stylists) {
-      if (!stylist.email) continue;
-
-      console.log(
-        `\n👤 Processing stylist: ${stylist.full_name} (${stylist.email})`,
-      );
-
-      // Create Stripe connected account if needed
-      if (!stylist.stylist_details?.stripe_account_id) {
-        console.log("  🏦 Creating Stripe connected account...");
-
-        const accountResult = await createStripeConnectedAccount({
-          email: stylist.email,
-          name: stylist.full_name || "Unknown Stylist",
-          address: {
-            addressLine1: "Test Address 1",
-            addressLine2: "",
-            city: "Oslo",
-            state: "",
-            postalCode: "0150",
-            country: "NO",
-          },
-        });
-
-        if (accountResult.error || !accountResult.data) {
-          console.error(
-            `  ❌ Failed to create Stripe account: ${accountResult.error}`,
-          );
-          continue;
+    // Process stylists in parallel batches
+    const results = await processBatches(
+      stylists,
+      async (stylist) => {
+        if (!stylist.email) {
+          return {
+            stylistId: stylist.id,
+            accountCreated: false,
+            customerCreated: false,
+            accountSkipped: false,
+            customerSkipped: false,
+            error: "No email address",
+          };
         }
 
-        // Save to database
-        const saveResult = await saveStripeAccountIdToDatabase({
-          supabaseClient: supabase,
-          profileId: stylist.id,
-          stripeAccountId: accountResult.data.stripeAccountId,
-        });
+        console.log(
+          `  👤 Processing stylist: ${stylist.full_name} (${stylist.email})`,
+        );
 
-        if (saveResult.success) {
+        let accountCreated = false;
+        let customerCreated = false;
+        let accountSkipped = false;
+        let customerSkipped = false;
+        let error = null;
+
+        // Create Stripe connected account if needed
+        if (!stylist.stylist_details?.stripe_account_id) {
           console.log(
-            `  ✅ Created Stripe account: ${accountResult.data.stripeAccountId}`,
+            `    🏦 Creating Stripe connected account for ${stylist.full_name}...`,
           );
-          accountsCreated++;
+
+          try {
+            const accountResult = await retryWithBackoff(() =>
+              createStripeConnectedAccount({
+                // We have already validated that the email is not null
+                email: stylist.email!,
+                name: stylist.full_name || "Unknown Stylist",
+                address: {
+                  addressLine1: "Test Address 1",
+                  addressLine2: "",
+                  city: "Oslo",
+                  state: "",
+                  postalCode: "0150",
+                  country: "NO",
+                },
+              })
+            );
+
+            if (accountResult.error || !accountResult.data) {
+              console.error(
+                `    ❌ Failed to create Stripe account for ${stylist.full_name}: ${accountResult.error}`,
+              );
+              error = accountResult.error;
+            } else {
+              // Save to database
+              const saveResult = await saveStripeAccountIdToDatabase({
+                supabaseClient: supabase,
+                profileId: stylist.id,
+                stripeAccountId: accountResult.data.stripeAccountId,
+              });
+
+              if (saveResult.success) {
+                console.log(
+                  `    ✅ Created Stripe account for ${stylist.full_name}: ${accountResult.data.stripeAccountId}`,
+                );
+                accountCreated = true;
+              } else {
+                console.error(
+                  `    ❌ Failed to save account ID for ${stylist.full_name}: ${saveResult.error}`,
+                );
+                error = saveResult.error;
+              }
+            }
+          } catch (err) {
+            console.error(
+              `    ❌ Exception creating account for ${stylist.full_name}:`,
+              err,
+            );
+            error = err instanceof Error ? err.message : String(err);
+          }
         } else {
-          console.error(`  ❌ Failed to save account ID: ${saveResult.error}`);
-        }
-      } else {
-        console.log("  ⏭️  Already has Stripe account, skipping");
-        accountsSkipped++;
-      }
-
-      // Create Stripe customer if needed (stylists can also book services)
-      if (!stylist.stripe_customer_id) {
-        console.log("  👥 Creating Stripe customer for stylist...");
-
-        const customerResult = await createStripeCustomer({
-          email: stylist.email,
-          name: stylist.full_name || undefined,
-          metadata: {
-            profile_id: stylist.id,
-            source: "development_seed",
-            role: "stylist",
-          },
-        });
-
-        if (customerResult.error || !customerResult.data) {
-          console.error(
-            `  ❌ Failed to create Stripe customer: ${customerResult.error}`,
-          );
-          continue;
-        }
-
-        // Save to database
-        const saveResult = await saveStripeCustomerIdToDatabase({
-          supabaseClient: supabase,
-          profileId: stylist.id,
-          stripeCustomerId: customerResult.data.customerId,
-        });
-
-        if (saveResult.success) {
           console.log(
-            `  ✅ Created Stripe customer: ${customerResult.data.customerId}`,
+            `    ⏭️  ${stylist.full_name} already has Stripe account`,
           );
-          customersCreated++;
-        } else {
-          console.error(`  ❌ Failed to save customer ID: ${saveResult.error}`);
+          accountSkipped = true;
         }
-      } else {
-        console.log("  ⏭️  Already has Stripe customer, skipping");
-        customersSkipped++;
-      }
-    }
+
+        // Create Stripe customer if needed (stylists can also book services)
+        if (!stylist.stripe_customer_id) {
+          console.log(
+            `    👥 Creating Stripe customer for ${stylist.full_name}...`,
+          );
+
+          try {
+            const customerResult = await retryWithBackoff(() =>
+              createStripeCustomer({
+                // We have already validated that the email is not null
+                email: stylist.email!,
+                name: stylist.full_name || undefined,
+                metadata: {
+                  profile_id: stylist.id,
+                  source: "development_seed",
+                  role: "stylist",
+                },
+              })
+            );
+
+            if (customerResult.error || !customerResult.data) {
+              console.error(
+                `    ❌ Failed to create Stripe customer for ${stylist.full_name}: ${customerResult.error}`,
+              );
+              error = customerResult.error;
+            } else {
+              // Save to database
+              const saveResult = await saveStripeCustomerIdToDatabase({
+                supabaseClient: supabase,
+                profileId: stylist.id,
+                stripeCustomerId: customerResult.data.customerId,
+              });
+
+              if (saveResult.success) {
+                console.log(
+                  `    ✅ Created Stripe customer for ${stylist.full_name}: ${customerResult.data.customerId}`,
+                );
+                customerCreated = true;
+              } else {
+                console.error(
+                  `    ❌ Failed to save customer ID for ${stylist.full_name}: ${saveResult.error}`,
+                );
+                error = saveResult.error;
+              }
+            }
+          } catch (err) {
+            console.error(
+              `    ❌ Exception creating customer for ${stylist.full_name}:`,
+              err,
+            );
+            error = err instanceof Error ? err.message : String(err);
+          }
+        } else {
+          console.log(
+            `    ⏭️  ${stylist.full_name} already has Stripe customer`,
+          );
+          customerSkipped = true;
+        }
+
+        return {
+          stylistId: stylist.id,
+          stylistName: stylist.full_name,
+          accountCreated,
+          customerCreated,
+          accountSkipped,
+          customerSkipped,
+          error,
+        };
+      },
+      5,
+      200,
+    ); // Smaller batch size for creation operations, longer delay
+
+    // Count results
+    const accountsCreated = results.filter((r) => r.accountCreated).length;
+    const accountsSkipped = results.filter((r) => r.accountSkipped).length;
+    const customersCreated = results.filter((r) => r.customerCreated).length;
+    const customersSkipped = results.filter((r) => r.customerSkipped).length;
+    const errors = results.filter((r) => r.error).length;
 
     console.log(`\n📊 Stylist Processing Summary:`);
     console.log(`  🏦 Stripe accounts created: ${accountsCreated}`);
     console.log(`  ⏭️  Stripe accounts skipped: ${accountsSkipped}`);
     console.log(`  👥 Stripe customers created: ${customersCreated}`);
     console.log(`  ⏭️  Stripe customers skipped: ${customersSkipped}`);
+    if (errors > 0) {
+      console.log(`  ❌ Errors encountered: ${errors}`);
+    }
   } catch (error) {
     console.error("❌ Unexpected error in seedStripeAccounts:", error);
   }
@@ -682,59 +754,99 @@ async function seedStripeCustomers() {
 
     console.log(`📋 Found ${customers.length} customers to process`);
 
-    let customersCreated = 0;
-    let customersSkipped = 0;
+    // Process customers in parallel batches
+    const results = await processBatches(
+      customers,
+      async (customer) => {
+        console.log(
+          `  👤 Processing customer: ${customer.full_name} (${customer.email})`,
+        );
 
-    for (const customer of customers) {
-      console.log(
-        `\n👤 Processing customer: ${customer.full_name} (${customer.email})`,
-      );
+        let customerCreated = false;
+        let customerSkipped = false;
+        let error = null;
 
-      if (!customer.stripe_customer_id) {
-        console.log("  👥 Creating Stripe customer...");
-
-        const customerResult = await createStripeCustomer({
-          email: customer.email,
-          name: customer.full_name || undefined,
-          phone: customer.phone_number || undefined,
-          metadata: {
-            profile_id: customer.id,
-            source: "development_seed",
-            role: "customer",
-          },
-        });
-
-        if (customerResult.error || !customerResult.data) {
-          console.error(
-            `  ❌ Failed to create Stripe customer: ${customerResult.error}`,
-          );
-          continue;
-        }
-
-        // Save to database
-        const saveResult = await saveStripeCustomerIdToDatabase({
-          supabaseClient: supabase,
-          profileId: customer.id,
-          stripeCustomerId: customerResult.data.customerId,
-        });
-
-        if (saveResult.success) {
+        if (!customer.stripe_customer_id) {
           console.log(
-            `  ✅ Created Stripe customer: ${customerResult.data.customerId}`,
+            `    👥 Creating Stripe customer for ${customer.full_name}...`,
           );
-          customersCreated++;
+
+          try {
+            const customerResult = await retryWithBackoff(() =>
+              createStripeCustomer({
+                email: customer.email,
+                name: customer.full_name || undefined,
+                phone: customer.phone_number || undefined,
+                metadata: {
+                  profile_id: customer.id,
+                  source: "development_seed",
+                  role: "customer",
+                },
+              })
+            );
+
+            if (customerResult.error || !customerResult.data) {
+              console.error(
+                `    ❌ Failed to create Stripe customer for ${customer.full_name}: ${customerResult.error}`,
+              );
+              error = customerResult.error;
+            } else {
+              // Save to database
+              const saveResult = await saveStripeCustomerIdToDatabase({
+                supabaseClient: supabase,
+                profileId: customer.id,
+                stripeCustomerId: customerResult.data.customerId,
+              });
+
+              if (saveResult.success) {
+                console.log(
+                  `    ✅ Created Stripe customer for ${customer.full_name}: ${customerResult.data.customerId}`,
+                );
+                customerCreated = true;
+              } else {
+                console.error(
+                  `    ❌ Failed to save customer ID for ${customer.full_name}: ${saveResult.error}`,
+                );
+                error = saveResult.error;
+              }
+            }
+          } catch (err) {
+            console.error(
+              `    ❌ Exception creating customer for ${customer.full_name}:`,
+              err,
+            );
+            error = err instanceof Error ? err.message : String(err);
+          }
         } else {
-          console.error(`  ❌ Failed to save customer ID: ${saveResult.error}`);
+          console.log(
+            `    ⏭️  ${customer.full_name} already has Stripe customer`,
+          );
+          customerSkipped = true;
         }
-      } else {
-        console.log("  ⏭️  Already has Stripe customer, skipping");
-        customersSkipped++;
-      }
-    }
+
+        return {
+          customerId: customer.id,
+          customerName: customer.full_name,
+          customerCreated,
+          customerSkipped,
+          error,
+        };
+      },
+      8,
+      150,
+    ); // Slightly larger batch size for customer creation, shorter delay
+
+    // Count results
+    const customersCreated = results.filter((r) => r.customerCreated).length;
+    const customersSkipped = results.filter((r) => r.customerSkipped).length;
+    const errors = results.filter((r) => r.error).length;
 
     console.log(`\n📊 Customer Processing Summary:`);
     console.log(`  👥 Stripe customers created: ${customersCreated}`);
     console.log(`  ⏭️  Stripe customers skipped: ${customersSkipped}`);
+    if (errors > 0) {
+      console.log(`  ❌ Errors encountered: ${errors}`);
+    }
   } catch (error) {
     console.error("❌ Unexpected error in seedStripeCustomers:", error);
   }

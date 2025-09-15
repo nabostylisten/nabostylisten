@@ -91,7 +91,7 @@ This test plan covers the complete stylist onboarding flow with the newly integr
 2. ✅ **Expected**: "Opprett ny tjeneste" button should be enabled
 3. ✅ **Create** a test service
 4. ✅ **Expected**: Service creation should succeed
-5. **Verify**: Can see the service in the list
+5. ✅ **Verify**: Can see the service in the list
 
 ### Scenario 2: Identity Verification Failure Handling
 

@@ -7,7 +7,7 @@
  * accounts and customers using the actual Stripe service functions.
  *
  * ⚠️  DEVELOPMENT ONLY - This script will DELETE existing Stripe accounts/customers
- * and is protected by NODE_ENV checks to prevent running in production.
+ * and CANCEL existing payment intents. Protected by NODE_ENV checks to prevent running in production.
  *
  * Usage: NODE_ENV=development bun scripts/seed-stripe.ts
  *
@@ -521,6 +521,154 @@ async function deleteAllStripeCustomers() {
   }
 }
 
+async function cancelAllStripePaymentIntents() {
+  console.log("\n🗑️  Canceling all Stripe payment intents...");
+
+  try {
+    let totalPaymentIntentsCanceled = 0;
+    let hasMorePaymentIntents = true;
+    let startingAfter: string | undefined;
+
+    while (hasMorePaymentIntents) {
+      // List payment intents with pagination using Stripe SDK with retry logic
+      const listParams: { limit: number; starting_after?: string } = {
+        limit: 100,
+      };
+      if (startingAfter) {
+        listParams.starting_after = startingAfter;
+      }
+
+      const paymentIntents = await retryWithBackoff(() =>
+        stripe.paymentIntents.list(listParams)
+      );
+
+      if (!paymentIntents.data || paymentIntents.data.length === 0) {
+        console.log("ℹ️  No more Stripe payment intents found");
+        break;
+      }
+
+      // Filter payment intents that can be canceled
+      const cancelableStatuses = [
+        "requires_payment_method",
+        "requires_capture",
+        "requires_confirmation",
+        "requires_action",
+        "processing", // rare cases
+      ];
+      const cancelablePaymentIntents = paymentIntents.data.filter((pi) =>
+        cancelableStatuses.includes(pi.status)
+      );
+
+      if (cancelablePaymentIntents.length === 0) {
+        console.log("ℹ️  No cancelable payment intents in this batch");
+        // Still need to check if there are more pages
+        hasMorePaymentIntents = paymentIntents.has_more;
+        if (hasMorePaymentIntents && paymentIntents.data.length > 0) {
+          startingAfter = paymentIntents.data[paymentIntents.data.length - 1].id;
+          console.log(
+            `    ➡️  Fetching next batch (starting after: ${startingAfter}) - skipping non-cancelable payment intents`,
+          );
+          continue;
+        } else {
+          break;
+        }
+      }
+
+      console.log(
+        `📋 Found ${cancelablePaymentIntents.length} cancelable Stripe payment intents (batch of ${paymentIntents.data.length} total)`,
+      );
+
+      // Store the pagination cursor BEFORE canceling payment intents
+      const nextCursor = paymentIntents.data.length > 0
+        ? paymentIntents.data[paymentIntents.data.length - 1].id
+        : undefined;
+
+      // Cancel payment intents in batches to respect rate limits
+      const results = await processBatches(
+        cancelablePaymentIntents,
+        async (paymentIntent) => {
+          console.log(
+            `  💳 Canceling payment intent: ${paymentIntent.id} (${paymentIntent.status})`,
+          );
+
+          try {
+            // Cancel the payment intent from Stripe with retry logic
+            const canceled = await retryWithBackoff(() =>
+              stripe.paymentIntents.cancel(paymentIntent.id, {
+                cancellation_reason: "abandoned",
+              })
+            );
+            console.log(
+              `    ✅ Stripe cancellation result for ${paymentIntent.id}: ${canceled.status}`,
+            );
+
+            const stripeCanceled = canceled.status === "canceled";
+
+            return {
+              stripeCanceled,
+              paymentIntentId: paymentIntent.id,
+            };
+
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } catch (stripeError: any) {
+            console.log(`    ⚠️  Stripe error details for ${paymentIntent.id}:`, {
+              type: stripeError.type,
+              code: stripeError.code,
+              message: stripeError.message,
+            });
+
+            // Payment intent might already be canceled or in non-cancelable state
+            if (
+              stripeError.type === "StripeInvalidRequestError" &&
+              (stripeError.message?.includes("No such payment_intent") ||
+                stripeError.code === "resource_missing" ||
+                stripeError.message?.includes("cannot be canceled"))
+            ) {
+              console.log(
+                `    ℹ️  Payment intent ${paymentIntent.id} cannot be canceled or doesn't exist`,
+              );
+            } else {
+              console.error(
+                `    ❌ Failed to cancel Stripe payment intent ${paymentIntent.id}: ${stripeError.message}`,
+              );
+            }
+
+            return {
+              stripeCanceled: false,
+              paymentIntentId: paymentIntent.id,
+            };
+          }
+        },
+      );
+
+      const batchPaymentIntentsCanceled = results.filter((r) =>
+        r.stripeCanceled
+      ).length;
+
+      totalPaymentIntentsCanceled += batchPaymentIntentsCanceled;
+
+      console.log(
+        `    📊 Batch complete: ${batchPaymentIntentsCanceled} canceled`,
+      );
+
+      // Check if there are more payment intents to fetch
+      hasMorePaymentIntents = paymentIntents.has_more;
+      if (hasMorePaymentIntents && nextCursor) {
+        startingAfter = nextCursor;
+        console.log(
+          `    ➡️  Fetching next batch (starting after: ${startingAfter})`,
+        );
+      }
+    }
+
+    console.log(
+      `  🎯 TOTAL: Canceled ${totalPaymentIntentsCanceled} Stripe payment intents`,
+    );
+  } catch (error) {
+    console.error("❌ Unexpected error in cancelAllStripePaymentIntents:", error);
+  }
+}
+
 async function seedStripeAccounts() {
   console.log("🎭 Starting Stripe account seeding for stylists...");
 
@@ -892,8 +1040,9 @@ async function main() {
     "⚠️  WARNING: This script will DELETE all existing Stripe accounts/customers",
   );
   console.log(
-    "   and create new ones for development. Only runs in NODE_ENV=development.",
+    "   and CANCEL all existing payment intents, then create new accounts/customers for development.",
   );
+  console.log("   Only runs in NODE_ENV=development.");
   console.log("   Make sure you've run 'bun supabase:db:reset' first.\n");
 
   try {
@@ -906,6 +1055,7 @@ async function main() {
     console.log("=================");
     await deleteAllStripeAccounts();
     await deleteAllStripeCustomers();
+    await cancelAllStripePaymentIntents();
 
     // Create new Stripe data
     console.log("\n🏗️  CREATION PHASE");
@@ -924,7 +1074,7 @@ async function main() {
     console.log("  - Payment intents will work with real Stripe accounts");
     console.log("  - You can test the Express Dashboard functionality");
     console.log(
-      "  - All previous Stripe accounts/customers have been cleaned up",
+      "  - All previous Stripe accounts/customers/payment intents have been cleaned up",
     );
   } catch (error) {
     console.error("\n❌ Stripe seeding failed:", error);

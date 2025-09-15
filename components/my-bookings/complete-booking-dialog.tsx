@@ -62,6 +62,8 @@ export function CompleteBookingDialog({
       toast.success("Booking markert som fullført");
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
       queryClient.invalidateQueries({ queryKey: ["booking", booking.id] });
+      queryClient.invalidateQueries({ queryKey: ["booking-details", booking.id] });
+      queryClient.invalidateQueries({ queryKey: ["user-bookings"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {

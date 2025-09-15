@@ -74,23 +74,23 @@ This test plan covers the complete stylist onboarding flow with the newly integr
 #### Step 5: Identity Verification Processing
 
 1. ✅ **Return** to `/stylist/stripe/identity-verification/return`
-2. ❌ **Expected**: Should see appropriate status based on verification result:
+2. ✅ **Expected**: Should see appropriate status based on verification result:
    - **If verified**: Green checkmark with "Identitet verifisert!" message
    - **If processing**: Blue clock with "Verifisering behandles" message
    - **If failed**: Warning triangle with appropriate error message
 
 #### Step 6: Webhook Processing
 
-1. **Monitor** webhook endpoint logs for incoming events
-2. **Expected**: Should receive `identity.verification_session.verified` event
-3. **Verify**: Database `identity_verification_completed_at` is updated with timestamp
+1. ✅ **Monitor** webhook endpoint logs for incoming events
+2. ✅ **Expected**: Should receive `identity.verification_session.verified` event
+3. ✅ **Verify**: Database `identity_verification_completed_at` is updated with timestamp
 
 #### Step 7: Service Creation Access
 
-1. **Navigate** to `/profiler/[id]/mine-tjenester`
-2. **Expected**: "Opprett ny tjeneste" button should be enabled
-3. **Create** a test service
-4. **Expected**: Service creation should succeed
+1. ✅ **Navigate** to `/profiler/[id]/mine-tjenester`
+2. ✅ **Expected**: "Opprett ny tjeneste" button should be enabled
+3. ✅ **Create** a test service
+4. ✅ **Expected**: Service creation should succeed
 5. **Verify**: Can see the service in the list
 
 ### Scenario 2: Identity Verification Failure Handling

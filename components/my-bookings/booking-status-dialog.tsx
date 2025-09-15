@@ -83,6 +83,8 @@ export function BookingStatusDialog({
 
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ["user-bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["booking-details", bookingId] });
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
 
       // Close dialog and reset form
       onOpenChange(false);

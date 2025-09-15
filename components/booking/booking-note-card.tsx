@@ -73,6 +73,9 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
       queryClient.invalidateQueries({
         queryKey: ["booking-notes", note.booking_id],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["booking-details", note.booking_id],
+      });
       toast.success("Bookingnotat slettet!");
       setDeleteDialogOpen(false);
     },

@@ -217,6 +217,7 @@ export function ReviewForm({
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       queryClient.invalidateQueries({ queryKey: ["review", bookingId] });
       queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
+      queryClient.invalidateQueries({ queryKey: ["booking-details", bookingId] });
       queryClient.invalidateQueries({
         queryKey: ["completedBookingsWithoutReviews"],
       });
@@ -253,6 +254,7 @@ export function ReviewForm({
       queryClient.invalidateQueries({ queryKey: ["reviews"] });
       queryClient.invalidateQueries({ queryKey: ["review", bookingId] });
       queryClient.invalidateQueries({ queryKey: ["booking", bookingId] });
+      queryClient.invalidateQueries({ queryKey: ["booking-details", bookingId] });
       queryClient.invalidateQueries({
         queryKey: ["completedBookingsWithoutReviews"],
       });
@@ -274,6 +276,7 @@ export function ReviewForm({
         
         // Invalidate queries to refresh data
         queryClient.invalidateQueries({ queryKey: ["review", bookingId] });
+        queryClient.invalidateQueries({ queryKey: ["booking-details", bookingId] });
       }
     },
     onError: (error) => {

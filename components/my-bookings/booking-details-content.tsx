@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   Calendar,
@@ -109,8 +108,6 @@ export function BookingDetailsContent({
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
-  console.log(bookingResponse?.data?.address);
-
   // Fetch booking notes (for stylists and admins)
   const {
     data: bookingNotesResponse,
@@ -122,7 +119,6 @@ export function BookingDetailsContent({
     enabled: userRole === "stylist" || userRole === "admin", // Load for stylists and admins
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
-
 
   // Check if there's an existing review for this booking
   const { data: reviewResponse } = useQuery({

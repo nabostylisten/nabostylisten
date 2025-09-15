@@ -356,6 +356,7 @@ export function BookingNoteForm({
       }
 
       queryClient.invalidateQueries({ queryKey: ["booking-notes", bookingId] });
+      queryClient.invalidateQueries({ queryKey: ["booking-details", bookingId] });
       form.reset();
       setSelectedFiles([]);
       onSuccess();
@@ -376,6 +377,7 @@ export function BookingNoteForm({
     }) => updateBookingNote(noteId, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["booking-notes", bookingId] });
+      queryClient.invalidateQueries({ queryKey: ["booking-details", bookingId] });
       toast.success("Bookingnotat oppdatert!");
       onSuccess();
     },

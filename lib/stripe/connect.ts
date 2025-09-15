@@ -99,6 +99,10 @@ export async function createStripeAccountOnboardingLink({
       account: stripeAccountId,
       refresh_url,
       return_url,
+      collection_options: {
+        fields: "eventually_due",
+        future_requirements: "include",
+      },
       type: "account_onboarding",
     });
 

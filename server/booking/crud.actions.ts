@@ -1,12 +1,13 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import {
     bookingsInsertSchema,
     bookingsUpdateSchema,
 } from "@/schemas/database.schema";
 import type { BookingFilters, DatabaseTables } from "@/types";
-import type { Service, Profile } from "@/types/database-helpers";
+import type { Profile, Service } from "@/types/database-helpers";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -169,7 +170,6 @@ export async function getUserBookings(
         query = query.eq("stylist_id", userId);
     }
 
-
     // Apply service IDs filter
     if (filters.serviceIds && filters.serviceIds.length > 0) {
         // Find bookings that contain any of the specified services
@@ -177,13 +177,19 @@ export async function getUserBookings(
             .from("booking_services")
             .select("booking_id")
             .in("service_id", filters.serviceIds);
-        
+
         if (matchingBookingIds && matchingBookingIds.length > 0) {
-            const ids = matchingBookingIds.map(bs => bs.booking_id);
+            const ids = matchingBookingIds.map((bs) => bs.booking_id);
             query = query.in("id", ids);
         } else {
             // No matches found, return empty result
-            return { data: [], error: null, total: 0, totalPages: 0, currentPage: page };
+            return {
+                data: [],
+                error: null,
+                total: 0,
+                totalPages: 0,
+                currentPage: page,
+            };
         }
     }
 
@@ -251,18 +257,23 @@ export async function getUserBookings(
         countQuery.eq("stylist_id", userId);
     }
 
-
     if (filters.serviceIds && filters.serviceIds.length > 0) {
         const { data: matchingBookingIds } = await supabase
             .from("booking_services")
             .select("booking_id")
             .in("service_id", filters.serviceIds);
-        
+
         if (matchingBookingIds && matchingBookingIds.length > 0) {
-            const ids = matchingBookingIds.map(bs => bs.booking_id);
+            const ids = matchingBookingIds.map((bs) => bs.booking_id);
             countQuery.in("id", ids);
         } else {
-            return { data: [], error: null, total: 0, totalPages: 0, currentPage: page };
+            return {
+                data: [],
+                error: null,
+                total: 0,
+                totalPages: 0,
+                currentPage: page,
+            };
         }
     }
 
@@ -318,6 +329,7 @@ export async function getUserBookings(
 
 export async function getBookingDetails(bookingId: string) {
     const supabase = await createClient();
+    const supabaseServiceClient = await createServiceClient();
 
     // Check authentication first
     const { data: { user } } = await supabase.auth.getUser();
@@ -429,7 +441,7 @@ export async function getBookingDetails(bookingId: string) {
 
     // 4. Get address if exists
     const address = booking.address_id
-        ? (await supabase
+        ? (await supabaseServiceClient
             .from("addresses")
             .select(`
                 id,
@@ -625,7 +637,10 @@ export async function getBookingDetails(bookingId: string) {
 }
 
 // Type for the service data returned by getUserBookingServices
-type UserBookingService = Pick<Service, "id" | "title" | "price" | "currency" | "duration_minutes">;
+type UserBookingService = Pick<
+    Service,
+    "id" | "title" | "price" | "currency" | "duration_minutes"
+>;
 
 export async function getUserBookingServices(
     userId: string,
@@ -675,18 +690,21 @@ export async function getUserBookingServices(
     bookingsData?.forEach((booking) => {
         booking.booking_services?.forEach((bs) => {
             if (bs.service) {
-                servicesMap.set(bs.service.id, {
-                    id: bs.service.id,
-                    title: bs.service.title,
-                    price: bs.service.price,
-                    currency: bs.service.currency,
-                    duration_minutes: bs.service.duration_minutes,
-                } satisfies UserBookingService);
+                servicesMap.set(
+                    bs.service.id,
+                    {
+                        id: bs.service.id,
+                        title: bs.service.title,
+                        price: bs.service.price,
+                        currency: bs.service.currency,
+                        duration_minutes: bs.service.duration_minutes,
+                    } satisfies UserBookingService,
+                );
             }
         });
     });
 
-    const services = Array.from(servicesMap.values()).sort((a, b) => 
+    const services = Array.from(servicesMap.values()).sort((a, b) =>
         a.title.localeCompare(b.title)
     );
 
@@ -760,18 +778,23 @@ export async function getUserBookingStylists(
         } else if (userRole === "stylist" && "customer" in booking) {
             profile = booking.customer;
         }
-        
+
         if (profile) {
-            profilesMap.set(profile.id, {
-                id: profile.id,
-                full_name: profile.full_name,
-                email: profile.email,
-            } satisfies UserBookingStylist);
+            profilesMap.set(
+                profile.id,
+                {
+                    id: profile.id,
+                    full_name: profile.full_name,
+                    email: profile.email,
+                } satisfies UserBookingStylist,
+            );
         }
     });
 
     const profiles = Array.from(profilesMap.values())
-        .filter((profile): profile is UserBookingStylist & { full_name: string } => 
+        .filter((
+            profile,
+        ): profile is UserBookingStylist & { full_name: string } =>
             profile.full_name !== null
         ) // Only include profiles with names
         .sort((a, b) => a.full_name.localeCompare(b.full_name));

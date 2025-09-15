@@ -27,7 +27,7 @@ export function RatingDisplay({
       md: { star: "w-4 h-4", rating: "w-10 h-4", count: "w-20 h-4" },
       lg: { star: "w-5 h-5", rating: "w-12 h-5", count: "w-24 h-5" },
     };
-    
+
     return (
       <div className={cn("flex items-center gap-1", className)}>
         <Skeleton className={cn("rounded-full", skeletonSizes[size].star)} />
@@ -38,7 +38,21 @@ export function RatingDisplay({
   }
 
   if (count === 0) {
-    return null;
+    const sizeClasses = {
+      sm: "text-xs",
+      md: "text-sm",
+      lg: "text-base",
+    };
+
+    return (
+      <div
+        className={cn("flex items-center gap-1", sizeClasses[size], className)}
+      >
+        <span className="text-muted-foreground text-xs italic">
+          Ingen anmeldelser enda
+        </span>
+      </div>
+    );
   }
 
   const sizeClasses = {
@@ -54,8 +68,12 @@ export function RatingDisplay({
   };
 
   return (
-    <div className={cn("flex items-center gap-1", sizeClasses[size], className)}>
-      <Star className={cn("fill-yellow-400 text-yellow-400", starSizeClasses[size])} />
+    <div
+      className={cn("flex items-center gap-1", sizeClasses[size], className)}
+    >
+      <Star
+        className={cn("fill-yellow-400 text-yellow-400", starSizeClasses[size])}
+      />
       <span className="font-medium">{average.toFixed(1)}</span>
       {showCount && (
         <span className="text-muted-foreground">

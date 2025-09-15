@@ -31,6 +31,7 @@ export async function POST() {
         email,
         user_id,
         created_at,
+        approved_at,
         profiles!inner(
           id,
           role,
@@ -91,8 +92,16 @@ export async function POST() {
           continue;
         }
 
-        // Calculate days since approval (using created_at since applications don't have updated_at)
-        const approvalDate = new Date(application.created_at);
+        // Calculate days since approval
+        if (!application.approved_at) {
+          console.log(
+            `⏭️  Skipping ${application.email} - no approval date (application approved before migration)`,
+          );
+          remindersSkipped++;
+          continue;
+        }
+
+        const approvalDate = new Date(application.approved_at);
         const daysSinceApproval = Math.floor(
           (now.getTime() - approvalDate.getTime()) / (1000 * 60 * 60 * 24),
         );

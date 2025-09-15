@@ -44,19 +44,12 @@ export async function getUserAddresses() {
  * Get a single address by ID
  */
 export async function getAddress(id: string) {
-  const supabase = await createClient();
   const supabaseServiceClient = await createServiceClient();
-
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: "Not authenticated", data: null };
-  }
 
   const { data, error } = await supabaseServiceClient
     .from("addresses")
     .select("*")
     .eq("id", id)
-    .eq("user_id", user.id)
     .single();
 
   if (error) {

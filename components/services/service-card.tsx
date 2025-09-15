@@ -159,11 +159,11 @@ export function ServiceCard({ service }: ServiceCardProps) {
                   {service.title}
                 </CardTitle>
                 {/* Service-specific rating near title */}
-                {service.average_rating !== undefined && service.average_rating !== null && service.total_reviews && service.total_reviews > 0 && (
+                {service.average_rating !== undefined && service.total_reviews !== undefined && (
                   <div className="mt-1">
                     <RatingDisplay
-                      average={service.average_rating}
-                      count={service.total_reviews}
+                      average={service.average_rating || 0}
+                      count={service.total_reviews || 0}
                       size="sm"
                       className="text-xs"
                     />
@@ -229,14 +229,13 @@ export function ServiceCard({ service }: ServiceCardProps) {
                   )}
                 </div>
                 {/* Show stylist rating with count if no service rating exists */}
-                {(!service.total_reviews || service.total_reviews === 0) && (
+                {(!service.total_reviews || service.total_reviews === 0) && !isRatingLoading && (
                   <div className="mt-1">
                     <RatingDisplay
                       average={rating?.average || 0}
                       count={rating?.count || 0}
                       size="sm"
                       className="text-xs"
-                      isLoading={isRatingLoading}
                     />
                   </div>
                 )}

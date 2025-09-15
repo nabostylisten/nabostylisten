@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { getBookingDetails } from "@/server/booking/crud.actions";
-import { getAddress } from "@/server/addresses.actions";
 import {
   Card,
   CardContent,
@@ -110,6 +109,8 @@ export function BookingDetailsContent({
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 
+  console.log(bookingResponse?.data?.address);
+
   // Fetch booking notes (for stylists and admins)
   const {
     data: bookingNotesResponse,
@@ -122,15 +123,6 @@ export function BookingDetailsContent({
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
-  // Fetch address details if booking has an address_id
-  const { data: addressData, isLoading: addressLoading } = useQuery({
-    queryKey: ["address", bookingResponse?.data?.address_id],
-    queryFn: () =>
-      bookingResponse?.data?.address_id
-        ? getAddress(bookingResponse.data.address_id)
-        : null,
-    enabled: !!bookingResponse?.data?.address_id,
-  });
 
   // Check if there's an existing review for this booking
   const { data: reviewResponse } = useQuery({
@@ -167,7 +159,7 @@ export function BookingDetailsContent({
   }
 
   const booking = bookingResponse.data;
-  const address = addressData?.data;
+  const address = booking.address;
   const existingReview = reviewResponse?.data;
   const startTime = new Date(booking.start_time);
   const endTime = new Date(booking.end_time);
@@ -433,12 +425,7 @@ export function BookingDetailsContent({
                     <div className="flex items-start gap-3">
                       <MapPin className="w-5 h-5 text-muted-foreground mt-0.5 shrink-0" />
                       <div className="space-y-1 min-w-0 flex-1">
-                        {addressLoading ? (
-                          <div className="space-y-1">
-                            <Skeleton className="h-4 w-32" />
-                            <Skeleton className="h-3 w-24" />
-                          </div>
-                        ) : address ? (
+                        {address ? (
                           <div>
                             <div className="font-medium">Adresse</div>
                             <div className="text-sm text-muted-foreground">
@@ -659,7 +646,9 @@ export function BookingDetailsContent({
                       <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm text-muted-foreground">
                         <div className="flex items-center gap-2 justify-center sm:justify-start">
                           <Mail className="w-4 h-4" />
-                          <span className="break-all">{booking.stylist?.email}</span>
+                          <span className="break-all">
+                            {booking.stylist?.email}
+                          </span>
                         </div>
                       </div>
                       {booking.stylist?.phone_number && (
@@ -673,7 +662,9 @@ export function BookingDetailsContent({
                     </div>
                     {booking.stylist?.stylist_details?.bio && (
                       <div className="text-sm text-center sm:text-left">
-                        <p className="break-words">{booking.stylist.stylist_details.bio}</p>
+                        <p className="break-words">
+                          {booking.stylist.stylist_details.bio}
+                        </p>
                       </div>
                     )}
                   </div>

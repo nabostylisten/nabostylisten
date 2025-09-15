@@ -147,7 +147,8 @@ CREATE TABLE IF NOT EXISTS public.applications (
     price_range_currency text DEFAULT 'NOK' NOT NULL,
 
     -- Status
-    status public.application_status DEFAULT 'applied' NOT NULL
+    status public.application_status DEFAULT 'applied' NOT NULL,
+    approved_at timestamp with time zone -- When application was approved
 );
 
 -- Junction table to link applications to the service categories they apply for

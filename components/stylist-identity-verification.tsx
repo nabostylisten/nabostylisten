@@ -1,16 +1,22 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Shield, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { createIdentityVerificationForCurrentUser } from "@/server/stripe.actions";
 import { BlurFade } from "@/components/magicui/blur-fade";
-import { 
-  StylistOnboardingStepper, 
-  type OnboardingStep 
+import {
+  StylistOnboardingStepper,
+  type OnboardingStep,
 } from "@/components/stylist-onboarding-stepper";
 
 interface StylistIdentityVerificationProps {
@@ -20,7 +26,7 @@ interface StylistIdentityVerificationProps {
 
 export function StylistIdentityVerification({
   userId,
-  hasVerificationSession
+  hasVerificationSession,
 }: StylistIdentityVerificationProps) {
   const [isCreating, setIsCreating] = useState(false);
 
@@ -75,13 +81,13 @@ export function StylistIdentityVerification({
   };
 
   return (
-    <div className="container max-w-2xl mx-auto py-12">
+    <div className="container max-w-4xl mx-auto py-12">
       <BlurFade delay={0.1} duration={0.5} inView>
         {/* Progress Indicator */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <StylistOnboardingStepper 
-              steps={getOnboardingSteps()} 
+            <StylistOnboardingStepper
+              steps={getOnboardingSteps()}
               variant="horizontal"
             />
           </CardContent>
@@ -92,7 +98,9 @@ export function StylistIdentityVerification({
             <div className="flex justify-center mb-4">
               <Shield className="h-12 w-12 text-primary" />
             </div>
-            <CardTitle className="text-2xl">Identitetsverifisering påkrevd</CardTitle>
+            <CardTitle className="text-2xl">
+              Identitetsverifisering påkrevd
+            </CardTitle>
             <CardDescription>
               For å motta betalinger må du verifisere identiteten din med Stripe
             </CardDescription>
@@ -103,8 +111,9 @@ export function StylistIdentityVerification({
               <Shield className="h-4 w-4" />
               <AlertTitle>Sikker verifisering</AlertTitle>
               <AlertDescription>
-                Du vil bli omdirigert til Stripes sikre verifiseringsside hvor du kan laste opp
-                et gyldig identitetsdokument (førerkort, pass, eller nasjonal ID).
+                Du vil bli omdirigert til Stripes sikre verifiseringsside hvor
+                du kan laste opp et gyldig identitetsdokument (førerkort, pass,
+                eller nasjonal ID).
               </AlertDescription>
             </Alert>
 
@@ -112,8 +121,9 @@ export function StylistIdentityVerification({
               <Alert>
                 <AlertTitle>Verifisering startet</AlertTitle>
                 <AlertDescription>
-                  Du har allerede startet identitetsverifisering. Hvis du ikke fullførte prosessen
-                  eller dokumentene ble avvist, kan du prøve igjen med en ny verifisering.
+                  Du har allerede startet identitetsverifisering. Hvis du ikke
+                  fullførte prosessen eller dokumentene ble avvist, kan du prøve
+                  igjen med en ny verifisering.
                 </AlertDescription>
               </Alert>
             ) : null}
@@ -129,15 +139,17 @@ export function StylistIdentityVerification({
                 ) : (
                   <>
                     <ExternalLink className="h-4 w-4 mr-2" />
-                    {hasVerificationSession ? "Prøv identitetsverifisering igjen" : "Start identitetsverifisering"}
+                    {hasVerificationSession
+                      ? "Prøv identitetsverifisering igjen"
+                      : "Start identitetsverifisering"}
                   </>
                 )}
               </Button>
             </div>
 
             <div className="text-xs text-muted-foreground text-center">
-              Ved å fortsette godtar du at Stripe behandler identitetsinformasjonen din
-              i henhold til deres{" "}
+              Ved å fortsette godtar du at Stripe behandler
+              identitetsinformasjonen din i henhold til deres{" "}
               <a
                 href="https://stripe.com/privacy"
                 target="_blank"

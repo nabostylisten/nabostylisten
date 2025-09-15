@@ -337,10 +337,15 @@ export async function updateApplicationStatus({
             throw new Error("Kunne ikke finne søknad");
         }
 
-        // Update application status
+        // Update application status and set approved_at timestamp if approved
+        const updateData: { status: typeof status; approved_at?: string } = { status };
+        if (status === "approved") {
+            updateData.approved_at = new Date().toISOString();
+        }
+
         const { data: updatedApplication, error } = await supabase
             .from("applications")
-            .update({ status })
+            .update(updateData)
             .eq("id", applicationId)
             .select()
             .single();

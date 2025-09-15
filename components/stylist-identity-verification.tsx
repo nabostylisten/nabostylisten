@@ -8,6 +8,10 @@ import { Shield, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { createIdentityVerificationForCurrentUser } from "@/server/stripe.actions";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { 
+  StylistOnboardingStepper, 
+  type OnboardingStep 
+} from "@/components/stylist-onboarding-stepper";
 
 interface StylistIdentityVerificationProps {
   userId: string;
@@ -19,6 +23,36 @@ export function StylistIdentityVerification({
   hasVerificationSession
 }: StylistIdentityVerificationProps) {
   const [isCreating, setIsCreating] = useState(false);
+
+  // Define onboarding progress for identity verification step
+  const getOnboardingSteps = (): OnboardingStep[] => {
+    return [
+      {
+        id: "application",
+        label: "Søknad godkjent",
+        description: "Din søknad er godkjent",
+        status: "completed",
+      },
+      {
+        id: "stripe-setup",
+        label: "Stripe-oppsett",
+        description: "Grunnleggende informasjon",
+        status: "completed",
+      },
+      {
+        id: "identity",
+        label: "Identitetsverifisering",
+        description: "Bekreft identitet",
+        status: "current",
+      },
+      {
+        id: "ready",
+        label: "Klar for salg",
+        description: "Start med tjenester",
+        status: "pending",
+      },
+    ];
+  };
 
   const handleStartVerification = async () => {
     setIsCreating(true);
@@ -43,6 +77,16 @@ export function StylistIdentityVerification({
   return (
     <div className="container max-w-2xl mx-auto py-12">
       <BlurFade delay={0.1} duration={0.5} inView>
+        {/* Progress Indicator */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <StylistOnboardingStepper 
+              steps={getOnboardingSteps()} 
+              variant="horizontal"
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">

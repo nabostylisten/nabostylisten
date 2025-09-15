@@ -208,7 +208,7 @@ const defineStepper = <const Steps extends Stepperize.Step[]>(
             {variant === "vertical" && (
               <div className="flex gap-4">
                 {!isLast && (
-                  <div className="flex justify-center ps-[calc(var(--spacing)_*_4.5_-_1px)]">
+                  <div className="flex justify-center w-10">
                     <StepperSeparator
                       orientation="vertical"
                       isLast={isLast}
@@ -397,7 +397,7 @@ const classForSeparator = cva(
       },
       labelOrientation: {
         vertical:
-          "absolute left-[calc(50%+30px)] right-[calc(-50%+20px)] top-5 block shrink-0",
+          "absolute left-[calc(50%+2rem)] right-[calc(-50%+1.25rem)] top-5 block shrink-0 md:left-[calc(50%+30px)] md:right-[calc(-50%+20px)]",
       },
     },
   }

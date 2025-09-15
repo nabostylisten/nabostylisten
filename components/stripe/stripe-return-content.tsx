@@ -24,12 +24,37 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import {
+  StylistOnboardingStepper,
+  type OnboardingStep,
+} from "@/components/stylist-onboarding-stepper";
 
 // Status skeleton that matches the main layout
 function StripeReturnSkeleton() {
   return (
-    <div className="container max-w-2xl mx-auto py-12">
+    <div className="container max-w-4xl mx-auto py-12">
       <BlurFade delay={0.1} duration={0.5} inView>
+        {/* Progress Indicator Skeleton */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <div className="space-y-4">
+              <div className="flex justify-between items-center mb-2">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+              <Skeleton className="h-2 w-full rounded-full" />
+              <div className="flex justify-between">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex flex-col items-center">
+                    <Skeleton className="h-8 w-8 rounded-full mb-2" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -82,6 +107,44 @@ function StripeReturnSkeleton() {
   );
 }
 
+// Helper function to get onboarding steps based on current status
+function getOnboardingSteps(
+  basicStripeComplete: boolean,
+  identityVerificationComplete: boolean,
+  isFullyOnboarded: boolean
+): OnboardingStep[] {
+  return [
+    {
+      id: "application",
+      label: "Søknad godkjent",
+      description: "Din søknad er godkjent",
+      status: "completed", // They're here, so application is approved
+    },
+    {
+      id: "stripe-setup",
+      label: "Stripe-oppsett",
+      description: "Grunnleggende informasjon",
+      status: basicStripeComplete ? "completed" : "current",
+    },
+    {
+      id: "identity",
+      label: "Identitetsverifisering",
+      description: "Bekreft identitet",
+      status: identityVerificationComplete
+        ? "completed"
+        : basicStripeComplete
+          ? "current"
+          : "pending",
+    },
+    {
+      id: "ready",
+      label: "Klar for salg",
+      description: "Start med tjenester",
+      status: isFullyOnboarded ? "completed" : "pending",
+    },
+  ];
+}
+
 export function StripeReturnContent() {
   const {
     data: stripeData,
@@ -106,7 +169,7 @@ export function StripeReturnContent() {
       "Kunne ikke laste Stripe-status";
 
     return (
-      <div className="container max-w-2xl mx-auto py-12">
+      <div className="container max-w-4xl mx-auto py-12">
         <BlurFade delay={0.1} duration={0.5} inView>
           <Card>
             <CardHeader className="text-center">
@@ -232,9 +295,26 @@ export function StripeReturnContent() {
 
   const statusContent = getStatusContent();
 
+  // Get onboarding steps for the stepper
+  const onboardingSteps = getOnboardingSteps(
+    basicStripeComplete,
+    identityVerificationComplete,
+    isFullyOnboarded
+  );
+
   return (
-    <div className="container max-w-2xl mx-auto py-12">
+    <div className="container max-w-4xl mx-auto py-12">
       <BlurFade delay={0.1} duration={0.5} inView>
+        {/* Progress Indicator */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <StylistOnboardingStepper
+              steps={onboardingSteps}
+              variant="horizontal"
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">{statusContent.icon}</div>

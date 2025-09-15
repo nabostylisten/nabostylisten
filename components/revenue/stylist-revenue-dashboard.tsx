@@ -281,7 +281,7 @@ export function StylistRevenueDashboard({
                       <Shield className="h-8 w-8 text-purple-600 dark:text-purple-400 mx-auto mb-2" />
                       <h4 className="font-medium text-sm">Verifisering</h4>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Identitetsbekreftelse og skatteinfo
+                        Identitetsbekreftelse
                       </p>
                     </div>
                   </div>

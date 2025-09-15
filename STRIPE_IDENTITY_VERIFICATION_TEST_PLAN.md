@@ -38,43 +38,43 @@ This test plan covers the complete stylist onboarding flow with the newly integr
 
 #### Step 1: Initial Stylist State Verification
 
-1. **Login** as approved stylist user
-2. **Navigate** to `/stylist/stripe`
-3. **Expected**: Should see Stripe onboarding form (NOT identity verification yet)
-4. **Verify**: Database shows `stripe_account_id` is NULL and `identity_verification_completed_at` is NULL
+1. ✅ **Login** as approved stylist user
+2. ✅ **Navigate** to `/stylist/stripe`
+3. ✅ **Expected**: Should see Stripe onboarding form (NOT identity verification yet)
+4. ✅ **Verify**: Database shows `stripe_account_id` is NULL and `identity_verification_completed_at` is NULL
 
 #### Step 2: Basic Stripe Onboarding
 
-1. **Click** "Start onboarding" button
-2. **Complete** Stripe Connect onboarding with test data:
+1. ✅ **Click** "Start onboarding" button
+2. ✅ **Complete** Stripe Connect onboarding with test data:
    - Personal information
    - Bank account details
    - Tax information
-3. **Return** to platform after Stripe completion
-4. **Expected**: Should see onboarding completed message temporarily, then redirect to identity verification
-5. **Verify**: Database shows `stripe_account_id` is populated, but `identity_verification_completed_at` is still NULL
+3. ✅ **Return** to platform after Stripe completion
+4. ✅ **Expected**: Should see onboarding completed message temporarily, then redirect to identity verification
+5. ✅ **Verify**: Database shows `stripe_account_id` is populated, but `identity_verification_completed_at` is still NULL
 
 #### Step 3: Identity Verification Required
 
-1. **Navigate** to `/stylist/stripe` (after basic Stripe onboarding)
-2. **Expected**: Should see identity verification screen with:
+1. ✅ **Navigate** to `/stylist/stripe` (after basic Stripe onboarding)
+2. ✅ **Expected**: Should see identity verification screen with:
    - "Identitetsverifisering påkrevd" heading
    - Shield icon
    - "Start identitetsverifisering" button
    - Privacy notice about Stripe handling data
-3. **Verify**: Service creation is blocked (check `/profiler/[id]/mine-tjenester`)
+3. ✅ **Verify**: Service creation is blocked (check `/profiler/[id]/mine-tjenester`)
 
 #### Step 4: Start Identity Verification
 
-1. **Click** "Start identitetsverifisering" button
-2. **Expected**: Should redirect to Stripe's hosted identity verification page
-3. **Verify**: Database shows `stripe_verification_session_id` is populated
-4. **Complete** identity verification with test document (use Stripe test cases)
+1. ✅ **Click** "Start identitetsverifisering" button
+2. ✅ **Expected**: Should redirect to Stripe's hosted identity verification page
+3. ✅ **Verify**: Database shows `stripe_verification_session_id` is populated
+4. ✅ **Complete** identity verification with test document (use Stripe test cases)
 
 #### Step 5: Identity Verification Processing
 
-1. **Return** to `/stylist/stripe/identity-verification/return`
-2. **Expected**: Should see appropriate status based on verification result:
+1. ✅ **Return** to `/stylist/stripe/identity-verification/return`
+2. ❌ **Expected**: Should see appropriate status based on verification result:
    - **If verified**: Green checkmark with "Identitet verifisert!" message
    - **If processing**: Blue clock with "Verifisering behandles" message
    - **If failed**: Warning triangle with appropriate error message

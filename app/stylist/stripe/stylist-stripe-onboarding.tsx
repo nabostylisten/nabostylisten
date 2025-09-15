@@ -26,6 +26,10 @@ import {
 } from "@/server/stripe.actions";
 import { toast } from "sonner";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import {
+  StylistOnboardingStepper,
+  type OnboardingStep,
+} from "@/components/stylist-onboarding-stepper";
 
 interface StylistStripeOnboardingProps {
   userId: string;
@@ -47,6 +51,48 @@ export function StylistStripeOnboarding({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState(5);
+
+  // Determine onboarding progress steps
+  const getOnboardingSteps = (): OnboardingStep[] => {
+    const hasStripeAccount = !!stripeAccountId;
+    const hasCompletedStripeOnboarding = !needsOnboarding && hasStripeAccount;
+    const hasCompletedIdentityVerification = isCompletelyDone;
+
+    return [
+      {
+        id: "application",
+        label: "Søknad godkjent",
+        description: "Din søknad er godkjent",
+        status: "completed", // They're here, so application is approved
+      },
+      {
+        id: "stripe-setup",
+        label: "Stripe-oppsett",
+        description: "Grunnleggende informasjon",
+        status: hasCompletedStripeOnboarding
+          ? "completed"
+          : hasStripeAccount
+            ? "current"
+            : "current",
+      },
+      {
+        id: "identity",
+        label: "Identitetsverifisering",
+        description: "Bekreft identitet",
+        status: hasCompletedIdentityVerification
+          ? "completed"
+          : hasCompletedStripeOnboarding
+            ? "current"
+            : "pending",
+      },
+      {
+        id: "ready",
+        label: "Klar for salg",
+        description: "Start med tjenester",
+        status: isCompletelyDone ? "completed" : "pending",
+      },
+    ];
+  };
 
   // Countdown effect for completed onboarding (both Stripe and identity verification)
   useEffect(() => {
@@ -185,6 +231,16 @@ export function StylistStripeOnboarding({
   return (
     <div className="container mx-auto max-w-4xl px-4 py-8">
       <BlurFade delay={0.1} duration={0.5} inView>
+        {/* Progress Indicator */}
+        <Card className="mb-6">
+          <CardContent className="pt-6">
+            <StylistOnboardingStepper
+              steps={getOnboardingSteps()}
+              variant="horizontal"
+            />
+          </CardContent>
+        </Card>
+
         <Card>
           <CardHeader className="text-center">
             <div className="mx-auto mb-4">
@@ -263,7 +319,7 @@ export function StylistStripeOnboarding({
                     <Shield className="h-8 w-8 text-purple-500 mx-auto mb-2" />
                     <h4 className="font-medium text-sm">Verifisering</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Identitetsbekreftelse og skatteinfo
+                      Identitetsbekreftelse
                     </p>
                   </div>
                 </div>

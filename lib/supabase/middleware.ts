@@ -26,6 +26,7 @@ const publicRoutePatterns = [
   /^\/profiler\/[^/]+$/, // /profiler/[profileId]
   /^\/api\/cron(\/.*)?$/, // /api/cron and all sub-routes (for Vercel cron jobs)
   /^\/api\/dev(\/.*)?$/, // /api/dev and all sub-routes (for dev tool testing)
+  /^\/api\/webhooks(\/.*)?$/, // /api/webhooks and all sub-routes (for external webhook endpoints)
 ];
 
 function isPublicRoute(pathname: string): boolean {

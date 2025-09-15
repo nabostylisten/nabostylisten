@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const supabase = createServiceClient();
+  const supabase = await createServiceClient();
 
   try {
     switch (event.type) {
@@ -34,25 +34,52 @@ export async function POST(req: Request) {
           .object as Stripe.Identity.VerificationSession;
         const verifiedProfileId = verifiedSession.metadata?.profile_id;
 
+        console.log(
+          `🔍 Processing identity.verification_session.verified event:`,
+          {
+            sessionId: verifiedSession.id,
+            profileId: verifiedProfileId,
+            status: verifiedSession.status,
+          }
+        );
+
         if (verifiedProfileId) {
           console.log(
-            `Identity verification completed for profile: ${verifiedProfileId}`,
+            `✅ Identity verification completed for profile: ${verifiedProfileId}`,
           );
 
-          const { error } = await supabase
+          // First check if the record exists
+          const { data: existingRecord, error: fetchError } = await supabase
+            .from("stylist_details")
+            .select("profile_id, stripe_verification_session_id")
+            .eq("profile_id", verifiedProfileId)
+            .eq("stripe_verification_session_id", verifiedSession.id);
+
+          console.log(`🔍 Database lookup result:`, { 
+            existingRecord, 
+            fetchError,
+            expectedSessionId: verifiedSession.id 
+          });
+
+          const { data: updateResult, error } = await supabase
             .from("stylist_details")
             .update({
               identity_verification_completed_at: new Date().toISOString(),
             })
             .eq("profile_id", verifiedProfileId)
-            .eq("stripe_verification_session_id", verifiedSession.id);
+            .eq("stripe_verification_session_id", verifiedSession.id)
+            .select();
 
           if (error) {
             console.error(
-              "Failed to update identity verification completion:",
+              `❌ Failed to update identity verification completion:`,
               error,
             );
+          } else {
+            console.log(`✅ Successfully updated identity verification:`, updateResult);
           }
+        } else {
+          console.error(`❌ No profile_id in session metadata`);
         }
         break;
 

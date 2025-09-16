@@ -613,6 +613,30 @@ CREATE POLICY "Anyone can upload application images." ON public.media
 FOR INSERT TO anon, authenticated
 WITH CHECK ( media_type = 'application_image' );
 
+-- Stylists can upload booking note images for their own booking notes
+CREATE POLICY "Stylists can upload booking note images" ON public.media
+FOR INSERT TO authenticated
+WITH CHECK (
+  media_type = 'booking_note_image' AND
+  (select auth.uid()) = owner_id AND
+  booking_note_id IN (
+    SELECT id FROM public.booking_notes WHERE stylist_id = (select auth.uid())
+  )
+);
+
+-- Booking note images are viewable by booking participants
+CREATE POLICY "Booking note images are viewable by participants" ON public.media
+FOR SELECT TO authenticated
+USING (
+  media_type = 'booking_note_image' AND
+  booking_note_id IN (
+    SELECT bn.id
+    FROM public.booking_notes bn
+    JOIN public.bookings b ON bn.booking_id = b.id
+    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+  )
+);
+
 
 
 -- Policies for `service_categories`
@@ -803,6 +827,35 @@ CREATE POLICY "Stylists can delete portfolio images" ON storage.objects
 FOR DELETE TO authenticated
 USING (bucket_id = 'portfolio' AND (select auth.uid())::text = (storage.foldername(name))[1]);
 
+
+-- ========== BOOKING-NOTE-MEDIA BUCKET ==========
+-- Booking participants can view booking note media
+CREATE POLICY "Booking participants can view booking note media" ON storage.objects
+FOR SELECT TO authenticated
+USING (
+  bucket_id = 'booking-note-media' AND
+  (storage.foldername(name))[1] IN (
+    SELECT bn.id::text
+    FROM public.booking_notes bn
+    JOIN public.bookings b ON bn.booking_id = b.id
+    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+  )
+);
+
+-- Stylists can upload booking note media for their own booking notes
+CREATE POLICY "Stylists can upload booking note media" ON storage.objects
+FOR INSERT TO authenticated
+WITH CHECK (
+  bucket_id = 'booking-note-media' AND
+  (storage.foldername(name))[1] IN (
+    SELECT id::text FROM public.booking_notes WHERE stylist_id = (select auth.uid())
+  )
+);
+
+-- Users can delete their own booking note media
+CREATE POLICY "Users can delete their own booking note media" ON storage.objects
+FOR DELETE TO authenticated
+USING (bucket_id = 'booking-note-media' AND (select auth.uid()) = owner);
 
 -- ========== PUBLIC ASSETS BUCKETS ==========
 -- Anyone can view public assets (landing-media, assets)

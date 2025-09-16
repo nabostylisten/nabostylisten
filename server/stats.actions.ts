@@ -14,33 +14,63 @@ export async function getPlatformStats() {
       bookingsResult,
       ratingsResult,
     ] = await Promise.all([
-      // Count stylists (profiles with role = 'stylist')
+      // Count verified stylists (profiles with role = 'stylist' and identity verification completed)
       supabase
         .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("role", "stylist"),
+        .select(`
+          *,
+          stylist_details!inner (
+            identity_verification_completed_at
+          )
+        `, { count: "exact", head: true })
+        .eq("role", "stylist")
+        .not("stylist_details.identity_verification_completed_at", "is", null),
 
-      // Count published services
+      // Count published services from verified stylists
       supabase
         .from("services")
-        .select("*", { count: "exact", head: true })
-        .eq("is_published", true),
+        .select(`
+          *,
+          profiles!stylist_id (
+            stylist_details!inner (
+              identity_verification_completed_at
+            )
+          )
+        `, { count: "exact", head: true })
+        .eq("is_published", true)
+        .not("profiles.stylist_details.identity_verification_completed_at", "is", null),
 
       // Count service categories
       supabase
         .from("service_categories")
         .select("*", { count: "exact", head: true }),
 
-      // Count confirmed bookings
+      // Count confirmed bookings for verified stylists
       supabase
         .from("bookings")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "confirmed"),
+        .select(`
+          *,
+          stylist:profiles!stylist_id (
+            stylist_details!inner (
+              identity_verification_completed_at
+            )
+          )
+        `, { count: "exact", head: true })
+        .eq("status", "confirmed")
+        .not("stylist.stylist_details.identity_verification_completed_at", "is", null),
 
-      // Get average rating from reviews
+      // Get average rating from reviews for verified stylists
       supabase
         .from("reviews")
-        .select("rating"),
+        .select(`
+          rating,
+          stylist:profiles!stylist_id (
+            stylist_details!inner (
+              identity_verification_completed_at
+            )
+          )
+        `)
+        .not("stylist.stylist_details.identity_verification_completed_at", "is", null),
     ]);
 
     // Calculate average rating
@@ -154,9 +184,9 @@ export async function getPopularServices(limit: number = 10) {
 
     if (error) throw error;
 
-    // If we have no services with reviews, get some without reviews  
+    // If we have no services with reviews, get some without reviews
     // Filter to only include services from verified stylists
-    let finalServices = (services || []).filter(service => 
+    let finalServices = (services || []).filter(service =>
       service.profiles?.stylist_details?.identity_verification_completed_at
     );
 
@@ -200,7 +230,11 @@ export async function getPopularServices(limit: number = 10) {
       const { data: additionalServices } = await additionalServicesQuery;
 
       if (additionalServices) {
-        finalServices = [...finalServices, ...additionalServices];
+        // Filter additional services as well
+        const verifiedAdditionalServices = additionalServices.filter(service =>
+          service.profiles?.stylist_details?.identity_verification_completed_at
+        );
+        finalServices = [...finalServices, ...verifiedAdditionalServices];
       }
     }
 

@@ -124,7 +124,14 @@ async function PopularServicesContent() {
   );
 }
 
-export function PopularServices() {
+export async function PopularServices() {
+  // Check if there are any services before rendering the section
+  const { data: services } = await getPopularServices(12);
+
+  if (!services || services.length === 0) {
+    return null;
+  }
+
   return (
     <BlurFade delay={0.12} duration={0.5} inView>
       <div className="space-y-8">

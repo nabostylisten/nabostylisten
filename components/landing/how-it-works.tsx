@@ -43,14 +43,16 @@ const steps = [
 export function HowItWorks() {
   return (
     <div className="space-y-8">
-      <div className="text-center">
-        <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">
-          Slik fungerer det
-        </h2>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Fra søk til ferdig behandling på bare fire enkle steg
-        </p>
-      </div>
+      <BlurFade delay={0.1} duration={0.5} inView>
+        <div className="text-center">
+          <h2 className="text-3xl md:text-4xl font-bold font-fraunces mb-4">
+            Slik fungerer det
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Fra søk til ferdig behandling på bare fire enkle steg
+          </p>
+        </div>
+      </BlurFade>
 
       <div className="space-y-6 md:space-y-2">
         {steps.map((step, index) => {
@@ -60,7 +62,7 @@ export function HowItWorks() {
 
           return (
             <div key={step.number}>
-              <BlurFade delay={index * 0.1} duration={0.5} inView>
+              <BlurFade delay={0.12 + index * 0.1} duration={0.5} inView>
                 <div
                   className={`flex flex-col md:flex-row items-center gap-6 md:gap-8 ${
                     !isEven ? "md:flex-row-reverse" : ""
@@ -98,7 +100,7 @@ export function HowItWorks() {
 
               {/* Arrow between steps (except after last step) */}
               {!isLast && (
-                <BlurFade delay={(index + 1) * 0.1} duration={0.5} inView>
+                <BlurFade delay={0.12 + (index + 1) * 0.1} duration={0.5} inView>
                   <div
                     className={`flex justify-center my-4 md:my-2 ${
                       index % 2 === 0 ? "md:ml-12" : "md:mr-12"
@@ -124,7 +126,7 @@ export function HowItWorks() {
       </div>
 
       {/* CTA */}
-      <BlurFade delay={0.4} duration={0.5} inView>
+      <BlurFade delay={0.55} duration={0.5} inView>
         <div className="text-center pt-6 md:pt-8">
           <h3 className="text-base sm:text-lg mb-4 md:mb-6 font-fraunces px-4">
             Klar til å prøve? Kom i gang på under 2 minutter!

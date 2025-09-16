@@ -28,6 +28,7 @@ import {
   User,
   ArrowRight,
   Tag,
+  FileText,
 } from "lucide-react";
 import { BookingNoteImageCarousel } from "./booking-note-image-carousel";
 import { deleteBookingNote } from "@/server/booking-note.actions";
@@ -50,20 +51,21 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const CATEGORY_COLORS: Record<string, string> = {
-  service_notes: "bg-blue-100 text-blue-800 border-blue-200",
-  customer_preferences: "bg-purple-100 text-purple-800 border-purple-200",
-  issues: "bg-red-100 text-red-800 border-red-200",
-  results: "bg-green-100 text-green-800 border-green-200",
-  follow_up: "bg-orange-100 text-orange-800 border-orange-200",
-  other: "bg-gray-100 text-gray-800 border-gray-200",
+  service_notes: "bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/30 dark:text-blue-200 dark:border-blue-800",
+  customer_preferences: "bg-purple-50 text-purple-800 border-purple-200 dark:bg-purple-950/30 dark:text-purple-200 dark:border-purple-800",
+  issues: "bg-red-50 text-red-800 border-red-200 dark:bg-red-950/30 dark:text-red-200 dark:border-red-800",
+  results: "bg-green-50 text-green-800 border-green-200 dark:bg-green-950/30 dark:text-green-200 dark:border-green-800",
+  follow_up: "bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-800",
+  other: "bg-gray-50 text-gray-800 border-gray-200 dark:bg-gray-950/30 dark:text-gray-200 dark:border-gray-800",
 };
 
 interface BookingNoteCardProps {
   note: BookingNote;
   onEdit?: () => void;
+  readOnly?: boolean;
 }
 
-export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
+export function BookingNoteCard({ note, onEdit, readOnly = false }: BookingNoteCardProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -100,7 +102,12 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
                 {CATEGORY_LABELS[note.category] || "Ukjent"}
               </Badge>
               <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                {note.customer_visible ? (
+                {readOnly ? (
+                  <>
+                    <FileText className="w-3 h-3" />
+                    <span className="text-xs">Notat fra stylist</span>
+                  </>
+                ) : note.customer_visible ? (
                   <>
                     <Eye className="w-3 h-3" />
                     <span className="text-xs">Synlig for kunde</span>
@@ -113,26 +120,28 @@ export function BookingNoteCard({ note, onEdit }: BookingNoteCardProps) {
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-1">
-              {onEdit && (
+            {!readOnly && (
+              <div className="flex items-center gap-1">
+                {onEdit && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onEdit}
+                    className="h-8 w-8 p-0"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </Button>
+                )}
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onEdit}
-                  className="h-8 w-8 p-0"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                 >
-                  <Edit className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" />
                 </Button>
-              )}
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setDeleteDialogOpen(true)}
-                className="h-8 w-8 p-0 text-destructive hover:text-destructive"
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
+              </div>
+            )}
           </div>
         </CardHeader>
         <CardContent className="space-y-4">

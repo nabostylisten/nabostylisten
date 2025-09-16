@@ -120,6 +120,19 @@ export function BookingDetailsContent({
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 
+  // Fetch customer-visible booking notes (for customers)
+  const {
+    data: customerNotesResponse,
+    isLoading: customerNotesLoading,
+    error: customerNotesError,
+  } = useQuery({
+    queryKey: ["customer-booking-notes", bookingId],
+    queryFn: () => getBookingNotes(bookingId),
+    enabled:
+      userRole === "customer" && bookingResponse?.data?.status === "completed", // Only load for customers with completed bookings
+    staleTime: 1000 * 60 * 2, // 2 minutes
+  });
+
   // Check if there's an existing review for this booking
   const { data: reviewResponse } = useQuery({
     queryKey: ["review", bookingId],
@@ -1091,9 +1104,66 @@ export function BookingDetailsContent({
           </BlurFade>
         )}
 
+        {/* Customer Booking Notes - For customers with completed bookings */}
+        {userRole === "customer" && booking.status === "completed" && (
+          <BlurFade delay={0.42} duration={0.5}>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Notater fra stylist
+                </CardTitle>
+                <CardDescription>
+                  Notater og informasjon fra stylisten om tjenesten som ble
+                  utført.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {customerNotesLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                    <span>Laster notater...</span>
+                  </div>
+                ) : customerNotesError ? (
+                  <div className="flex items-center justify-center py-8 text-muted-foreground">
+                    <AlertCircle className="w-5 h-5 mr-2" />
+                    <span>Feil ved lasting av notater</span>
+                  </div>
+                ) : customerNotesResponse?.data &&
+                  customerNotesResponse.data.filter(
+                    (note) => note.customer_visible
+                  ).length > 0 ? (
+                  <div className="space-y-4">
+                    {customerNotesResponse.data
+                      .filter((note) => note.customer_visible)
+                      .map((note) => (
+                        <BookingNoteCard
+                          key={note.id}
+                          note={note}
+                          readOnly={true}
+                        />
+                      ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                    <FileText className="w-12 h-12 mb-4 opacity-50" />
+                    <h3 className="text-lg font-medium mb-2">
+                      Ingen notater tilgjengelig
+                    </h3>
+                    <p className="text-sm text-center">
+                      Stylisten har ikke delt noen notater for denne bookingen
+                      ennå.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </BlurFade>
+        )}
+
         {/* Booking Notes - For stylists and admins */}
         {(userRole === "stylist" || userRole === "admin") && (
-          <BlurFade delay={0.4} duration={0.5}>
+          <BlurFade delay={0.45} duration={0.5}>
             <Card>
               <CardHeader>
                 <div className="flex flex-col sm:flex-row gap-2 justify-between items-center">

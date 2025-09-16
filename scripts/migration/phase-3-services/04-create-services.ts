@@ -17,6 +17,11 @@ interface TransformedService {
   at_stylist_place: boolean;
   includes: string[];
   requirements: string[];
+  // Trial session fields (new in current schema - not in old MySQL)
+  has_trial_session: boolean;
+  trial_session_price: number | null;
+  trial_session_duration_minutes: number | null;
+  trial_session_description: string | null;
 }
 
 interface ServiceCreationResult {
@@ -62,6 +67,11 @@ export async function createServices(): Promise<void> {
           at_stylist_place: service.at_stylist_place,
           includes: service.includes,
           requirements: service.requirements,
+          // Trial session fields - default to false/null for migrated services (no old system support)
+          has_trial_session: service.has_trial_session || false,
+          trial_session_price: service.trial_session_price || null,
+          trial_session_duration_minutes: service.trial_session_duration_minutes || null,
+          trial_session_description: service.trial_session_description || null,
         };
         
         const createResult = await db.createService(serviceData);

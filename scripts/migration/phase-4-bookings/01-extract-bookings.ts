@@ -31,6 +31,19 @@ interface TransformedBooking {
   total_price: number;
   total_duration_minutes: number;
   service_ids: string[]; // Parsed from JSON or will be from junction table
+  // New fields (not in old MySQL system - set to defaults)
+  needs_destination_update: boolean;
+  payment_captured_at: string | null;
+  payout_processed_at: string | null;
+  customer_receipt_email_sent_at: string | null;
+  stylist_notification_email_sent_at: string | null;
+  payout_email_sent_at: string | null;
+  rescheduled_from: string | null;
+  rescheduled_at: string | null;
+  reschedule_reason: string | null;
+  is_trial_session: boolean;
+  main_booking_id: string | null;
+  trial_booking_id: string | null;
 }
 
 interface BookingMigrationStats {
@@ -180,7 +193,20 @@ export async function extractBookings(): Promise<void> {
           address_id: booking.address_id, // Will need Phase 2 mapping if addresses migrated
           total_price: parseFloat(booking.amount),
           total_duration_minutes: totalDuration,
-          service_ids: serviceIds
+          service_ids: serviceIds,
+          // New fields (not in old MySQL system - set to defaults)
+          needs_destination_update: false, // Default false for migrated bookings
+          payment_captured_at: null, // Default null - will be set by automated payment processing
+          payout_processed_at: null, // Default null - will be set by automated payout processing
+          customer_receipt_email_sent_at: null, // Default null - email tracking starts post-migration
+          stylist_notification_email_sent_at: null, // Default null
+          payout_email_sent_at: null, // Default null
+          rescheduled_from: null, // Default null - reschedule tracking starts post-migration
+          rescheduled_at: null, // Default null
+          reschedule_reason: null, // Default null
+          is_trial_session: false, // Default false - trial sessions are new functionality
+          main_booking_id: null, // Default null - trial session linking is new
+          trial_booking_id: null, // Default null
         };
         
         transformedBookings.push(transformedBooking);

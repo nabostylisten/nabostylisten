@@ -2,6 +2,29 @@
 
 # Full Migration Script
 # This script resets the database and runs all migration phases in order
+#
+# MIGRATION SCOPE (Updated):
+# Phase 1: Users (buyer + stylist → profiles + stylist_details + user_preferences)
+# Phase 2: Addresses (MySQL address → PostgreSQL addresses with PostGIS)
+# Phase 3: Services (category/subcategory → service_categories, services with trial session defaults)
+# Phase 4: Bookings (MySQL booking → bookings with enhanced payment/trial fields)
+# Phase 5: Payments (MySQL payment → payments with affiliate integration fields)
+# Phase 6: Communication (chat + message → chats + chat_messages)
+# Phase 7: Reviews (rating → reviews)
+#
+# NOT MIGRATED (Clean start or new features):
+# - Discount system (old promocode) - Admin will create new discounts
+# - Affiliate marketing system - New business model, starts fresh
+# - Recurring availability - Stylists will reconfigure in new iCal system
+# - Booking notes - New feature, starts post-migration
+#
+# Logs are written to: scripts/migration/logs/
+# - session.log: Complete session log
+# - errors.log: Error details
+# - warnings.log: Warning messages
+# - debug.log: Debug information (when DEBUG=true)
+# - progress.log: Progress updates
+# - validation-errors.log: Data validation errors
 
 # Don't exit on error - we want to handle migration warnings gracefully
 set +e

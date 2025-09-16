@@ -12,7 +12,7 @@ This document provides a comprehensive analysis of the MySQL to PostgreSQL migra
 | **High**         | address, service, chat, message                                                               | Medium     | Polymorphic → direct relationships, JSON normalization |
 | **Medium**       | category, subcategory, image, portfolio                                                       | Low-Medium | Table consolidation, file path updates                 |
 | **Low**          | rating, booking_services_service                                                              | Low        | Direct field mapping                                   |
-| **Not Migrated** | salon, personalchat, personal_message, chat_notes, favourite, promocode, stripe_webhook_event | N/A        | Business model changes                                 |
+| **Not Migrated** | salon, personalchat, personal_message, chat_notes, favourite, promocode, stripe_webhook_event | N/A        | Business model changes & clean start decisions        |
 
 ## Phase 1: User System Migration
 
@@ -219,6 +219,12 @@ DEFAULT TRUE                              → services.at_stylist_place
 DEFAULT []                                → services.includes
 DEFAULT []                                → services.requirements
 
+-- TRIAL SESSION FIELDS (No old system support)
+DEFAULT FALSE                             → services.has_trial_session
+NULL                                      → services.trial_session_price
+NULL                                      → services.trial_session_duration_minutes
+NULL                                      → services.trial_session_description
+
 -- NOT MIGRATED
 service.deleted_at                        → Filter out soft-deleted
 ```
@@ -280,12 +286,25 @@ payment.payment_intent_id                 → bookings.stripe_payment_intent_id
 NULL                                      → bookings.discount_id
 0                                         → bookings.discount_applied
 
--- NEW TRACKING FIELDS
+-- NEW TRACKING FIELDS (Automated payment processing)
 NULL                                      → bookings.payment_captured_at
 NULL                                      → bookings.payout_processed_at
 NULL                                      → bookings.customer_receipt_email_sent_at
 NULL                                      → bookings.stylist_notification_email_sent_at
 NULL                                      → bookings.payout_email_sent_at
+
+-- RESCHEDULE TRACKING (New functionality)
+NULL                                      → bookings.rescheduled_from
+NULL                                      → bookings.rescheduled_at
+NULL                                      → bookings.reschedule_reason
+
+-- TRIAL SESSION SUPPORT (No old system support)
+DEFAULT FALSE                             → bookings.is_trial_session
+NULL                                      → bookings.main_booking_id
+NULL                                      → bookings.trial_booking_id
+
+-- STRIPE CONNECT INTEGRATION
+DEFAULT FALSE                             → bookings.needs_destination_update
 ```
 
 ### 4.2 MySQL `booking_services_service` + booking.service (JSON) → PostgreSQL `booking_services`
@@ -341,16 +360,22 @@ payment.salon_amount                      → NOT MIGRATED
 payment.salon_percentage                  → NOT MIGRATED
 payment.salon_transfer_id                 → NOT MIGRATED
 
--- NEW FIELDS
+-- NEW FIELDS (Enhanced payment processing)
 NULL                                      → payments.discount_code
 NULL                                      → payments.discount_percentage
 NULL                                      → payments.discount_fixed_amount
+
+-- AFFILIATE SYSTEM INTEGRATION (New business model)
 NULL                                      → payments.affiliate_id
 NULL                                      → payments.affiliate_commission_percentage
+
+-- ENHANCED PAYMENT LIFECYCLE TRACKING
 NULL                                      → payments.authorized_at
 NULL                                      → payments.succeeded_at
 NULL                                      → payments.payout_initiated_at
 NULL                                      → payments.payout_completed_at
+
+-- ENHANCED REFUND TRACKING
 0                                         → payments.refunded_amount
 NULL                                      → payments.refund_reason
 ```
@@ -505,6 +530,64 @@ stylist_special_hours.end_time            → stylist_unavailability.end_time
 stylist_special_hours.reason              → stylist_unavailability.reason
 ```
 
+## Phase 10: New Features (No Migration Required)
+
+### 10.1 Booking Notes System - **NEW FEATURE**
+
+**Status**: Not migrated - entirely new functionality
+**Business Impact**: Enhanced service documentation and customer relationship management
+
+**New Tables**:
+- `booking_notes` - Service documentation with categories and tagging
+- Media support via `booking_note_id` in existing `media` table
+
+**Features Added Post-Migration**:
+- Comprehensive note creation with rich text content
+- 6-category system (service notes, preferences, issues, results, follow-up, other)
+- Smart tagging system with pre-defined tags
+- Visual documentation with multi-image upload
+- Duration tracking for performance analytics
+- Privacy controls (customer-visible vs. private notes)
+
+**Migration Action**: None required - stylists will start creating notes for new bookings
+
+### 10.2 Discount System - **NO MIGRATION**
+
+**Decision**: Do not migrate old `promocode` data - create fresh discount system
+**Rationale**: Clean start with enhanced discount capabilities
+
+**New Tables** (Not Migrated):
+- `discounts` - Modern discount configuration with percentage/fixed amount
+- `discount_restrictions` - User-specific access control
+- `discount_usage` - Usage tracking and audit trail
+
+**Migration Action**: Admin will create new discount codes in the new system as needed
+
+### 10.3 Affiliate Marketing System - **NEW FEATURE**
+
+**Status**: No MySQL equivalent - entirely new business model
+**Business Impact**: New revenue sharing model for stylists
+
+**New Tables**:
+- `affiliate_applications` - Application process for affiliate status
+- `affiliate_links` - Unique affiliate codes and tracking
+- `affiliate_clicks` - Detailed click analytics
+- `affiliate_payouts` - Commission payment tracking
+- `affiliate_commissions` - Per-booking commission records
+
+**Migration Action**: None required - new business model launches post-migration
+
+### 10.4 Enhanced Recurring Availability - **NO MIGRATION**
+
+**Decision**: Do not migrate old availability data - stylists will re-configure
+**Rationale**: New system uses iCal RRULE standard, incompatible with old JSON format
+
+**New Tables** (Not Migrated):
+- `stylist_recurring_unavailability` - iCal-based recurring schedules
+- `recurring_unavailability_exceptions` - Exception handling for recurring events
+
+**Migration Action**: Stylists will set up their availability in the new system
+
 ## Migration Dependencies & Order
 
 ### Critical Path (Must be executed in this exact order)
@@ -529,6 +612,15 @@ graph TD
     P --> Q[17. Update Media Associations]
     B --> R[18. Availability Rules]
     R --> S[19. Unavailability Records]
+
+    classDef newFeature fill:#e1f5fe,stroke:#01579b,color:#000
+    classDef noMigration fill:#fff3e0,stroke:#e65100,color:#000
+
+    T[Phase 10: New Features - NO MIGRATION]:::noMigration
+    T1[Booking Notes System]:::newFeature
+    T2[Discount System - Clean Start]:::noMigration
+    T3[Affiliate Marketing System]:::newFeature
+    T4[Enhanced Recurring Availability]:::noMigration
 ```
 
 ## Data Validation Checkpoints
@@ -774,12 +866,20 @@ const parseAvailability = (jsonString: string): AvailabilityRule[] => {
 
 ## Conclusion
 
-This migration represents a fundamental architectural shift from a complex multi-tenant system to a streamlined two-sided marketplace. The key to success lies in:
+This migration represents a fundamental architectural shift from a complex multi-tenant system to a streamlined two-sided marketplace with enhanced capabilities. The key to success lies in:
 
 1. **Careful user consolidation** - Preventing ID collisions while preserving all relationships
 2. **Accurate status mapping** - Simplifying complex states without losing business meaning
 3. **Data integrity validation** - Checking at every phase to catch issues early
 4. **Incremental migration** - Moving data in dependency order to maintain referential integrity
 5. **Comprehensive testing** - Including edge cases, duplicates, and orphaned records
+6. **Clean start approach** - Starting fresh with enhanced systems (discounts, availability) rather than migrating legacy data
 
-The migration will result in a cleaner, more maintainable system with improved performance and reduced complexity, setting the foundation for future growth and feature development.
+**Post-Migration New Features:**
+- **Booking Notes System**: Comprehensive service documentation and customer relationship management
+- **Enhanced Discount System**: Modern discount management with usage tracking and restrictions
+- **Affiliate Marketing System**: New revenue sharing model for stylists
+- **Trial Session Support**: Enhanced service offerings with trial booking capabilities
+- **Automated Payment Processing**: Reliable payment capture and payout processing
+
+The migration will result in a cleaner, more maintainable system with improved performance, reduced complexity, and new business capabilities, setting the foundation for significant growth and feature development.

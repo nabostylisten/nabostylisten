@@ -35,6 +35,11 @@ interface TransformedService {
   at_stylist_place: boolean;
   includes: string[];
   requirements: string[];
+  // Trial session fields (not in old MySQL system - will be set to defaults)
+  has_trial_session: boolean;
+  trial_session_price: number | null;
+  trial_session_duration_minutes: number | null;
+  trial_session_description: string | null;
 }
 
 interface ServiceMigrationStats {
@@ -138,6 +143,11 @@ export async function extractServices(): Promise<void> {
           at_stylist_place: true,   // Default value for new field
           includes: [],             // Default empty array for new field
           requirements: [],         // Default empty array for new field
+          // Trial session fields (not in old MySQL system - set to defaults)
+          has_trial_session: false, // Default false for migrated services
+          trial_session_price: null, // Default null
+          trial_session_duration_minutes: null, // Default null
+          trial_session_description: null, // Default null
         };
         
         transformedServices.push(transformedService);

@@ -18,6 +18,19 @@ interface TransformedBooking {
   total_price: number;
   total_duration_minutes: number;
   service_ids: string[];
+  // New fields (enhanced booking functionality)
+  needs_destination_update: boolean;
+  payment_captured_at: string | null;
+  payout_processed_at: string | null;
+  customer_receipt_email_sent_at: string | null;
+  stylist_notification_email_sent_at: string | null;
+  payout_email_sent_at: string | null;
+  rescheduled_from: string | null;
+  rescheduled_at: string | null;
+  reschedule_reason: string | null;
+  is_trial_session: boolean;
+  main_booking_id: string | null;
+  trial_booking_id: string | null;
 }
 
 interface BookingCreationResult {
@@ -72,6 +85,19 @@ export async function createBookings(): Promise<void> {
           address_id: null, // Temporarily null - addresses not migrated yet
           total_price: booking.total_price,
           total_duration_minutes: booking.total_duration_minutes,
+          // Enhanced booking fields (new functionality)
+          needs_destination_update: booking.needs_destination_update,
+          payment_captured_at: booking.payment_captured_at,
+          payout_processed_at: booking.payout_processed_at,
+          customer_receipt_email_sent_at: booking.customer_receipt_email_sent_at,
+          stylist_notification_email_sent_at: booking.stylist_notification_email_sent_at,
+          payout_email_sent_at: booking.payout_email_sent_at,
+          rescheduled_from: booking.rescheduled_from,
+          rescheduled_at: booking.rescheduled_at,
+          reschedule_reason: booking.reschedule_reason,
+          is_trial_session: booking.is_trial_session,
+          main_booking_id: booking.main_booking_id,
+          trial_booking_id: booking.trial_booking_id,
         };
         
         const createResult = await db.createBooking(bookingData);

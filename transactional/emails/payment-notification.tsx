@@ -293,7 +293,7 @@ export const PaymentNotificationEmail = ({
           {recipientRole === "stylist" &&
             notificationType === "payout_processed" && (
               <Section style={taxSection}>
-                <Text style={taxHeader}>📊 Skatteinformasjon:</Text>
+                <Text style={taxHeader}>Skatteinformasjon:</Text>
                 <Text style={taxText}>
                   Husk at utbetalinger fra Nabostylisten må rapporteres som
                   inntekt. Du vil motta skattedokumenter i slutten av året. Hold
@@ -304,7 +304,7 @@ export const PaymentNotificationEmail = ({
 
           {/* Transaction Details */}
           <Section style={transactionSection}>
-            <Text style={transactionHeader}>🔍 Transaksjonsdetaljer:</Text>
+            <Text style={transactionHeader}>Transaksjonsdetaljer:</Text>
             <div style={transactionRow}>
               <Text style={transactionLabel}>Transaksjons-ID:</Text>
               <Text style={transactionValue}>{transactionId}</Text>
@@ -329,7 +329,7 @@ export const PaymentNotificationEmail = ({
           {/* Notification Settings */}
           <Section style={settingsSection}>
             <Text style={settingsText}>
-              📧 Du mottar denne e-posten fordi du har aktivert varsler for
+              Du mottar denne e-posten fordi du har aktivert varsler for
               betalinger.
             </Text>
             <Link

@@ -6,8 +6,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
-import { Loader2, AlertTriangle, Info, ExternalLink } from "lucide-react";
+import { Loader2, AlertTriangle, Info, ExternalLink, Mail } from "lucide-react";
 import { toast } from "sonner";
+import { useMediaQuery } from "@/hooks/use-media-query";
 
 import {
   Dialog,
@@ -109,6 +110,7 @@ export function AdminRefundDialog({
 }: AdminRefundDialogProps) {
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [showConfirmation, setShowConfirmation] = React.useState(false);
+  const isMobile = useMediaQuery("(max-width: 640px)");
 
   const form = useForm<RefundFormData>({
     resolver: zodResolver(refundFormSchema),
@@ -190,7 +192,7 @@ export function AdminRefundDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-md sm:max-w-2xl overflow-y-scroll max-h-screen">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Refunder betaling
@@ -211,7 +213,7 @@ export function AdminRefundDialog({
               <CardTitle className="text-lg">Betalingsdetaljer</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="flex flex-col sm:grid sm:grid-cols-2 gap-4 text-sm">
                 <div>
                   <span className="font-medium text-muted-foreground">
                     Kunde:
@@ -383,7 +385,13 @@ export function AdminRefundDialog({
                           >
                             <FormControl>
                               <SelectTrigger>
-                                <SelectValue placeholder="Velg en grunn for refundering" />
+                                <SelectValue
+                                  placeholder={
+                                    isMobile
+                                      ? "Velg grunn"
+                                      : "Velg en grunn for refundering"
+                                  }
+                                />
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
@@ -438,12 +446,13 @@ export function AdminRefundDialog({
                     </CardHeader>
                     <CardContent className="space-y-3">
                       <div className="text-sm space-y-2">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                           <span className="font-medium">Stripe-operasjon:</span>
                           <Badge
                             variant={
                               refundImpact.willCancel ? "secondary" : "default"
                             }
+                            className="w-fit"
                           >
                             {refundImpact.willCancel
                               ? "Kanseller PaymentIntent"
@@ -472,7 +481,7 @@ export function AdminRefundDialog({
                         )}
 
                         <div className="flex items-center gap-2 mt-3">
-                          <span className="text-sm">📧</span>
+                          <Mail className="hidden sm:block h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">
                             Kunden vil motta en e-post med bekreftelse på
                             refunderingen
@@ -483,17 +492,19 @@ export function AdminRefundDialog({
                   </Card>
                 )}
 
-                <DialogFooter>
+                <DialogFooter className="flex-col sm:flex-row gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => onOpenChange(false)}
+                    className="w-full sm:w-auto"
                   >
                     Avbryt
                   </Button>
                   <Button
                     type="submit"
                     disabled={watchedRefundAmount <= 0 || !watchedRefundReason}
+                    className="w-full sm:w-auto"
                   >
                     Fortsett til bekreftelse
                   </Button>
@@ -533,18 +544,19 @@ export function AdminRefundDialog({
                   </AlertDescription>
                 </Alert>
 
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-2">
                   <Button
                     variant="outline"
                     onClick={() => setShowConfirmation(false)}
                     disabled={isProcessing}
+                    className="w-full sm:w-auto"
                   >
                     Gå tilbake
                   </Button>
                   <Button
                     onClick={handleConfirmRefund}
                     disabled={isProcessing}
-                    className="bg-red-600 hover:bg-red-700"
+                    className="w-full sm:w-auto bg-red-600 hover:bg-red-700"
                   >
                     {isProcessing ? (
                       <>
@@ -561,7 +573,7 @@ export function AdminRefundDialog({
           )}
 
           {/* Additional Actions */}
-          <div className="flex gap-2 text-sm">
+          <div className="flex flex-col sm:flex-row gap-2 text-sm">
             <Button
               variant="ghost"
               size="sm"
@@ -569,6 +581,7 @@ export function AdminRefundDialog({
                 const stripeUrl = `https://dashboard.stripe.com/payments/${payment.payment_intent_id}`;
                 window.open(stripeUrl, "_blank");
               }}
+              className="w-full sm:w-auto justify-start"
             >
               <ExternalLink className="mr-2 h-4 w-4" />
               Åpne i Stripe Dashboard

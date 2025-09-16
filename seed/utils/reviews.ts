@@ -1,7 +1,7 @@
 import type {
   booking_servicesScalars,
   bookingsScalars,
-  public_reviewsScalars,
+  reviewsScalars,
   SeedClient,
   servicesScalars,
   usersScalars,
@@ -178,8 +178,8 @@ async function createReviewsForCompletedBookings(
 
   if (reviewsToCreate.length > 0) {
     try {
-      const { public_reviews } = await seed.public_reviews(reviewsToCreate);
-      return public_reviews;
+      const { reviews } = await seed.reviews(reviewsToCreate);
+      return reviews;
     } catch (error) {
       console.log(
         `-- Error creating reviews: ${
@@ -272,13 +272,38 @@ async function createStylistCrossBookingsWithReviews(
   for (const booking of extraBookings) {
     if (booking.id && booking.customer_id && booking.stylist_id) {
       // More varied rating distribution: 10% 1-star, 15% 2-star, 20% 3-star, 25% 4-star, 30% 5-star
-      const ratingDistribution = [1, 1, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5];
-      const rating = ratingDistribution[Math.floor(Math.random() * ratingDistribution.length)];
-      
+      const ratingDistribution = [
+        1,
+        1,
+        2,
+        2,
+        2,
+        3,
+        3,
+        3,
+        3,
+        4,
+        4,
+        4,
+        4,
+        4,
+        5,
+        5,
+        5,
+        5,
+        5,
+        5,
+      ];
+      const rating = ratingDistribution[
+        Math.floor(Math.random() * ratingDistribution.length)
+      ];
+
       // Select appropriate comment based on rating
       let comment: string;
       if (rating === 5) {
-        comment = stylistReviewComments[Math.floor(Math.random() * stylistReviewComments.length)];
+        comment = stylistReviewComments[
+          Math.floor(Math.random() * stylistReviewComments.length)
+        ];
       } else if (rating === 4) {
         comment = [
           "God jobb! Som stylist selv ser jeg at dette er solid håndverk, men det er alltid rom for forbedring.",
@@ -315,11 +340,11 @@ async function createStylistCrossBookingsWithReviews(
     }
   }
 
-  let createdAdditionalReviews: public_reviewsScalars[] = [];
+  let createdAdditionalReviews: reviewsScalars[] = [];
   if (additionalReviews.length > 0) {
     try {
-      const { public_reviews } = await seed.public_reviews(additionalReviews);
-      createdAdditionalReviews = public_reviews;
+      const { reviews } = await seed.reviews(additionalReviews);
+      createdAdditionalReviews = reviews;
     } catch (error) {
       console.log(
         `-- Error creating additional reviews: ${
@@ -342,7 +367,7 @@ async function ensureEveryServiceHasReviews(
   stylistUsers: usersScalars[],
   bookingServiceLinks: Partial<booking_servicesScalars>[],
   allBookings: bookingsScalars[],
-  existingReviews: public_reviewsScalars[],
+  existingReviews: reviewsScalars[],
 ) {
   console.log("-- Ensuring every service has reviews...");
 
@@ -436,15 +461,15 @@ async function ensureEveryServiceHasReviews(
   }
 
   // Create reviews for these additional bookings
-  const additionalReviews: public_reviewsScalars[] = [];
+  const additionalReviews: reviewsScalars[] = [];
   for (let idx = 0; idx < newBookings.length; idx++) {
     const booking = newBookings[idx];
     if (booking.id && booking.customer_id && booking.stylist_id) {
       // More realistic distribution with service-specific variation
       // Some services will naturally have higher/lower ratings
-      const serviceIndex = idx % servicesToEnsureReviews.length;
+      // const serviceIndex = idx % servicesToEnsureReviews.length;
       const baseRatingBias = Math.random(); // Each service gets a quality bias
-      
+
       let rating: number;
       if (baseRatingBias < 0.1) {
         // 10% of services are poorly rated overall
@@ -513,11 +538,11 @@ async function ensureEveryServiceHasReviews(
 
   if (additionalReviews.length > 0) {
     try {
-      const { public_reviews } = await seed.public_reviews(additionalReviews);
+      const { reviews } = await seed.reviews(additionalReviews);
       console.log(
         `-- Created ${additionalReviews.length} additional reviews to ensure service coverage`,
       );
-      return public_reviews;
+      return reviews;
     } catch (error) {
       console.log(
         `-- Error creating additional reviews: ${
@@ -536,7 +561,7 @@ async function ensureEveryServiceHasReviews(
  */
 async function addReviewImages(
   seed: SeedClient,
-  reviews: public_reviewsScalars[],
+  reviews: reviewsScalars[],
 ) {
   const reviewImagesData: DatabaseTables["media"]["Insert"][] = [];
   const reviewsWithImages = reviews.filter((_, index) => index % 3 === 0); // Every 3rd review gets images

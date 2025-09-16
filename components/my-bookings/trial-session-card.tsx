@@ -21,7 +21,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getReviewByBookingId } from "@/server/review.actions";
-import { getAddress, getAddress } from "@/server/addresses.actions";
+import { getAddress } from "@/server/addresses.actions";
 import type { getUserBookings } from "@/server/booking/crud.actions";
 import { BookingStatusDialog } from "./booking-status-dialog";
 import { BookingActionsDropdown } from "./booking-actions-dropdown";

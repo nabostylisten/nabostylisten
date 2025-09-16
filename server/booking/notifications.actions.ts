@@ -6,6 +6,7 @@ import { BookingReceiptEmail } from "@/transactional/emails/booking-receipt";
 import { NewBookingRequestEmail } from "@/transactional/emails/new-booking-request";
 import { StripeOnboardingRequired } from "@/transactional/emails/stripe-onboarding-required";
 import { BookingAwaitingPayment } from "@/transactional/emails/booking-awaiting-payment";
+import { BookingCreationErrorEmail } from "@/transactional/emails/booking-creation-error";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { getNabostylistenLogoUrl } from "@/lib/supabase/utils";
@@ -93,7 +94,8 @@ export async function sendBookingAwaitingPaymentEmails({
         let location = "";
         if (booking.address_id && booking.address) {
             // Show booking address details
-            location = `${booking.address.street_address}, ${booking.address.postal_code} ${booking.address.city}`;
+            location =
+                `${booking.address.street_address}, ${booking.address.postal_code} ${booking.address.city}`;
         } else if (
             booking.stylist?.addresses &&
             Array.isArray(booking.stylist.addresses)
@@ -103,7 +105,8 @@ export async function sendBookingAwaitingPaymentEmails({
                 addr,
             ) => addr.is_primary);
             if (stylistPrimaryAddress) {
-                location = `${stylistPrimaryAddress.street_address}, ${stylistPrimaryAddress.postal_code} ${stylistPrimaryAddress.city}`;
+                location =
+                    `${stylistPrimaryAddress.street_address}, ${stylistPrimaryAddress.postal_code} ${stylistPrimaryAddress.city}`;
             }
         }
 
@@ -435,17 +438,19 @@ export async function sendPostPaymentEmails(bookingId: string) {
         let location = "";
         if (booking.address_id && booking.address) {
             // Show booking address details
-            location = `${booking.address.street_address}, ${booking.address.postal_code} ${booking.address.city}`;
+            location =
+                `${booking.address.street_address}, ${booking.address.postal_code} ${booking.address.city}`;
         } else if (
             booking.stylist?.addresses &&
             Array.isArray(booking.stylist.addresses)
         ) {
             // Show stylist address if no booking address
-            const stylistPrimaryAddress = booking.stylist.addresses.find((addr) =>
-                addr.is_primary
-            );
+            const stylistPrimaryAddress = booking.stylist.addresses.find((
+                addr,
+            ) => addr.is_primary);
             if (stylistPrimaryAddress) {
-                location = `${stylistPrimaryAddress.street_address}, ${stylistPrimaryAddress.postal_code} ${stylistPrimaryAddress.city}`;
+                location =
+                    `${stylistPrimaryAddress.street_address}, ${stylistPrimaryAddress.postal_code} ${stylistPrimaryAddress.city}`;
             }
         }
 
@@ -602,6 +607,53 @@ export async function sendPostPaymentEmails(bookingId: string) {
         console.error("Error in sendPostPaymentEmails:", error);
         return {
             error: "Failed to send post-payment emails",
+            data: null,
+        };
+    }
+}
+
+/**
+ * Send error email when booking creation fails
+ * Reassures user that their payment method was not charged
+ */
+export async function sendBookingCreationErrorEmail({
+    userEmail,
+    userName,
+}: {
+    userEmail: string;
+    userName: string;
+}) {
+    try {
+        const logoUrl = await getNabostylistenLogoUrl();
+
+        const result = await sendEmail({
+            to: [userEmail],
+            subject:
+                "Booking opprettelse feilet - betalingsmetoden din ble ikke belastet",
+            react: BookingCreationErrorEmail({
+                userName,
+                logoUrl,
+            }),
+            sendAdminCopy: true, // Send admin copy for booking creation errors
+        });
+
+        if (result.error) {
+            console.error(
+                "Failed to send booking creation error email:",
+                result.error,
+            );
+            return { error: result.error, data: null };
+        }
+
+        console.log(
+            "Successfully sent booking creation error email to:",
+            userEmail,
+        );
+        return { error: null, data: { emailSent: true } };
+    } catch (error) {
+        console.error("Error in sendBookingCreationErrorEmail:", error);
+        return {
+            error: "Failed to send booking creation error email",
             data: null,
         };
     }

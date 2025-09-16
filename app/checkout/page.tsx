@@ -125,7 +125,7 @@ function PaymentForm({
   const discountAmount = booking?.data?.discount_applied || 0;
 
   if (discountAmount > 0) {
-    // Check if it's an affiliate discount first
+    // Check if it's an affiliate discount first (affiliate_code is at root level)
     if (booking?.data?.affiliate_code) {
       appliedDiscount = {
         type: "affiliate" as const,
@@ -140,7 +140,7 @@ function PaymentForm({
         },
       };
     }
-    // Otherwise check if it's a regular discount
+    // Otherwise check if it's a regular discount (discount_code is at root level)
     else if (booking?.data?.discount_code) {
       appliedDiscount = {
         type: "discount" as const,

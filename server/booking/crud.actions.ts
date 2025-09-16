@@ -361,19 +361,30 @@ export async function getBookingDetails(bookingId: string) {
         return { error: "Booking not found", data: null };
     }
 
-    // Get affiliate information if available
-    const { data: affiliateClick } = await supabase
-        .from("affiliate_clicks")
-        .select(`
-            id,
-            affiliate_links:affiliate_link_id (
-                link_code,
-                commission_percentage
-            )
-        `)
+    // Get affiliate information from payment record (more reliable than affiliate_clicks)
+    let affiliateCode: string | null = null;
+    let affiliateCommissionPercentage: number | null = null;
+
+    // Check payment record first for affiliate information
+    const { data: paymentRecord } = await supabase
+        .from("payments")
+        .select("affiliate_id, affiliate_commission_percentage, discount_code")
         .eq("booking_id", bookingId)
-        .eq("converted", true)
         .single();
+
+    if (paymentRecord?.affiliate_id && paymentRecord?.discount_code) {
+        // Get the affiliate link code for this stylist
+        const { data: affiliateLink } = await supabase
+            .from("affiliate_links")
+            .select("link_code")
+            .eq("stylist_id", paymentRecord.affiliate_id)
+            .single();
+
+        if (affiliateLink) {
+            affiliateCode = affiliateLink.link_code;
+            affiliateCommissionPercentage = paymentRecord.affiliate_commission_percentage;
+        }
+    }
 
     if (!booking) {
         return { error: "Booking not found", data: null };
@@ -622,11 +633,10 @@ export async function getBookingDetails(bookingId: string) {
         chats,
         payments: payments || [],
         // Add affiliate information if available
-        affiliate_code: affiliateClick?.affiliate_links?.link_code || null,
-        affiliate_commission_percentage:
-            affiliateClick?.affiliate_links?.commission_percentage || null,
-        // Add discount code if available
-        discount_code: booking.discounts?.code || null,
+        affiliate_code: affiliateCode,
+        affiliate_commission_percentage: affiliateCommissionPercentage,
+        // Add discount code if available (prefer payment record, fallback to discount table)
+        discount_code: paymentRecord?.discount_code || booking.discounts?.code || null,
         // Calculate original total price if there's a discount
         original_total_price: booking.discount_applied > 0
             ? booking.total_price + booking.discount_applied

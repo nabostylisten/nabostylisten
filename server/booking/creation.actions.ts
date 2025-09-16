@@ -343,12 +343,39 @@ export async function createBookingWithServices(
             .single();
 
         if (bookingError || !booking) {
-            // TODO: Cancel Stripe PaymentIntent if booking creation fails
-            // This should be implemented with proper error handling
-            console.error(
-                "Booking creation failed, PaymentIntent may need cleanup:",
-                stripePaymentIntentId,
-            );
+            // Cancel Stripe PaymentIntent to ensure no charge occurs
+            if (stripePaymentIntentId) {
+                const { cancelStripePaymentIntent } = await import("@/lib/stripe/connect");
+                const cancelResult = await cancelStripePaymentIntent({
+                    paymentIntentId: stripePaymentIntentId,
+                    cancellationReason: "requested_by_customer",
+                });
+
+                if (cancelResult.error) {
+                    console.error("Failed to cancel PaymentIntent:", cancelResult.error);
+                } else {
+                    console.log("Successfully cancelled PaymentIntent:", stripePaymentIntentId);
+                }
+
+                // Send error email to user
+                const { sendBookingCreationErrorEmail } = await import("./notifications.actions");
+
+                // Get user profile for full name
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("full_name")
+                    .eq("id", user.id)
+                    .single();
+
+                sendBookingCreationErrorEmail({
+                    userEmail: user.email!,
+                    userName: profile?.full_name || user.email!,
+                }).catch((error: unknown) => {
+                    console.error("Failed to send booking error email:", error);
+                });
+            }
+
+            console.error("Booking creation failed:", bookingError);
             return { error: "Failed to create booking", data: null };
         }
 
@@ -386,11 +413,40 @@ export async function createBookingWithServices(
         if (servicesError) {
             // Rollback: delete the booking
             await supabase.from("bookings").delete().eq("id", booking.id);
-            // TODO: Cancel Stripe PaymentIntent
-            console.error(
-                "Service linking failed, PaymentIntent may need cleanup:",
-                stripePaymentIntentId,
-            );
+
+            // Cancel Stripe PaymentIntent to ensure no charge occurs
+            if (stripePaymentIntentId) {
+                const { cancelStripePaymentIntent } = await import("@/lib/stripe/connect");
+                const cancelResult = await cancelStripePaymentIntent({
+                    paymentIntentId: stripePaymentIntentId,
+                    cancellationReason: "requested_by_customer",
+                });
+
+                if (cancelResult.error) {
+                    console.error("Failed to cancel PaymentIntent:", cancelResult.error);
+                } else {
+                    console.log("Successfully cancelled PaymentIntent:", stripePaymentIntentId);
+                }
+
+                // Send error email to user
+                const { sendBookingCreationErrorEmail } = await import("./notifications.actions");
+
+                // Get user profile for full name
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("full_name")
+                    .eq("id", user.id)
+                    .single();
+
+                sendBookingCreationErrorEmail({
+                    userEmail: user.email!,
+                    userName: profile?.full_name || user.email!,
+                }).catch((error: unknown) => {
+                    console.error("Failed to send booking error email:", error);
+                });
+            }
+
+            console.error("Service linking failed:", servicesError);
             return { error: "Failed to link services to booking", data: null };
         }
 
@@ -542,6 +598,7 @@ export async function createBookingWithServices(
             // This should never happen now since we always create payment intent
             console.error("Unexpected: No payment intent ID after creation");
         }
+
 
         // Note: Customer will always go through payment flow now
         // No need for special "awaiting payment" emails to customer

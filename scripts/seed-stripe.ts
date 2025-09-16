@@ -106,14 +106,6 @@ const supabase = createClient<Database>(
   },
 );
 
-interface CustomerToSeed {
-  id: string;
-  email: string;
-  full_name: string;
-  phone_number: string | null;
-  stripe_customer_id: string | null;
-}
-
 async function validateDevelopmentEnvironment() {
   console.log("🔒 Validating development environment...");
 
@@ -564,7 +556,8 @@ async function cancelAllStripePaymentIntents() {
         // Still need to check if there are more pages
         hasMorePaymentIntents = paymentIntents.has_more;
         if (hasMorePaymentIntents && paymentIntents.data.length > 0) {
-          startingAfter = paymentIntents.data[paymentIntents.data.length - 1].id;
+          startingAfter =
+            paymentIntents.data[paymentIntents.data.length - 1].id;
           console.log(
             `    ➡️  Fetching next batch (starting after: ${startingAfter}) - skipping non-cancelable payment intents`,
           );
@@ -611,11 +604,14 @@ async function cancelAllStripePaymentIntents() {
 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (stripeError: any) {
-            console.log(`    ⚠️  Stripe error details for ${paymentIntent.id}:`, {
-              type: stripeError.type,
-              code: stripeError.code,
-              message: stripeError.message,
-            });
+            console.log(
+              `    ⚠️  Stripe error details for ${paymentIntent.id}:`,
+              {
+                type: stripeError.type,
+                code: stripeError.code,
+                message: stripeError.message,
+              },
+            );
 
             // Payment intent might already be canceled or in non-cancelable state
             if (
@@ -665,7 +661,110 @@ async function cancelAllStripePaymentIntents() {
       `  🎯 TOTAL: Canceled ${totalPaymentIntentsCanceled} Stripe payment intents`,
     );
   } catch (error) {
-    console.error("❌ Unexpected error in cancelAllStripePaymentIntents:", error);
+    console.error(
+      "❌ Unexpected error in cancelAllStripePaymentIntents:",
+      error,
+    );
+  }
+}
+
+/**
+ * Adds identity verification and bank account to a Stripe connected account for testing.
+ * Uses test file tokens, test personal information, and test bank accounts from Stripe's testing guide.
+ */
+async function addIdentityVerificationAndBankAccount(
+  accountId: string,
+  verificationType: "success" | "failure",
+) {
+  try {
+    // Determine test data based on verification type
+    const testData = verificationType === "success"
+      ? {
+        // Successful verification test data
+        dob: { day: 1, month: 1, year: 1901 }, // Test DOB for successful match
+        id_number: "000000000", // Test ID number for successful match
+        address: {
+          line1: "address_full_match", // Test address for successful match
+          city: "Oslo",
+          state: "",
+          postal_code: "0150",
+          country: "NO",
+        },
+        document_front: "file_identity_document_success", // Test file token for success
+        // Norwegian test IBAN for successful payouts
+        external_account: {
+          object: "bank_account",
+          country: "NO",
+          currency: "nok",
+          account_holder_name: "Test Success",
+          account_holder_type: "individual",
+          account_number: "NO9386011117947", // Test IBAN for successful payouts
+        },
+      }
+      : {
+        // Failed verification test data
+        dob: { day: 1, month: 1, year: 1900 }, // Test DOB that triggers OFAC alert
+        id_number: "111111111", // Test ID number for unsuccessful match
+        address: {
+          line1: "address_no_match", // Test address for unsuccessful match
+          city: "Oslo",
+          state: "",
+          postal_code: "0150",
+          country: "NO",
+        },
+        document_front: "file_identity_document_failure", // Test file token for failure
+        // Norwegian test IBAN that will still work but account has failed verification
+        external_account: {
+          object: "bank_account",
+          country: "NO",
+          currency: "nok",
+          account_holder_name: "Test Failure",
+          account_holder_type: "individual",
+          account_number: "NO9386011117947", // Test IBAN for successful payouts (even for failed verification)
+        },
+      };
+
+    // Update the account with individual information, verification document, and bank account
+    // Note: Express accounts handle TOS acceptance through Stripe's onboarding flow
+    const updatedAccount = await retryWithBackoff(() =>
+      stripe.accounts.update(accountId, {
+        individual: {
+          first_name: "Test",
+          last_name: verificationType === "success" ? "Success" : "Failure",
+          dob: testData.dob,
+          id_number: testData.id_number,
+          address: testData.address,
+          email: `test.${verificationType}@example.com`,
+          phone: "0000000000", // Stripe test token for successful phone validation
+          verification: {
+            document: {
+              front: testData.document_front,
+            },
+          },
+        },
+        external_account: testData.external_account as any,
+      })
+    );
+
+    console.log(
+      `      📄 Identity verification (${verificationType}) and bank account added to ${accountId}`,
+    );
+
+    return {
+      success: true,
+      verificationType,
+      verificationStatus: updatedAccount.individual?.verification?.status,
+    };
+  } catch (error) {
+    console.error(
+      `      ❌ Failed to add identity verification: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
   }
 }
 
@@ -699,6 +798,13 @@ async function seedStripeAccounts() {
 
     console.log(`📋 Found ${stylists.length} stylists to process`);
 
+    // Track verification statistics
+    const verificationStats = {
+      successful: 0,
+      failed: 0,
+      errors: 0,
+    };
+
     // Process stylists in parallel batches
     const results = await processBatches(
       stylists,
@@ -710,6 +816,7 @@ async function seedStripeAccounts() {
             customerCreated: false,
             accountSkipped: false,
             customerSkipped: false,
+            verificationApplied: false,
             error: "No email address",
           };
         }
@@ -722,7 +829,15 @@ async function seedStripeAccounts() {
         let customerCreated = false;
         let accountSkipped = false;
         let customerSkipped = false;
+        let verificationApplied = false;
         let error = null;
+
+        // Determine verification type for this stylist
+        // 80% get successful verification, 20% get failed verification
+        const randomValue = Math.random();
+        const verificationType: "success" | "failure" = randomValue < 0.8
+          ? "success"
+          : "failure";
 
         // Create Stripe connected account if needed
         if (!stylist.stylist_details?.stripe_account_id) {
@@ -765,6 +880,35 @@ async function seedStripeAccounts() {
                   `    ✅ Created Stripe account for ${stylist.full_name}: ${accountResult.data.stripeAccountId}`,
                 );
                 accountCreated = true;
+
+                // Add identity verification and bank account after successful account creation
+                console.log(
+                  `    🔐 Adding identity verification and bank account (${verificationType}) for ${stylist.full_name}...`,
+                );
+                const verificationResult = await addIdentityVerificationAndBankAccount(
+                  accountResult.data.stripeAccountId,
+                  verificationType,
+                );
+
+                if (verificationResult.success) {
+                  verificationApplied = true;
+                  if (verificationType === "success") {
+                    verificationStats.successful++;
+                    console.log(
+                      `    ✅ Applied successful identity verification for ${stylist.full_name}`,
+                    );
+                  } else {
+                    verificationStats.failed++;
+                    console.log(
+                      `    ⚠️  Applied failed identity verification for ${stylist.full_name}`,
+                    );
+                  }
+                } else {
+                  verificationStats.errors++;
+                  console.error(
+                    `    ❌ Failed to apply identity verification for ${stylist.full_name}`,
+                  );
+                }
               } else {
                 console.error(
                   `    ❌ Failed to save account ID for ${stylist.full_name}: ${saveResult.error}`,
@@ -852,6 +996,7 @@ async function seedStripeAccounts() {
           customerCreated,
           accountSkipped,
           customerSkipped,
+          verificationApplied,
           error,
         };
       },
@@ -864,6 +1009,9 @@ async function seedStripeAccounts() {
     const accountsSkipped = results.filter((r) => r.accountSkipped).length;
     const customersCreated = results.filter((r) => r.customerCreated).length;
     const customersSkipped = results.filter((r) => r.customerSkipped).length;
+    const verificationApplied = results.filter((r) =>
+      r.verificationApplied
+    ).length;
     const errors = results.filter((r) => r.error).length;
 
     console.log(`\n📊 Stylist Processing Summary:`);
@@ -871,6 +1019,15 @@ async function seedStripeAccounts() {
     console.log(`  ⏭️  Stripe accounts skipped: ${accountsSkipped}`);
     console.log(`  👥 Stripe customers created: ${customersCreated}`);
     console.log(`  ⏭️  Stripe customers skipped: ${customersSkipped}`);
+    console.log(`  🔐 Identity verifications applied: ${verificationApplied}`);
+    if (verificationStats.successful > 0) {
+      console.log(
+        `    ✅ Successful verifications: ${verificationStats.successful}`,
+      );
+    }
+    if (verificationStats.failed > 0) {
+      console.log(`    ⚠️  Failed verifications: ${verificationStats.failed}`);
+    }
     if (errors > 0) {
       console.log(`  ❌ Errors encountered: ${errors}`);
     }
@@ -887,8 +1044,7 @@ async function seedStripeCustomers() {
     const { data: customers, error: customersError } = await supabase
       .from("profiles")
       .select("id, email, full_name, phone_number, stripe_customer_id")
-      .eq("role", "customer")
-      .returns<CustomerToSeed[]>();
+      .eq("role", "customer");
 
     if (customersError) {
       console.error("❌ Error fetching customers:", customersError);
@@ -919,10 +1075,24 @@ async function seedStripeCustomers() {
             `    👥 Creating Stripe customer for ${customer.full_name}...`,
           );
 
+          if (!customer.email) {
+            console.error(
+              `    ❌ No email address for ${customer.full_name}`,
+            );
+            error = "No email address";
+            return {
+              customerId: customer.id,
+              customerName: customer.full_name,
+              customerCreated: false,
+              customerSkipped: false,
+              error: "No email address",
+            };
+          }
+
           try {
             const customerResult = await retryWithBackoff(() =>
               createStripeCustomer({
-                email: customer.email,
+                email: customer.email!,
                 name: customer.full_name || undefined,
                 phone: customer.phone_number || undefined,
                 metadata: {

@@ -10,7 +10,6 @@ import {
   Trash2,
   ChevronUp,
   ChevronDown,
-  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,11 +31,7 @@ import type { User } from "@supabase/supabase-js";
 import { BlurFade } from "@/components/magicui/blur-fade";
 
 // Affiliate components
-import {
-  AffiliateDiscountBanner,
-  AffiliateAttributionInfo,
-  ManualAffiliateCodeEntry,
-} from "@/components/affiliate/affiliate-discount-banner";
+import { AffiliateDiscountBanner } from "@/components/affiliate/affiliate-discount-banner";
 import { useAffiliateAttribution } from "@/hooks/use-affiliate-attribution";
 import { OrderSummary } from "@/components/booking/order-summary";
 import { DEFAULT_PLATFORM_CONFIG } from "@/schemas/platform-config.schema";
@@ -48,7 +43,6 @@ export default function CartPage() {
     removeFromCart,
     clearCart,
     getTotalItems,
-    getTotalPrice,
     getCurrentStylist,
     updateQuantity,
   } = useCartStore();
@@ -62,7 +56,6 @@ export default function CartPage() {
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
 
   const totalItems = getTotalItems();
-  const totalPrice = getTotalPrice();
   const currentStylist = getCurrentStylist();
 
   // Prepare cart items for affiliate hook
@@ -80,20 +73,11 @@ export default function CartPage() {
     affiliateCode,
     applicableServices,
     nonApplicableReason,
-    submitManualCode,
-    isValidatingCode,
-    manualCodeError,
-    getSavingsSummary,
-    getAttributionStatus,
   } = useAffiliateAttribution({
     cartItems,
     userId: user?.id,
     enabled: cartItems.length > 0,
   });
-
-  const savings = getSavingsSummary();
-  const attributionStatus = getAttributionStatus();
-  const finalTotal = totalPrice - discountAmount;
 
   // Transform cart items to OrderSummary format
   const orderSummaryItems = items.map((item) => ({
@@ -107,17 +91,26 @@ export default function CartPage() {
   }));
 
   // Create applied discount object when affiliate discount is applicable AND there's no blocking reason
-  const appliedDiscount = canAutoApply && discountAmount > 0 && affiliateCode && stylistName && !nonApplicableReason ? {
-    type: "affiliate" as const,
-    code: affiliateCode,
-    discountAmount: discountAmount,
-    affiliateInfo: {
-      stylistId: applicableServices?.[0]?.stylist_id || "",
-      stylistName: stylistName,
-      affiliateCode: affiliateCode,
-      commissionPercentage: DEFAULT_PLATFORM_CONFIG.fees.affiliate.defaultCommissionPercentage,
-    },
-  } : null;
+  const appliedDiscount =
+    canAutoApply &&
+    discountAmount > 0 &&
+    affiliateCode &&
+    stylistName &&
+    !nonApplicableReason
+      ? {
+          type: "affiliate" as const,
+          code: affiliateCode,
+          discountAmount: discountAmount,
+          affiliateInfo: {
+            stylistId: applicableServices?.[0]?.stylist_id || "",
+            stylistName: stylistName,
+            affiliateCode: affiliateCode,
+            commissionPercentage:
+              DEFAULT_PLATFORM_CONFIG.fees.affiliate
+                .defaultCommissionPercentage,
+          },
+        }
+      : null;
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -433,18 +426,20 @@ export default function CartPage() {
             <BlurFade delay={0.12} duration={0.5} inView>
               <div className="space-y-4 mt-4">
                 {/* Show affiliate banner when applicable OR when there's a reason it can't be applied */}
-                {((canAutoApply || nonApplicableReason) && stylistName && affiliateCode) && (
-                  <AffiliateDiscountBanner
-                    stylistName={stylistName}
-                    affiliateCode={affiliateCode}
-                    discountAmount={discountAmount}
-                    applicableServices={
-                      applicableServices?.map((s) => s.title) || []
-                    }
-                    isAutoApplied={canAutoApply}
-                    nonApplicableReason={nonApplicableReason}
-                  />
-                )}
+                {(canAutoApply || nonApplicableReason) &&
+                  stylistName &&
+                  affiliateCode && (
+                    <AffiliateDiscountBanner
+                      stylistName={stylistName}
+                      affiliateCode={affiliateCode}
+                      discountAmount={discountAmount}
+                      applicableServices={
+                        applicableServices?.map((s) => s.title) || []
+                      }
+                      isAutoApplied={canAutoApply}
+                      nonApplicableReason={nonApplicableReason}
+                    />
+                  )}
               </div>
             </BlurFade>
           </div>

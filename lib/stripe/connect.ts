@@ -587,8 +587,6 @@ export async function createStripePaymentIntent({
       },
       capture_method: "manual" as const, // Will be captured by cron job before appointment
       metadata,
-      // Add description for better tracking
-      description: `Booking ${bookingId} - Stylist services`,
     };
 
     console.log("Stripe API call data:", {

@@ -183,7 +183,9 @@ export const PaymentNotificationEmail = ({
           {/* Payout Breakdown for Stylists */}
           {recipientRole === "stylist" &&
             (notificationType === "payout_processed" ||
-              notificationType === "payout_pending") && (
+              notificationType === "payout_pending") &&
+            platformFee !== undefined &&
+            stylistPayout !== undefined && (
               <Section style={payoutSection}>
                 <Text style={sectionHeader}>Utbetalingsdetaljer:</Text>
 
@@ -208,7 +210,7 @@ export const PaymentNotificationEmail = ({
                   </Text>
                 </div>
 
-                {payoutDate && (
+                {payoutDate && payoutMethod && (
                   <div style={payoutDateRow}>
                     <Text style={payoutDateLabel}>Utbetalt til:</Text>
                     <Text style={payoutDateValue}>
@@ -246,8 +248,21 @@ export const PaymentNotificationEmail = ({
                   <br />• Avlysning må skje minst 24 timer i forveien
                 </Text>
               )}
-            {recipientRole === "stylist" &&
+            {recipientRole === "customer" &&
               notificationType === "payout_processed" && (
+                <Text style={nextStepsText}>
+                  • Din tjeneste er nå fullført
+                  <br />
+                  • Du kan nå legge igjen en anmeldelse av stylisten
+                  <br />
+                  • Ta gjerne kontakt hvis du har spørsmål om tjenesten
+                  <br />• Book gjerne en ny time når du trenger det
+                </Text>
+              )}
+            {recipientRole === "stylist" &&
+              notificationType === "payout_processed" &&
+              platformFee !== undefined &&
+              stylistPayout !== undefined && (
                 <Text style={nextStepsText}>
                   • Pengene vil være tilgjengelig i bankkontoen din innen 1-3
                   virkedager
@@ -291,7 +306,9 @@ export const PaymentNotificationEmail = ({
 
           {/* Tax Information for Stylists */}
           {recipientRole === "stylist" &&
-            notificationType === "payout_processed" && (
+            notificationType === "payout_processed" &&
+            platformFee !== undefined &&
+            stylistPayout !== undefined && (
               <Section style={taxSection}>
                 <Text style={taxHeader}>Skatteinformasjon:</Text>
                 <Text style={taxText}>

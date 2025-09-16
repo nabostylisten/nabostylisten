@@ -8,6 +8,7 @@ interface SendEmailOptions {
   to: string[];
   subject: string;
   react: ReactElement;
+  sendAdminCopy?: boolean;
 }
 
 /**
@@ -20,11 +21,11 @@ interface SendEmailOptions {
  * In production:
  * - Uses PROD_EMAIL_FROM for from address
  * - Uses actual recipient emails from the to parameter
- * 
- * @param options - Email options with to, subject, and react content
+ *
+ * @param options - Email options with to, subject, react content, and optional admin copy
  * @returns Promise<{error: string | null}>
  */
-export async function sendEmail({ to, subject, react }: SendEmailOptions): Promise<{error: string | null}> {
+export async function sendEmail({ to, subject, react, sendAdminCopy = false }: SendEmailOptions): Promise<{error: string | null}> {
   const isDevelopment = process.env.NODE_ENV === "development";
 
   const fromAddress = isDevelopment 
@@ -35,19 +36,25 @@ export async function sendEmail({ to, subject, react }: SendEmailOptions): Promi
     ? [process.env.DEV_EMAIL_TO as string]
     : to;
 
+  // Add admin email if requested and available
+  const finalToAddresses = [...toAddresses];
+  if (sendAdminCopy && process.env.ADMIN_EMAIL && !isDevelopment) {
+    // Only add admin email in production and if it's defined
+    finalToAddresses.push(process.env.ADMIN_EMAIL);
+  }
+
   if (!fromAddress) {
     throw new Error("From address is not set");
   }
 
-  if (!toAddresses || toAddresses.length === 0) {
+  if (!finalToAddresses || finalToAddresses.length === 0) {
     throw new Error("To addresses are not set");
   }
-
 
   try {
     const { error } = await resend.emails.send({
       from: fromAddress,
-      to: toAddresses,
+      to: finalToAddresses,
       subject,
       react,
     });
@@ -57,7 +64,10 @@ export async function sendEmail({ to, subject, react }: SendEmailOptions): Promi
       return { error: error.message || "Failed to send email" };
     }
 
-    console.log(`[RESEND_UTILS] Email sent successfully to:\n${toAddresses.map(address => `- ${address}`).join("\n")}\n(from: ${fromAddress})`);
+    console.log(`[RESEND_UTILS] Email sent successfully to:\n${finalToAddresses.map(address => `- ${address}`).join("\n")}\n(from: ${fromAddress})`);
+    if (sendAdminCopy && process.env.ADMIN_EMAIL && !isDevelopment) {
+      console.log(`[RESEND_UTILS] Admin copy sent to: ${process.env.ADMIN_EMAIL}`);
+    }
     return { error: null };
 
   } catch (error) {

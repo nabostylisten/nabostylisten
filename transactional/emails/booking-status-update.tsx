@@ -169,13 +169,18 @@ export const BookingStatusUpdateEmail = ({
               <Text style={sectionHeader}>Refusjon og kompensasjon:</Text>
 
               {recipientType === "customer" && refundInfo.refundAmount > 0 && (
-                <div style={detailRow}>
-                  <Text style={detailLabel}>Du får refundert:</Text>
-                  <Text style={detailValue}>
-                    {refundInfo.refundAmount.toLocaleString("nb-NO")} kr (
-                    {Math.round(refundInfo.refundPercentage * 100)}%)
+                <>
+                  <div style={detailRow}>
+                    <Text style={detailLabel}>Du får refundert:</Text>
+                    <Text style={detailValue}>
+                      {refundInfo.refundAmount.toLocaleString("nb-NO")} kr (
+                      {Math.round(refundInfo.refundPercentage * 100)}%)
+                    </Text>
+                  </div>
+                  <Text style={refundNote}>
+                    Refusjonen vil bli behandlet innen 3-5 virkedager og vises på din konto.
                   </Text>
-                </div>
+                </>
               )}
 
               {recipientType === "customer" && refundInfo.refundAmount === 0 && (
@@ -188,10 +193,27 @@ export const BookingStatusUpdateEmail = ({
               )}
 
               {recipientType === "stylist" && refundInfo.stylistCompensation && refundInfo.stylistCompensation > 0 && (
+                <>
+                  <div style={detailRow}>
+                    <Text style={detailLabel}>Din kompensasjon:</Text>
+                    <Text style={detailValue}>
+                      {refundInfo.stylistCompensation.toLocaleString("nb-NO")} kr
+                    </Text>
+                  </div>
+                  <Text style={refundNote}>
+                    Kompensasjonen vil bli behandlet i henhold til våre betalingsvilkår.
+                  </Text>
+                </>
+              )}
+
+              {recipientType === "stylist" && (!refundInfo.stylistCompensation || refundInfo.stylistCompensation === 0) && (
                 <div style={detailRow}>
-                  <Text style={detailLabel}>Din kompensasjon:</Text>
+                  <Text style={detailLabel}>Kompensasjon:</Text>
                   <Text style={detailValue}>
-                    {refundInfo.stylistCompensation.toLocaleString("nb-NO")} kr
+                    {cancelledBy === "stylist"
+                      ? "Ingen kompensasjon (avlyst av deg)"
+                      : "Ingen kompensasjon (avlyst innenfor avbestillingsfristen)"
+                    }
                   </Text>
                 </div>
               )}
@@ -200,18 +222,12 @@ export const BookingStatusUpdateEmail = ({
                 <div style={detailRow}>
                   <Text style={detailLabel}>Kundens refusjon:</Text>
                   <Text style={detailValue}>
-                    {refundInfo.refundAmount.toLocaleString("nb-NO")} kr (100%)
+                    {refundInfo.refundAmount > 0
+                      ? `${refundInfo.refundAmount.toLocaleString("nb-NO")} kr (100%)`
+                      : "Ingen refusjon (avlyst mindre enn 24 timer før avtalt tid)"
+                    }
                   </Text>
                 </div>
-              )}
-
-              {refundInfo.refundAmount > 0 && (
-                <Text style={refundNote}>
-                  {recipientType === "customer" 
-                    ? "Refusjonen vil bli behandlet innen 3-5 virkedager og vises på din konto."
-                    : "Eventuelle utbetalinger vil bli behandlet i henhold til våre betalingsvilkår."
-                  }
-                </Text>
               )}
             </Section>
           )}

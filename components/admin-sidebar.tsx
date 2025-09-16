@@ -11,6 +11,7 @@ import {
   Percent,
   Wrench,
   Users,
+  Map,
 } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { shouldShowDevTools } from "@/lib/dev-utils";
@@ -56,6 +57,12 @@ const adminSidebarItems = [
     href: "/admin/partner",
     icon: Users,
     description: "Administrer partner-program",
+  },
+  {
+    title: "Kart",
+    href: "/admin/kart",
+    icon: Map,
+    description: "Geografisk oversikt over brukere",
   },
 ];
 

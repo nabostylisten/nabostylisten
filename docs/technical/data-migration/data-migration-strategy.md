@@ -113,7 +113,7 @@ class SupabaseLoader {
 
 ### Phase 1: Environment Setup (Day 1)
 
-**Duration**: 4 hours  
+**Duration**: 4 hours
 **Risk**: Low
 
 ```bash
@@ -133,6 +133,30 @@ supabase db push
 # 4. Verify schema compatibility
 ./scripts/verify-schemas.sh
 ```
+
+#### Migration Script Configuration
+
+The migration system now supports configurable SQL dump files for different environments:
+
+```bash
+# Option 1: Use default development dump
+./scripts/run-full-migration.sh
+
+# Option 2: Specify production dump file
+./scripts/run-full-migration.sh ./nabostylisten_prod.sql
+
+# Option 3: Use environment variable
+export MYSQL_DUMP_PATH="./nabostylisten_prod.sql"
+./scripts/run-full-migration.sh
+
+# Option 4: Individual phase execution with custom dump
+MYSQL_DUMP_PATH="./custom_dump.sql" bun scripts/migration/run-phase-1.ts
+```
+
+**Dump File Naming Convention**:
+- **Development**: `nabostylisten_dump.sql` (default, for testing)
+- **Production**: `nabostylisten_prod.sql` (recommended for production migration)
+- **Custom**: Any `.sql` file with compatible MySQL schema structure
 
 **Success Criteria**:
 
@@ -349,7 +373,7 @@ npm run test:migration -- --suite=communication
 
 ```bash
 # 1. Final production dump (< 2 hours old)
-./scripts/fetch-final-dump.sh
+./scripts/fetch-final-dump.sh nabostylisten_prod.sql
 
 # 2. Incremental migration for new data
 ./scripts/migrate-incremental.sh
@@ -367,8 +391,8 @@ npm run test:migration -- --suite=communication
 # 1. Enable maintenance mode
 ./scripts/enable-maintenance.sh
 
-# 2. Final data sync
-./scripts/final-sync.sh
+# 2. Final data sync with production dump
+./scripts/run-full-migration.sh ./nabostylisten_prod.sql
 
 # 3. Switch database connections
 ./scripts/switch-to-supabase.sh

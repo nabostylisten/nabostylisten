@@ -3,6 +3,13 @@
 # Full Migration Script
 # This script resets the database and runs all migration phases in order
 #
+# Usage: ./scripts/run-full-migration.sh [SQL_DUMP_FILE]
+#
+# Arguments:
+#   SQL_DUMP_FILE   Path to the MySQL dump file (optional)
+#                   Default: ./nabostylisten_dump.sql
+#                   Example: ./nabostylisten_prod.sql
+#
 # MIGRATION SCOPE (Updated):
 # Phase 1: Users (buyer + stylist → profiles + stylist_details + user_preferences)
 # Phase 2: Addresses (MySQL address → PostgreSQL addresses with PostGIS)
@@ -29,7 +36,21 @@
 # Don't exit on error - we want to handle migration warnings gracefully
 set +e
 
+# Parse command line arguments
+SQL_DUMP_FILE="${1:-./nabostylisten_dump.sql}"
+
+# Validate that the SQL dump file exists
+if [ ! -f "$SQL_DUMP_FILE" ]; then
+    echo "❌ Error: SQL dump file not found: $SQL_DUMP_FILE"
+    echo ""
+    echo "Usage: $0 [SQL_DUMP_FILE]"
+    echo "Example: $0 ./nabostylisten_prod.sql"
+    exit 1
+fi
+
 echo "🚀 Starting Full Migration Process"
+echo "================================================================"
+echo "📁 Using SQL dump file: $SQL_DUMP_FILE"
 echo "================================================================"
 
 # Colors for output
@@ -75,9 +96,10 @@ WARNING_PHASES=()
 
 for phase in "${PHASES[@]}"; do
     print_info "Running Phase $phase..."
-    
+
     # Capture both output and exit code
-    if output=$(bun scripts/migration/run-phase-$phase.ts 2>&1); then
+    # Pass the SQL dump file as environment variable
+    if output=$(MYSQL_DUMP_PATH="$SQL_DUMP_FILE" bun scripts/migration/run-phase-$phase.ts 2>&1); then
         # Phase completed successfully
         print_status "Phase $phase completed successfully"
         SUCCESSFUL_PHASES+=($phase)

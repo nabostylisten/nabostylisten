@@ -114,14 +114,50 @@ brew install mysql@8.0
 
 ## File Output
 
-- **Dump File**: `nabostylisten_dump.sql`
+- **Dump File**: `nabostylisten_dump.sql` (or custom filename)
 - **Location**: Current working directory
 - **Contains**: Complete database schema and data from snapshot timestamp
+
+## Migration Script Configuration
+
+The migration scripts can now accept custom SQL dump file paths:
+
+### Running Full Migration with Custom Dump File
+
+```bash
+# Use default nabostylisten_dump.sql
+./scripts/run-full-migration.sh
+
+# Use production dump file
+./scripts/run-full-migration.sh ./nabostylisten_prod.sql
+
+# Use custom path
+./scripts/run-full-migration.sh /path/to/custom/dump.sql
+```
+
+### Environment Variable Configuration
+
+All migration scripts now support the `MYSQL_DUMP_PATH` environment variable:
+
+```bash
+# Set environment variable for individual scripts
+MYSQL_DUMP_PATH="./nabostylisten_prod.sql" bun scripts/migration/run-phase-1.ts
+
+# Or export for session
+export MYSQL_DUMP_PATH="./nabostylisten_prod.sql"
+bun scripts/migration/run-phase-1.ts
+```
+
+### Production vs Development Dumps
+
+- **Development Dump**: `nabostylisten_dump.sql` (default)
+- **Production Dump**: `nabostylisten_prod.sql` (recommended naming)
+- **Custom Dumps**: Any `.sql` file with the same schema structure
 
 ## Next Steps
 
 1. Analyze dump file schema structure
-2. Map old schema to new Supabase PostgreSQL schema  
+2. Map old schema to new Supabase PostgreSQL schema
 3. Create migration scripts
-4. Test migration process
-5. Execute production migration
+4. Test migration process with development dump
+5. Execute production migration with production dump

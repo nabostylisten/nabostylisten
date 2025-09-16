@@ -1313,6 +1313,46 @@ CREATE INDEX IF NOT EXISTS idx_payments_affiliate_id ON public.payments(affiliat
 CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON public.payments(booking_id);
 CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
 
+-- Function to get all addresses with user data for map display
+CREATE OR REPLACE FUNCTION public.get_map_addresses()
+RETURNS TABLE (
+  id uuid,
+  user_id uuid,
+  nickname text,
+  street_address text,
+  city text,
+  postal_code text,
+  country text,
+  latitude float,
+  longitude float,
+  user_role user_role,
+  user_name text,
+  user_email text,
+  is_primary boolean
+)
+SET search_path = ''
+LANGUAGE sql
+AS $$
+  SELECT
+    a.id,
+    a.user_id,
+    a.nickname,
+    a.street_address,
+    a.city,
+    a.postal_code,
+    a.country,
+    gis.st_y(a.location::gis.geometry) as latitude,
+    gis.st_x(a.location::gis.geometry) as longitude,
+    p.role as user_role,
+    p.full_name as user_name,
+    p.email as user_email,
+    a.is_primary
+  FROM public.addresses a
+  INNER JOIN public.profiles p ON a.user_id = p.id
+  WHERE a.location IS NOT NULL
+  ORDER BY p.role, a.city;
+$$;
+
 -- ================== DEFAULT DATA ==================
 -- Platform configuration will be managed at the application level
 -- No automatic insertion of platform config data

@@ -892,3 +892,25 @@
 [2025-08-27T18:53:40.850Z] [WARN ]    ⚠️  Missing reviews: 6
 [2025-08-27T18:53:40.851Z] [WARN ] ⚠️  CREATION FAILURES:
 [2025-08-27T18:53:40.851Z] [WARN ]    • Failed review creations: 2
+[2025-09-16T17:35:00.163Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:35:00.163Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:36:38.683Z] [WARN ] Migration stopped due to error. To resume:
+[2025-09-16T17:36:43.223Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:36:43.223Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:37:53.853Z] [WARN ] Email already exists in Supabase: test@bh.com
+Data: {
+  "original_id": "ffcbe12d-982a-43d0-bfe5-b95d5c2e2812",
+  "role": "stylist"
+}
+[2025-09-16T17:37:54.360Z] [WARN ] Migration stopped due to error. To resume:
+[2025-09-16T17:39:16.696Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:39:16.696Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:40:56.171Z] [WARN ] Migration stopped due to error. To resume:
+[2025-09-16T17:41:01.808Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:41:01.809Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:42:12.635Z] [WARN ] Email already exists in Supabase: test@bh.com
+Data: {
+  "original_id": "ffcbe12d-982a-43d0-bfe5-b95d5c2e2812",
+  "role": "stylist"
+}
+[2025-09-16T17:42:13.141Z] [WARN ] Migration stopped due to error. To resume:

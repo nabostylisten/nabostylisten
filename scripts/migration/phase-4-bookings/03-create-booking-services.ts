@@ -68,7 +68,7 @@ export async function createBookingServices(): Promise<void> {
     logger.info(`Found ${fromJsonFields} booking-service relationships from JSON fields`);
     
     // Parse MySQL dump for booking_services_service junction table
-    const dumpPath = path.join(process.cwd(), 'nabostylisten_dump.sql');
+    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), 'nabostylisten_dump.sql');
     const parser = new MySQLParser(dumpPath, logger);
     
     logger.info('Parsing booking_services_service junction table from MySQL dump...');

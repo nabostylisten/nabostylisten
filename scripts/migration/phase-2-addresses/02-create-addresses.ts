@@ -17,7 +17,7 @@ import { MigrationDatabase } from '../shared/database';
 import type { AddressMigrationStats, MigrationProgress } from '../shared/types';
 import type { Database } from '@/types/database.types';
 
-// Processed address from Step 1
+// Processed address from Step 1 (enhanced with geocoding)
 interface ProcessedAddress {
   id: string;
   user_id: string;
@@ -28,12 +28,50 @@ interface ProcessedAddress {
   country_code: string | null;
   nickname: string | null;
   entry_instructions: string | null;
-  location: string | null; // PostGIS POINT format or null
+  location: string | null; // PostGIS POINT format
   is_primary: boolean;
   created_at: string;
   updated_at: string;
   source_table: 'buyer' | 'stylist';
   original_id: string;
+  geocoding_confidence: 'high' | 'medium' | 'low' | 'none';
+}
+
+/**
+ * Parse PostGIS POINT format and convert to geography type
+ * Input: "POINT(lng lat)"
+ * Output: Valid PostGIS geography value
+ */
+function parsePostGISPoint(pointStr: string): string | null {
+  if (!pointStr || !pointStr.startsWith('POINT(')) {
+    return null;
+  }
+
+  try {
+    // Extract coordinates from POINT(lng lat) format
+    const match = pointStr.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
+    if (!match) {
+      return null;
+    }
+
+    const lng = parseFloat(match[1]);
+    const lat = parseFloat(match[2]);
+
+    // Validate coordinates
+    if (isNaN(lng) || isNaN(lat)) {
+      return null;
+    }
+
+    // Basic validation for Nordic region
+    if (lng < -10 || lng > 35 || lat < 50 || lat > 75) {
+      return null;
+    }
+
+    // Return as PostGIS geography (SRID 4326)
+    return `POINT(${lng} ${lat})`;
+  } catch (error) {
+    return null;
+  }
 }
 
 async function main() {
@@ -72,12 +110,21 @@ async function main() {
       supabase_id: string;
       user_id: string;
       city: string | null;
+      has_coordinates: boolean;
+      geocoding_confidence: string;
       success: boolean;
       error?: string;
     }> = [];
 
     let created = 0;
     let errors = 0;
+    let coordinated = 0; // Addresses with coordinates
+    const geocodingStats = {
+      high: 0,
+      medium: 0,
+      low: 0,
+      none: 0
+    };
 
     // Process addresses in batches
     const batchSize = 50;
@@ -100,7 +147,7 @@ async function main() {
       };
       logger.progress(progress);
 
-      // Prepare batch of address records
+      // Prepare batch of address records with PostGIS geography
       const addressBatch: Database['public']['Tables']['addresses']['Insert'][] = batch.map(address => ({
         id: address.id,
         user_id: address.user_id,
@@ -111,8 +158,8 @@ async function main() {
         country_code: address.country_code,
         nickname: address.nickname,
         entry_instructions: address.entry_instructions,
-        // Note: PostGIS location will be handled separately if needed
-        location: null, // For now, skip coordinates due to binary format issues
+        // PostGIS geography: Convert POINT(lng lat) to geography type
+        location: address.location ? parsePostGISPoint(address.location) : null,
         is_primary: address.is_primary,
         created_at: address.created_at,
         updated_at: address.updated_at
@@ -132,8 +179,14 @@ async function main() {
               supabase_id: address.id,
               user_id: address.user_id,
               city: address.city,
+              has_coordinates: !!address.location,
+              geocoding_confidence: address.geocoding_confidence,
               success: true
             });
+
+            // Track statistics
+            if (address.location) coordinated++;
+            geocodingStats[address.geocoding_confidence]++;
           });
 
           created += batchResult.inserted;
@@ -152,7 +205,7 @@ async function main() {
               country_code: address.country_code,
               nickname: address.nickname,
               entry_instructions: address.entry_instructions,
-              location: null,
+              location: address.location ? parsePostGISPoint(address.location) : null,
               is_primary: address.is_primary,
               created_at: address.created_at,
               updated_at: address.updated_at
@@ -166,8 +219,14 @@ async function main() {
                 supabase_id: address.id,
                 user_id: address.user_id,
                 city: address.city,
+                has_coordinates: !!address.location,
+                geocoding_confidence: address.geocoding_confidence,
                 success: true
               });
+
+              // Track statistics
+              if (address.location) coordinated++;
+              geocodingStats[address.geocoding_confidence]++;
               created++;
             } else {
               logger.error(`Failed to create address for user ${address.user_id}`, individualResult.error);
@@ -176,6 +235,8 @@ async function main() {
                 supabase_id: address.id,
                 user_id: address.user_id,
                 city: address.city,
+                has_coordinates: !!address.location,
+                geocoding_confidence: address.geocoding_confidence,
                 success: false,
                 error: individualResult.error
               });
@@ -195,6 +256,8 @@ async function main() {
             supabase_id: address.id,
             user_id: address.user_id,
             city: address.city,
+            has_coordinates: !!address.location,
+            geocoding_confidence: address.geocoding_confidence,
             success: false,
             error: errorMessage
           });
@@ -218,7 +281,9 @@ async function main() {
         created_at: new Date().toISOString(),
         total_processed: addresses.length,
         successful: created,
-        errors
+        errors,
+        addresses_with_coordinates: coordinated,
+        geocoding_confidence_distribution: geocodingStats
       },
       results
     }, null, 2));
@@ -229,10 +294,17 @@ async function main() {
     // Get final database counts for verification
     const counts = await database.getCurrentCounts();
 
+    // Generate geocoding summary
+    const geocodingPercentage = coordinated > 0 ? Math.round((coordinated / created) * 100) : 0;
+    const geocodingSummary = `${geocodingStats.high} high, ${geocodingStats.medium} medium, ${geocodingStats.low} low, ${geocodingStats.none} none`;
+
     // Log summary
     logger.stats('Address Creation Summary', {
       'Total Addresses to Create': addresses.length,
       'Successfully Created': created,
+      'Addresses with Coordinates': `${coordinated} (${geocodingPercentage}%)`,
+      'Geocoding Confidence': geocodingSummary,
+      'Mapbox Enhanced': geocodingStats.high + geocodingStats.medium > 0 ? '✅ Yes' : '⚠️  No coordinates found',
       'Errors': errors,
       'Success Rate': addresses.length > 0 ? `${Math.round((created / addresses.length) * 100)}%` : '0%',
       'Database Address Count': counts.addresses,

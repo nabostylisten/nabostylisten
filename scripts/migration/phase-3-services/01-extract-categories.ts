@@ -43,7 +43,7 @@ export async function extractCategories(): Promise<void> {
     logger.info('Starting Phase 3 Step 1: Extract Categories');
     
     // Parse MySQL dump for category and subcategory data
-    const dumpPath = path.join(process.cwd(), 'nabostylisten_dump.sql');
+    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), 'nabostylisten_dump.sql');
     const parser = new MySQLParser(dumpPath, logger);
     
     logger.info('Parsing categories from MySQL dump...');

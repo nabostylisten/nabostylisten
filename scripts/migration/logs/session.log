@@ -18588,3 +18588,2349 @@ Data: {
 [2025-08-27T18:53:40.851Z] [INFO ]    • 4 stars: 0 (0.0%)
 [2025-08-27T18:53:40.851Z] [INFO ]    • 5 stars: 1 (50.0%)
 [2025-08-27T18:53:40.851Z] [INFO ] 📄 Detailed statistics saved to: /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/phase-7-migration-stats.json
+
+
+=== Migration Session Started: 2025-09-16T17:35:00.026Z ===
+[2025-09-16T17:35:00.027Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-09-16T17:35:00.028Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-09-16T17:35:00.028Z] [INFO ] Verifying prerequisites...
+[2025-09-16T17:35:00.028Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-09-16T17:35:00.044Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:35:00.065Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-09-16T17:35:00.065Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-09-16T17:35:00.066Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:35:00.106Z ===
+[2025-09-16T17:35:00.107Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-09-16T17:35:00.119Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:35:00.120Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-09-16T17:35:00.126Z] [SUCCESS] Parsed 278 records from buyer
+[2025-09-16T17:35:00.126Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-09-16T17:35:00.140Z] [SUCCESS] Parsed 221 records from stylist
+[2025-09-16T17:35:00.141Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:35:00.141Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:35:00.141Z] [INFO ] Extracting user data from MySQL dump...
+[2025-09-16T17:35:00.141Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-09-16T17:35:00.145Z] [SUCCESS] Extracted 278 buyer records
+[2025-09-16T17:35:00.146Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-09-16T17:35:00.160Z] [SUCCESS] Extracted 221 stylist records
+[2025-09-16T17:35:00.160Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-09-16T17:35:00.161Z] [INFO ] Validating extracted user data...
+[2025-09-16T17:35:00.161Z] [INFO ] Validating buyer records
+[2025-09-16T17:35:00.162Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-09-16T17:35:00.162Z] [INFO ] Validating stylist records
+[2025-09-16T17:35:00.162Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-09-16T17:35:00.162Z] [ERROR] Validation found 2 errors
+[2025-09-16T17:35:00.163Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:35:00.163Z] [INFO ] Identifying duplicate users...
+[2025-09-16T17:35:00.163Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-09-16T17:35:00.163Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-09-16T17:35:00.163Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:35:00.164Z] [INFO ] Consolidating user data...
+[2025-09-16T17:35:00.164Z] [INFO ] Consolidating users with deduplication
+[2025-09-16T17:35:00.165Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-09-16T17:35:00.165Z] [INFO ] Validating consolidated user data...
+[2025-09-16T17:35:00.165Z] [INFO ] Validating consolidated user records
+[2025-09-16T17:35:00.165Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-09-16T17:35:00.165Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-09-16T17:35:00.168Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-09-16T17:35:00.168Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-09-16T17:35:00.170Z] [SUCCESS] ✅ Step 1: Extract Users completed in 0s
+[2025-09-16T17:35:00.171Z] [INFO ] 
+📋 Step 2: Create Auth Users & Profiles: Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)
+[2025-09-16T17:35:00.171Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:35:00.241Z ===
+[2025-09-16T17:35:00.242Z] [INFO ] === Phase 1 Step 2: Create Supabase Auth Users ===
+[2025-09-16T17:35:00.256Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:35:00.256Z] [INFO ] Loading consolidated user data...
+[2025-09-16T17:35:00.257Z] [INFO ] Loaded 437 consolidated users
+[2025-09-16T17:36:38.592Z] [INFO ] Auth User Creation Summary:
+  Total Processed: 437
+  Successfully Created: 437
+  Skipped (Already Exists): 0
+  Errors: 0
+  Success Rate: 100%
+  Status: ✅ SUCCESS
+[2025-09-16T17:36:38.592Z] [SUCCESS] Phase 1 Step 2 completed
+Data: {
+  "auth_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/auth-users-created.json",
+  "user_mapping_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-id-mapping.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-09-16T17:36:38.594Z] [SUCCESS] ✅ Step 2: Create Auth Users & Profiles completed in 98s
+[2025-09-16T17:36:38.594Z] [INFO ] 
+📋 Step 3: Create Stylist Details: Create stylist-specific data records
+[2025-09-16T17:36:38.594Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/04-create-stylist-details.ts
+
+
+=== Migration Session Started: 2025-09-16T17:36:38.652Z ===
+[2025-09-16T17:36:38.654Z] [INFO ] === Phase 1 Step 4: Create Stylist Details Records ===
+[2025-09-16T17:36:38.679Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:36:38.679Z] [INFO ] Loading data files...
+[2025-09-16T17:36:38.680Z] [ERROR] Phase 1 Step 4 failed
+Data: {
+  "message": "No such file or directory",
+  "stack": "ENOENT: No such file or directory\n    at readFileSync (native)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/04-create-stylist-details.ts:41:39)"
+}
+[2025-09-16T17:36:38.682Z] [ERROR] ❌ Step 3: Create Stylist Details failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:36:38.683Z] [WARN ] Migration stopped due to error. To resume:
+[2025-09-16T17:36:38.683Z] [INFO ] 1. Fix the error in phase-1-users/04-create-stylist-details.ts
+[2025-09-16T17:36:38.683Z] [INFO ] 2. Re-run this script - it will continue from where it left off
+[2025-09-16T17:36:38.683Z] [INFO ] 3. Or run individual scripts manually for debugging
+[2025-09-16T17:36:38.683Z] [ERROR] ❌ Phase 1 migration failed after 99s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:36:38.683Z] [INFO ] 
+Troubleshooting:
+[2025-09-16T17:36:38.683Z] [INFO ] 1. Check the error logs above
+[2025-09-16T17:36:38.683Z] [INFO ] 2. Verify database connection and credentials
+[2025-09-16T17:36:38.683Z] [INFO ] 3. Check that the MySQL dump file exists and is readable
+[2025-09-16T17:36:38.683Z] [INFO ] 4. Run individual scripts to isolate the issue
+
+
+=== Migration Session Started: 2025-09-16T17:36:43.081Z ===
+[2025-09-16T17:36:43.082Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-09-16T17:36:43.082Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-09-16T17:36:43.083Z] [INFO ] Verifying prerequisites...
+[2025-09-16T17:36:43.083Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-09-16T17:36:43.097Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:36:43.126Z] [INFO ] Initial Database State:
+  profiles: 437
+  stylist_details: 0
+  user_preferences: 437
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-09-16T17:36:43.127Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-09-16T17:36:43.127Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:36:43.168Z ===
+[2025-09-16T17:36:43.170Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-09-16T17:36:43.182Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:36:43.183Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-09-16T17:36:43.188Z] [SUCCESS] Parsed 278 records from buyer
+[2025-09-16T17:36:43.188Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-09-16T17:36:43.203Z] [SUCCESS] Parsed 221 records from stylist
+[2025-09-16T17:36:43.203Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:36:43.203Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:36:43.203Z] [INFO ] Extracting user data from MySQL dump...
+[2025-09-16T17:36:43.203Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-09-16T17:36:43.207Z] [SUCCESS] Extracted 278 buyer records
+[2025-09-16T17:36:43.208Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-09-16T17:36:43.221Z] [SUCCESS] Extracted 221 stylist records
+[2025-09-16T17:36:43.221Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-09-16T17:36:43.221Z] [INFO ] Validating extracted user data...
+[2025-09-16T17:36:43.221Z] [INFO ] Validating buyer records
+[2025-09-16T17:36:43.222Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-09-16T17:36:43.222Z] [INFO ] Validating stylist records
+[2025-09-16T17:36:43.222Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-09-16T17:36:43.223Z] [ERROR] Validation found 2 errors
+[2025-09-16T17:36:43.223Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:36:43.223Z] [INFO ] Identifying duplicate users...
+[2025-09-16T17:36:43.223Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-09-16T17:36:43.223Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-09-16T17:36:43.223Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:36:43.224Z] [INFO ] Consolidating user data...
+[2025-09-16T17:36:43.224Z] [INFO ] Consolidating users with deduplication
+[2025-09-16T17:36:43.225Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-09-16T17:36:43.225Z] [INFO ] Validating consolidated user data...
+[2025-09-16T17:36:43.225Z] [INFO ] Validating consolidated user records
+[2025-09-16T17:36:43.225Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-09-16T17:36:43.225Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-09-16T17:36:43.228Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-09-16T17:36:43.228Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-09-16T17:36:43.231Z] [SUCCESS] ✅ Step 1: Extract Users completed in 0s
+[2025-09-16T17:36:43.231Z] [INFO ] 
+📋 Step 2: Create Auth Users & Profiles: Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)
+[2025-09-16T17:36:43.231Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:36:43.271Z ===
+[2025-09-16T17:36:43.272Z] [INFO ] === Phase 1 Step 2: Create Supabase Auth Users ===
+[2025-09-16T17:36:43.286Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:36:43.286Z] [INFO ] Loading consolidated user data...
+[2025-09-16T17:36:43.287Z] [INFO ] Loaded 437 consolidated users
+[2025-09-16T17:36:43.296Z] [ERROR] Failed to create auth user: example@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:43.409Z] [ERROR] Failed to create auth user: swati@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:43.521Z] [ERROR] Failed to create auth user: five@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:43.630Z] [ERROR] Failed to create auth user: amadu@nabostylisten.no
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:43.739Z] [ERROR] Failed to create auth user: pooja@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:43.849Z] [ERROR] Failed to create auth user: shruti.a.kudache@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:43.956Z] [ERROR] Failed to create auth user: qqq@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:44.062Z] [ERROR] Failed to create auth user: sghosh1792@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:44.168Z] [ERROR] Failed to create auth user: hy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:44.275Z] [ERROR] Failed to create auth user: g@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:44.886Z] [ERROR] Failed to create auth user: nn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:44.994Z] [ERROR] Failed to create auth user: gfd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.108Z] [ERROR] Failed to create auth user: 123@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.218Z] [ERROR] Failed to create auth user: aa99@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.331Z] [ERROR] Failed to create auth user: rest@example.ccom
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.440Z] [ERROR] Failed to create auth user: taraa@examplee.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.554Z] [ERROR] Failed to create auth user: rty@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.669Z] [ERROR] Failed to create auth user: test@examplee.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.784Z] [ERROR] Failed to create auth user: tera@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:45.902Z] [ERROR] Failed to create auth user: ana@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:46.514Z] [ERROR] Failed to create auth user: bruh@this.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:46.628Z] [ERROR] Failed to create auth user: shreya@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:46.739Z] [ERROR] Failed to create auth user: user22@gh.ch
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:46.849Z] [ERROR] Failed to create auth user: tesrss@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:46.959Z] [ERROR] Failed to create auth user: werty@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:47.065Z] [ERROR] Failed to create auth user: hy1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:47.172Z] [ERROR] Failed to create auth user: tyert@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:47.285Z] [ERROR] Failed to create auth user: wqsdf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:47.398Z] [ERROR] Failed to create auth user: anushka9927@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:47.510Z] [ERROR] Failed to create auth user: hy2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.125Z] [ERROR] Failed to create auth user: hyfvbj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.237Z] [ERROR] Failed to create auth user: dacheq@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.357Z] [ERROR] Failed to create auth user: Okay@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.469Z] [ERROR] Failed to create auth user: rs@exmp.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.589Z] [ERROR] Failed to create auth user: uyfg@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.702Z] [ERROR] Failed to create auth user: test@examc.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.814Z] [ERROR] Failed to create auth user: pl@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:48.925Z] [ERROR] Failed to create auth user: nkn@GMAIL.COM
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:49.034Z] [ERROR] Failed to create auth user: ytrf@exam.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:49.142Z] [ERROR] Failed to create auth user: kilk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:49.753Z] [ERROR] Failed to create auth user: pooja@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:49.865Z] [ERROR] Failed to create auth user: shruti.a.kudache@gmail.commm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:49.975Z] [ERROR] Failed to create auth user: treww@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:50.085Z] [ERROR] Failed to create auth user: jhhgbk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:50.197Z] [ERROR] Failed to create auth user: uy@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:50.304Z] [ERROR] Failed to create auth user: asb@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:50.416Z] [ERROR] Failed to create auth user: test99@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:50.526Z] [ERROR] Failed to create auth user: njhv@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:50.643Z] [ERROR] Failed to create auth user: a@mm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:50.753Z] [ERROR] Failed to create auth user: sdf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:51.362Z] [ERROR] Failed to create auth user: sss@ss.ss
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:51.470Z] [ERROR] Failed to create auth user: iuy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:51.586Z] [ERROR] Failed to create auth user: hbuy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:51.699Z] [ERROR] Failed to create auth user: jijuhi@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:51.808Z] [ERROR] Failed to create auth user: yt@examplee.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:51.923Z] [ERROR] Failed to create auth user: dsa@sd.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:52.043Z] [ERROR] Failed to create auth user: c@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:52.152Z] [ERROR] Failed to create auth user: bruh@this4.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:52.268Z] [ERROR] Failed to create auth user: shruti@mail.bb
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:52.381Z] [ERROR] Failed to create auth user: asas@hm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:52.992Z] [ERROR] Failed to create auth user: hgfhb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.106Z] [ERROR] Failed to create auth user: sigurd.skaare@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.217Z] [ERROR] Failed to create auth user: tert@exammple.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.329Z] [ERROR] Failed to create auth user: oknk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.439Z] [ERROR] Failed to create auth user: dd44@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.553Z] [ERROR] Failed to create auth user: aew@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.670Z] [ERROR] Failed to create auth user: tredd@exmp.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.785Z] [ERROR] Failed to create auth user: tes@exmp.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:53.898Z] [ERROR] Failed to create auth user: user21@gg.gg
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:54.011Z] [ERROR] Failed to create auth user: ky4@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:54.623Z] [ERROR] Failed to create auth user: jkj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:54.741Z] [ERROR] Failed to create auth user: yaart@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:54.860Z] [ERROR] Failed to create auth user: testyu@t.cooo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:54.978Z] [ERROR] Failed to create auth user: hy3@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:55.088Z] [ERROR] Failed to create auth user: Tyyy@exm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:55.201Z] [ERROR] Failed to create auth user: yt@example.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:55.311Z] [ERROR] Failed to create auth user: hy12@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:55.423Z] [ERROR] Failed to create auth user: tf@rf.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:55.535Z] [ERROR] Failed to create auth user: testing4@abc.uj
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:55.647Z] [ERROR] Failed to create auth user: amduskole@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:56.260Z] [ERROR] Failed to create auth user: test@gm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:56.379Z] [ERROR] Failed to create auth user: mkjgh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:56.485Z] [ERROR] Failed to create auth user: jhbu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:56.599Z] [ERROR] Failed to create auth user: 0@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:56.710Z] [ERROR] Failed to create auth user: api@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:56.821Z] [ERROR] Failed to create auth user: y@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:56.932Z] [ERROR] Failed to create auth user: aa12@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:57.050Z] [ERROR] Failed to create auth user: test24@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:57.156Z] [ERROR] Failed to create auth user: test97@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:57.265Z] [ERROR] Failed to create auth user: jnuhuh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:57.882Z] [ERROR] Failed to create auth user: uri@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:57.992Z] [ERROR] Failed to create auth user: nb@nb.mn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.105Z] [ERROR] Failed to create auth user: test@exampll.cco
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.221Z] [ERROR] Failed to create auth user: bgvhg@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.333Z] [ERROR] Failed to create auth user: yt@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.446Z] [ERROR] Failed to create auth user: test@tg.nh
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.559Z] [ERROR] Failed to create auth user: trt@gh.hm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.670Z] [ERROR] Failed to create auth user: testexample@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.780Z] [ERROR] Failed to create auth user: east@examle.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:58.892Z] [ERROR] Failed to create auth user: Ytcg@examplee.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:59.590Z] [ERROR] Failed to create auth user: yt@gmai.cm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:59.706Z] [ERROR] Failed to create auth user: sdd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:59.822Z] [ERROR] Failed to create auth user: try@exampl.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:36:59.937Z] [ERROR] Failed to create auth user: ky5@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:00.049Z] [ERROR] Failed to create auth user: testemail@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:00.159Z] [ERROR] Failed to create auth user: ter@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:00.272Z] [ERROR] Failed to create auth user: y@t.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:00.384Z] [ERROR] Failed to create auth user: ky1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:00.493Z] [ERROR] Failed to create auth user: bruh@thisi2.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:00.607Z] [ERROR] Failed to create auth user: sv@s.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:01.223Z] [ERROR] Failed to create auth user: gvfffv@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:01.335Z] [ERROR] Failed to create auth user: te@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:01.441Z] [ERROR] Failed to create auth user: test88@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:01.549Z] [ERROR] Failed to create auth user: kjmk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:01.663Z] [ERROR] Failed to create auth user: yt@expcc.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:01.776Z] [ERROR] Failed to create auth user: ytw@e.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:01.891Z] [ERROR] Failed to create auth user: tara@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:02.008Z] [ERROR] Failed to create auth user: chaudharyamit61900@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:02.123Z] [ERROR] Failed to create auth user: hgfb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:02.231Z] [ERROR] Failed to create auth user: ty1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:02.843Z] [ERROR] Failed to create auth user: tr@hgg.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:02.953Z] [ERROR] Failed to create auth user: jhin@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.061Z] [ERROR] Failed to create auth user: test123@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.170Z] [ERROR] Failed to create auth user: test89@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.281Z] [ERROR] Failed to create auth user: tc@tv.bh
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.393Z] [ERROR] Failed to create auth user: jhgb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.503Z] [ERROR] Failed to create auth user: aa66@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.613Z] [ERROR] Failed to create auth user: res@EXAMPLE.COM
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.730Z] [ERROR] Failed to create auth user: oijn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:03.838Z] [ERROR] Failed to create auth user: ters@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:04.445Z] [ERROR] Failed to create auth user: rahul.f444@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:04.551Z] [ERROR] Failed to create auth user: tesr@example.voo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:04.660Z] [ERROR] Failed to create auth user: tara@examplee.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:04.768Z] [ERROR] Failed to create auth user: asef@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:04.877Z] [ERROR] Failed to create auth user: yyy@examle.bo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:04.994Z] [ERROR] Failed to create auth user: rest@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:05.104Z] [ERROR] Failed to create auth user: jaco@example.cco
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:05.221Z] [ERROR] Failed to create auth user: oiujbn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:05.335Z] [ERROR] Failed to create auth user: side@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:05.452Z] [ERROR] Failed to create auth user: sk4@gh.im
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.067Z] [ERROR] Failed to create auth user: ryt@exapl.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.179Z] [ERROR] Failed to create auth user: tr@exam.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.290Z] [ERROR] Failed to create auth user: ytr@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.402Z] [ERROR] Failed to create auth user: uyt@example.cooo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.517Z] [ERROR] Failed to create auth user: tesrtt@example.conn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.624Z] [ERROR] Failed to create auth user: lkjmi@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.733Z] [ERROR] Failed to create auth user: test@exapmplee.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.849Z] [ERROR] Failed to create auth user: khunl@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:06.961Z] [ERROR] Failed to create auth user: unow@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:07.074Z] [ERROR] Failed to create auth user: yt@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:07.687Z] [ERROR] Failed to create auth user: purplearjun@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:07.796Z] [ERROR] Failed to create auth user: yuop@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:07.910Z] [ERROR] Failed to create auth user: Example@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:08.023Z] [ERROR] Failed to create auth user: testing4@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:08.141Z] [ERROR] Failed to create auth user: wer@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:08.252Z] [ERROR] Failed to create auth user: hy4@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:08.367Z] [ERROR] Failed to create auth user: jkhnj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:08.480Z] [ERROR] Failed to create auth user: ss@ss.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:08.593Z] [ERROR] Failed to create auth user: testinguser5@gh.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:08.701Z] [ERROR] Failed to create auth user: apir@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:09.314Z] [ERROR] Failed to create auth user: mko@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:09.424Z] [ERROR] Failed to create auth user: yr@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:09.536Z] [ERROR] Failed to create auth user: fsdfaasdf@awdfdsafds.sda
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:09.647Z] [ERROR] Failed to create auth user: tara@exxample.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:09.757Z] [ERROR] Failed to create auth user: Test@exakpl.vom
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:09.869Z] [ERROR] Failed to create auth user: testing5@gh.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:09.982Z] [ERROR] Failed to create auth user: s@gg.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:10.101Z] [ERROR] Failed to create auth user: limii@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:10.211Z] [ERROR] Failed to create auth user: tata@examplee.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:10.324Z] [ERROR] Failed to create auth user: rest@examplee.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:10.940Z] [ERROR] Failed to create auth user: jhbj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.056Z] [ERROR] Failed to create auth user: testshrutiqa@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.172Z] [ERROR] Failed to create auth user: qwew@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.282Z] [ERROR] Failed to create auth user: jjj@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.392Z] [ERROR] Failed to create auth user: tr@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.497Z] [ERROR] Failed to create auth user: chef@ama.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.603Z] [ERROR] Failed to create auth user: task@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.713Z] [ERROR] Failed to create auth user: tre@r.so
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.823Z] [ERROR] Failed to create auth user: ty@gm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:11.932Z] [ERROR] Failed to create auth user: mn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:12.552Z] [ERROR] Failed to create auth user: jh@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:12.661Z] [ERROR] Failed to create auth user: qwer@example.cco
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:12.774Z] [ERROR] Failed to create auth user: kmui@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:12.881Z] [ERROR] Failed to create auth user: Gh@h.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:12.989Z] [ERROR] Failed to create auth user: thh@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:13.101Z] [ERROR] Failed to create auth user: iuyn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:13.210Z] [ERROR] Failed to create auth user: test@nbv.mn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:13.325Z] [ERROR] Failed to create auth user: iuh@exampe.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:13.438Z] [ERROR] Failed to create auth user: aa77@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:13.548Z] [ERROR] Failed to create auth user: aa33@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.165Z] [ERROR] Failed to create auth user: dd55@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.274Z] [ERROR] Failed to create auth user: testff@example.coom
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.383Z] [ERROR] Failed to create auth user: testing2@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.493Z] [ERROR] Failed to create auth user: nhio@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.599Z] [ERROR] Failed to create auth user: hy11@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.705Z] [ERROR] Failed to create auth user: kimjuh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.814Z] [ERROR] Failed to create auth user: sss111@ss.ss
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:14.923Z] [ERROR] Failed to create auth user: tr@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:15.034Z] [ERROR] Failed to create auth user: dd11@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:15.145Z] [ERROR] Failed to create auth user: test23@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:15.761Z] [ERROR] Failed to create auth user: sfsfdsfa@dfdsaf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:15.866Z] [ERROR] Failed to create auth user: saas@exm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:15.981Z] [ERROR] Failed to create auth user: trr@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:16.096Z] [ERROR] Failed to create auth user: trp@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:16.210Z] [ERROR] Failed to create auth user: iuhni@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:16.336Z] [ERROR] Failed to create auth user: dd33@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:16.454Z] [ERROR] Failed to create auth user: rita@examople.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:16.569Z] [ERROR] Failed to create auth user: oiu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:16.678Z] [ERROR] Failed to create auth user: bruh@thisi4.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:16.786Z] [ERROR] Failed to create auth user: indi@examplee.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:17.396Z] [ERROR] Failed to create auth user: ky3@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:17.503Z] [ERROR] Failed to create auth user: ky2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:17.614Z] [ERROR] Failed to create auth user: ty@gf.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:17.734Z] [ERROR] Failed to create auth user: aa88@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:17.849Z] [ERROR] Failed to create auth user: iuhnh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:17.961Z] [ERROR] Failed to create auth user: gt@rft.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:18.077Z] [ERROR] Failed to create auth user: 1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:18.188Z] [ERROR] Failed to create auth user: uno@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:18.299Z] [ERROR] Failed to create auth user: ss11@ss.ss
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:18.407Z] [ERROR] Failed to create auth user: asdsd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.024Z] [ERROR] Failed to create auth user: hbf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.135Z] [ERROR] Failed to create auth user: rrr@rrr.rrr
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.243Z] [ERROR] Failed to create auth user: test2test@gmaill.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.353Z] [ERROR] Failed to create auth user: india@examplee.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.462Z] [ERROR] Failed to create auth user: aa44@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.570Z] [ERROR] Failed to create auth user: hngbuj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.679Z] [ERROR] Failed to create auth user: yt@uyt.bo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.789Z] [ERROR] Failed to create auth user: six@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:19.897Z] [ERROR] Failed to create auth user: te@gmans.ns
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:20.006Z] [ERROR] Failed to create auth user: bruh@thisi3.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:20.620Z] [ERROR] Failed to create auth user: s@s.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:20.743Z] [ERROR] Failed to create auth user: tesfcgd@gmai.cin
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:20.856Z] [ERROR] Failed to create auth user: aa11@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:20.969Z] [ERROR] Failed to create auth user: es@exapml.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:21.080Z] [ERROR] Failed to create auth user: ihy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:21.198Z] [ERROR] Failed to create auth user: test@twstexample.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:21.308Z] [ERROR] Failed to create auth user: mnj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:21.418Z] [ERROR] Failed to create auth user: uyt@uj.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:21.526Z] [ERROR] Failed to create auth user: shreya17@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:21.633Z] [ERROR] Failed to create auth user: bullerina77@mail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:22.250Z] [ERROR] Failed to create auth user: poojadewani21@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:22.367Z] [ERROR] Failed to create auth user: ty2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:22.491Z] [ERROR] Failed to create auth user: tr@gg.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:22.598Z] [ERROR] Failed to create auth user: hyvfujb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:22.709Z] [ERROR] Failed to create auth user: qwes@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:22.822Z] [ERROR] Failed to create auth user: ab@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:22.928Z] [ERROR] Failed to create auth user: c@cc.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:23.037Z] [ERROR] Failed to create auth user: chatgp@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:23.145Z] [ERROR] Failed to create auth user: trfwf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:23.259Z] [ERROR] Failed to create auth user: adad@aad.ck
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:23.872Z] [ERROR] Failed to create auth user: tr@rt.bv
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:23.983Z] [ERROR] Failed to create auth user: vc@vc.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.097Z] [ERROR] Failed to create auth user: avinash350@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.210Z] [ERROR] Failed to create auth user: swati1@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.323Z] [ERROR] Failed to create auth user: testuser1@ff.gg
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.439Z] [ERROR] Failed to create auth user: testingt@t.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.554Z] [ERROR] Failed to create auth user: ab12@ab.ab
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.663Z] [ERROR] Failed to create auth user: dust@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.770Z] [ERROR] Failed to create auth user: user23@tt.tt
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:24.877Z] [ERROR] Failed to create auth user: south@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:25.496Z] [ERROR] Failed to create auth user: awee@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:25.608Z] [ERROR] Failed to create auth user: sdma@gma.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:25.727Z] [ERROR] Failed to create auth user: iknh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:25.841Z] [ERROR] Failed to create auth user: yyyyy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:25.956Z] [ERROR] Failed to create auth user: ytuiu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:26.069Z] [ERROR] Failed to create auth user: hy5@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:26.185Z] [ERROR] Failed to create auth user: shruti@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:26.299Z] [ERROR] Failed to create auth user: west@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:26.416Z] [ERROR] Failed to create auth user: jhbjh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:26.530Z] [ERROR] Failed to create auth user: asdfsadf.dfsd@afdsfdfds.sdfs
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.151Z] [ERROR] Failed to create auth user: reta@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.265Z] [ERROR] Failed to create auth user: Yar@exm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.375Z] [ERROR] Failed to create auth user: oium@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.484Z] [ERROR] Failed to create auth user: tatas@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.591Z] [ERROR] Failed to create auth user: test@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.702Z] [ERROR] Failed to create auth user: tr@w.vb
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.814Z] [ERROR] Failed to create auth user: Fire@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:27.927Z] [ERROR] Failed to create auth user: repo@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:28.035Z] [ERROR] Failed to create auth user: ggh@exm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:28.143Z] [ERROR] Failed to create auth user: plot@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:28.757Z] [ERROR] Failed to create auth user: desy@exmample.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:28.870Z] [ERROR] Failed to create auth user: trd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:28.982Z] [ERROR] Failed to create auth user: plot6@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:29.093Z] [ERROR] Failed to create auth user: sfsdfas@fafsd.dfdf
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:29.203Z] [ERROR] Failed to create auth user: adsfkk@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:29.315Z] [ERROR] Failed to create auth user: shruti29kudache@gma.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:29.431Z] [ERROR] Failed to create auth user: ouiasd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:29.542Z] [ERROR] Failed to create auth user: yrt@exampp.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:29.659Z] [ERROR] Failed to create auth user: stylist4@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:29.772Z] [ERROR] Failed to create auth user: pooja@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:30.387Z] [ERROR] Failed to create auth user: stylistsix@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:30.500Z] [ERROR] Failed to create auth user: stylist8@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:30.607Z] [ERROR] Failed to create auth user: ss@sp.ci
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:30.726Z] [ERROR] Failed to create auth user: testttt@example.voo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:30.839Z] [ERROR] Failed to create auth user: abc@xyz.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:30.952Z] [ERROR] Failed to create auth user: indStylist3@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:31.068Z] [ERROR] Failed to create auth user: test@testng.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:31.184Z] [ERROR] Failed to create auth user: ssthree@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:31.298Z] [ERROR] Failed to create auth user: a@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:31.408Z] [ERROR] Failed to create auth user: amit99@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.026Z] [ERROR] Failed to create auth user: afdsfsd@esf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.137Z] [ERROR] Failed to create auth user: yfbu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.246Z] [ERROR] Failed to create auth user: jubgy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.361Z] [ERROR] Failed to create auth user: zx@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.476Z] [ERROR] Failed to create auth user: rahul111@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.593Z] [ERROR] Failed to create auth user: testSty5@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.702Z] [ERROR] Failed to create auth user: hybf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.821Z] [ERROR] Failed to create auth user: style1@a1.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:32.934Z] [ERROR] Failed to create auth user: oui@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:33.041Z] [ERROR] Failed to create auth user: zsfd@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:33.653Z] [ERROR] Failed to create auth user: havard@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:33.768Z] [ERROR] Failed to create auth user: z@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:33.883Z] [ERROR] Failed to create auth user: testSty6@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:33.995Z] [ERROR] Failed to create auth user: testw@examplee.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:34.109Z] [ERROR] Failed to create auth user: te@n.mn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:34.218Z] [ERROR] Failed to create auth user: hsj@hd.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:34.328Z] [ERROR] Failed to create auth user: plot2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:34.440Z] [ERROR] Failed to create auth user: sssss@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:34.555Z] [ERROR] Failed to create auth user: sdfadfd@fs.ere
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:34.665Z] [ERROR] Failed to create auth user: indStylist1@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:35.276Z] [ERROR] Failed to create auth user: shrutitestqa@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:35.388Z] [ERROR] Failed to create auth user: a1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:35.497Z] [ERROR] Failed to create auth user: ivarnakken1441@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:35.608Z] [ERROR] Failed to create auth user: gisf@cd.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:35.716Z] [ERROR] Failed to create auth user: dfsdgdsgf@fddsfaf.dfs
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:35.825Z] [ERROR] Failed to create auth user: avinash.hemagire@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:35.934Z] [ERROR] Failed to create auth user: 333@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:36.046Z] [ERROR] Failed to create auth user: tomas@tomaserdis.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:36.156Z] [ERROR] Failed to create auth user: avinash365@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:36.264Z] [ERROR] Failed to create auth user: plot3@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:36.874Z] [ERROR] Failed to create auth user: test903@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:36.987Z] [ERROR] Failed to create auth user: ss@ss.vv
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.101Z] [ERROR] Failed to create auth user: jay@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.215Z] [ERROR] Failed to create auth user: sdfsdfsdf@sdfsdf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.326Z] [ERROR] Failed to create auth user: shre@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.439Z] [ERROR] Failed to create auth user: test@examplee.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.550Z] [ERROR] Failed to create auth user: jay1@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.656Z] [ERROR] Failed to create auth user: test124@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.764Z] [ERROR] Failed to create auth user: indStylist2@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:37.881Z] [ERROR] Failed to create auth user: reall@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:38.493Z] [ERROR] Failed to create auth user: tr@r.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:38.610Z] [ERROR] Failed to create auth user: dsdgsfg@dfg.fds
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:38.724Z] [ERROR] Failed to create auth user: 111@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:38.837Z] [ERROR] Failed to create auth user: sk@sk.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:38.951Z] [ERROR] Failed to create auth user: amit92@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:39.069Z] [ERROR] Failed to create auth user: nabostylist@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:39.182Z] [ERROR] Failed to create auth user: teststy4@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:39.292Z] [ERROR] Failed to create auth user: aa@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:39.403Z] [ERROR] Failed to create auth user: sae@nabo.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:39.518Z] [ERROR] Failed to create auth user: d@j.ca
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.135Z] [ERROR] Failed to create auth user: testSty2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.249Z] [ERROR] Failed to create auth user: a@gma.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.370Z] [ERROR] Failed to create auth user: testSty7@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.480Z] [ERROR] Failed to create auth user: mhjhn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.587Z] [ERROR] Failed to create auth user: aaa@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.702Z] [ERROR] Failed to create auth user: hdhdh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.822Z] [ERROR] Failed to create auth user: test@vb.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:40.934Z] [ERROR] Failed to create auth user: jay123@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:41.051Z] [ERROR] Failed to create auth user: ss@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:41.163Z] [ERROR] Failed to create auth user: as@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:41.773Z] [ERROR] Failed to create auth user: ss@a.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:41.884Z] [ERROR] Failed to create auth user: sdfsdaff@dfd.fgf
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:41.999Z] [ERROR] Failed to create auth user: dsafsdfs@dsf.sf
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:42.107Z] [ERROR] Failed to create auth user: newsty@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:42.222Z] [ERROR] Failed to create auth user: asdd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:42.335Z] [ERROR] Failed to create auth user: dessy@xample.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:42.448Z] [ERROR] Failed to create auth user: ten@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:42.554Z] [ERROR] Failed to create auth user: taraaa@examplle.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:42.670Z] [ERROR] Failed to create auth user: stwo@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:42.785Z] [ERROR] Failed to create auth user: erer@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:43.401Z] [ERROR] Failed to create auth user: s@ss.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:43.519Z] [ERROR] Failed to create auth user: three@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:43.629Z] [ERROR] Failed to create auth user: qastylisttest@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:43.746Z] [ERROR] Failed to create auth user: ss@s.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:43.856Z] [ERROR] Failed to create auth user: ingeborg2809@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:43.970Z] [ERROR] Failed to create auth user: dgfg@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:44.080Z] [ERROR] Failed to create auth user: r@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:44.191Z] [ERROR] Failed to create auth user: stylist123@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:44.302Z] [ERROR] Failed to create auth user: zxc1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:44.413Z] [ERROR] Failed to create auth user: r@example1.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.022Z] [ERROR] Failed to create auth user: plot5@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.128Z] [ERROR] Failed to create auth user: stylist3@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.237Z] [ERROR] Failed to create auth user: ds@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.344Z] [ERROR] Failed to create auth user: test@test.ts
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.452Z] [ERROR] Failed to create auth user: adf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.566Z] [ERROR] Failed to create auth user: gshreya179@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.675Z] [ERROR] Failed to create auth user: zz@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.787Z] [ERROR] Failed to create auth user: yjbu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:45.901Z] [ERROR] Failed to create auth user: stylist7@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:46.012Z] [ERROR] Failed to create auth user: s@sa.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:46.628Z] [ERROR] Failed to create auth user: jhgjb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:46.742Z] [ERROR] Failed to create auth user: w@k.mj
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:46.850Z] [ERROR] Failed to create auth user: ooo@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:46.961Z] [ERROR] Failed to create auth user: command@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:47.074Z] [ERROR] Failed to create auth user: zxc@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:47.187Z] [ERROR] Failed to create auth user: nabosalonstylist@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:47.304Z] [ERROR] Failed to create auth user: shymu@mail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:47.416Z] [ERROR] Failed to create auth user: tr@ree.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:47.527Z] [ERROR] Failed to create auth user: sfive@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:47.644Z] [ERROR] Failed to create auth user: asd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:48.261Z] [ERROR] Failed to create auth user: ssfour@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:48.377Z] [ERROR] Failed to create auth user: stylist12@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:48.490Z] [ERROR] Failed to create auth user: aaaa@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:48.606Z] [ERROR] Failed to create auth user: d@ds.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:48.722Z] [ERROR] Failed to create auth user: rahul@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:48.836Z] [ERROR] Failed to create auth user: a@a.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:48.955Z] [ERROR] Failed to create auth user: qwewqe@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:49.070Z] [ERROR] Failed to create auth user: testSty1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:49.186Z] [ERROR] Failed to create auth user: htfvyj@examplle.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:49.298Z] [ERROR] Failed to create auth user: gt@g.bm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:49.917Z] [ERROR] Failed to create auth user: abc@axyz.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.028Z] [ERROR] Failed to create auth user: s@sc.cm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.141Z] [ERROR] Failed to create auth user: stylist11@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.258Z] [ERROR] Failed to create auth user: stylistseven@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.369Z] [ERROR] Failed to create auth user: twelve@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.482Z] [ERROR] Failed to create auth user: q@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.597Z] [ERROR] Failed to create auth user: dfd@sw.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.705Z] [ERROR] Failed to create auth user: test21@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.820Z] [ERROR] Failed to create auth user: four@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:50.931Z] [ERROR] Failed to create auth user: stylist1@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:51.549Z] [ERROR] Failed to create auth user: test123@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:51.668Z] [ERROR] Failed to create auth user: sd@exm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:51.775Z] [ERROR] Failed to create auth user: asdfsfadsfsd@sfesdfs.fdd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:51.885Z] [ERROR] Failed to create auth user: ddd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:51.997Z] [ERROR] Failed to create auth user: stylist6@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:52.111Z] [ERROR] Failed to create auth user: renuka@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:52.225Z] [ERROR] Failed to create auth user: stylist2@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:52.336Z] [ERROR] Failed to create auth user: adt@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:52.453Z] [ERROR] Failed to create auth user: efsdfsdf@edsf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:52.563Z] [ERROR] Failed to create auth user: mail@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:53.175Z] [ERROR] Failed to create auth user: qqaq@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:53.289Z] [ERROR] Failed to create auth user: test@ex.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:53.404Z] [ERROR] Failed to create auth user: testymirqa@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:53.522Z] [ERROR] Failed to create auth user: philip.cylo@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:53.632Z] [ERROR] Failed to create auth user: jninm@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:53.744Z] [ERROR] Failed to create auth user: kuhlni@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:37:53.853Z] [WARN ] Email already exists in Supabase: test@bh.com
+Data: {
+  "original_id": "ffcbe12d-982a-43d0-bfe5-b95d5c2e2812",
+  "role": "stylist"
+}
+[2025-09-16T17:37:54.357Z] [INFO ] Auth User Creation Summary:
+  Total Processed: 437
+  Successfully Created: 0
+  Skipped (Already Exists): 1
+  Errors: 436
+  Success Rate: 0%
+  Status: ❌ FAILED
+[2025-09-16T17:37:54.357Z] [ERROR] Phase 1 Step 2 failed
+Data: {
+  "message": "No auth users were created successfully",
+  "stack": "Error: No auth users were created successfully\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts:215:17)"
+}
+[2025-09-16T17:37:54.360Z] [ERROR] ❌ Step 2: Create Auth Users & Profiles failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:37:54.360Z] [WARN ] Migration stopped due to error. To resume:
+[2025-09-16T17:37:54.360Z] [INFO ] 1. Fix the error in phase-1-users/02-create-auth-users.ts
+[2025-09-16T17:37:54.360Z] [INFO ] 2. Re-run this script - it will continue from where it left off
+[2025-09-16T17:37:54.360Z] [INFO ] 3. Or run individual scripts manually for debugging
+[2025-09-16T17:37:54.360Z] [ERROR] ❌ Phase 1 migration failed after 71s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:37:54.360Z] [INFO ] 
+Troubleshooting:
+[2025-09-16T17:37:54.360Z] [INFO ] 1. Check the error logs above
+[2025-09-16T17:37:54.360Z] [INFO ] 2. Verify database connection and credentials
+[2025-09-16T17:37:54.360Z] [INFO ] 3. Check that the MySQL dump file exists and is readable
+[2025-09-16T17:37:54.360Z] [INFO ] 4. Run individual scripts to isolate the issue
+
+
+=== Migration Session Started: 2025-09-16T17:39:16.565Z ===
+[2025-09-16T17:39:16.566Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-09-16T17:39:16.566Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-09-16T17:39:16.566Z] [INFO ] Verifying prerequisites...
+[2025-09-16T17:39:16.566Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-09-16T17:39:16.578Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:39:16.599Z] [INFO ] Initial Database State:
+  profiles: 0
+  stylist_details: 0
+  user_preferences: 0
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-09-16T17:39:16.599Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-09-16T17:39:16.599Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:39:16.641Z ===
+[2025-09-16T17:39:16.642Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-09-16T17:39:16.654Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:39:16.655Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-09-16T17:39:16.660Z] [SUCCESS] Parsed 278 records from buyer
+[2025-09-16T17:39:16.661Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-09-16T17:39:16.674Z] [SUCCESS] Parsed 221 records from stylist
+[2025-09-16T17:39:16.675Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:39:16.675Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:39:16.675Z] [INFO ] Extracting user data from MySQL dump...
+[2025-09-16T17:39:16.675Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-09-16T17:39:16.680Z] [SUCCESS] Extracted 278 buyer records
+[2025-09-16T17:39:16.680Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-09-16T17:39:16.694Z] [SUCCESS] Extracted 221 stylist records
+[2025-09-16T17:39:16.694Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-09-16T17:39:16.694Z] [INFO ] Validating extracted user data...
+[2025-09-16T17:39:16.694Z] [INFO ] Validating buyer records
+[2025-09-16T17:39:16.695Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-09-16T17:39:16.695Z] [INFO ] Validating stylist records
+[2025-09-16T17:39:16.695Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-09-16T17:39:16.696Z] [ERROR] Validation found 2 errors
+[2025-09-16T17:39:16.696Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:39:16.696Z] [INFO ] Identifying duplicate users...
+[2025-09-16T17:39:16.696Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-09-16T17:39:16.696Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-09-16T17:39:16.696Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:39:16.697Z] [INFO ] Consolidating user data...
+[2025-09-16T17:39:16.697Z] [INFO ] Consolidating users with deduplication
+[2025-09-16T17:39:16.697Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-09-16T17:39:16.697Z] [INFO ] Validating consolidated user data...
+[2025-09-16T17:39:16.698Z] [INFO ] Validating consolidated user records
+[2025-09-16T17:39:16.698Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-09-16T17:39:16.698Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-09-16T17:39:16.700Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-09-16T17:39:16.701Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-09-16T17:39:16.703Z] [SUCCESS] ✅ Step 1: Extract Users completed in 0s
+[2025-09-16T17:39:16.703Z] [INFO ] 
+📋 Step 2: Create Auth Users & Profiles: Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)
+[2025-09-16T17:39:16.703Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:39:16.742Z ===
+[2025-09-16T17:39:16.743Z] [INFO ] === Phase 1 Step 2: Create Supabase Auth Users ===
+[2025-09-16T17:39:16.756Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:39:16.756Z] [INFO ] Loading consolidated user data...
+[2025-09-16T17:39:16.757Z] [INFO ] Loaded 437 consolidated users
+[2025-09-16T17:40:56.070Z] [INFO ] Auth User Creation Summary:
+  Total Processed: 437
+  Successfully Created: 437
+  Skipped (Already Exists): 0
+  Errors: 0
+  Success Rate: 100%
+  Status: ✅ SUCCESS
+[2025-09-16T17:40:56.071Z] [SUCCESS] Phase 1 Step 2 completed
+Data: {
+  "auth_results_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/auth-users-created.json",
+  "user_mapping_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-id-mapping.json",
+  "updated_stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-09-16T17:40:56.075Z] [SUCCESS] ✅ Step 2: Create Auth Users & Profiles completed in 99s
+[2025-09-16T17:40:56.075Z] [INFO ] 
+📋 Step 3: Create Stylist Details: Create stylist-specific data records
+[2025-09-16T17:40:56.075Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/04-create-stylist-details.ts
+
+
+=== Migration Session Started: 2025-09-16T17:40:56.144Z ===
+[2025-09-16T17:40:56.145Z] [INFO ] === Phase 1 Step 4: Create Stylist Details Records ===
+[2025-09-16T17:40:56.167Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:40:56.167Z] [INFO ] Loading data files...
+[2025-09-16T17:40:56.169Z] [ERROR] Phase 1 Step 4 failed
+Data: {
+  "message": "No such file or directory",
+  "stack": "ENOENT: No such file or directory\n    at readFileSync (native)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/04-create-stylist-details.ts:41:39)"
+}
+[2025-09-16T17:40:56.171Z] [ERROR] ❌ Step 3: Create Stylist Details failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:40:56.171Z] [WARN ] Migration stopped due to error. To resume:
+[2025-09-16T17:40:56.171Z] [INFO ] 1. Fix the error in phase-1-users/04-create-stylist-details.ts
+[2025-09-16T17:40:56.171Z] [INFO ] 2. Re-run this script - it will continue from where it left off
+[2025-09-16T17:40:56.171Z] [INFO ] 3. Or run individual scripts manually for debugging
+[2025-09-16T17:40:56.171Z] [ERROR] ❌ Phase 1 migration failed after 100s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:40:56.171Z] [INFO ] 
+Troubleshooting:
+[2025-09-16T17:40:56.171Z] [INFO ] 1. Check the error logs above
+[2025-09-16T17:40:56.171Z] [INFO ] 2. Verify database connection and credentials
+[2025-09-16T17:40:56.171Z] [INFO ] 3. Check that the MySQL dump file exists and is readable
+[2025-09-16T17:40:56.171Z] [INFO ] 4. Run individual scripts to isolate the issue
+
+
+=== Migration Session Started: 2025-09-16T17:41:01.669Z ===
+[2025-09-16T17:41:01.670Z] [INFO ] 🚀 === PHASE 1: USER MIGRATION STARTED ===
+[2025-09-16T17:41:01.670Z] [INFO ] Migrating users from MySQL to Supabase with OTP authentication
+[2025-09-16T17:41:01.670Z] [INFO ] Verifying prerequisites...
+[2025-09-16T17:41:01.670Z] [SUCCESS] Found MySQL dump file: ./nabostylisten_dump.sql
+[2025-09-16T17:41:01.685Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:41:01.714Z] [INFO ] Initial Database State:
+  profiles: 437
+  stylist_details: 0
+  user_preferences: 437
+  addresses: 0
+  services: 0
+  bookings: 0
+  payments: 0
+  chats: 0
+  chat_messages: 0
+  reviews: 0
+  media: 0
+[2025-09-16T17:41:01.714Z] [INFO ] 
+📋 Step 1: Extract Users: Extract and validate user data from MySQL dump
+[2025-09-16T17:41:01.714Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/01-extract-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:41:01.755Z ===
+[2025-09-16T17:41:01.756Z] [INFO ] === Phase 1 Step 1: Extract Users from MySQL Dump ===
+[2025-09-16T17:41:01.767Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:41:01.769Z] [INFO ] Parsing buyer table from MySQL dump
+[2025-09-16T17:41:01.773Z] [SUCCESS] Parsed 278 records from buyer
+[2025-09-16T17:41:01.774Z] [INFO ] Parsing stylist table from MySQL dump
+[2025-09-16T17:41:01.787Z] [SUCCESS] Parsed 221 records from stylist
+[2025-09-16T17:41:01.787Z] [INFO ] MySQL Dump Statistics:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:41:01.787Z] [INFO ] MySQL Dump Analysis:
+  File Size (MB): 2
+  Total Buyers: 278
+  Active Buyers: 278
+  Total Stylists: 221
+  Active Stylists: 171
+[2025-09-16T17:41:01.787Z] [INFO ] Extracting user data from MySQL dump...
+[2025-09-16T17:41:01.787Z] [INFO ] Extracting buyer records from MySQL dump
+[2025-09-16T17:41:01.791Z] [SUCCESS] Extracted 278 buyer records
+[2025-09-16T17:41:01.792Z] [INFO ] Extracting stylist records from MySQL dump
+[2025-09-16T17:41:01.805Z] [SUCCESS] Extracted 221 stylist records
+[2025-09-16T17:41:01.806Z] [INFO ] Filtered active users
+Data: {
+  "active_buyers": 278,
+  "active_stylists": 170,
+  "filtered_out": 51
+}
+[2025-09-16T17:41:01.806Z] [INFO ] Validating extracted user data...
+[2025-09-16T17:41:01.806Z] [INFO ] Validating buyer records
+[2025-09-16T17:41:01.807Z] [INFO ] Buyer validation completed. Found 0 errors
+[2025-09-16T17:41:01.807Z] [INFO ] Validating stylist records
+[2025-09-16T17:41:01.808Z] [INFO ] Stylist validation completed. Found 2 errors
+[2025-09-16T17:41:01.808Z] [ERROR] Validation found 2 errors
+[2025-09-16T17:41:01.808Z] [WARN ] Validation errors found, but continuing with migration...
+[2025-09-16T17:41:01.808Z] [INFO ] Identifying duplicate users...
+[2025-09-16T17:41:01.808Z] [INFO ] Finding duplicate emails across buyer and stylist tables
+[2025-09-16T17:41:01.808Z] [INFO ] Found 11 users with duplicate emails
+Data: {
+  "total_duplicates": 11,
+  "resolutions": {
+    "merge_to_stylist": 11
+  }
+}
+[2025-09-16T17:41:01.809Z] [WARN ] Found 11 users with duplicate emails
+[2025-09-16T17:41:01.809Z] [INFO ] Consolidating user data...
+[2025-09-16T17:41:01.809Z] [INFO ] Consolidating users with deduplication
+[2025-09-16T17:41:01.810Z] [SUCCESS] Consolidated 437 unique users
+Data: {
+  "customers": 267,
+  "stylists": 170,
+  "merged_accounts": 11
+}
+[2025-09-16T17:41:01.810Z] [INFO ] Validating consolidated user data...
+[2025-09-16T17:41:01.810Z] [INFO ] Validating consolidated user records
+[2025-09-16T17:41:01.810Z] [INFO ] Consolidated user validation completed. Found 0 errors
+[2025-09-16T17:41:01.810Z] [INFO ] Saving processed data to /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp
+[2025-09-16T17:41:01.813Z] [INFO ] User Extraction Summary:
+  Total Users Extracted: 437
+  Customers: 267
+  Stylists: 170
+  Duplicate Emails Resolved: 11
+  Validation Errors: 2
+  Status: ⚠️  SUCCESS WITH WARNINGS
+[2025-09-16T17:41:01.813Z] [SUCCESS] Phase 1 Step 1 completed successfully
+Data: {
+  "consolidated_users_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/consolidated-users.json",
+  "duplicates_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/duplicate-users.json",
+  "stats_file": "/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/temp/user-migration-stats.json"
+}
+[2025-09-16T17:41:01.816Z] [SUCCESS] ✅ Step 1: Extract Users completed in 0s
+[2025-09-16T17:41:01.816Z] [INFO ] 
+📋 Step 2: Create Auth Users & Profiles: Create Supabase Auth users with confirmed emails (profiles auto-created by trigger)
+[2025-09-16T17:41:01.816Z] [INFO ] Executing: bun /Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts
+
+
+=== Migration Session Started: 2025-09-16T17:41:01.855Z ===
+[2025-09-16T17:41:01.857Z] [INFO ] === Phase 1 Step 2: Create Supabase Auth Users ===
+[2025-09-16T17:41:01.870Z] [SUCCESS] Database connection successful. Current profiles count: 0
+[2025-09-16T17:41:01.870Z] [INFO ] Loading consolidated user data...
+[2025-09-16T17:41:01.871Z] [INFO ] Loaded 437 consolidated users
+[2025-09-16T17:41:01.880Z] [ERROR] Failed to create auth user: example@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:01.992Z] [ERROR] Failed to create auth user: swati@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.105Z] [ERROR] Failed to create auth user: five@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.220Z] [ERROR] Failed to create auth user: amadu@nabostylisten.no
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.330Z] [ERROR] Failed to create auth user: pooja@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.439Z] [ERROR] Failed to create auth user: shruti.a.kudache@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.551Z] [ERROR] Failed to create auth user: qqq@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.661Z] [ERROR] Failed to create auth user: sghosh1792@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.772Z] [ERROR] Failed to create auth user: hy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:02.888Z] [ERROR] Failed to create auth user: g@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:03.504Z] [ERROR] Failed to create auth user: nn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:03.619Z] [ERROR] Failed to create auth user: gfd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:03.734Z] [ERROR] Failed to create auth user: 123@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:03.843Z] [ERROR] Failed to create auth user: aa99@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:03.955Z] [ERROR] Failed to create auth user: rest@example.ccom
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:04.069Z] [ERROR] Failed to create auth user: taraa@examplee.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:04.188Z] [ERROR] Failed to create auth user: rty@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:04.299Z] [ERROR] Failed to create auth user: test@examplee.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:04.411Z] [ERROR] Failed to create auth user: tera@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:04.524Z] [ERROR] Failed to create auth user: ana@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.140Z] [ERROR] Failed to create auth user: bruh@this.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.252Z] [ERROR] Failed to create auth user: shreya@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.363Z] [ERROR] Failed to create auth user: user22@gh.ch
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.476Z] [ERROR] Failed to create auth user: tesrss@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.586Z] [ERROR] Failed to create auth user: werty@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.701Z] [ERROR] Failed to create auth user: hy1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.810Z] [ERROR] Failed to create auth user: tyert@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:05.927Z] [ERROR] Failed to create auth user: wqsdf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:06.042Z] [ERROR] Failed to create auth user: anushka9927@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:06.152Z] [ERROR] Failed to create auth user: hy2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:06.769Z] [ERROR] Failed to create auth user: hyfvbj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:06.888Z] [ERROR] Failed to create auth user: dacheq@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:06.995Z] [ERROR] Failed to create auth user: Okay@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:07.110Z] [ERROR] Failed to create auth user: rs@exmp.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:07.229Z] [ERROR] Failed to create auth user: uyfg@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:07.339Z] [ERROR] Failed to create auth user: test@examc.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:07.451Z] [ERROR] Failed to create auth user: pl@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:07.561Z] [ERROR] Failed to create auth user: nkn@GMAIL.COM
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:07.668Z] [ERROR] Failed to create auth user: ytrf@exam.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:07.777Z] [ERROR] Failed to create auth user: kilk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:08.388Z] [ERROR] Failed to create auth user: pooja@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:08.509Z] [ERROR] Failed to create auth user: shruti.a.kudache@gmail.commm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:08.619Z] [ERROR] Failed to create auth user: treww@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:08.738Z] [ERROR] Failed to create auth user: jhhgbk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:08.855Z] [ERROR] Failed to create auth user: uy@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:08.970Z] [ERROR] Failed to create auth user: asb@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:09.077Z] [ERROR] Failed to create auth user: test99@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:09.184Z] [ERROR] Failed to create auth user: njhv@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:09.295Z] [ERROR] Failed to create auth user: a@mm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:09.407Z] [ERROR] Failed to create auth user: sdf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.029Z] [ERROR] Failed to create auth user: sss@ss.ss
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.141Z] [ERROR] Failed to create auth user: iuy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.250Z] [ERROR] Failed to create auth user: hbuy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.361Z] [ERROR] Failed to create auth user: jijuhi@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.474Z] [ERROR] Failed to create auth user: yt@examplee.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.586Z] [ERROR] Failed to create auth user: dsa@sd.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.700Z] [ERROR] Failed to create auth user: c@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.811Z] [ERROR] Failed to create auth user: bruh@this4.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:10.919Z] [ERROR] Failed to create auth user: shruti@mail.bb
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:11.028Z] [ERROR] Failed to create auth user: asas@hm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:11.640Z] [ERROR] Failed to create auth user: hgfhb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:11.751Z] [ERROR] Failed to create auth user: sigurd.skaare@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:11.869Z] [ERROR] Failed to create auth user: tert@exammple.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:11.982Z] [ERROR] Failed to create auth user: oknk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:12.097Z] [ERROR] Failed to create auth user: dd44@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:12.210Z] [ERROR] Failed to create auth user: aew@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:12.324Z] [ERROR] Failed to create auth user: tredd@exmp.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:12.436Z] [ERROR] Failed to create auth user: tes@exmp.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:12.555Z] [ERROR] Failed to create auth user: user21@gg.gg
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:12.670Z] [ERROR] Failed to create auth user: ky4@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:13.286Z] [ERROR] Failed to create auth user: jkj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:13.408Z] [ERROR] Failed to create auth user: yaart@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:13.524Z] [ERROR] Failed to create auth user: testyu@t.cooo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:13.640Z] [ERROR] Failed to create auth user: hy3@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:13.750Z] [ERROR] Failed to create auth user: Tyyy@exm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:13.858Z] [ERROR] Failed to create auth user: yt@example.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:13.971Z] [ERROR] Failed to create auth user: hy12@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:14.083Z] [ERROR] Failed to create auth user: tf@rf.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:14.199Z] [ERROR] Failed to create auth user: testing4@abc.uj
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:14.318Z] [ERROR] Failed to create auth user: amduskole@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:14.930Z] [ERROR] Failed to create auth user: test@gm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.041Z] [ERROR] Failed to create auth user: mkjgh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.154Z] [ERROR] Failed to create auth user: jhbu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.265Z] [ERROR] Failed to create auth user: 0@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.372Z] [ERROR] Failed to create auth user: api@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.481Z] [ERROR] Failed to create auth user: y@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.595Z] [ERROR] Failed to create auth user: aa12@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.707Z] [ERROR] Failed to create auth user: test24@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.818Z] [ERROR] Failed to create auth user: test97@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:15.933Z] [ERROR] Failed to create auth user: jnuhuh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:16.560Z] [ERROR] Failed to create auth user: uri@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:16.675Z] [ERROR] Failed to create auth user: nb@nb.mn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:16.789Z] [ERROR] Failed to create auth user: test@exampll.cco
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:16.905Z] [ERROR] Failed to create auth user: bgvhg@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:17.013Z] [ERROR] Failed to create auth user: yt@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:17.125Z] [ERROR] Failed to create auth user: test@tg.nh
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:17.238Z] [ERROR] Failed to create auth user: trt@gh.hm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:17.349Z] [ERROR] Failed to create auth user: testexample@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:17.465Z] [ERROR] Failed to create auth user: east@examle.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:17.576Z] [ERROR] Failed to create auth user: Ytcg@examplee.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.197Z] [ERROR] Failed to create auth user: yt@gmai.cm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.311Z] [ERROR] Failed to create auth user: sdd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.421Z] [ERROR] Failed to create auth user: try@exampl.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.535Z] [ERROR] Failed to create auth user: ky5@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.646Z] [ERROR] Failed to create auth user: testemail@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.761Z] [ERROR] Failed to create auth user: ter@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.870Z] [ERROR] Failed to create auth user: y@t.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:18.985Z] [ERROR] Failed to create auth user: ky1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:19.101Z] [ERROR] Failed to create auth user: bruh@thisi2.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:19.208Z] [ERROR] Failed to create auth user: sv@s.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:19.824Z] [ERROR] Failed to create auth user: gvfffv@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:19.936Z] [ERROR] Failed to create auth user: te@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.052Z] [ERROR] Failed to create auth user: test88@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.161Z] [ERROR] Failed to create auth user: kjmk@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.272Z] [ERROR] Failed to create auth user: yt@expcc.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.388Z] [ERROR] Failed to create auth user: ytw@e.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.510Z] [ERROR] Failed to create auth user: tara@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.624Z] [ERROR] Failed to create auth user: chaudharyamit61900@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.746Z] [ERROR] Failed to create auth user: hgfb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:20.866Z] [ERROR] Failed to create auth user: ty1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:21.487Z] [ERROR] Failed to create auth user: tr@hgg.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:21.606Z] [ERROR] Failed to create auth user: jhin@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:21.722Z] [ERROR] Failed to create auth user: test123@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:21.838Z] [ERROR] Failed to create auth user: test89@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:21.953Z] [ERROR] Failed to create auth user: tc@tv.bh
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:22.069Z] [ERROR] Failed to create auth user: jhgb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:22.190Z] [ERROR] Failed to create auth user: aa66@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:22.301Z] [ERROR] Failed to create auth user: res@EXAMPLE.COM
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:22.411Z] [ERROR] Failed to create auth user: oijn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:22.525Z] [ERROR] Failed to create auth user: ters@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.142Z] [ERROR] Failed to create auth user: rahul.f444@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.259Z] [ERROR] Failed to create auth user: tesr@example.voo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.375Z] [ERROR] Failed to create auth user: tara@examplee.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.489Z] [ERROR] Failed to create auth user: asef@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.604Z] [ERROR] Failed to create auth user: yyy@examle.bo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.725Z] [ERROR] Failed to create auth user: rest@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.844Z] [ERROR] Failed to create auth user: jaco@example.cco
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:23.953Z] [ERROR] Failed to create auth user: oiujbn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:24.072Z] [ERROR] Failed to create auth user: side@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:24.192Z] [ERROR] Failed to create auth user: sk4@gh.im
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:24.809Z] [ERROR] Failed to create auth user: ryt@exapl.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:24.924Z] [ERROR] Failed to create auth user: tr@exam.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.041Z] [ERROR] Failed to create auth user: ytr@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.156Z] [ERROR] Failed to create auth user: uyt@example.cooo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.274Z] [ERROR] Failed to create auth user: tesrtt@example.conn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.391Z] [ERROR] Failed to create auth user: lkjmi@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.508Z] [ERROR] Failed to create auth user: test@exapmplee.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.623Z] [ERROR] Failed to create auth user: khunl@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.738Z] [ERROR] Failed to create auth user: unow@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:25.844Z] [ERROR] Failed to create auth user: yt@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:26.459Z] [ERROR] Failed to create auth user: purplearjun@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:26.575Z] [ERROR] Failed to create auth user: yuop@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:26.692Z] [ERROR] Failed to create auth user: Example@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:26.808Z] [ERROR] Failed to create auth user: testing4@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:26.926Z] [ERROR] Failed to create auth user: wer@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:27.034Z] [ERROR] Failed to create auth user: hy4@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:27.147Z] [ERROR] Failed to create auth user: jkhnj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:27.260Z] [ERROR] Failed to create auth user: ss@ss.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:27.371Z] [ERROR] Failed to create auth user: testinguser5@gh.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:27.486Z] [ERROR] Failed to create auth user: apir@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.096Z] [ERROR] Failed to create auth user: mko@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.209Z] [ERROR] Failed to create auth user: yr@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.325Z] [ERROR] Failed to create auth user: fsdfaasdf@awdfdsafds.sda
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.436Z] [ERROR] Failed to create auth user: tara@exxample.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.552Z] [ERROR] Failed to create auth user: Test@exakpl.vom
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.668Z] [ERROR] Failed to create auth user: testing5@gh.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.787Z] [ERROR] Failed to create auth user: s@gg.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:28.901Z] [ERROR] Failed to create auth user: limii@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:29.013Z] [ERROR] Failed to create auth user: tata@examplee.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:29.128Z] [ERROR] Failed to create auth user: rest@examplee.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:29.743Z] [ERROR] Failed to create auth user: jhbj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:29.856Z] [ERROR] Failed to create auth user: testshrutiqa@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:29.966Z] [ERROR] Failed to create auth user: qwew@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:30.082Z] [ERROR] Failed to create auth user: jjj@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:30.199Z] [ERROR] Failed to create auth user: tr@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:30.315Z] [ERROR] Failed to create auth user: chef@ama.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:30.426Z] [ERROR] Failed to create auth user: task@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:30.541Z] [ERROR] Failed to create auth user: tre@r.so
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:30.656Z] [ERROR] Failed to create auth user: ty@gm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:30.767Z] [ERROR] Failed to create auth user: mn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:31.381Z] [ERROR] Failed to create auth user: jh@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:31.494Z] [ERROR] Failed to create auth user: qwer@example.cco
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:31.610Z] [ERROR] Failed to create auth user: kmui@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:31.724Z] [ERROR] Failed to create auth user: Gh@h.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:31.834Z] [ERROR] Failed to create auth user: thh@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:31.946Z] [ERROR] Failed to create auth user: iuyn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:32.058Z] [ERROR] Failed to create auth user: test@nbv.mn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:32.174Z] [ERROR] Failed to create auth user: iuh@exampe.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:32.284Z] [ERROR] Failed to create auth user: aa77@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:32.395Z] [ERROR] Failed to create auth user: aa33@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.002Z] [ERROR] Failed to create auth user: dd55@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.113Z] [ERROR] Failed to create auth user: testff@example.coom
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.222Z] [ERROR] Failed to create auth user: testing2@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.336Z] [ERROR] Failed to create auth user: nhio@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.448Z] [ERROR] Failed to create auth user: hy11@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.567Z] [ERROR] Failed to create auth user: kimjuh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.681Z] [ERROR] Failed to create auth user: sss111@ss.ss
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.798Z] [ERROR] Failed to create auth user: tr@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:33.910Z] [ERROR] Failed to create auth user: dd11@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:34.020Z] [ERROR] Failed to create auth user: test23@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:34.640Z] [ERROR] Failed to create auth user: sfsfdsfa@dfdsaf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:34.752Z] [ERROR] Failed to create auth user: saas@exm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:34.868Z] [ERROR] Failed to create auth user: trr@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:34.986Z] [ERROR] Failed to create auth user: trp@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:35.102Z] [ERROR] Failed to create auth user: iuhni@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:35.217Z] [ERROR] Failed to create auth user: dd33@dd.dd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:35.333Z] [ERROR] Failed to create auth user: rita@examople.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:35.447Z] [ERROR] Failed to create auth user: oiu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:35.558Z] [ERROR] Failed to create auth user: bruh@thisi4.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:35.672Z] [ERROR] Failed to create auth user: indi@examplee.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:36.281Z] [ERROR] Failed to create auth user: ky3@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:36.392Z] [ERROR] Failed to create auth user: ky2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:36.508Z] [ERROR] Failed to create auth user: ty@gf.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:36.619Z] [ERROR] Failed to create auth user: aa88@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:36.731Z] [ERROR] Failed to create auth user: iuhnh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:36.846Z] [ERROR] Failed to create auth user: gt@rft.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:36.964Z] [ERROR] Failed to create auth user: 1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:37.072Z] [ERROR] Failed to create auth user: uno@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:37.183Z] [ERROR] Failed to create auth user: ss11@ss.ss
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:37.293Z] [ERROR] Failed to create auth user: asdsd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:37.906Z] [ERROR] Failed to create auth user: hbf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.014Z] [ERROR] Failed to create auth user: rrr@rrr.rrr
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.119Z] [ERROR] Failed to create auth user: test2test@gmaill.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.228Z] [ERROR] Failed to create auth user: india@examplee.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.338Z] [ERROR] Failed to create auth user: aa44@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.446Z] [ERROR] Failed to create auth user: hngbuj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.558Z] [ERROR] Failed to create auth user: yt@uyt.bo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.674Z] [ERROR] Failed to create auth user: six@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.788Z] [ERROR] Failed to create auth user: te@gmans.ns
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:38.901Z] [ERROR] Failed to create auth user: bruh@thisi3.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:39.513Z] [ERROR] Failed to create auth user: s@s.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:39.627Z] [ERROR] Failed to create auth user: tesfcgd@gmai.cin
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:39.740Z] [ERROR] Failed to create auth user: aa11@aa.aa
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:39.857Z] [ERROR] Failed to create auth user: es@exapml.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:39.974Z] [ERROR] Failed to create auth user: ihy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:40.088Z] [ERROR] Failed to create auth user: test@twstexample.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:40.198Z] [ERROR] Failed to create auth user: mnj@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:40.316Z] [ERROR] Failed to create auth user: uyt@uj.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:40.428Z] [ERROR] Failed to create auth user: shreya17@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:40.542Z] [ERROR] Failed to create auth user: bullerina77@mail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.152Z] [ERROR] Failed to create auth user: poojadewani21@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.260Z] [ERROR] Failed to create auth user: ty2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.365Z] [ERROR] Failed to create auth user: tr@gg.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.476Z] [ERROR] Failed to create auth user: hyvfujb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.588Z] [ERROR] Failed to create auth user: qwes@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.699Z] [ERROR] Failed to create auth user: ab@g.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.809Z] [ERROR] Failed to create auth user: c@cc.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:41.919Z] [ERROR] Failed to create auth user: chatgp@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:42.030Z] [ERROR] Failed to create auth user: trfwf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:42.139Z] [ERROR] Failed to create auth user: adad@aad.ck
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:42.752Z] [ERROR] Failed to create auth user: tr@rt.bv
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:42.859Z] [ERROR] Failed to create auth user: vc@vc.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:42.969Z] [ERROR] Failed to create auth user: avinash350@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:43.077Z] [ERROR] Failed to create auth user: swati1@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:43.191Z] [ERROR] Failed to create auth user: testuser1@ff.gg
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:43.303Z] [ERROR] Failed to create auth user: testingt@t.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:43.424Z] [ERROR] Failed to create auth user: ab12@ab.ab
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:43.540Z] [ERROR] Failed to create auth user: dust@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:43.657Z] [ERROR] Failed to create auth user: user23@tt.tt
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:43.766Z] [ERROR] Failed to create auth user: south@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:44.379Z] [ERROR] Failed to create auth user: awee@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:44.490Z] [ERROR] Failed to create auth user: sdma@gma.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:44.598Z] [ERROR] Failed to create auth user: iknh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:44.707Z] [ERROR] Failed to create auth user: yyyyy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:44.814Z] [ERROR] Failed to create auth user: ytuiu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:44.927Z] [ERROR] Failed to create auth user: hy5@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:45.035Z] [ERROR] Failed to create auth user: shruti@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:45.145Z] [ERROR] Failed to create auth user: west@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:45.256Z] [ERROR] Failed to create auth user: jhbjh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:45.366Z] [ERROR] Failed to create auth user: asdfsadf.dfsd@afdsfdfds.sdfs
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:45.985Z] [ERROR] Failed to create auth user: reta@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.097Z] [ERROR] Failed to create auth user: Yar@exm.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.213Z] [ERROR] Failed to create auth user: oium@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.321Z] [ERROR] Failed to create auth user: tatas@example.comm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.432Z] [ERROR] Failed to create auth user: test@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.548Z] [ERROR] Failed to create auth user: tr@w.vb
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.659Z] [ERROR] Failed to create auth user: Fire@example.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.770Z] [ERROR] Failed to create auth user: repo@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.879Z] [ERROR] Failed to create auth user: ggh@exm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:46.991Z] [ERROR] Failed to create auth user: plot@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:47.607Z] [ERROR] Failed to create auth user: desy@exmample.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:47.726Z] [ERROR] Failed to create auth user: trd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:47.839Z] [ERROR] Failed to create auth user: plot6@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:47.953Z] [ERROR] Failed to create auth user: sfsdfas@fafsd.dfdf
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:48.060Z] [ERROR] Failed to create auth user: adsfkk@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:48.167Z] [ERROR] Failed to create auth user: shruti29kudache@gma.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:48.272Z] [ERROR] Failed to create auth user: ouiasd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:48.380Z] [ERROR] Failed to create auth user: yrt@exampp.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:48.488Z] [ERROR] Failed to create auth user: stylist4@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:48.602Z] [ERROR] Failed to create auth user: pooja@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.218Z] [ERROR] Failed to create auth user: stylistsix@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.323Z] [ERROR] Failed to create auth user: stylist8@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.431Z] [ERROR] Failed to create auth user: ss@sp.ci
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.544Z] [ERROR] Failed to create auth user: testttt@example.voo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.658Z] [ERROR] Failed to create auth user: abc@xyz.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.772Z] [ERROR] Failed to create auth user: indStylist3@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.885Z] [ERROR] Failed to create auth user: test@testng.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:49.999Z] [ERROR] Failed to create auth user: ssthree@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:50.113Z] [ERROR] Failed to create auth user: a@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:50.226Z] [ERROR] Failed to create auth user: amit99@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:50.847Z] [ERROR] Failed to create auth user: afdsfsd@esf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:50.955Z] [ERROR] Failed to create auth user: yfbu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.065Z] [ERROR] Failed to create auth user: jubgy@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.172Z] [ERROR] Failed to create auth user: zx@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.284Z] [ERROR] Failed to create auth user: rahul111@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.395Z] [ERROR] Failed to create auth user: testSty5@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.510Z] [ERROR] Failed to create auth user: hybf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.620Z] [ERROR] Failed to create auth user: style1@a1.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.731Z] [ERROR] Failed to create auth user: oui@example.coo
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:51.844Z] [ERROR] Failed to create auth user: zsfd@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:52.463Z] [ERROR] Failed to create auth user: havard@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:52.574Z] [ERROR] Failed to create auth user: z@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:52.687Z] [ERROR] Failed to create auth user: testSty6@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:52.798Z] [ERROR] Failed to create auth user: testw@examplee.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:52.911Z] [ERROR] Failed to create auth user: te@n.mn
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:53.024Z] [ERROR] Failed to create auth user: hsj@hd.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:53.137Z] [ERROR] Failed to create auth user: plot2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:53.253Z] [ERROR] Failed to create auth user: sssss@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:53.372Z] [ERROR] Failed to create auth user: sdfadfd@fs.ere
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:53.485Z] [ERROR] Failed to create auth user: indStylist1@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.095Z] [ERROR] Failed to create auth user: shrutitestqa@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.210Z] [ERROR] Failed to create auth user: a1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.324Z] [ERROR] Failed to create auth user: ivarnakken1441@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.438Z] [ERROR] Failed to create auth user: gisf@cd.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.553Z] [ERROR] Failed to create auth user: dfsdgdsgf@fddsfaf.dfs
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.667Z] [ERROR] Failed to create auth user: avinash.hemagire@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.779Z] [ERROR] Failed to create auth user: 333@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:54.891Z] [ERROR] Failed to create auth user: tomas@tomaserdis.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:55.005Z] [ERROR] Failed to create auth user: avinash365@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:55.118Z] [ERROR] Failed to create auth user: plot3@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:55.737Z] [ERROR] Failed to create auth user: test903@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:55.850Z] [ERROR] Failed to create auth user: ss@ss.vv
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:55.958Z] [ERROR] Failed to create auth user: jay@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:56.072Z] [ERROR] Failed to create auth user: sdfsdfsdf@sdfsdf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:56.184Z] [ERROR] Failed to create auth user: shre@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:56.299Z] [ERROR] Failed to create auth user: test@examplee.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:56.408Z] [ERROR] Failed to create auth user: jay1@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:56.518Z] [ERROR] Failed to create auth user: test124@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:56.632Z] [ERROR] Failed to create auth user: indStylist2@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:56.745Z] [ERROR] Failed to create auth user: reall@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:57.360Z] [ERROR] Failed to create auth user: tr@r.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:57.470Z] [ERROR] Failed to create auth user: dsdgsfg@dfg.fds
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:57.587Z] [ERROR] Failed to create auth user: 111@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:57.706Z] [ERROR] Failed to create auth user: sk@sk.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:57.821Z] [ERROR] Failed to create auth user: amit92@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:57.938Z] [ERROR] Failed to create auth user: nabostylist@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:58.050Z] [ERROR] Failed to create auth user: teststy4@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:58.165Z] [ERROR] Failed to create auth user: aa@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:58.282Z] [ERROR] Failed to create auth user: sae@nabo.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:58.388Z] [ERROR] Failed to create auth user: d@j.ca
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.003Z] [ERROR] Failed to create auth user: testSty2@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.113Z] [ERROR] Failed to create auth user: a@gma.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.226Z] [ERROR] Failed to create auth user: testSty7@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.335Z] [ERROR] Failed to create auth user: mhjhn@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.441Z] [ERROR] Failed to create auth user: aaa@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.550Z] [ERROR] Failed to create auth user: hdhdh@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.665Z] [ERROR] Failed to create auth user: test@vb.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.778Z] [ERROR] Failed to create auth user: jay123@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:41:59.892Z] [ERROR] Failed to create auth user: ss@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:00.010Z] [ERROR] Failed to create auth user: as@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:00.629Z] [ERROR] Failed to create auth user: ss@a.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:00.747Z] [ERROR] Failed to create auth user: sdfsdaff@dfd.fgf
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:00.861Z] [ERROR] Failed to create auth user: dsafsdfs@dsf.sf
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:00.978Z] [ERROR] Failed to create auth user: newsty@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:01.091Z] [ERROR] Failed to create auth user: asdd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:01.199Z] [ERROR] Failed to create auth user: dessy@xample.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:01.311Z] [ERROR] Failed to create auth user: ten@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:01.431Z] [ERROR] Failed to create auth user: taraaa@examplle.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:01.543Z] [ERROR] Failed to create auth user: stwo@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:01.655Z] [ERROR] Failed to create auth user: erer@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:02.271Z] [ERROR] Failed to create auth user: s@ss.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:02.384Z] [ERROR] Failed to create auth user: three@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:02.501Z] [ERROR] Failed to create auth user: qastylisttest@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:02.614Z] [ERROR] Failed to create auth user: ss@s.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:02.730Z] [ERROR] Failed to create auth user: ingeborg2809@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:02.843Z] [ERROR] Failed to create auth user: dgfg@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:02.957Z] [ERROR] Failed to create auth user: r@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:03.066Z] [ERROR] Failed to create auth user: stylist123@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:03.179Z] [ERROR] Failed to create auth user: zxc1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:03.292Z] [ERROR] Failed to create auth user: r@example1.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:03.906Z] [ERROR] Failed to create auth user: plot5@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.019Z] [ERROR] Failed to create auth user: stylist3@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.131Z] [ERROR] Failed to create auth user: ds@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.245Z] [ERROR] Failed to create auth user: test@test.ts
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.358Z] [ERROR] Failed to create auth user: adf@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.470Z] [ERROR] Failed to create auth user: gshreya179@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.587Z] [ERROR] Failed to create auth user: zz@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.700Z] [ERROR] Failed to create auth user: yjbu@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.812Z] [ERROR] Failed to create auth user: stylist7@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:04.927Z] [ERROR] Failed to create auth user: s@sa.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:05.540Z] [ERROR] Failed to create auth user: jhgjb@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:05.652Z] [ERROR] Failed to create auth user: w@k.mj
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:05.765Z] [ERROR] Failed to create auth user: ooo@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:05.879Z] [ERROR] Failed to create auth user: command@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:05.987Z] [ERROR] Failed to create auth user: zxc@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:06.099Z] [ERROR] Failed to create auth user: nabosalonstylist@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:06.212Z] [ERROR] Failed to create auth user: shymu@mail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:06.328Z] [ERROR] Failed to create auth user: tr@ree.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:06.437Z] [ERROR] Failed to create auth user: sfive@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:06.549Z] [ERROR] Failed to create auth user: asd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.162Z] [ERROR] Failed to create auth user: ssfour@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.268Z] [ERROR] Failed to create auth user: stylist12@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.380Z] [ERROR] Failed to create auth user: aaaa@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.497Z] [ERROR] Failed to create auth user: d@ds.cc
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.613Z] [ERROR] Failed to create auth user: rahul@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.727Z] [ERROR] Failed to create auth user: a@a.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.837Z] [ERROR] Failed to create auth user: qwewqe@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:07.947Z] [ERROR] Failed to create auth user: testSty1@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:08.057Z] [ERROR] Failed to create auth user: htfvyj@examplle.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:08.173Z] [ERROR] Failed to create auth user: gt@g.bm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:08.783Z] [ERROR] Failed to create auth user: abc@axyz.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:08.891Z] [ERROR] Failed to create auth user: s@sc.cm
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.003Z] [ERROR] Failed to create auth user: stylist11@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.117Z] [ERROR] Failed to create auth user: stylistseven@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.227Z] [ERROR] Failed to create auth user: twelve@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.336Z] [ERROR] Failed to create auth user: q@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.441Z] [ERROR] Failed to create auth user: dfd@sw.co
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.547Z] [ERROR] Failed to create auth user: test21@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.653Z] [ERROR] Failed to create auth user: four@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:09.762Z] [ERROR] Failed to create auth user: stylist1@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:10.374Z] [ERROR] Failed to create auth user: test123@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:10.483Z] [ERROR] Failed to create auth user: sd@exm.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:10.592Z] [ERROR] Failed to create auth user: asdfsfadsfsd@sfesdfs.fdd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:10.700Z] [ERROR] Failed to create auth user: ddd@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:10.811Z] [ERROR] Failed to create auth user: stylist6@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:10.925Z] [ERROR] Failed to create auth user: renuka@ymirlabs.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:11.036Z] [ERROR] Failed to create auth user: stylist2@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:11.144Z] [ERROR] Failed to create auth user: adt@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:11.249Z] [ERROR] Failed to create auth user: efsdfsdf@edsf.dfd
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:11.358Z] [ERROR] Failed to create auth user: mail@mailinator.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:11.967Z] [ERROR] Failed to create auth user: qqaq@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:12.077Z] [ERROR] Failed to create auth user: test@ex.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:12.187Z] [ERROR] Failed to create auth user: testymirqa@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:12.301Z] [ERROR] Failed to create auth user: philip.cylo@gmail.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:12.417Z] [ERROR] Failed to create auth user: jninm@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:12.527Z] [ERROR] Failed to create auth user: kuhlni@example.com
+Data: "A user with this email address has already been registered"
+[2025-09-16T17:42:12.635Z] [WARN ] Email already exists in Supabase: test@bh.com
+Data: {
+  "original_id": "ffcbe12d-982a-43d0-bfe5-b95d5c2e2812",
+  "role": "stylist"
+}
+[2025-09-16T17:42:13.138Z] [INFO ] Auth User Creation Summary:
+  Total Processed: 437
+  Successfully Created: 0
+  Skipped (Already Exists): 1
+  Errors: 436
+  Success Rate: 0%
+  Status: ❌ FAILED
+[2025-09-16T17:42:13.138Z] [ERROR] Phase 1 Step 2 failed
+Data: {
+  "message": "No auth users were created successfully",
+  "stack": "Error: No auth users were created successfully\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/02-create-auth-users.ts:215:17)"
+}
+[2025-09-16T17:42:13.141Z] [ERROR] ❌ Step 2: Create Auth Users & Profiles failed
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:42:13.141Z] [WARN ] Migration stopped due to error. To resume:
+[2025-09-16T17:42:13.141Z] [INFO ] 1. Fix the error in phase-1-users/02-create-auth-users.ts
+[2025-09-16T17:42:13.141Z] [INFO ] 2. Re-run this script - it will continue from where it left off
+[2025-09-16T17:42:13.141Z] [INFO ] 3. Or run individual scripts manually for debugging
+[2025-09-16T17:42:13.141Z] [ERROR] ❌ Phase 1 migration failed after 71s
+Data: {
+  "message": "null",
+  "stack": "Error: null\n    at new SystemError (node:child_process:903:14)\n    at <anonymous> (node:child_process:175:24)\n    at <anonymous> (node:child_process:226:23)\n    at <anonymous> (/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/run-phase-1.ts:88:9)"
+}
+[2025-09-16T17:42:13.141Z] [INFO ] 
+Troubleshooting:
+[2025-09-16T17:42:13.141Z] [INFO ] 1. Check the error logs above
+[2025-09-16T17:42:13.141Z] [INFO ] 2. Verify database connection and credentials
+[2025-09-16T17:42:13.141Z] [INFO ] 3. Check that the MySQL dump file exists and is readable
+[2025-09-16T17:42:13.141Z] [INFO ] 4. Run individual scripts to isolate the issue

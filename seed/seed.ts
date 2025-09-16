@@ -11,6 +11,7 @@ import {
   // Chat system
   createBookingChats,
   // Booking system
+  createBookingNotes,
   createComprehensiveBookings,
   // Review system
   createComprehensiveReviewsSystem,
@@ -121,6 +122,10 @@ async function main() {
   console.log("-- Creating discount usage records...");
   await createDiscountUsage(seed, discounts, allUsers, bookings);
 
+  // Create booking notes for completed bookings
+  console.log("-- Creating booking notes...");
+  await createBookingNotes(seed, bookings);
+
   // 9. Create chat system
   console.log("-- Phase 9: Chat System");
   const chats = await createBookingChats(seed, bookings);
@@ -193,7 +198,7 @@ async function main() {
     `--   =� Services: ${services.length} services with images and category links`,
   );
   console.log(
-    `--   =� Bookings: ${bookings.length} bookings across various statuses`,
+    `--   =� Bookings: ${bookings.length} bookings across various statuses with notes`,
   );
   console.log(`--   =� Chats: ${chats.length} active chat conversations`);
   console.log(

@@ -365,3 +365,150 @@ export async function linkServicesToBookings(
   await seed.booking_services(bookingServiceLinks);
   return bookingServiceLinks;
 }
+
+/**
+ * Creates booking notes for completed bookings to test the notes functionality
+ * Stylists can add notes about services, customer preferences, and follow-up suggestions
+ */
+export async function createBookingNotes(
+  seed: SeedClient,
+  bookings: bookingsScalars[],
+) {
+  console.log("-- Creating booking notes for completed bookings...");
+
+  // Filter to only completed bookings for realistic notes
+  const completedBookings = bookings.filter(booking =>
+    booking.status === "completed" && booking.stylist_id
+  );
+
+  const bookingNotesToCreate: DatabaseTables["booking_notes"]["Insert"][] = [];
+
+  // Add specific notes for the first few completed bookings
+  if (completedBookings.length > 0) {
+    // First completed booking - detailed service notes
+    bookingNotesToCreate.push({
+      booking_id: completedBookings[0].id,
+      stylist_id: completedBookings[0].stylist_id!,
+      content: "Kunden hadde meget tynt hår som responderte bra på behandlingen. Brukte ekstra fuktighetsbehandling. Resultatet ble fantastisk! Kunden var kjempefornøyd med lengden og fargene.",
+      category: "service_notes",
+      customer_visible: true,
+      duration_minutes: 125, // Slightly longer than scheduled
+      next_appointment_suggestion: "Anbefaler å komme tilbake om 8-10 uker for touch-up. Kan prøve ombre teknikk neste gang.",
+      tags: ["tynt-hår", "fuktighetsbehandling", "fornøyd-kunde", "balayage"]
+    });
+
+    // Customer preferences note (stylist-only)
+    bookingNotesToCreate.push({
+      booking_id: completedBookings[0].id,
+      stylist_id: completedBookings[0].stylist_id!,
+      content: "Kunden foretrekker varme toner og unngår aske-nyanser. Liker ikke for mye volum i toppen. Ønsker alltid soft waves til slutt.",
+      category: "customer_preferences",
+      customer_visible: false,
+      duration_minutes: null,
+      next_appointment_suggestion: null,
+      tags: ["varme-toner", "unngå-aske", "soft-waves"]
+    });
+  }
+
+  if (completedBookings.length > 1) {
+    // Second completed booking - issues and resolution
+    bookingNotesToCreate.push({
+      booking_id: completedBookings[1].id,
+      stylist_id: completedBookings[1].stylist_id!,
+      content: "Kunden hadde sensitive øyne så vi måtte bytte mascara. Brukte hypoallergen produkter resten av behandlingen. Alt gikk bra til slutt!",
+      category: "issues",
+      customer_visible: true,
+      duration_minutes: 65, // A bit longer due to issues
+      next_appointment_suggestion: "Husk hypoallergen produkter neste gang. Kunden ønsker samme look til neste fest.",
+      tags: ["sensitive-øyne", "hypoallergen", "makeup-skifte"]
+    });
+  }
+
+  if (completedBookings.length > 2) {
+    // Third completed booking - results focused
+    bookingNotesToCreate.push({
+      booking_id: completedBookings[2].id,
+      stylist_id: completedBookings[2].stylist_id!,
+      content: "Vippeextensions ble perfekte! Kunden fikk natural look som hun ønsket. Retention ser bra ut, forklarte efterbehandling grundig.",
+      category: "results",
+      customer_visible: true,
+      duration_minutes: 110,
+      next_appointment_suggestion: "Refill om 2-3 uker. Kan vurdere litt lengre vipper neste gang hvis ønsket.",
+      tags: ["natural-look", "god-retention", "vippeextensions", "efterbehandling"]
+    });
+
+    // Follow-up note for same booking
+    bookingNotesToCreate.push({
+      booking_id: completedBookings[2].id,
+      stylist_id: completedBookings[2].stylist_id!,
+      content: "Sendte oppfølgings-SMS med tips for stellning av vipper. Kunden svarte at hun er kjempefornøyd og ønsker å booke refill snart.",
+      category: "follow_up",
+      customer_visible: false,
+      duration_minutes: null,
+      next_appointment_suggestion: null,
+      tags: ["oppfølging", "fornøyd", "refill-ønsket"]
+    });
+  }
+
+  // Add random notes for remaining completed bookings
+  const noteTemplates = [
+    {
+      content: "Standard behandling utført uten problemer. Kunden fornøyd med resultatet.",
+      category: "service_notes" as const,
+      customer_visible: true,
+      tags: ["standard", "uten-problemer", "fornøyd"]
+    },
+    {
+      content: "Kunden kom 5 minutter for sent, men vi fikk gjennomført alt som planlagt.",
+      category: "other" as const,
+      customer_visible: false,
+      tags: ["for-sent", "gjennomført"]
+    },
+    {
+      content: "Brukte mindre tid enn forventet. Kundens hår var i veldig god stand fra før.",
+      category: "service_notes" as const,
+      customer_visible: true,
+      tags: ["rask", "godt-hår", "effektiv"]
+    },
+    {
+      content: "Kunden spør alltid om tips for styling hjemme. Liker detaljerte forklaringer.",
+      category: "customer_preferences" as const,
+      customer_visible: false,
+      tags: ["styling-tips", "detaljert", "lærevillig"]
+    },
+    {
+      content: "Anbefaler å prøve en annen teknikk neste gang for enda bedre resultat.",
+      category: "follow_up" as const,
+      customer_visible: true,
+      tags: ["ny-teknikk", "forbedring", "neste-gang"]
+    }
+  ];
+
+  // Add random notes for remaining completed bookings (starting from index 3)
+  for (let i = 3; i < Math.min(completedBookings.length, 8); i++) {
+    const booking = completedBookings[i];
+    const template = noteTemplates[Math.floor(Math.random() * noteTemplates.length)];
+
+    bookingNotesToCreate.push({
+      booking_id: booking.id,
+      stylist_id: booking.stylist_id!,
+      content: template.content,
+      category: template.category,
+      customer_visible: template.customer_visible,
+      duration_minutes: template.customer_visible ?
+        60 + Math.floor(Math.random() * 60) : null, // Random duration for service notes
+      next_appointment_suggestion: Math.random() > 0.6 ?
+        "Kan booke neste time om 4-6 uker for best resultat." : null,
+      tags: template.tags
+    });
+  }
+
+  if (bookingNotesToCreate.length > 0) {
+    await seed.booking_notes(bookingNotesToCreate);
+    console.log(`-- Created ${bookingNotesToCreate.length} booking notes`);
+  } else {
+    console.log("-- No completed bookings found for notes creation");
+  }
+
+  return bookingNotesToCreate;
+}

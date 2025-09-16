@@ -12,7 +12,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, MessageCircle, Loader2, History } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { getChatMessages } from "@/server/chat.actions";
+import { getChatMessages, getChatMessageImages } from "@/server/chat.actions";
 import { format } from "date-fns";
 import { nb } from "date-fns/locale";
 import { ChatMessageItem } from "@/components/chat-message";
@@ -48,21 +48,36 @@ export function ChatHistorySheet({
     enabled: open && !!chatId,
   });
 
-  // Convert messages to ChatMessage format
+  // Convert messages to ChatMessage format with images
   useEffect(() => {
-    if (messagesResponse?.data) {
-      const converted = messagesResponse.data.map((msg) => ({
-        id: msg.id,
-        content: msg.content,
-        createdAt: msg.created_at,
-        user: {
-          name: msg.sender.full_name || "Ukjent bruker",
-        },
-        // Note: We're not loading images for history view to keep it simple
-        // Could be enhanced later if needed
-      }));
-      setConvertedMessages(converted);
-    }
+    const loadMessagesWithImages = async () => {
+      if (messagesResponse?.data) {
+        console.log("[DEBUG] Loading chat history messages with images");
+
+        const messagesWithImages = await Promise.all(
+          messagesResponse.data.map(async (msg) => {
+            // Fetch images for this message
+            const imagesResult = await getChatMessageImages(msg.id);
+            const images = imagesResult.error ? [] : imagesResult.data || [];
+
+            return {
+              id: msg.id,
+              content: msg.content,
+              createdAt: msg.created_at,
+              user: {
+                name: msg.sender.full_name || "Ukjent bruker",
+                senderId: msg.sender.id, // Add sender ID for proper comparison
+              },
+              images: images.length > 0 ? images : undefined,
+            };
+          })
+        );
+
+        setConvertedMessages(messagesWithImages);
+      }
+    };
+
+    loadMessagesWithImages();
   }, [messagesResponse?.data]);
 
   return (

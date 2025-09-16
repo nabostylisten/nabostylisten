@@ -20,13 +20,30 @@ const OmOssPage = async () => {
 
   console.log(stats);
 
+  // Helper function to round values based on magnitude
+  const roundValue = (value: number) => {
+    if (value >= 1000) {
+      // Round down to nearest 100 for thousands
+      return Math.floor(value / 100) * 100;
+    } else if (value >= 100) {
+      // Round down to nearest 50 for hundreds
+      return Math.floor(value / 50) * 50;
+    } else {
+      // Round down to nearest 10 for smaller values
+      return Math.floor(value / 10) * 10;
+    }
+  };
+
   // Calculate rounded stats
   const roundedStylists = stats
-    ? Math.max(Math.floor(stats.stylists / 10) * 10, minValue)
+    ? Math.max(roundValue(stats.stylists), minValue)
     : 500;
   const roundedCustomers = stats
-    ? Math.max(Math.floor(stats.bookings / 10) * 10, minValue)
+    ? Math.max(roundValue(stats.customers), minValue)
     : 10000;
+  const roundedBookings = stats
+    ? Math.max(roundValue(stats.bookings), minValue)
+    : 15000;
   const avgRating = stats?.averageRating || 4.8;
 
   return (
@@ -63,7 +80,7 @@ const OmOssPage = async () => {
       <section className="py-16 px-6 lg:px-12 bg-muted/30">
         <BlurFade delay={0.1} duration={0.5} inView>
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-3 gap-8">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-8">
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary mb-2">
                   {roundedStylists}+
@@ -77,6 +94,12 @@ const OmOssPage = async () => {
                 <div className="text-sm text-muted-foreground">
                   Fornøyde kunder
                 </div>
+              </div>
+              <div className="text-center">
+                <div className="text-3xl font-bold text-primary mb-2">
+                  {roundedBookings}+
+                </div>
+                <div className="text-sm text-muted-foreground">Bookinger</div>
               </div>
               <div className="text-center">
                 <div className="text-3xl font-bold text-primary mb-2">

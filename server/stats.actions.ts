@@ -12,65 +12,90 @@ export async function getPlatformStats() {
       servicesResult,
       categoriesResult,
       bookingsResult,
+      customersResult,
       ratingsResult,
     ] = await Promise.all([
-      // Count verified stylists (profiles with role = 'stylist' and identity verification completed)
+      // Count stylists (profiles with role = 'stylist')
+      // TODO: Re-enable identity verification check before production launch
+      // See supabase/schemas/00-schema.sql for identity_verification_completed_at field
+      // Add back: .not("stylist_details.identity_verification_completed_at", "is", null)
       supabase
         .from("profiles")
-        .select(`
+        .select(
+          `
           *,
-          stylist_details!inner (
+          stylist_details (
             identity_verification_completed_at
           )
-        `, { count: "exact", head: true })
-        .eq("role", "stylist")
-        .not("stylist_details.identity_verification_completed_at", "is", null),
+        `,
+          { count: "exact", head: true },
+        )
+        .eq("role", "stylist"),
 
-      // Count published services from verified stylists
+      // Count published services
+      // TODO: Re-enable identity verification check before production launch
+      // See supabase/schemas/00-schema.sql for identity_verification_completed_at field
+      // Add back: .not("profiles.stylist_details.identity_verification_completed_at", "is", null)
       supabase
         .from("services")
-        .select(`
+        .select(
+          `
           *,
           profiles!stylist_id (
-            stylist_details!inner (
+            stylist_details (
               identity_verification_completed_at
             )
           )
-        `, { count: "exact", head: true })
-        .eq("is_published", true)
-        .not("profiles.stylist_details.identity_verification_completed_at", "is", null),
+        `,
+          { count: "exact", head: true },
+        )
+        .eq("is_published", true),
+      // .not("profiles.stylist_details.identity_verification_completed_at", "is", null),
 
       // Count service categories
       supabase
         .from("service_categories")
         .select("*", { count: "exact", head: true }),
 
-      // Count confirmed bookings for verified stylists
+      // Count confirmed bookings
+      // TODO: Re-enable identity verification check before production launch
+      // See supabase/schemas/00-schema.sql for identity_verification_completed_at field
+      // Add back: .not("stylist.stylist_details.identity_verification_completed_at", "is", null)
       supabase
         .from("bookings")
-        .select(`
+        .select(
+          `
           *,
           stylist:profiles!stylist_id (
-            stylist_details!inner (
+            stylist_details (
               identity_verification_completed_at
             )
           )
-        `, { count: "exact", head: true })
-        .eq("status", "confirmed")
-        .not("stylist.stylist_details.identity_verification_completed_at", "is", null),
+        `,
+          { count: "exact", head: true },
+        )
+        .eq("status", "confirmed"),
 
-      // Get average rating from reviews for verified stylists
+      // Count unique customers (profiles with role = 'customer')
+      supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("role", "customer"),
+
+      // Get average rating from reviews
+      // TODO: Re-enable identity verification check before production launch
+      // See supabase/schemas/00-schema.sql for identity_verification_completed_at field
+      // Add back: .not("stylist.stylist_details.identity_verification_completed_at", "is", null)
       supabase
         .from("reviews")
         .select(`
           rating,
           stylist:profiles!stylist_id (
-            stylist_details!inner (
+            stylist_details (
               identity_verification_completed_at
             )
           )
-        `)
-        .not("stylist.stylist_details.identity_verification_completed_at", "is", null),
+        `),
     ]);
 
     // Calculate average rating
@@ -83,12 +108,16 @@ export async function getPlatformStats() {
       averageRating = totalRating / ratingsResult.data.length;
     }
 
+    // Get customer count from the customer query
+    const customerCount = customersResult.count || 0;
+
     return {
       data: {
         stylists: stylistsResult.count || 0,
         services: servicesResult.count || 0,
         categories: categoriesResult.count || 0,
         bookings: bookingsResult.count || 0,
+        customers: customerCount,
         averageRating: Math.round(averageRating * 10) / 10, // Round to 1 decimal place
       },
       error: null,
@@ -174,7 +203,11 @@ export async function getPopularServices(limit: number = 10) {
         )
       `)
       .eq("is_published", true)
-      .not("profiles.stylist_details.identity_verification_completed_at", "is", null)
+      .not(
+        "profiles.stylist_details.identity_verification_completed_at",
+        "is",
+        null,
+      )
       .in(
         "id",
         serviceIdsWithReviews.length > 0
@@ -186,7 +219,7 @@ export async function getPopularServices(limit: number = 10) {
 
     // If we have no services with reviews, get some without reviews
     // Filter to only include services from verified stylists
-    let finalServices = (services || []).filter(service =>
+    let finalServices = (services || []).filter((service) =>
       service.profiles?.stylist_details?.identity_verification_completed_at
     );
 
@@ -215,7 +248,11 @@ export async function getPopularServices(limit: number = 10) {
           )
         `)
         .eq("is_published", true)
-        .not("profiles.stylist_details.identity_verification_completed_at", "is", null)
+        .not(
+          "profiles.stylist_details.identity_verification_completed_at",
+          "is",
+          null,
+        )
         .limit(limit - finalServices.length);
 
       // Only exclude services with reviews if there are any
@@ -231,8 +268,10 @@ export async function getPopularServices(limit: number = 10) {
 
       if (additionalServices) {
         // Filter additional services as well
-        const verifiedAdditionalServices = additionalServices.filter(service =>
-          service.profiles?.stylist_details?.identity_verification_completed_at
+        const verifiedAdditionalServices = additionalServices.filter(
+          (service) =>
+            service.profiles?.stylist_details
+              ?.identity_verification_completed_at
         );
         finalServices = [...finalServices, ...verifiedAdditionalServices];
       }

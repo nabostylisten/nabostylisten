@@ -37,7 +37,7 @@ export class MigrationDatabase {
     const requiredEnvVars = {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
       supabaseServiceKey: process.env.SUPABASE_SERVICE_ROLE_KEY,
-      dumpFilePath: process.env.MYSQL_DUMP_PATH || "./nabostylisten_dump.sql",
+      dumpFilePath: process.env.MYSQL_DUMP_PATH || "./nabostylisten_prod.sql",
     };
 
     // Validate environment variables

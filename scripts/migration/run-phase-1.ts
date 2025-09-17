@@ -169,12 +169,12 @@ Usage: bun scripts/migration/run-phase-1.ts
 Environment Variables Required:
   NEXT_PUBLIC_SUPABASE_URL      - Supabase project URL
   SUPABASE_SERVICE_ROLE_KEY     - Supabase service role key
-  MYSQL_DUMP_PATH               - Path to MySQL dump file (default: ./nabostylisten_dump.sql)
+  MYSQL_DUMP_PATH               - Path to MySQL dump file (default: ./nabostylisten_prod.sql)
 
 Example:
   NEXT_PUBLIC_SUPABASE_URL="https://xyz.supabase.co" \\
   SUPABASE_SERVICE_ROLE_KEY="your-service-key" \\
-  MYSQL_DUMP_PATH="./nabostylisten_dump.sql" \\
+  MYSQL_DUMP_PATH="./nabostylisten_prod.sql" \\
   bun scripts/migration/run-phase-1.ts
 
 Prerequisites:

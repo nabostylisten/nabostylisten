@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { checkUserExists, sendWelcomeEmail } from "@/server/auth.actions";
 import { subscribeUserToNewsletterAfterSignup } from "@/server/preferences.actions";
 import { createStripeCustomer } from "@/server/stripe.actions";
+import { normalizeNorwegianPhoneNumber } from "@/lib/utils";
 
 export type AuthMode = "login" | "signup";
 export type AuthStep = "email" | "code";
@@ -201,7 +202,7 @@ export function useAuthForm({
               emailRedirectTo,
               data: {
                 full_name: fullName.trim() || "Development User",
-                phone_number: phoneNumber.trim() || "+47 000 00 000",
+                phone_number: normalizeNorwegianPhoneNumber(phoneNumber.trim() || "+47 000 00 000"),
               },
             },
           });
@@ -238,7 +239,7 @@ export function useAuthForm({
               shouldCreateUser: true,
               data: {
                 full_name: fullName.trim(),
-                phone_number: phoneNumber.trim(),
+                phone_number: normalizeNorwegianPhoneNumber(phoneNumber.trim()),
               },
             },
           });

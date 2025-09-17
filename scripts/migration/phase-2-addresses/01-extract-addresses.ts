@@ -16,7 +16,6 @@ import { join } from 'path';
 import { MigrationLogger } from '../shared/logger';
 import { MigrationDatabase } from '../shared/database';
 import { MySQLParser, type MySQLAddress } from '../phase-1-users/utils/mysql-parser';
-import { MapboxGeocoder } from '../shared/mapbox-helper';
 import type { AddressMigrationStats } from '../shared/types';
 
 // Processed address for Supabase
@@ -52,19 +51,35 @@ async function main() {
       throw new Error('Database connection failed');
     }
 
-    // Read Phase 1 results
+    // Read Phase 1 results - load auth users created to get email → supabase_user_id mapping
     const tempDir = join(process.cwd(), 'scripts', 'migration', 'temp');
-    const userMappingPath = join(tempDir, 'user-id-mapping.json');
+    const authUsersPath = join(tempDir, 'auth-users-created.json');
 
-    logger.info('Loading user ID mapping from Phase 1...');
-    const mappingData = JSON.parse(readFileSync(userMappingPath, 'utf-8'));
-    const userMapping: Record<string, string> = mappingData.mapping;
+    logger.info('Loading auth users created from Phase 1...');
+    const authUsersData = JSON.parse(readFileSync(authUsersPath, 'utf-8'));
 
-    logger.info(`Loaded mapping for ${Object.keys(userMapping).length} users`);
+    // Create email → supabase_user_id mapping for successful users only
+    const emailToUserIdMapping: Record<string, string> = {};
+    const successfulUsers = authUsersData.results.filter((result: any) => result.success);
 
-    // Initialize Mapbox geocoder
-    logger.info('Initializing Mapbox geocoder for address enhancement...');
-    const geocoder = new MapboxGeocoder(logger);
+    successfulUsers.forEach((user: any) => {
+      emailToUserIdMapping[user.email.toLowerCase()] = user.supabase_user_id;
+    });
+
+    logger.info(`Loaded email mapping for ${Object.keys(emailToUserIdMapping).length} successfully created users`);
+
+    // We also need the consolidated users data to get emails for MySQL IDs
+    const consolidatedUsersPath = join(tempDir, 'consolidated-users.json');
+    const consolidatedData = JSON.parse(readFileSync(consolidatedUsersPath, 'utf-8'));
+
+    // Create MySQL ID → email mapping
+    const mysqlIdToEmailMapping: Record<string, string> = {};
+    consolidatedData.users.forEach((user: any) => {
+      mysqlIdToEmailMapping[user.id] = user.email.toLowerCase();
+    });
+
+    logger.info(`Loaded MySQL ID to email mapping for ${Object.keys(mysqlIdToEmailMapping).length} users`);
+
 
     // Initialize MySQL parser
     const parser = new MySQLParser(database.getDumpFilePath(), logger);
@@ -73,10 +88,21 @@ async function main() {
     logger.info('Extracting address records from MySQL dump...');
     const addresses = await extractAddresses(parser);
 
+    // Debug: Log all addresses found
+    logger.debug('=== ALL EXTRACTED ADDRESSES ===');
+    addresses.forEach((addr, index) => {
+      logger.debug(`Address ${index + 1}: ID=${addr.id}, buyer_id=${addr.buyer_id}, stylist_id=${addr.stylist_id}, salon_id=${addr.salon_id}, deleted_at=${addr.deleted_at}, street_name=${addr.street_name}, formatted_address=${addr.formatted_address}, city=${addr.city}`);
+    });
+
     // Filter out soft-deleted and salon addresses
     const activeAddresses = addresses.filter(addr =>
       !addr.deleted_at && !addr.salon_id
     );
+
+    logger.debug('=== ACTIVE ADDRESSES (after filtering) ===');
+    activeAddresses.forEach((addr, index) => {
+      logger.debug(`Active Address ${index + 1}: ID=${addr.id}, buyer_id=${addr.buyer_id}, stylist_id=${addr.stylist_id}, street_name=${addr.street_name}, formatted_address=${addr.formatted_address}, city=${addr.city}`);
+    });
 
     logger.info(`Found ${addresses.length} total addresses, ${activeAddresses.length} active (excluded ${addresses.length - activeAddresses.length} soft-deleted/salon)`);
 
@@ -89,12 +115,40 @@ async function main() {
     }> = [];
 
     // First pass: Process addresses and convert basic data
+    logger.debug('=== PROCESSING ADDRESSES ===');
     for (const address of activeAddresses) {
       try {
-        const processed = await processAddress(address, userMapping, logger, geocoder);
+        logger.debug(`Processing address ${address.id}: buyer_id=${address.buyer_id}, stylist_id=${address.stylist_id}`);
+
+        // Debug: Check if user mapping exists via email lookup
+        if (address.buyer_id && mysqlIdToEmailMapping[address.buyer_id]) {
+          const email = mysqlIdToEmailMapping[address.buyer_id];
+          if (emailToUserIdMapping[email]) {
+            logger.debug(`✓ Found user mapping for buyer_id ${address.buyer_id} → email ${email} → ${emailToUserIdMapping[email]}`);
+          } else {
+            logger.debug(`✗ Found email ${email} for buyer_id ${address.buyer_id}, but no Supabase user found`);
+          }
+        } else if (address.buyer_id) {
+          logger.debug(`✗ No email mapping found for buyer_id ${address.buyer_id}`);
+        }
+
+        if (address.stylist_id && mysqlIdToEmailMapping[address.stylist_id]) {
+          const email = mysqlIdToEmailMapping[address.stylist_id];
+          if (emailToUserIdMapping[email]) {
+            logger.debug(`✓ Found user mapping for stylist_id ${address.stylist_id} → email ${email} → ${emailToUserIdMapping[email]}`);
+          } else {
+            logger.debug(`✗ Found email ${email} for stylist_id ${address.stylist_id}, but no Supabase user found`);
+          }
+        } else if (address.stylist_id) {
+          logger.debug(`✗ No email mapping found for stylist_id ${address.stylist_id}`);
+        }
+
+        const processed = await processAddress(address, mysqlIdToEmailMapping, emailToUserIdMapping, logger);
         if (processed) {
+          logger.debug(`✓ Successfully processed address ${address.id} → user ${processed.user_id}`);
           processedAddresses.push(processed);
         } else {
+          logger.debug(`✗ Failed to process address ${address.id}: No valid user mapping found`);
           skippedAddresses.push({
             address,
             reason: 'No valid user mapping found'
@@ -109,37 +163,7 @@ async function main() {
       }
     }
 
-    // Second pass: Batch geocoding for addresses without coordinates
-    const addressesToGeocode = processedAddresses.filter(addr =>
-      !addr.location || addr.geocoding_confidence === 'none'
-    );
-
-    if (addressesToGeocode.length > 0) {
-      logger.info(`Geocoding ${addressesToGeocode.length} addresses using Mapbox...`);
-
-      const geocodedAddresses = await geocoder.batchGeocode(addressesToGeocode, {
-        batchSize: 10,
-        delayMs: 100,
-        onProgress: (current, total) => {
-          logger.progress({
-            phase: 'Address Geocoding',
-            step: 'Mapbox API',
-            current,
-            total,
-            percentage: (current / total) * 100,
-            errors: []
-          });
-        }
-      });
-
-      // Update the processed addresses with geocoded data
-      geocodedAddresses.forEach((geocoded, index) => {
-        const originalIndex = processedAddresses.findIndex(addr => addr.id === geocoded.id);
-        if (originalIndex !== -1) {
-          processedAddresses[originalIndex] = geocoded as ProcessedAddress;
-        }
-      });
-    }
+    // Note: Geography coordinates will be added later by a separate Mapbox integration script
 
     // Validate processed addresses
     logger.info('Validating processed addresses...');
@@ -149,8 +173,12 @@ async function main() {
       logger.validation(validationErrors);
     }
 
-    // Get geocoding statistics
-    const geocodingStats = geocoder.getStats();
+    // Statistics without geocoding
+    const geocodingStats = {
+      enabled: false,
+      requestCount: 0,
+      failedGeocodes: 0
+    };
 
     // Generate migration statistics
     const stats: AddressMigrationStats = {
@@ -199,6 +227,18 @@ async function main() {
     const addressStatsPath = join(tempDir, 'address-migration-stats.json');
     writeFileSync(addressStatsPath, JSON.stringify(stats, null, 2));
 
+    // Debug: Log skipped addresses with details
+    if (skippedAddresses.length > 0) {
+      logger.debug('=== SKIPPED ADDRESSES DETAILS ===');
+      skippedAddresses.forEach((skipped, index) => {
+        logger.debug(`Skipped Address ${index + 1}: ID=${skipped.address.id}, buyer_id=${skipped.address.buyer_id}, stylist_id=${skipped.address.stylist_id}, reason="${skipped.reason}"`);
+        logger.debug(`  → street_name: ${skipped.address.street_name}`);
+        logger.debug(`  → formatted_address: ${skipped.address.formatted_address}`);
+        logger.debug(`  → city: ${skipped.address.city}`);
+        logger.debug(`  → zipcode: ${skipped.address.zipcode}`);
+      });
+    }
+
     // Summary
     logger.stats('Address Extraction Summary', {
       'Total MySQL Addresses': addresses.length,
@@ -209,7 +249,7 @@ async function main() {
       'Buyer Addresses': stats.buyer_addresses,
       'Stylist Addresses': stats.stylist_addresses,
       'Validation Errors': validationErrors.length,
-      'Mapbox Geocoding': geocodingStats.enabled ? `✅ Enabled (${geocodingStats.requestCount} requests)` : '⚠️  Disabled',
+      'Mapbox Geocoding': '⚠️ Deferred to separate script',
       'Geocoding Confidence': `High: ${stats.geocoding_stats.high_confidence}, Med: ${stats.geocoding_stats.medium_confidence}, Low: ${stats.geocoding_stats.low_confidence}`,
       'Status': validationErrors.length === 0 ? '✅ SUCCESS' : '⚠️  SUCCESS WITH WARNINGS'
     });
@@ -238,29 +278,35 @@ async function extractAddresses(parser: MySQLParser): Promise<MySQLAddress[]> {
  */
 async function processAddress(
   address: MySQLAddress,
-  userMapping: Record<string, string>,
-  logger: MigrationLogger,
-  geocoder: MapboxGeocoder
+  mysqlIdToEmailMapping: Record<string, string>,
+  emailToUserIdMapping: Record<string, string>,
+  logger: MigrationLogger
 ): Promise<ProcessedAddress | null> {
-  // Determine user ID from polymorphic relationship
+  // Determine user ID from polymorphic relationship via email lookup
   let userId: string | null = null;
   let sourceTable: 'buyer' | 'stylist';
 
-  if (address.buyer_id && userMapping[address.buyer_id]) {
-    userId = userMapping[address.buyer_id];
-    sourceTable = 'buyer';
-  } else if (address.stylist_id && userMapping[address.stylist_id]) {
-    userId = userMapping[address.stylist_id];
-    sourceTable = 'stylist';
+  if (address.buyer_id && mysqlIdToEmailMapping[address.buyer_id]) {
+    const email = mysqlIdToEmailMapping[address.buyer_id];
+    if (emailToUserIdMapping[email]) {
+      userId = emailToUserIdMapping[email];
+      sourceTable = 'buyer';
+    }
+  } else if (address.stylist_id && mysqlIdToEmailMapping[address.stylist_id]) {
+    const email = mysqlIdToEmailMapping[address.stylist_id];
+    if (emailToUserIdMapping[email]) {
+      userId = emailToUserIdMapping[email];
+      sourceTable = 'stylist';
+    }
   }
 
   if (!userId) {
     return null;
   }
 
-  // Try to parse MySQL binary POINT coordinates
-  let location = parseMySQLBinaryPoint(address.coordinates, logger);
-  let geocodingConfidence: 'high' | 'medium' | 'low' | 'none' = location ? 'high' : 'none';
+  // Skip coordinate parsing - will be handled by separate Mapbox script
+  const location: string | null = null;
+  const geocodingConfidence: 'high' | 'medium' | 'low' | 'none' = 'none';
 
   // Build address components
   const streetAddress = [address.street_name, address.street_no]
@@ -271,25 +317,14 @@ async function processAddress(
     .filter(Boolean)
     .join(' - ') || null;
 
-  // Parse city, postal code from formatted address if not provided
-  let city = address.city || null;
-  let postalCode = address.zipcode || null;
-
-  // If city or postal code is empty, try to parse from formatted_address
-  if ((!city || !postalCode) && address.formatted_address) {
-    const parsedAddress = parseFormattedAddress(address.formatted_address);
-    city = city || parsedAddress.city;
-    postalCode = postalCode || parsedAddress.postalCode;
-  }
+  // Use city and postal code from MySQL, preserving empty strings as valid data
+  let city = address.city; // Keep as-is from MySQL (could be empty string)
+  let postalCode = address.zipcode; // Keep as-is from MySQL (could be empty string)
 
   const country = address.country || 'Norway';
   const countryCode = deriveCountryCode(country);
 
-  // If we don't have coordinates from MySQL, prepare for geocoding
-  // (Geocoding will be done in batch in the main function)
-  if (!location) {
-    geocodingConfidence = 'none';
-  }
+  // Location will be set to NULL initially, populated later by separate script
 
   return {
     id: address.id,
@@ -311,40 +346,6 @@ async function processAddress(
   };
 }
 
-/**
- * Parse MySQL binary POINT data
- * MySQL stores POINT as binary data in the dump. The dump shows it as escaped binary.
- * Format: _binary '\0\0\0\0\0\0...' where the data contains WKB (Well-Known Binary) format
- */
-function parseMySQLBinaryPoint(coordinates: any, logger: MigrationLogger): string | null {
-  if (!coordinates) return null;
-
-  try {
-    // If it's already a string in POINT format, just validate and return it
-    if (typeof coordinates === 'string' && coordinates.startsWith('POINT(')) {
-      const match = coordinates.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
-      if (match) {
-        const lng = parseFloat(match[1]);
-        const lat = parseFloat(match[2]);
-
-        // Validate coordinates are reasonable for Norway/Nordic region
-        if (lng >= -10 && lng <= 35 && lat >= 50 && lat <= 75) {
-          return `POINT(${lng} ${lat})`;
-        }
-      }
-    }
-
-    // For now, we'll return null for binary data and rely on Mapbox geocoding
-    // The binary format in MySQL dumps is complex and would require WKB parsing
-    // It's more reliable to geocode from address components
-    logger.debug('Binary POINT data detected, will geocode from address');
-    return null;
-
-  } catch (error) {
-    logger.debug(`Could not parse MySQL coordinates, will geocode`, error);
-    return null;
-  }
-}
 
 /**
  * Parse formatted address to extract city and postal code

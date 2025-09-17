@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { MigrationLogger } from '../shared/logger';
 import { MigrationDatabase } from '../shared/database';
+import { processBatchesWithResults, getOptimalBatchSize } from '../shared/batch-processor';
 import type { ConsolidatedUser, UserMigrationStats, MigrationProgress } from '../shared/types';
 
 async function main() {
@@ -38,11 +39,19 @@ async function main() {
     const consolidatedData = JSON.parse(readFileSync(consolidatedUsersPath, 'utf-8'));
     const stats: UserMigrationStats = JSON.parse(readFileSync(statsPath, 'utf-8'));
     
-    const users: ConsolidatedUser[] = consolidatedData.users;
-    logger.info(`Loaded ${users.length} consolidated users`);
+    let users: ConsolidatedUser[] = consolidatedData.users;
+
+    // Apply head limit if specified
+    const headLimit = process.env.HEAD_LIMIT ? parseInt(process.env.HEAD_LIMIT, 10) : undefined;
+    if (headLimit && headLimit > 0) {
+      users = users.slice(0, headLimit);
+      logger.warn(`🔢 Limited to first ${headLimit} users (HEAD_LIMIT environment variable)`);
+    }
+
+    logger.info(`Processing ${users.length} consolidated users`);
 
     // Track progress and results
-    const results: Array<{
+    interface AuthUserResult {
       original_id: string;
       email: string;
       success: boolean;
@@ -50,55 +59,33 @@ async function main() {
       error?: string;
       skipped?: boolean;
       skip_reason?: string;
-    }> = [];
+    }
 
-    let created = 0;
-    let skipped = 0;
-    let errors = 0;
+    // Process users using optimized batch processing
+    // Auth user creation CANNOT be batched - each call is individual to Supabase Auth API
+    const batchSize = getOptimalBatchSize('auth_users', users.length);
+    logger.info(`Processing ${users.length} users in batches of ${batchSize}`);
 
-    // Process users in batches to avoid overwhelming the system
-    const batchSize = 10;
-    const totalBatches = Math.ceil(users.length / batchSize);
-
-    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-      const startIdx = batchIndex * batchSize;
-      const endIdx = Math.min(startIdx + batchSize, users.length);
-      const batch = users.slice(startIdx, endIdx);
-
-      // Update progress
-      const progress: MigrationProgress = {
-        phase: 'Phase 1 Step 2',
-        step: 'Creating Auth Users',
-        current: endIdx,
-        total: users.length,
-        percentage: (endIdx / users.length) * 100,
-        start_time: new Date().toISOString(),
-        errors: []
-      };
-      logger.progress(progress);
-
-      // Process batch
-      for (const user of batch) {
+    const batchResult = await processBatchesWithResults<ConsolidatedUser, AuthUserResult>(
+      users,
+      async (user: ConsolidatedUser): Promise<AuthUserResult> => {
         try {
           // Check if email already exists
           const emailExists = await database.emailExists(user.email);
-          
+
           if (emailExists) {
             logger.warn(`Email already exists in Supabase: ${user.email}`, {
               original_id: user.original_id,
               role: user.role
             });
 
-            results.push({
+            return {
               original_id: user.original_id,
               email: user.email,
               success: false,
               skipped: true,
               skip_reason: 'Email already exists in Supabase'
-            });
-            
-            skipped++;
-            continue;
+            };
           }
 
           // Create Supabase Auth user
@@ -121,48 +108,59 @@ async function main() {
               role: user.role
             });
 
-            results.push({
+            return {
               original_id: user.original_id,
               email: user.email,
               success: true,
               supabase_user_id: authResult.user_id
-            });
-
-            created++;
+            };
           } else {
             logger.error(`Failed to create auth user: ${user.email}`, authResult.error);
-            
-            results.push({
+
+            return {
               original_id: user.original_id,
               email: user.email,
               success: false,
               error: authResult.error
-            });
-
-            errors++;
+            };
           }
 
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           logger.error(`Error processing user ${user.email}`, error);
 
-          results.push({
+          return {
             original_id: user.original_id,
             email: user.email,
             success: false,
             error: errorMessage
-          });
-
-          errors++;
+          };
         }
+      },
+      {
+        batchSize,
+        delayBetweenBatches: 500, // Longer delay for auth operations
+        progressCallback: (current, total) => {
+          const progress: MigrationProgress = {
+            phase: 'Phase 1 Step 2',
+            step: 'Creating Auth Users',
+            current,
+            total,
+            percentage: (current / total) * 100,
+            start_time: new Date().toISOString(),
+            errors: []
+          };
+          logger.progress(progress);
+        }
+      },
+      logger
+    );
 
-        // Small delay between users to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      // Delay between batches
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
+    // Extract results from batch processing
+    const results = batchResult.successful;
+    const created = results.filter(r => r.success && !r.skipped).length;
+    const skipped = results.filter(r => r.skipped).length;
+    const errors = batchResult.errorCount + results.filter(r => !r.success && !r.skipped).length;
 
     // Update migration stats
     stats.created_auth_users = created;

@@ -7,8 +7,7 @@
 #
 # Arguments:
 #   SQL_DUMP_FILE   Path to the MySQL dump file (optional)
-#                   Default: ./nabostylisten_dump.sql
-#                   Example: ./nabostylisten_prod.sql
+#                   Default: ./nabostylisten_prod.sql
 #
 # MIGRATION SCOPE (Updated):
 # Phase 1: Users (buyer + stylist → profiles + stylist_details + user_preferences)
@@ -37,7 +36,7 @@
 set +e
 
 # Parse command line arguments
-SQL_DUMP_FILE="${1:-./nabostylisten_dump.sql}"
+SQL_DUMP_FILE="${1:-./nabostylisten_prod.sql}"
 
 # Validate that the SQL dump file exists
 if [ ! -f "$SQL_DUMP_FILE" ]; then

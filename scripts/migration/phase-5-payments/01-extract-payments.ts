@@ -85,7 +85,7 @@ async function extractPayments(): Promise<ExtractionResult> {
 
   try {
     // Load MySQL dump
-    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), "nabostylisten_dump.sql");
+    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), "nabostylisten_prod.sql");
     const parser = new MySQLParser(dumpPath, logger);
 
     logger.info("Parsing payments and bookings from MySQL dump...");

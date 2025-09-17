@@ -100,7 +100,14 @@ async function main() {
 
     // Consolidate users
     logger.info('Consolidating user data...');
-    const consolidatedUsers = deduplicator.consolidateUsers(activeBuyers, activeStylists, duplicates);
+    let consolidatedUsers = deduplicator.consolidateUsers(activeBuyers, activeStylists, duplicates);
+
+    // Apply head limit if specified
+    const headLimit = process.env.HEAD_LIMIT ? parseInt(process.env.HEAD_LIMIT, 10) : undefined;
+    if (headLimit && headLimit > 0) {
+      logger.warn(`🔢 Limiting to first ${headLimit} users (HEAD_LIMIT environment variable)`);
+      consolidatedUsers = consolidatedUsers.slice(0, headLimit);
+    }
 
     // Validate consolidated data
     logger.info('Validating consolidated user data...');

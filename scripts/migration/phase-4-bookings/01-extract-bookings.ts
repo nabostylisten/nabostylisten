@@ -134,7 +134,7 @@ export async function extractBookings(): Promise<void> {
     logger.info(`Loaded ${Object.keys(userIdMapping).length} user ID mappings`);
     
     // Parse MySQL dump for booking data
-    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), 'nabostylisten_dump.sql');
+    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), 'nabostylisten_prod.sql');
     const parser = new MySQLParser(dumpPath, logger);
     
     logger.info('Parsing bookings from MySQL dump...');

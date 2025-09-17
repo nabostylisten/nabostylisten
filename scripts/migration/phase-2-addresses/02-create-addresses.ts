@@ -38,6 +38,51 @@ interface ProcessedAddress {
 }
 
 /**
+ * Extract city from street address when city field is null
+ * Handles Norwegian address formats and location descriptions
+ */
+function extractCityFromStreetAddress(streetAddress: string | null): string | null {
+  if (!streetAddress) {
+    return null;
+  }
+
+  const address = streetAddress.trim();
+
+  // Handle airport codes: "Oslo Lufthavn (OSL)" -> "Oslo"
+  const airportMatch = address.match(/^(\w+)\s+Lufthavn/);
+  if (airportMatch) {
+    return airportMatch[1];
+  }
+
+  // Handle city names in parentheses: "Something (Oslo)" -> "Oslo"
+  const parenthesesMatch = address.match(/\(([^)]+)\)$/);
+  if (parenthesesMatch) {
+    const cityCandidate = parenthesesMatch[1];
+    // Only use if it looks like a city name (not codes like OSL)
+    if (cityCandidate.length > 3 && !/^\w{3}$/.test(cityCandidate)) {
+      return cityCandidate;
+    }
+  }
+
+  // Handle Norwegian city patterns: look for known Norwegian cities
+  const norwegianCities = ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Kristiansand', 'Drammen', 'Fredrikstad', 'Sarpsborg', 'Skien', 'Bodø', 'Tromsø', 'Haugesund', 'Ålesund', 'Moss', 'Sandefjord', 'Tønsberg', 'Halden', 'Arendal', 'Hamar', 'Lillehammer', 'Mo i Rana', 'Molde', 'Harstad', 'Kongsberg', 'Gjøvik', 'Jessheim', 'Sandnes', 'Lørenskog', 'Bærum', 'Asker'];
+
+  for (const city of norwegianCities) {
+    if (address.toLowerCase().includes(city.toLowerCase())) {
+      return city;
+    }
+  }
+
+  // Try to extract first word as city if it's capitalized and reasonable length
+  const firstWord = address.split(/[\s,]/)[0];
+  if (firstWord && firstWord.length >= 3 && firstWord.charAt(0) === firstWord.charAt(0).toUpperCase()) {
+    return firstWord;
+  }
+
+  return null;
+}
+
+/**
  * Parse PostGIS POINT format and convert to geography type
  * Input: "POINT(lng lat)"
  * Output: Valid PostGIS geography value
@@ -101,6 +146,30 @@ async function main() {
 
     if (addresses.length === 0) {
       logger.warn('No addresses to create');
+
+      // Still create empty results file for next step
+      const tempDir = join(process.cwd(), 'scripts', 'migration', 'temp');
+      const addressResultsPath = join(tempDir, 'addresses-created.json');
+      const addressStatsPath = join(tempDir, 'address-migration-stats.json');
+
+      writeFileSync(addressResultsPath, JSON.stringify({
+        metadata: {
+          created_at: new Date().toISOString(),
+          total_processed: 0,
+          successful: 0,
+          errors: 0,
+          addresses_with_coordinates: 0,
+          geocoding_confidence_distribution: { high: 0, medium: 0, low: 0, none: 0 }
+        },
+        results: []
+      }, null, 2));
+
+      // Load and update stats
+      const stats: AddressMigrationStats = JSON.parse(readFileSync(addressStatsPath, 'utf-8'));
+      stats.created_addresses = 0;
+      writeFileSync(addressStatsPath, JSON.stringify(stats, null, 2));
+
+      logger.success('Phase 2 Step 2 completed (no addresses to process)');
       return;
     }
 
@@ -152,8 +221,9 @@ async function main() {
         id: address.id,
         user_id: address.user_id,
         street_address: address.street_address,
-        city: address.city,
-        postal_code: address.postal_code,
+        // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
+        city: address.city || "",  // Empty string if null (MySQL NOT NULL behavior)
+        postal_code: address.postal_code || "",  // Empty string if null (MySQL NOT NULL behavior)
         country: address.country,
         country_code: address.country_code,
         nickname: address.nickname,
@@ -199,8 +269,9 @@ async function main() {
               id: address.id,
               user_id: address.user_id,
               street_address: address.street_address,
-              city: address.city,
-              postal_code: address.postal_code,
+              // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
+              city: address.city || "",  // Empty string if null (MySQL NOT NULL behavior)
+              postal_code: address.postal_code || "",  // Empty string if null (MySQL NOT NULL behavior)
               country: address.country,
               country_code: address.country_code,
               nickname: address.nickname,

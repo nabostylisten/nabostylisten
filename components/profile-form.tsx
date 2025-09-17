@@ -53,11 +53,16 @@ import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ProfileAddresses } from "@/components/addresses";
 import { StylistDetailsForm } from "@/components/stylist-details-form";
 import { useAuth } from "@/hooks/use-auth";
+import { isValidNorwegianPhoneNumber, normalizeNorwegianPhoneNumber, formatNorwegianPhoneNumber } from "@/lib/utils";
 
 // Form schema for profile updates
 const profileFormSchema = z.object({
   full_name: z.string().min(2, "Navn må være minst 2 karakterer"),
-  phone_number: z.string().optional(),
+  phone_number: z.string()
+    .optional()
+    .refine((val) => !val || isValidNorwegianPhoneNumber(val), {
+      message: "Skriv inn et gyldig norsk telefonnummer",
+    }),
 });
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
@@ -88,7 +93,7 @@ export function ProfileForm({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       full_name: profile.full_name || "",
-      phone_number: profile.phone_number || "",
+      phone_number: formatNorwegianPhoneNumber(profile.phone_number || ""),
     },
   });
 
@@ -96,7 +101,7 @@ export function ProfileForm({
   useEffect(() => {
     form.reset({
       full_name: profile.full_name || "",
-      phone_number: profile.phone_number || "",
+      phone_number: formatNorwegianPhoneNumber(profile.phone_number || ""),
     });
   }, [profile.full_name, profile.phone_number, form]);
 
@@ -144,9 +149,15 @@ export function ProfileForm({
 
   const onSubmit = (values: ProfileFormValues) => {
     if (isOwner) {
+      // Normalize phone number before saving to database
+      const normalizedData = {
+        ...values,
+        phone_number: values.phone_number ? normalizeNorwegianPhoneNumber(values.phone_number) : undefined,
+      };
+
       updateProfileMutation.mutate({
         id: profile.id,
-        data: values,
+        data: normalizedData,
       });
     }
   };
@@ -270,8 +281,15 @@ export function ProfileForm({
                         Telefonnummer
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="Ditt telefonnummer" {...field} />
+                        <Input
+                          placeholder="+47 123 45 678"
+                          type="tel"
+                          {...field}
+                        />
                       </FormControl>
+                      <p className="text-xs text-muted-foreground">
+                        Aksepterer alle vanlige norske formater: +47 123 45 678, 12345678, 123 45 678
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -313,7 +331,7 @@ export function ProfileForm({
                   Telefonnummer
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  {profile.phone_number || "Ikke satt"}
+                  {profile.phone_number ? formatNorwegianPhoneNumber(profile.phone_number) : "Ikke satt"}
                 </p>
               </div>
             </>

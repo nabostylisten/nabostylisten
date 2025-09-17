@@ -37,13 +37,13 @@ const OmOssPage = async () => {
   // Calculate rounded stats
   const roundedStylists = stats
     ? Math.max(roundValue(stats.stylists), minValue)
-    : 500;
+    : minValue;
   const roundedCustomers = stats
     ? Math.max(roundValue(stats.customers), minValue)
-    : 10000;
+    : minValue;
   const roundedBookings = stats
     ? Math.max(roundValue(stats.bookings), minValue)
-    : 15000;
+    : minValue;
   const avgRating = stats?.averageRating || 4.8;
 
   return (

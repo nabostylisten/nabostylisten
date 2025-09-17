@@ -41,7 +41,8 @@
     "stripe:trigger": "stripe trigger",
     "stripe:test:connect": "bun run with-env bun scripts/test-stripe-connect.ts",
     "test:dev:cron": "sh scripts/test-dev-cron.sh",
-    "migration:full": "sh scripts/run-full-migration.sh"
+    "migration:full": "sh scripts/run-full-migration.sh",
+    "migration:phase": "bun run with-env bun scripts/migration/run-phase-with-dump.ts"
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",

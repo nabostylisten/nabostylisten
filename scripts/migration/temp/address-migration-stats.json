@@ -1,0 +1,21 @@
+{
+  "total_addresses": 24,
+  "active_addresses": 24,
+  "processed_addresses": 24,
+  "skipped_addresses": 0,
+  "addresses_with_coordinates": 0,
+  "buyer_addresses": 24,
+  "stylist_addresses": 0,
+  "created_addresses": 24,
+  "primary_address_updates": 4,
+  "errors": 0,
+  "geocoding_stats": {
+    "enabled": false,
+    "requests_made": 0,
+    "failed_geocodes": 0,
+    "high_confidence": 0,
+    "medium_confidence": 0,
+    "low_confidence": 0,
+    "no_geocoding": 24
+  }
+}

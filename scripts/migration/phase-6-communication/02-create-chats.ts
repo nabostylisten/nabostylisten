@@ -65,7 +65,9 @@ async function createChats(): Promise<CreationResult> {
     const messages: ProcessedMessage[] = extractedData.processedMessages;
     const imageMessages = extractedData.imageMessages || [];
 
-    logger.info(`Loaded ${chats.length} chats and ${messages.length} messages to create`);
+    logger.info(
+      `Loaded ${chats.length} chats and ${messages.length} messages to create`,
+    );
 
     // Connect to Supabase
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -108,7 +110,9 @@ async function createChats(): Promise<CreationResult> {
             .single();
 
           if (checkError && checkError.code !== "PGRST116") {
-            logger.error(`Failed to check if chat already exists: ${checkError}`);
+            logger.error(
+              `Failed to check if chat already exists: ${checkError}`,
+            );
           }
 
           if (existingChat) {
@@ -140,7 +144,9 @@ async function createChats(): Promise<CreationResult> {
               booking_id: createdChat.booking_id,
             });
 
-            logger.debug(`✓ Created chat: ${chat.id} for booking: ${chat.booking_id}`);
+            logger.debug(
+              `✓ Created chat: ${chat.id} for booking: ${chat.booking_id}`,
+            );
           }
         } catch (error) {
           logger.error(`Failed to create chat ${chat.id}:`, error);
@@ -174,6 +180,11 @@ async function createChats(): Promise<CreationResult> {
 
       // Process each message in the batch
       const batchPromises = batch.map(async (message) => {
+        if (!message.id) {
+          logger.error(`Message ${message.id} has no id, skipping`);
+          return;
+        }
+
         try {
           // Check if message already exists
           const { data: existingMessage, error: checkError } = await supabase
@@ -183,7 +194,9 @@ async function createChats(): Promise<CreationResult> {
             .single();
 
           if (checkError && checkError.code !== "PGRST116") {
-            logger.error(`Failed to check if message already exists: ${checkError}`);
+            logger.error(
+              `Failed to check if message already exists: ${checkError}`,
+            );
           }
 
           if (existingMessage) {
@@ -211,7 +224,9 @@ async function createChats(): Promise<CreationResult> {
               has_image: has_image,
             });
 
-            logger.debug(`✓ Created message: ${message.id} in chat: ${message.chat_id}`);
+            logger.debug(
+              `✓ Created message: ${message.id} in chat: ${message.chat_id}`,
+            );
           }
         } catch (error) {
           logger.error(`Failed to create message ${message.id}:`, error);
@@ -232,14 +247,18 @@ async function createChats(): Promise<CreationResult> {
 
     // Phase 3: Create media records for image messages
     logger.info("Phase 3: Creating media records for image messages...");
-    
-    const imageMessageIds = new Set(imageMessages.map((img: any) => img.message.id));
-    const createdImageMessages = created_messages.filter(msg => 
+
+    const imageMessageIds = new Set(
+      imageMessages.map((img: { message: { id: string } }) => img.message.id),
+    );
+    const createdImageMessages = created_messages.filter((msg) =>
       msg.has_image && imageMessageIds.has(msg.id)
     );
 
     if (createdImageMessages.length > 0) {
-      logger.info(`Creating ${createdImageMessages.length} media records for image messages`);
+      logger.info(
+        `Creating ${createdImageMessages.length} media records for image messages`,
+      );
 
       const mediaPromises = createdImageMessages.map(async (message) => {
         try {
@@ -271,7 +290,10 @@ async function createChats(): Promise<CreationResult> {
             logger.debug(`✓ Created media record for message: ${message.id}`);
           }
         } catch (error) {
-          logger.warn(`Failed to create media record for message ${message.id}:`, error);
+          logger.warn(
+            `Failed to create media record for message ${message.id}:`,
+            error,
+          );
           // Non-critical error, don't fail the migration
         }
       });
@@ -344,8 +366,12 @@ async function createChats(): Promise<CreationResult> {
           successfully_created_media: created_media.length,
           failed_chat_creations: failed_chats.length,
           failed_message_creations: failed_messages.length,
-          chat_success_rate: `${((created_chats.length / chats.length) * 100).toFixed(2)}%`,
-          message_success_rate: `${((created_messages.length / messages.length) * 100).toFixed(2)}%`,
+          chat_success_rate: `${
+            ((created_chats.length / chats.length) * 100).toFixed(2)
+          }%`,
+          message_success_rate: `${
+            ((created_messages.length / messages.length) * 100).toFixed(2)
+          }%`,
         },
         null,
         2,
@@ -354,19 +380,37 @@ async function createChats(): Promise<CreationResult> {
 
     // Log summary
     logger.info("Chat and message creation completed:");
-    logger.info(`  - Total chats to create: ${result.metadata.total_chats_to_create}`);
-    logger.info(`  - Total messages to create: ${result.metadata.total_messages_to_create}`);
-    logger.info(`  - Successfully created chats: ${result.metadata.successful_chat_creations}`);
-    logger.info(`  - Successfully created messages: ${result.metadata.successful_message_creations}`);
-    logger.info(`  - Successfully created media: ${result.metadata.successful_media_creations}`);
-    logger.info(`  - Failed chat creations: ${result.metadata.failed_chat_creations}`);
-    logger.info(`  - Failed message creations: ${result.metadata.failed_message_creations}`);
-    logger.info(`  - Duration: ${(duration / 1000).toFixed(2)}s`);
     logger.info(
-      `  - Chat success rate: ${((created_chats.length / chats.length) * 100).toFixed(2)}%`,
+      `  - Total chats to create: ${result.metadata.total_chats_to_create}`,
     );
     logger.info(
-      `  - Message success rate: ${((created_messages.length / messages.length) * 100).toFixed(2)}%`,
+      `  - Total messages to create: ${result.metadata.total_messages_to_create}`,
+    );
+    logger.info(
+      `  - Successfully created chats: ${result.metadata.successful_chat_creations}`,
+    );
+    logger.info(
+      `  - Successfully created messages: ${result.metadata.successful_message_creations}`,
+    );
+    logger.info(
+      `  - Successfully created media: ${result.metadata.successful_media_creations}`,
+    );
+    logger.info(
+      `  - Failed chat creations: ${result.metadata.failed_chat_creations}`,
+    );
+    logger.info(
+      `  - Failed message creations: ${result.metadata.failed_message_creations}`,
+    );
+    logger.info(`  - Duration: ${(duration / 1000).toFixed(2)}s`);
+    logger.info(
+      `  - Chat success rate: ${
+        ((created_chats.length / chats.length) * 100).toFixed(2)
+      }%`,
+    );
+    logger.info(
+      `  - Message success rate: ${
+        ((created_messages.length / messages.length) * 100).toFixed(2)
+      }%`,
     );
 
     return result;

@@ -47,7 +47,8 @@ async function validatePayments(): Promise<ValidationResult> {
     const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
     // Load MySQL dump
-    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), "nabostylisten_prod.sql");
+    const dumpPath = process.env.MYSQL_DUMP_PATH ||
+      path.join(process.cwd(), "nabostylisten_prod.sql");
     const parser = new MySQLParser(dumpPath, logger);
 
     logger.info("Connected to both data sources");
@@ -85,8 +86,10 @@ async function validatePayments(): Promise<ValidationResult> {
       await fs.readFile(extractedPaymentsPath, "utf-8"),
     );
     const expectedPayments = extractedData.processedPayments;
-    const expectedPaymentIds = new Set(expectedPayments.map((p: any) => p.id));
-    
+    // const expectedPaymentIds = new Set(
+    //   expectedPayments.map((p: { id: string }) => p.id),
+    // );
+
     logger.info(
       `Expected ${expectedPayments.length} payments to be migrated (out of ${totalMysqlPayments} total MySQL payments)`,
     );
@@ -104,7 +107,7 @@ async function validatePayments(): Promise<ValidationResult> {
 
     const pgPaymentIds = new Set(pgPayments?.map((p) => p.id) || []);
     const missing_payments = expectedPayments
-      .map((p: any) => p.id)
+      .map((p: { id: string }) => p.id)
       .filter((id: string) => !pgPaymentIds.has(id));
 
     if (missing_payments.length > 0) {
@@ -171,7 +174,9 @@ async function validatePayments(): Promise<ValidationResult> {
 
       for (let i = 0; i < sampleSize; i++) {
         const pgPayment = pgPayments[i];
-        const expectedPayment = expectedPayments.find((p: any) => p.id === pgPayment.id);
+        const expectedPayment = expectedPayments.find((p: { id: string }) =>
+          p.id === pgPayment.id
+        );
 
         if (expectedPayment) {
           const expectedAmount = expectedPayment.final_amount;

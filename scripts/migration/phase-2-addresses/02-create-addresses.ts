@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * Phase 2 Step 2: Create address records in Supabase
- * 
+ *
  * This script:
  * 1. Reads processed address data from Step 1
  * 2. Creates address records in Supabase database
@@ -10,12 +10,12 @@
  * 5. Updates migration statistics
  */
 
-import { readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
-import { MigrationLogger } from '../shared/logger';
-import { MigrationDatabase } from '../shared/database';
-import type { AddressMigrationStats, MigrationProgress } from '../shared/types';
-import type { Database } from '@/types/database.types';
+import { readFileSync, writeFileSync } from "fs";
+import { join } from "path";
+import { MigrationLogger } from "../shared/logger";
+import { MigrationDatabase } from "../shared/database";
+import type { AddressMigrationStats, MigrationProgress } from "../shared/types";
+import type { Database } from "@/types/database.types";
 
 // Processed address from Step 1 (enhanced with geocoding)
 interface ProcessedAddress {
@@ -32,144 +32,80 @@ interface ProcessedAddress {
   is_primary: boolean;
   created_at: string;
   updated_at: string;
-  source_table: 'buyer' | 'stylist';
+  source_table: "buyer" | "stylist";
   original_id: string;
-  geocoding_confidence: 'high' | 'medium' | 'low' | 'none';
-}
-
-/**
- * Extract city from street address when city field is null
- * Handles Norwegian address formats and location descriptions
- */
-function extractCityFromStreetAddress(streetAddress: string | null): string | null {
-  if (!streetAddress) {
-    return null;
-  }
-
-  const address = streetAddress.trim();
-
-  // Handle airport codes: "Oslo Lufthavn (OSL)" -> "Oslo"
-  const airportMatch = address.match(/^(\w+)\s+Lufthavn/);
-  if (airportMatch) {
-    return airportMatch[1];
-  }
-
-  // Handle city names in parentheses: "Something (Oslo)" -> "Oslo"
-  const parenthesesMatch = address.match(/\(([^)]+)\)$/);
-  if (parenthesesMatch) {
-    const cityCandidate = parenthesesMatch[1];
-    // Only use if it looks like a city name (not codes like OSL)
-    if (cityCandidate.length > 3 && !/^\w{3}$/.test(cityCandidate)) {
-      return cityCandidate;
-    }
-  }
-
-  // Handle Norwegian city patterns: look for known Norwegian cities
-  const norwegianCities = ['Oslo', 'Bergen', 'Trondheim', 'Stavanger', 'Kristiansand', 'Drammen', 'Fredrikstad', 'Sarpsborg', 'Skien', 'Bodø', 'Tromsø', 'Haugesund', 'Ålesund', 'Moss', 'Sandefjord', 'Tønsberg', 'Halden', 'Arendal', 'Hamar', 'Lillehammer', 'Mo i Rana', 'Molde', 'Harstad', 'Kongsberg', 'Gjøvik', 'Jessheim', 'Sandnes', 'Lørenskog', 'Bærum', 'Asker'];
-
-  for (const city of norwegianCities) {
-    if (address.toLowerCase().includes(city.toLowerCase())) {
-      return city;
-    }
-  }
-
-  // Try to extract first word as city if it's capitalized and reasonable length
-  const firstWord = address.split(/[\s,]/)[0];
-  if (firstWord && firstWord.length >= 3 && firstWord.charAt(0) === firstWord.charAt(0).toUpperCase()) {
-    return firstWord;
-  }
-
-  return null;
-}
-
-/**
- * Parse PostGIS POINT format and convert to geography type
- * Input: "POINT(lng lat)"
- * Output: Valid PostGIS geography value
- */
-function parsePostGISPoint(pointStr: string): string | null {
-  if (!pointStr || !pointStr.startsWith('POINT(')) {
-    return null;
-  }
-
-  try {
-    // Extract coordinates from POINT(lng lat) format
-    const match = pointStr.match(/POINT\(([-\d.]+)\s+([-\d.]+)\)/);
-    if (!match) {
-      return null;
-    }
-
-    const lng = parseFloat(match[1]);
-    const lat = parseFloat(match[2]);
-
-    // Validate coordinates
-    if (isNaN(lng) || isNaN(lat)) {
-      return null;
-    }
-
-    // Basic validation for Nordic region
-    if (lng < -10 || lng > 35 || lat < 50 || lat > 75) {
-      return null;
-    }
-
-    // Return as PostGIS geography (SRID 4326)
-    return `POINT(${lng} ${lat})`;
-  } catch (error) {
-    return null;
-  }
+  geocoding_confidence: "high" | "medium" | "low" | "none";
 }
 
 async function main() {
   const logger = new MigrationLogger();
   const database = new MigrationDatabase(logger);
-  
-  logger.info('=== Phase 2 Step 2: Create Address Records ===');
+
+  logger.info("=== Phase 2 Step 2: Create Address Records ===");
 
   try {
     // Test database connection
     const isConnected = await database.testConnection();
     if (!isConnected) {
-      throw new Error('Database connection failed');
+      throw new Error("Database connection failed");
     }
 
     // Read processed address data from Step 1
-    const tempDir = join(process.cwd(), 'scripts', 'migration', 'temp');
-    const processedAddressesPath = join(tempDir, 'processed-addresses.json');
-    const addressStatsPath = join(tempDir, 'address-migration-stats.json');
-    
-    logger.info('Loading processed address data...');
-    const processedData = JSON.parse(readFileSync(processedAddressesPath, 'utf-8'));
-    const stats: AddressMigrationStats = JSON.parse(readFileSync(addressStatsPath, 'utf-8'));
-    
+    const tempDir = join(process.cwd(), "scripts", "migration", "temp");
+    const processedAddressesPath = join(tempDir, "processed-addresses.json");
+    const addressStatsPath = join(tempDir, "address-migration-stats.json");
+
+    logger.info("Loading processed address data...");
+    const processedData = JSON.parse(
+      readFileSync(processedAddressesPath, "utf-8"),
+    );
+    const stats: AddressMigrationStats = JSON.parse(
+      readFileSync(addressStatsPath, "utf-8"),
+    );
+
     const addresses: ProcessedAddress[] = processedData.addresses;
     logger.info(`Loaded ${addresses.length} addresses to create`);
 
     if (addresses.length === 0) {
-      logger.warn('No addresses to create');
+      logger.warn("No addresses to create");
 
       // Still create empty results file for next step
-      const tempDir = join(process.cwd(), 'scripts', 'migration', 'temp');
-      const addressResultsPath = join(tempDir, 'addresses-created.json');
-      const addressStatsPath = join(tempDir, 'address-migration-stats.json');
+      const tempDir = join(process.cwd(), "scripts", "migration", "temp");
+      const addressResultsPath = join(tempDir, "addresses-created.json");
+      const addressStatsPath = join(tempDir, "address-migration-stats.json");
 
-      writeFileSync(addressResultsPath, JSON.stringify({
-        metadata: {
-          created_at: new Date().toISOString(),
-          total_processed: 0,
-          successful: 0,
-          errors: 0,
-          addresses_with_coordinates: 0,
-          geocoding_confidence_distribution: { high: 0, medium: 0, low: 0, none: 0 }
-        },
-        results: []
-      }, null, 2));
+      writeFileSync(
+        addressResultsPath,
+        JSON.stringify(
+          {
+            metadata: {
+              created_at: new Date().toISOString(),
+              total_processed: 0,
+              successful: 0,
+              errors: 0,
+              addresses_with_coordinates: 0,
+              geocoding_confidence_distribution: {
+                high: 0,
+                medium: 0,
+                low: 0,
+                none: 0,
+              },
+            },
+            results: [],
+          },
+          null,
+          2,
+        ),
+      );
 
       // Load and update stats
-      const stats: AddressMigrationStats = JSON.parse(readFileSync(addressStatsPath, 'utf-8'));
+      const stats: AddressMigrationStats = JSON.parse(
+        readFileSync(addressStatsPath, "utf-8"),
+      );
       stats.created_addresses = 0;
       writeFileSync(addressStatsPath, JSON.stringify(stats, null, 2));
 
-      logger.success('Phase 2 Step 2 completed (no addresses to process)');
+      logger.success("Phase 2 Step 2 completed (no addresses to process)");
       return;
     }
 
@@ -192,7 +128,7 @@ async function main() {
       high: 0,
       medium: 0,
       low: 0,
-      none: 0
+      none: 0,
     };
 
     // Process addresses in batches
@@ -206,44 +142,53 @@ async function main() {
 
       // Update progress
       const progress: MigrationProgress = {
-        phase: 'Phase 2 Step 2',
-        step: 'Creating Address Records',
+        phase: "Phase 2 Step 2",
+        step: "Creating Address Records",
         current: endIdx,
         total: addresses.length,
         percentage: (endIdx / addresses.length) * 100,
         start_time: new Date().toISOString(),
-        errors: []
+        errors: [],
       };
       logger.progress(progress);
 
       // Prepare batch of address records with PostGIS geography
-      const addressBatch: Database['public']['Tables']['addresses']['Insert'][] = batch.map(address => ({
-        id: address.id,
-        user_id: address.user_id,
-        street_address: address.street_address,
-        // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
-        city: address.city || "",  // Empty string if null (MySQL NOT NULL behavior)
-        postal_code: address.postal_code || "",  // Empty string if null (MySQL NOT NULL behavior)
-        country: address.country,
-        country_code: address.country_code,
-        nickname: address.nickname,
-        entry_instructions: address.entry_instructions,
-        // PostGIS geography: Convert POINT(lng lat) to geography type
-        location: address.location ? parsePostGISPoint(address.location) : null,
-        is_primary: address.is_primary,
-        created_at: address.created_at,
-        updated_at: address.updated_at
-      }));
+      const addressBatch:
+        Database["public"]["Tables"]["addresses"]["Insert"][] = batch.map(
+          (address) => ({
+            id: address.id,
+            user_id: address.user_id,
+            street_address: address.street_address ?? "",
+            // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
+            city: address.city || "", // Empty string if null (MySQL NOT NULL behavior)
+            postal_code: address.postal_code || "", // Empty string if null (MySQL NOT NULL behavior)
+            country: address.country ?? "",
+            country_code: address.country_code,
+            nickname: address.nickname,
+            entry_instructions: address.entry_instructions,
+            location: null,
+            is_primary: address.is_primary,
+            created_at: address.created_at,
+            updated_at: address.updated_at,
+          }),
+        );
 
       try {
         // Use batch create for efficiency
-        const batchResult = await database.batchCreate('addresses', addressBatch as Record<string, unknown>[]);
+        const batchResult = await database.batchCreate(
+          "addresses",
+          addressBatch as Record<string, unknown>[],
+        );
 
         if (batchResult.success) {
-          logger.debug(`Successfully created batch ${batchIndex + 1}/${totalBatches}: ${batchResult.inserted} addresses`);
-          
+          logger.debug(
+            `Successfully created batch ${
+              batchIndex + 1
+            }/${totalBatches}: ${batchResult.inserted} addresses`,
+          );
+
           // Mark all in this batch as successful
-          batch.forEach(address => {
+          batch.forEach((address) => {
             results.push({
               original_id: address.original_id,
               supabase_id: address.id,
@@ -251,7 +196,7 @@ async function main() {
               city: address.city,
               has_coordinates: !!address.location,
               geocoding_confidence: address.geocoding_confidence,
-              success: true
+              success: true,
             });
 
             // Track statistics
@@ -261,28 +206,35 @@ async function main() {
 
           created += batchResult.inserted;
         } else {
-          logger.warn(`Batch ${batchIndex + 1} had errors: ${batchResult.errors.join('; ')}}`);
-          
+          logger.warn(
+            `Batch ${batchIndex + 1} had errors: ${
+              batchResult.errors.join("; ")
+            }}`,
+          );
+
           // Try individual inserts for this batch to identify specific failures
           for (const address of batch) {
-            const addressRecord: Database['public']['Tables']['addresses']['Insert'] = {
-              id: address.id,
-              user_id: address.user_id,
-              street_address: address.street_address,
-              // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
-              city: address.city || "",  // Empty string if null (MySQL NOT NULL behavior)
-              postal_code: address.postal_code || "",  // Empty string if null (MySQL NOT NULL behavior)
-              country: address.country,
-              country_code: address.country_code,
-              nickname: address.nickname,
-              entry_instructions: address.entry_instructions,
-              location: address.location ? parsePostGISPoint(address.location) : null,
-              is_primary: address.is_primary,
-              created_at: address.created_at,
-              updated_at: address.updated_at
-            };
+            const addressRecord:
+              Database["public"]["Tables"]["addresses"]["Insert"] = {
+                id: address.id,
+                user_id: address.user_id,
+                street_address: address.street_address ?? "",
+                // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
+                city: address.city || "", // Empty string if null (MySQL NOT NULL behavior)
+                postal_code: address.postal_code || "", // Empty string if null (MySQL NOT NULL behavior)
+                country: address.country ?? "",
+                country_code: address.country_code,
+                nickname: address.nickname,
+                entry_instructions: address.entry_instructions,
+                location: null,
+                is_primary: address.is_primary,
+                created_at: address.created_at,
+                updated_at: address.updated_at,
+              };
 
-            const individualResult = await database.createAddress(addressRecord);
+            const individualResult = await database.createAddress(
+              addressRecord,
+            );
 
             if (individualResult.success) {
               results.push({
@@ -292,7 +244,7 @@ async function main() {
                 city: address.city,
                 has_coordinates: !!address.location,
                 geocoding_confidence: address.geocoding_confidence,
-                success: true
+                success: true,
               });
 
               // Track statistics
@@ -300,7 +252,10 @@ async function main() {
               geocodingStats[address.geocoding_confidence]++;
               created++;
             } else {
-              logger.error(`Failed to create address for user ${address.user_id}`, individualResult.error);
+              logger.error(
+                `Failed to create address for user ${address.user_id}`,
+                individualResult.error,
+              );
               results.push({
                 original_id: address.original_id,
                 supabase_id: address.id,
@@ -309,19 +264,20 @@ async function main() {
                 has_coordinates: !!address.location,
                 geocoding_confidence: address.geocoding_confidence,
                 success: false,
-                error: individualResult.error
+                error: individualResult.error,
               });
               errors++;
             }
           }
         }
-
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        const errorMessage = error instanceof Error
+          ? error.message
+          : "Unknown error";
         logger.error(`Batch ${batchIndex + 1} failed completely`, error);
 
         // Mark all in this batch as failed
-        batch.forEach(address => {
+        batch.forEach((address) => {
           results.push({
             original_id: address.original_id,
             supabase_id: address.id,
@@ -330,7 +286,7 @@ async function main() {
             has_coordinates: !!address.location,
             geocoding_confidence: address.geocoding_confidence,
             success: false,
-            error: errorMessage
+            error: errorMessage,
           });
         });
 
@@ -338,7 +294,7 @@ async function main() {
       }
 
       // Small delay between batches
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
     }
 
     // Update migration stats
@@ -346,18 +302,25 @@ async function main() {
     stats.errors += errors;
 
     // Save results
-    const addressResultsPath = join(tempDir, 'addresses-created.json');
-    writeFileSync(addressResultsPath, JSON.stringify({
-      metadata: {
-        created_at: new Date().toISOString(),
-        total_processed: addresses.length,
-        successful: created,
-        errors,
-        addresses_with_coordinates: coordinated,
-        geocoding_confidence_distribution: geocodingStats
-      },
-      results
-    }, null, 2));
+    const addressResultsPath = join(tempDir, "addresses-created.json");
+    writeFileSync(
+      addressResultsPath,
+      JSON.stringify(
+        {
+          metadata: {
+            created_at: new Date().toISOString(),
+            total_processed: addresses.length,
+            successful: created,
+            errors,
+            addresses_with_coordinates: coordinated,
+            geocoding_confidence_distribution: geocodingStats,
+          },
+          results,
+        },
+        null,
+        2,
+      ),
+    );
 
     // Save updated stats
     writeFileSync(addressStatsPath, JSON.stringify(stats, null, 2));
@@ -366,36 +329,44 @@ async function main() {
     const counts = await database.getCurrentCounts();
 
     // Generate geocoding summary
-    const geocodingPercentage = coordinated > 0 ? Math.round((coordinated / created) * 100) : 0;
-    const geocodingSummary = `${geocodingStats.high} high, ${geocodingStats.medium} medium, ${geocodingStats.low} low, ${geocodingStats.none} none`;
+    const geocodingPercentage = coordinated > 0
+      ? Math.round((coordinated / created) * 100)
+      : 0;
+    const geocodingSummary =
+      `${geocodingStats.high} high, ${geocodingStats.medium} medium, ${geocodingStats.low} low, ${geocodingStats.none} none`;
 
     // Log summary
-    logger.stats('Address Creation Summary', {
-      'Total Addresses to Create': addresses.length,
-      'Successfully Created': created,
-      'Addresses with Coordinates': `${coordinated} (${geocodingPercentage}%)`,
-      'Geocoding Confidence': geocodingSummary,
-      'Mapbox Enhanced': geocodingStats.high + geocodingStats.medium > 0 ? '✅ Yes' : '⚠️  No coordinates found',
-      'Errors': errors,
-      'Success Rate': addresses.length > 0 ? `${Math.round((created / addresses.length) * 100)}%` : '0%',
-      'Database Address Count': counts.addresses,
-      'Status': errors === 0 ? '✅ SUCCESS' : (created > 0 ? '⚠️  PARTIAL SUCCESS' : '❌ FAILED')
+    logger.stats("Address Creation Summary", {
+      "Total Addresses to Create": addresses.length,
+      "Successfully Created": created,
+      "Addresses with Coordinates": `${coordinated} (${geocodingPercentage}%)`,
+      "Geocoding Confidence": geocodingSummary,
+      "Mapbox Enhanced": geocodingStats.high + geocodingStats.medium > 0
+        ? "✅ Yes"
+        : "⚠️  No coordinates found",
+      "Errors": errors,
+      "Success Rate": addresses.length > 0
+        ? `${Math.round((created / addresses.length) * 100)}%`
+        : "0%",
+      "Database Address Count": counts.addresses,
+      "Status": errors === 0
+        ? "✅ SUCCESS"
+        : (created > 0 ? "⚠️  PARTIAL SUCCESS" : "❌ FAILED"),
     });
 
-    logger.success('Phase 2 Step 2 completed', {
+    logger.success("Phase 2 Step 2 completed", {
       address_results_file: addressResultsPath,
       updated_stats_file: addressStatsPath,
-      addresses_in_database: counts.addresses
+      addresses_in_database: counts.addresses,
     });
-
   } catch (error) {
-    logger.error('Phase 2 Step 2 failed', error);
+    logger.error("Phase 2 Step 2 failed", error);
     process.exit(1);
   }
 }
 
 // Run the script if called directly
-main().catch(error => {
-  console.error('Script failed:', error);
+main().catch((error) => {
+  console.error("Script failed:", error);
   process.exit(1);
 });

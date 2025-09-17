@@ -242,73 +242,148 @@ export class MySQLParser {
 
   /**
    * Parse INSERT VALUES statement to extract individual rows
+   * Enhanced to handle binary data gracefully
    */
   private parseInsertValues(valuesString: string): (string | null)[][] {
     const rows: (string | null)[][] = [];
 
-    // Split by row patterns: (...),(...),...
-    let parenLevel = 0;
-    let currentRow: (string | null)[] = [];
-    let currentValue = "";
-    let inQuotes = false;
-    let quoteChar = "";
-    let processedChars = 0;
+    // Use a more robust approach: split by row boundaries first
+    // Look for patterns like ),( to identify row boundaries (no whitespace in our dump)
+    const rowPattern = /\),\(/g;
+    const rowBoundaries: number[] = [0];
 
-    for (let i = 0; i < valuesString.length; i++) {
-      processedChars++;
+    let match;
+    while ((match = rowPattern.exec(valuesString)) !== null) {
+      rowBoundaries.push(match.index + 1); // Position after ),(
+    }
 
-      // Log progress every 1M characters to monitor parsing
-      if (processedChars % 1000000 === 0) {
-        this.logger.debug(`Parsed ${processedChars} chars, found ${rows.length} rows so far`);
+    // Add the end position
+    rowBoundaries.push(valuesString.length);
+
+    this.logger.debug(`Found ${rowBoundaries.length - 1} potential rows`);
+
+    // Process each row section
+    for (let i = 0; i < rowBoundaries.length - 1; i++) {
+      const startPos = rowBoundaries[i];
+      const endPos = rowBoundaries[i + 1];
+      const rowText = valuesString.substring(startPos, endPos);
+
+      try {
+        const parsedRow = this.parseAddressRowText(rowText);
+        if (parsedRow && parsedRow.length > 0) {
+          rows.push(parsedRow);
+        }
+      } catch (error) {
+        this.logger.debug(`Failed to parse row ${i + 1}: ${error}`);
+        continue;
       }
-      const char = valuesString[i];
-      const nextChar = valuesString[i + 1];
+
+      // Log progress every 1000 rows
+      if ((i + 1) % 1000 === 0) {
+        this.logger.debug(`Processed ${i + 1} rows, extracted ${rows.length} valid rows`);
+      }
+    }
+
+    this.logger.debug(`Finished parsing: processed ${rowBoundaries.length - 1} row sections, extracted ${rows.length} valid rows`);
+    return rows;
+  }
+
+  /**
+   * Parse a single address row text, handling binary data gracefully
+   * Expected format: ('id','buyer_id','stylist_id','salon_id',_binary 'data','field5',...,'field16')
+   */
+  private parseAddressRowText(rowText: string): (string | null)[] {
+    const row: (string | null)[] = [];
+
+    // Remove leading/trailing parentheses and whitespace
+    let cleanText = rowText.replace(/^\s*\(/, '').replace(/\)\s*$/, '').trim();
+
+    // Handle the binary coordinate field (position 4) specially
+    // More robust pattern for _binary 'complex_data_with_nulls_and_special_chars'
+    // We need to find _binary and then skip to the next field after the binary data
+
+    const binaryStartIndex = cleanText.indexOf('_binary');
+    if (binaryStartIndex !== -1) {
+      // Find the quote after _binary
+      const quoteStartIndex = cleanText.indexOf("'", binaryStartIndex);
+      if (quoteStartIndex !== -1) {
+        // Find the closing quote, but we need to be careful with escaped quotes and null bytes
+        let quoteEndIndex = -1;
+        let i = quoteStartIndex + 1;
+
+        // Look for the end of the binary data by finding the pattern ','
+        // after the binary section (which should be after the closing quote)
+        while (i < cleanText.length) {
+          if (cleanText[i] === "'" &&
+              i + 1 < cleanText.length &&
+              cleanText[i + 1] === ',') {
+            quoteEndIndex = i;
+            break;
+          }
+          i++;
+        }
+
+        if (quoteEndIndex !== -1) {
+          // Replace the entire _binary '...' section with placeholder
+          const before = cleanText.substring(0, binaryStartIndex);
+          const after = cleanText.substring(quoteEndIndex + 1);
+          cleanText = before + 'BINARY_PLACEHOLDER' + after;
+        }
+      }
+    }
+
+    // Now split by commas that are not inside quotes
+    const values: string[] = [];
+    let currentValue = '';
+    let inQuotes = false;
+    let quoteChar = '';
+
+    for (let i = 0; i < cleanText.length; i++) {
+      const char = cleanText[i];
+      const nextChar = cleanText[i + 1];
 
       if (!inQuotes) {
-        if (char === "(" && parenLevel === 0) {
-          // Start of new row
-          parenLevel++;
-          continue;
-        } else if (char === ")" && parenLevel === 1) {
-          // End of row
-          if (currentValue.trim()) {
-            currentRow.push(this.parseValue(currentValue.trim()));
-          }
-          rows.push(currentRow);
-          currentRow = [];
-          currentValue = "";
-          parenLevel--;
-          continue;
-        } else if (char === "," && parenLevel === 1) {
-          // End of value
-          currentRow.push(this.parseValue(currentValue.trim()));
-          currentValue = "";
-          continue;
-        } else if ((char === '"' || char === "'") && parenLevel === 1) {
+        if (char === "'" || char === '"') {
           inQuotes = true;
           quoteChar = char;
-          continue;
+          currentValue += char;
+        } else if (char === ',') {
+          values.push(currentValue.trim());
+          currentValue = '';
+        } else {
+          currentValue += char;
         }
       } else {
         if (char === quoteChar && nextChar !== quoteChar) {
           // End of quoted string
           inQuotes = false;
-          quoteChar = "";
-          continue;
+          quoteChar = '';
+          currentValue += char;
         } else if (char === quoteChar && nextChar === quoteChar) {
           // Escaped quote
+          currentValue += char + char;
+          i++; // Skip next char
+        } else {
           currentValue += char;
-          i++; // Skip next character
-          continue;
         }
-      }
-
-      if (parenLevel === 1) {
-        currentValue += char;
       }
     }
 
-    return rows;
+    // Add the last value
+    if (currentValue.trim()) {
+      values.push(currentValue.trim());
+    }
+
+    // Convert values to proper format, handling the binary placeholder
+    for (const value of values) {
+      if (value === 'BINARY_PLACEHOLDER') {
+        row.push(null); // Skip binary coordinates
+      } else {
+        row.push(this.parseValue(value));
+      }
+    }
+
+    return row;
   }
 
   /**
@@ -483,40 +558,32 @@ export class MySQLParser {
       return null; // Skip rows that are too short
     }
 
-    // Based on production MySQL address table structure:
-    // INSERT INTO `address` VALUES ('id','buyer_id',stylist_id,salon_id,_binary 'coordinates','street_name','formatted_address','tag','created_at','updated_at',deleted_at,?,?,city,zipcode,country)
+    // Corrected based on actual production MySQL address table structure:
+    // INSERT INTO `address` VALUES ('id','buyer_id',stylist_id,salon_id,coordinates,'short_address','formatted_address','tag','created_at','updated_at',deleted_at,'street_name','street_no','city','zipcode','country')
     const id = row[0];
     const buyerId = row[1] === 'NULL' ? null : row[1];
     const stylistId = row[2] === 'NULL' ? null : row[2];
     const salonId = row[3] === 'NULL' ? null : row[3];
 
     // Skip the binary coordinates (row[4]) - we'll handle this in separate Mapbox script
-    const streetName = row[5];
+    const shortAddress = row[5]; // This was incorrectly mapped as streetName before
     const formattedAddress = row[6];
     const tag = row[7];
     const createdAt = row[8] || new Date().toISOString();
     const updatedAt = row[9] || new Date().toISOString();
     const deletedAt = row[10] === 'NULL' ? null : row[10];
 
-    // Additional fields that might exist at the end
-    let city: string | null = null;
-    let zipcode: string | null = null;
-    let country: string | null = null;
-
-    // Try to extract city, zipcode, country from later columns if they exist
-    if (row.length > 13) {
-      city = row[13] === 'NULL' || row[13] === '' ? null : row[13];
-      zipcode = row[14] === 'NULL' || row[14] === '' ? null : row[14];
-      country = row[15] === 'NULL' || row[15] === '' ? null : row[15];
-    }
+    // Correctly mapped fields from their actual positions
+    const streetName = row.length > 11 ? (row[11] === 'NULL' || row[11] === '' ? null : row[11]) : null;
+    const streetNo = row.length > 12 ? (row[12] === 'NULL' || row[12] === '' ? null : row[12]) : null;
+    const city = row.length > 13 ? (row[13] === 'NULL' || row[13] === '' ? null : row[13]) : null;
+    const zipcode = row.length > 14 ? (row[14] === 'NULL' || row[14] === '' ? null : row[14]) : null;
+    const country = row.length > 15 ? (row[15] === 'NULL' || row[15] === '' ? null : row[15]) : null;
 
     // Only return address if we have an ID and either buyer_id or stylist_id
     if (!id || (!buyerId && !stylistId)) {
       return null;
     }
-
-    // Extract short address from tag or default
-    const shortAddress = tag && tag !== '' ? tag : null;
 
     return {
       id,
@@ -524,8 +591,8 @@ export class MySQLParser {
       stylist_id: stylistId,
       salon_id: salonId,
       formatted_address: formattedAddress,
-      street_name: streetName && streetName !== '' ? streetName : null,
-      street_no: null, // Will be extracted from street_name if needed
+      street_name: streetName,
+      street_no: streetNo,
       city: city,
       zipcode: zipcode,
       country: country || "Norway", // Default to Norway

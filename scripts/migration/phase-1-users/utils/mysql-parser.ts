@@ -179,7 +179,7 @@ export class MySQLParser {
 
     while ((match = insertPattern.exec(dumpContent)) !== null) {
       const valuesString = match[1].trim();
-      const rows = this.parseInsertValues(valuesString);
+      const rows = this.parseInsertValues(valuesString, tableName);
 
       for (const row of rows) {
         if (row.length !== columns.length) {
@@ -242,9 +242,22 @@ export class MySQLParser {
 
   /**
    * Parse INSERT VALUES statement to extract individual rows
-   * Enhanced to handle binary data gracefully
+   * Enhanced to handle binary data gracefully (for address table) and simple parsing for other tables
    */
-  private parseInsertValues(valuesString: string): (string | null)[][] {
+  private parseInsertValues(valuesString: string, tableName?: string): (string | null)[][] {
+    // Use complex address parsing only for address table
+    if (tableName === 'address') {
+      return this.parseAddressInsertValues(valuesString);
+    }
+
+    // Use simple parsing for all other tables (category, subcategory, service, etc.)
+    return this.parseSimpleInsertValues(valuesString);
+  }
+
+  /**
+   * Complex address parsing (existing implementation)
+   */
+  private parseAddressInsertValues(valuesString: string): (string | null)[][] {
     const rows: (string | null)[][] = [];
 
     // Use a more robust approach: split by row boundaries first
@@ -286,6 +299,99 @@ export class MySQLParser {
 
     this.logger.debug(`Finished parsing: processed ${rowBoundaries.length - 1} row sections, extracted ${rows.length} valid rows`);
     return rows;
+  }
+
+  /**
+   * Simple parsing for standard tables (category, subcategory, service, etc.)
+   */
+  private parseSimpleInsertValues(valuesString: string): (string | null)[][] {
+    const rows: (string | null)[][] = [];
+
+    // Clean up the values string - remove leading/trailing whitespace
+    const cleanValues = valuesString.trim();
+
+    // Split by row boundaries: ),( pattern
+    const rowStrings = cleanValues.split('),(');
+
+    for (let i = 0; i < rowStrings.length; i++) {
+      let rowString = rowStrings[i];
+
+      // Clean up first and last rows
+      if (i === 0 && rowString.startsWith('(')) {
+        rowString = rowString.slice(1);
+      }
+      if (i === rowStrings.length - 1 && rowString.endsWith(')')) {
+        rowString = rowString.slice(0, -1);
+      }
+
+      try {
+        const row = this.parseSimpleRowValues(rowString);
+        if (row && row.length > 0) {
+          rows.push(row);
+        }
+      } catch (error) {
+        this.logger.debug(`Failed to parse row ${i + 1}: ${error}`);
+      }
+    }
+
+    return rows;
+  }
+
+  /**
+   * Parse individual row values from a comma-separated string for simple tables
+   */
+  private parseSimpleRowValues(rowString: string): (string | null)[] {
+    const values: (string | null)[] = [];
+    let currentValue = '';
+    let inQuotes = false;
+    let quoteChar = '';
+    let i = 0;
+
+    while (i < rowString.length) {
+      const char = rowString[i];
+
+      if (!inQuotes) {
+        if (char === "'" || char === '"') {
+          inQuotes = true;
+          quoteChar = char;
+        } else if (char === ',') {
+          // End of value
+          const trimmed = currentValue.trim();
+          if (trimmed === 'NULL') {
+            values.push(null);
+          } else {
+            values.push(trimmed);
+          }
+          currentValue = '';
+        } else {
+          currentValue += char;
+        }
+      } else {
+        if (char === quoteChar) {
+          // Check for escaped quote
+          if (i + 1 < rowString.length && rowString[i + 1] === quoteChar) {
+            currentValue += char;
+            i++; // Skip the next quote
+          } else {
+            inQuotes = false;
+            quoteChar = '';
+          }
+        } else {
+          currentValue += char;
+        }
+      }
+      i++;
+    }
+
+    // Add the last value
+    const trimmed = currentValue.trim();
+    if (trimmed === 'NULL') {
+      values.push(null);
+    } else {
+      values.push(trimmed);
+    }
+
+    return values;
   }
 
   /**
@@ -495,7 +601,7 @@ export class MySQLParser {
     while ((match = multipleInsertPattern.exec(dumpContent)) !== null) {
       foundMultiple = true;
       const valuesString = match[1];
-      const rows = this.parseInsertValues(valuesString);
+      const rows = this.parseInsertValues(valuesString, tableName);
 
       for (const row of rows) {
         try {
@@ -527,7 +633,7 @@ export class MySQLParser {
         const separatorCount = (valuesString.match(/\),\(/g) || []).length;
         this.logger.info(`Estimated ${separatorCount + 1} rows based on separator count`);
 
-        const rows = this.parseInsertValues(valuesString);
+        const rows = this.parseInsertValues(valuesString, tableName);
         this.logger.info(`Actually parsed ${rows.length} address rows from single INSERT statement`);
 
         for (const row of rows) {

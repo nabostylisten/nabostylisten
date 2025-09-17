@@ -244,9 +244,12 @@ export class MySQLParser {
    * Parse INSERT VALUES statement to extract individual rows
    * Enhanced to handle binary data gracefully (for address table) and simple parsing for other tables
    */
-  private parseInsertValues(valuesString: string, tableName?: string): (string | null)[][] {
+  private parseInsertValues(
+    valuesString: string,
+    tableName?: string,
+  ): (string | null)[][] {
     // Use complex address parsing only for address table
-    if (tableName === 'address') {
+    if (tableName === "address") {
       return this.parseAddressInsertValues(valuesString);
     }
 
@@ -293,11 +296,17 @@ export class MySQLParser {
 
       // Log progress every 1000 rows
       if ((i + 1) % 1000 === 0) {
-        this.logger.debug(`Processed ${i + 1} rows, extracted ${rows.length} valid rows`);
+        this.logger.debug(
+          `Processed ${i + 1} rows, extracted ${rows.length} valid rows`,
+        );
       }
     }
 
-    this.logger.debug(`Finished parsing: processed ${rowBoundaries.length - 1} row sections, extracted ${rows.length} valid rows`);
+    this.logger.debug(
+      `Finished parsing: processed ${
+        rowBoundaries.length - 1
+      } row sections, extracted ${rows.length} valid rows`,
+    );
     return rows;
   }
 
@@ -311,16 +320,16 @@ export class MySQLParser {
     const cleanValues = valuesString.trim();
 
     // Split by row boundaries: ),( pattern
-    const rowStrings = cleanValues.split('),(');
+    const rowStrings = cleanValues.split("),(");
 
     for (let i = 0; i < rowStrings.length; i++) {
       let rowString = rowStrings[i];
 
       // Clean up first and last rows
-      if (i === 0 && rowString.startsWith('(')) {
+      if (i === 0 && rowString.startsWith("(")) {
         rowString = rowString.slice(1);
       }
-      if (i === rowStrings.length - 1 && rowString.endsWith(')')) {
+      if (i === rowStrings.length - 1 && rowString.endsWith(")")) {
         rowString = rowString.slice(0, -1);
       }
 
@@ -342,9 +351,9 @@ export class MySQLParser {
    */
   private parseSimpleRowValues(rowString: string): (string | null)[] {
     const values: (string | null)[] = [];
-    let currentValue = '';
+    let currentValue = "";
     let inQuotes = false;
-    let quoteChar = '';
+    let quoteChar = "";
     let i = 0;
 
     while (i < rowString.length) {
@@ -354,15 +363,15 @@ export class MySQLParser {
         if (char === "'" || char === '"') {
           inQuotes = true;
           quoteChar = char;
-        } else if (char === ',') {
+        } else if (char === ",") {
           // End of value
           const trimmed = currentValue.trim();
-          if (trimmed === 'NULL') {
+          if (trimmed === "NULL") {
             values.push(null);
           } else {
             values.push(trimmed);
           }
-          currentValue = '';
+          currentValue = "";
         } else {
           currentValue += char;
         }
@@ -374,7 +383,7 @@ export class MySQLParser {
             i++; // Skip the next quote
           } else {
             inQuotes = false;
-            quoteChar = '';
+            quoteChar = "";
           }
         } else {
           currentValue += char;
@@ -385,7 +394,7 @@ export class MySQLParser {
 
     // Add the last value
     const trimmed = currentValue.trim();
-    if (trimmed === 'NULL') {
+    if (trimmed === "NULL") {
       values.push(null);
     } else {
       values.push(trimmed);
@@ -402,13 +411,13 @@ export class MySQLParser {
     const row: (string | null)[] = [];
 
     // Remove leading/trailing parentheses and whitespace
-    let cleanText = rowText.replace(/^\s*\(/, '').replace(/\)\s*$/, '').trim();
+    let cleanText = rowText.replace(/^\s*\(/, "").replace(/\)\s*$/, "").trim();
 
     // Handle the binary coordinate field (position 4) specially
     // More robust pattern for _binary 'complex_data_with_nulls_and_special_chars'
     // We need to find _binary and then skip to the next field after the binary data
 
-    const binaryStartIndex = cleanText.indexOf('_binary');
+    const binaryStartIndex = cleanText.indexOf("_binary");
     if (binaryStartIndex !== -1) {
       // Find the quote after _binary
       const quoteStartIndex = cleanText.indexOf("'", binaryStartIndex);
@@ -420,9 +429,11 @@ export class MySQLParser {
         // Look for the end of the binary data by finding the pattern ','
         // after the binary section (which should be after the closing quote)
         while (i < cleanText.length) {
-          if (cleanText[i] === "'" &&
-              i + 1 < cleanText.length &&
-              cleanText[i + 1] === ',') {
+          if (
+            cleanText[i] === "'" &&
+            i + 1 < cleanText.length &&
+            cleanText[i + 1] === ","
+          ) {
             quoteEndIndex = i;
             break;
           }
@@ -433,16 +444,16 @@ export class MySQLParser {
           // Replace the entire _binary '...' section with placeholder
           const before = cleanText.substring(0, binaryStartIndex);
           const after = cleanText.substring(quoteEndIndex + 1);
-          cleanText = before + 'BINARY_PLACEHOLDER' + after;
+          cleanText = before + "BINARY_PLACEHOLDER" + after;
         }
       }
     }
 
     // Now split by commas that are not inside quotes
     const values: string[] = [];
-    let currentValue = '';
+    let currentValue = "";
     let inQuotes = false;
-    let quoteChar = '';
+    let quoteChar = "";
 
     for (let i = 0; i < cleanText.length; i++) {
       const char = cleanText[i];
@@ -453,9 +464,9 @@ export class MySQLParser {
           inQuotes = true;
           quoteChar = char;
           currentValue += char;
-        } else if (char === ',') {
+        } else if (char === ",") {
           values.push(currentValue.trim());
-          currentValue = '';
+          currentValue = "";
         } else {
           currentValue += char;
         }
@@ -463,7 +474,7 @@ export class MySQLParser {
         if (char === quoteChar && nextChar !== quoteChar) {
           // End of quoted string
           inQuotes = false;
-          quoteChar = '';
+          quoteChar = "";
           currentValue += char;
         } else if (char === quoteChar && nextChar === quoteChar) {
           // Escaped quote
@@ -482,7 +493,7 @@ export class MySQLParser {
 
     // Convert values to proper format, handling the binary placeholder
     for (const value of values) {
-      if (value === 'BINARY_PLACEHOLDER') {
+      if (value === "BINARY_PLACEHOLDER") {
         row.push(null); // Skip binary coordinates
       } else {
         row.push(this.parseValue(value));
@@ -594,14 +605,15 @@ export class MySQLParser {
     const addresses: MySQLAddress[] = [];
 
     // First try the original pattern for multiple INSERT statements
-    const multipleInsertPattern = /INSERT INTO `address` VALUES\s*\(([^;]+)\);/gi;
+    const multipleInsertPattern =
+      /INSERT INTO `address` VALUES\s*\(([^;]+)\);/gi;
     let match;
     let foundMultiple = false;
 
     while ((match = multipleInsertPattern.exec(dumpContent)) !== null) {
       foundMultiple = true;
       const valuesString = match[1];
-      const rows = this.parseInsertValues(valuesString, tableName);
+      const rows = this.parseInsertValues(valuesString, "address");
 
       for (const row of rows) {
         try {
@@ -618,7 +630,9 @@ export class MySQLParser {
 
     // If no multiple INSERT statements found, try single massive INSERT statement
     if (!foundMultiple) {
-      this.logger.info("No multiple INSERT statements found, trying single massive INSERT format");
+      this.logger.info(
+        "No multiple INSERT statements found, trying single massive INSERT format",
+      );
 
       // Pattern for single massive INSERT statement
       const singleInsertPattern = /INSERT INTO `address` VALUES\s*([^;]+);/gi;
@@ -627,14 +641,20 @@ export class MySQLParser {
       if (singleMatch) {
         this.logger.info("Found single massive INSERT statement, parsing...");
         const valuesString = singleMatch[1];
-        this.logger.debug(`Values string length: ${valuesString.length} characters`);
+        this.logger.debug(
+          `Values string length: ${valuesString.length} characters`,
+        );
 
         // Count approximate number of rows by counting separator patterns
         const separatorCount = (valuesString.match(/\),\(/g) || []).length;
-        this.logger.info(`Estimated ${separatorCount + 1} rows based on separator count`);
+        this.logger.info(
+          `Estimated ${separatorCount + 1} rows based on separator count`,
+        );
 
-        const rows = this.parseInsertValues(valuesString, tableName);
-        this.logger.info(`Actually parsed ${rows.length} address rows from single INSERT statement`);
+        const rows = this.parseInsertValues(valuesString, "address");
+        this.logger.info(
+          `Actually parsed ${rows.length} address rows from single INSERT statement`,
+        );
 
         for (const row of rows) {
           try {
@@ -667,9 +687,9 @@ export class MySQLParser {
     // Corrected based on actual production MySQL address table structure:
     // INSERT INTO `address` VALUES ('id','buyer_id',stylist_id,salon_id,coordinates,'short_address','formatted_address','tag','created_at','updated_at',deleted_at,'street_name','street_no','city','zipcode','country')
     const id = row[0];
-    const buyerId = row[1] === 'NULL' ? null : row[1];
-    const stylistId = row[2] === 'NULL' ? null : row[2];
-    const salonId = row[3] === 'NULL' ? null : row[3];
+    const buyerId = row[1] === "NULL" ? null : row[1];
+    const stylistId = row[2] === "NULL" ? null : row[2];
+    const salonId = row[3] === "NULL" ? null : row[3];
 
     // Skip the binary coordinates (row[4]) - we'll handle this in separate Mapbox script
     const shortAddress = row[5]; // This was incorrectly mapped as streetName before
@@ -677,14 +697,24 @@ export class MySQLParser {
     const tag = row[7];
     const createdAt = row[8] || new Date().toISOString();
     const updatedAt = row[9] || new Date().toISOString();
-    const deletedAt = row[10] === 'NULL' ? null : row[10];
+    const deletedAt = row[10] === "NULL" ? null : row[10];
 
     // Correctly mapped fields from their actual positions
-    const streetName = row.length > 11 ? (row[11] === 'NULL' || row[11] === '' ? null : row[11]) : null;
-    const streetNo = row.length > 12 ? (row[12] === 'NULL' || row[12] === '' ? null : row[12]) : null;
-    const city = row.length > 13 ? (row[13] === 'NULL' || row[13] === '' ? null : row[13]) : null;
-    const zipcode = row.length > 14 ? (row[14] === 'NULL' || row[14] === '' ? null : row[14]) : null;
-    const country = row.length > 15 ? (row[15] === 'NULL' || row[15] === '' ? null : row[15]) : null;
+    const streetName = row.length > 11
+      ? (row[11] === "NULL" || row[11] === "" ? null : row[11])
+      : null;
+    const streetNo = row.length > 12
+      ? (row[12] === "NULL" || row[12] === "" ? null : row[12])
+      : null;
+    const city = row.length > 13
+      ? (row[13] === "NULL" || row[13] === "" ? null : row[13])
+      : null;
+    const zipcode = row.length > 14
+      ? (row[14] === "NULL" || row[14] === "" ? null : row[14])
+      : null;
+    const country = row.length > 15
+      ? (row[15] === "NULL" || row[15] === "" ? null : row[15])
+      : null;
 
     // Only return address if we have an ID and either buyer_id or stylist_id
     if (!id || (!buyerId && !stylistId)) {

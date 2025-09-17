@@ -12,11 +12,14 @@ import type {
 
 export class MigrationLogger {
   private logDir: string;
+  private scriptName: string;
   private sessionId: string;
   private startTime: Date;
 
-  constructor(logDir?: string) {
-    this.logDir = logDir || join(process.cwd(), "scripts", "migration", "logs");
+  constructor(scriptName?: string) {
+    // Always use the proper logs directory
+    this.logDir = join(process.cwd(), "scripts", "migration", "logs");
+    this.scriptName = scriptName || "migration";
     this.sessionId = new Date().toISOString().replace(/[:.]/g, "-");
     this.startTime = new Date();
 
@@ -25,10 +28,10 @@ export class MigrationLogger {
       mkdirSync(this.logDir, { recursive: true });
     }
 
-    // Initialize session log file
+    // Initialize session log file with script name
     this.writeToFile(
       "session.log",
-      `\n\n=== Migration Session Started: ${this.startTime.toISOString()} ===\n`,
+      `\n\n=== Migration Session Started: ${this.startTime.toISOString()} [${this.scriptName}] ===\n`,
     );
   }
 
@@ -48,7 +51,7 @@ export class MigrationLogger {
   ): string {
     const timestamp = new Date().toISOString();
     const dataStr = data ? `\nData: ${JSON.stringify(data, null, 2)}` : "";
-    return `[${timestamp}] [${level.padEnd(5)}] ${message}${dataStr}\n`;
+    return `[${timestamp}] [${level.padEnd(5)}] [${this.scriptName}] ${message}${dataStr}\n`;
   }
 
   info(message: string, data?: unknown): void {

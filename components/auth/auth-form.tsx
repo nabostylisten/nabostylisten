@@ -334,19 +334,19 @@ export function AuthForm({
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               className={
-                phoneNumber &&
-                !isValidNorwegianPhoneNumber(phoneNumber)
+                phoneNumber && !isValidNorwegianPhoneNumber(phoneNumber)
                   ? "border-red-500 focus:border-red-500"
                   : ""
               }
             />
             {phoneNumber && !isValidNorwegianPhoneNumber(phoneNumber) && (
               <p className="text-xs text-red-600">
-                Skriv inn et gyldig norsk telefonnummer (f.eks. +47 123 45 678, 12345678)
+                Skriv inn et gyldig norsk telefonnummer (f.eks. +47 123 45 678,
+                12345678)
               </p>
             )}
             <p className="text-xs text-muted-foreground">
-              Aksepterer alle vanlige norske formater: +47 123 45 678, 12345678, 123 45 678
+              Aksepterer alle vanlige norske formater
             </p>
           </div>
         )}

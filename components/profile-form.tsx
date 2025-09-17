@@ -53,12 +53,17 @@ import { CurrentUserAvatar } from "@/components/current-user-avatar";
 import { ProfileAddresses } from "@/components/addresses";
 import { StylistDetailsForm } from "@/components/stylist-details-form";
 import { useAuth } from "@/hooks/use-auth";
-import { isValidNorwegianPhoneNumber, normalizeNorwegianPhoneNumber, formatNorwegianPhoneNumber } from "@/lib/utils";
+import {
+  isValidNorwegianPhoneNumber,
+  normalizeNorwegianPhoneNumber,
+  formatNorwegianPhoneNumber,
+} from "@/lib/utils";
 
 // Form schema for profile updates
 const profileFormSchema = z.object({
   full_name: z.string().min(2, "Navn må være minst 2 karakterer"),
-  phone_number: z.string()
+  phone_number: z
+    .string()
     .optional()
     .refine((val) => !val || isValidNorwegianPhoneNumber(val), {
       message: "Skriv inn et gyldig norsk telefonnummer",
@@ -85,7 +90,7 @@ export function ProfileForm({
   const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
   const queryClient = useQueryClient();
   const { profile: clientProfile } = useAuth();
-  
+
   // Use client-side profile data if available, fallback to server-side data
   const profile = clientProfile || initialProfile;
 
@@ -110,8 +115,8 @@ export function ProfileForm({
       updateProfile(id, data),
     onSuccess: () => {
       // Invalidate the specific user's profile query key from useAuth hook
-      queryClient.invalidateQueries({ 
-        queryKey: ["auth", "profile", profile.id] 
+      queryClient.invalidateQueries({
+        queryKey: ["auth", "profile", profile.id],
       });
       toast.success("Profil oppdatert!");
       setIsEditing(false);
@@ -152,7 +157,9 @@ export function ProfileForm({
       // Normalize phone number before saving to database
       const normalizedData = {
         ...values,
-        phone_number: values.phone_number ? normalizeNorwegianPhoneNumber(values.phone_number) : undefined,
+        phone_number: values.phone_number
+          ? normalizeNorwegianPhoneNumber(values.phone_number)
+          : undefined,
       };
 
       updateProfileMutation.mutate({
@@ -199,7 +206,12 @@ export function ProfileForm({
           </div>
         </div>
         {isOwner && !isEditing ? (
-          <Button onClick={handleEdit} variant="outline" size="sm" className="w-full sm:w-auto">
+          <Button
+            onClick={handleEdit}
+            variant="outline"
+            size="sm"
+            className="w-full sm:w-auto"
+          >
             <Edit className="w-4 h-4 mr-2" />
             Endre profil
           </Button>
@@ -214,7 +226,12 @@ export function ProfileForm({
               <Save className="w-4 h-4 mr-2" />
               Lagre
             </Button>
-            <Button onClick={handleCancel} variant="outline" size="sm" className="flex-1 sm:flex-initial">
+            <Button
+              onClick={handleCancel}
+              variant="outline"
+              size="sm"
+              className="flex-1 sm:flex-initial"
+            >
               <X className="w-4 h-4 mr-2" />
               Avbryt
             </Button>
@@ -288,7 +305,7 @@ export function ProfileForm({
                         />
                       </FormControl>
                       <p className="text-xs text-muted-foreground">
-                        Aksepterer alle vanlige norske formater: +47 123 45 678, 12345678, 123 45 678
+                        Aksepterer alle vanlige norske formater
                       </p>
                       <FormMessage />
                     </FormItem>
@@ -331,7 +348,9 @@ export function ProfileForm({
                   Telefonnummer
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  {profile.phone_number ? formatNorwegianPhoneNumber(profile.phone_number) : "Ikke satt"}
+                  {profile.phone_number
+                    ? formatNorwegianPhoneNumber(profile.phone_number)
+                    : "Ikke satt"}
                 </p>
               </div>
             </>

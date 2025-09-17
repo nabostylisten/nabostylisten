@@ -203,7 +203,7 @@ export function ServiceFilterForm({
 
   return (
     <Card className="w-full overflow-hidden">
-      <CardContent className="p-4 sm:p-6 space-y-4">
+      <CardContent className="p-4 sm:p-6 space-y-2">
         {/* Search and Location Row */}
         <div className="flex flex-col md:flex-row gap-2 md:gap-4">
           <div className="md:flex-1 flex gap-2">
@@ -284,7 +284,7 @@ export function ServiceFilterForm({
         </div>
 
         {/* Filters Rows - Split into multiple rows for better responsiveness */}
-        <div className="space-y-2 md:space-y-4">
+        <div className="space-y-2 md:space-y-3">
           {/* First row: Categories and Service Destination */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4">
             {/* Category Filter */}

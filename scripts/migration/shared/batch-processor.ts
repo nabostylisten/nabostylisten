@@ -369,15 +369,15 @@ export function getOptimalBatchSize(
 ): number {
   // Different operations have different optimal batch sizes
   const batchSizes: Record<OperationType, number> = {
-    "auth_users": 10, // Auth operations are expensive and rate-limited
-    "profiles": 100, // Database inserts can be larger
-    "services": 50, // Medium complexity
-    "addresses": 75, // PostGIS operations are moderately expensive
-    "bookings": 25, // Complex relationships
-    "payments": 25, // Financial data, process carefully
-    "chats": 100, // Simple records
-    "reviews": 100, // Simple records
-    "default": 50,
+    "auth_users": 50, // Increased for better throughput
+    "profiles": 200, // Database inserts can be larger
+    "services": 100, // Increased for better performance
+    "addresses": 150, // PostGIS operations are moderately expensive
+    "bookings": 100, // Increased for better relationships processing
+    "payments": 50, // Financial data, process carefully
+    "chats": 200, // Simple records
+    "reviews": 200, // Simple records
+    "default": 100,
   };
 
   const baseBatchSize = batchSizes[operationType] || batchSizes.default;

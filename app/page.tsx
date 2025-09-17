@@ -75,7 +75,12 @@ export default async function Home() {
                 <Button size="lg" asChild className="w-full sm:w-auto">
                   <Link href="/tjenester">Se tjenester</Link>
                 </Button>
-                <Button variant="outline" size="lg" asChild className="w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="lg"
+                  asChild
+                  className="w-full sm:w-auto"
+                >
                   <Link href="/bli-stylist">Bli stylist</Link>
                 </Button>
               </div>
@@ -93,7 +98,7 @@ export default async function Home() {
             </BlurFade>
 
             {/* Service Filter Form */}
-            <div className="pt-4 md:pt-8">
+            <div>
               <BlurFade delay={0.15} duration={0.5} inView>
                 <div className="text-center mb-6 md:mb-8">
                   <h2 className="text-xl sm:text-2xl md:text-3xl font-bold font-fraunces mb-3 md:mb-4">

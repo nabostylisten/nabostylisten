@@ -8,7 +8,6 @@ import path from 'path';
 interface MySQLBookingServiceJunction {
   booking_id: string;
   service_id: string;
-  created_at: string;
 }
 
 interface BookingServiceRelationship {
@@ -74,6 +73,10 @@ export async function createBookingServices(): Promise<void> {
     logger.info('Parsing booking_services_service junction table from MySQL dump...');
     const junctionRecords = await parser.parseTable<MySQLBookingServiceJunction>('booking_services_service');
     logger.info(`Found ${junctionRecords.length} records in booking_services_service table`);
+
+    if (junctionRecords.length > 0) {
+      logger.debug('Sample junction record:', junctionRecords[0]);
+    }
     
     // Load service ID mapping from Phase 3 to map MySQL service IDs
     let serviceIdMapping: Record<string, string> = {};
@@ -84,8 +87,8 @@ export async function createBookingServices(): Promise<void> {
       
       // Create mapping from MySQL service IDs to Supabase service IDs
       for (const result of serviceData.results || []) {
-        if (result.success && result.mysql_service_id && result.supabase_service_id) {
-          serviceIdMapping[result.mysql_service_id] = result.supabase_service_id;
+        if (result.success && result.original_id && result.supabase_id) {
+          serviceIdMapping[result.original_id] = result.supabase_id;
         }
       }
       logger.info(`Loaded ${Object.keys(serviceIdMapping).length} service ID mappings from Phase 3`);

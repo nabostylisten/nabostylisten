@@ -59,11 +59,19 @@ interface BookingMigrationStats {
 // Parse booking.service JSON field for older bookings
 const parseBookingServices = (bookingService: string | null): string[] => {
   if (!bookingService) return [];
-  
+
   try {
-    const parsed = JSON.parse(bookingService);
-    return Array.isArray(parsed) ? parsed : [parsed];
-  } catch {
+    // Handle escaped JSON from MySQL dumps - unescape quotes
+    const unescapedJson = bookingService.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+
+    const parsed = JSON.parse(unescapedJson);
+    const services = Array.isArray(parsed) ? parsed : [parsed];
+
+    // Extract service IDs from service objects
+    return services
+      .filter(service => service && typeof service === 'object' && service.id)
+      .map(service => service.id);
+  } catch (error) {
     return [];
   }
 };

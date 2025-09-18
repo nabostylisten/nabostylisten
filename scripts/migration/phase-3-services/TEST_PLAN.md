@@ -368,6 +368,19 @@ bun run scripts/migration/phase-3-services/03-extract-services.ts
 | "Description parsing failed" | Review MySQL description format edge cases          |
 | "Invalid duration/price"     | Check for NULL or negative values in MySQL          |
 
+### Important Note: Orphaned Services
+
+⚠️ **Expected Behavior**: The migration will correctly skip services that reference stylists who no longer exist in the MySQL `stylist` table. This is intentional data integrity protection.
+
+**Background**: In the old MySQL system, some stylists were deleted without cascading the delete to their services, resulting in orphaned service records. The migration system identifies these orphaned services and excludes them to maintain referential integrity in the new PostgreSQL database.
+
+**Typical Impact**:
+- Approximately 25-30 services may be skipped due to missing stylist references
+- This represents ~10-15% of total services depending on the dataset
+- These services cannot be migrated as they lack valid ownership
+
+**Validation**: Check the `temp/services-created.json` output for skipped services with `skip_reason: "Stylist not found in user mapping"`
+
 ---
 
 ## Step 4: Create Services (`04-create-services.ts`)

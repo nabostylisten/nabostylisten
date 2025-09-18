@@ -28,18 +28,27 @@ interface MediaInventory {
 }
 
 interface UserMapping {
-  [oldUserId: string]: string; // maps old UUID to new UUID
+  metadata: {
+    created_at: string;
+    total_mappings: number;
+  };
+  mapping: {
+    [oldUserId: string]: string; // maps old UUID to new UUID
+  };
 }
 
 interface ServiceCreated {
-  migrated_at: string;
-  successful_services: number;
-  failed_services: number;
-  services: Array<{
-    old_service_id: string;
-    new_service_id: string;
+  metadata: {
+    created_at: string;
+    total_processed: number;
+    successful_creations: number;
+    failed_creations: number;
+  };
+  results: Array<{
+    original_id: string;
+    supabase_id: string;
+    title: string;
     stylist_id: string;
-    name: string;
     success: boolean;
   }>;
 }
@@ -114,17 +123,17 @@ async function validateMappings(): Promise<void> {
   ]);
 
   console.log(`✅ Loaded inventory with ${inventory.items.length} items`);
-  console.log(`✅ Loaded ${Object.keys(userMapping).length} user mappings`);
-  console.log(`✅ Loaded ${servicesCreated.services.length} service records`);
+  console.log(`✅ Loaded ${Object.keys(userMapping.mapping).length} user mappings`);
+  console.log(`✅ Loaded ${servicesCreated.results.length} service records`);
 
   // Create service mapping lookup
   const serviceMapping: Record<string, string> = {};
   const serviceStylistMapping: Record<string, string> = {};
 
-  for (const service of servicesCreated.services) {
+  for (const service of servicesCreated.results) {
     if (service.success) {
-      serviceMapping[service.old_service_id] = service.new_service_id;
-      serviceStylistMapping[service.old_service_id] = service.stylist_id;
+      serviceMapping[service.original_id] = service.supabase_id;
+      serviceStylistMapping[service.original_id] = service.stylist_id;
     }
   }
 
@@ -165,7 +174,7 @@ async function validateMappings(): Promise<void> {
         continue;
       }
 
-      const newUserId = userMapping[item.userId];
+      const newUserId = userMapping.mapping[item.userId];
       if (!newUserId) {
         results.push({
           category: "profile",

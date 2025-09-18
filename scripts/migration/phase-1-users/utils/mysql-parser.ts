@@ -555,11 +555,13 @@ export class MySQLParser {
    */
   private mapToStylist(raw: Record<string, string | null>): MySQLStylist {
     return {
+      // Core fields (matching exact order in CREATE TABLE)
       id: raw.id || "",
       name: raw.name || "",
-      email: raw.email || null,
       phone_number: raw.phone_number || null,
+      email: raw.email || null,
       default_address_id: raw.default_address_id || null,
+      profile_picture_uploaded: raw.profile_picture_uploaded === "1",
       is_deleted: raw.is_deleted === "1",
       phone_verified: raw.phone_verified === "1",
       email_verified: raw.email_verified === "1",
@@ -589,7 +591,7 @@ export class MySQLParser {
       scheduler_resource_id: raw.scheduler_resource_id
         ? parseInt(raw.scheduler_resource_id, 10)
         : null,
-      profile_picture_uploaded: raw.profile_picture_uploaded === "1",
+      is_blocked: raw.is_blocked === "1",
       has_own_place: raw.has_own_place === "1",
     };
   }

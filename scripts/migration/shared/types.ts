@@ -26,7 +26,7 @@ export interface MySQLBuyer {
 }
 
 export interface MySQLStylist {
-  // Core fields (matching order in CREATE TABLE)
+  // Core fields (matching exact order in CREATE TABLE)
   id: string; // VARCHAR(36)
   name: string;
   phone_number: string | null;

@@ -44,7 +44,7 @@ const OmOssPage = async () => {
   const roundedBookings = stats
     ? Math.max(roundValue(stats.bookings), minValue)
     : minValue;
-  const avgRating = stats?.averageRating || 4.8;
+  const avgRating = stats?.averageRating.toFixed(1) || 4.8;
 
   return (
     <div className="min-h-screen bg-background">
@@ -105,7 +105,9 @@ const OmOssPage = async () => {
                 <div className="text-3xl font-bold text-primary mb-2">
                   {avgRating}
                 </div>
-                <div className="text-sm text-muted-foreground">Rating</div>
+                <div className="text-sm text-muted-foreground">
+                  Gjennomsnittlig rating
+                </div>
               </div>
             </div>
           </div>

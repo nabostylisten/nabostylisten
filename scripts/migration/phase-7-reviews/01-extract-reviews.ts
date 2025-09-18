@@ -85,6 +85,23 @@ async function extractReviews(): Promise<ExtractionResult> {
       );
     }
 
+    // Load user ID mapping from Phase 1
+    const userMappingPath = path.join(tempDir, "user-id-mapping.json");
+    let userIdMapping: Record<string, string> = {};
+
+    try {
+      const userMapping = JSON.parse(
+        await fs.readFile(userMappingPath, "utf-8"),
+      );
+      if (userMapping.mapping) {
+        userIdMapping = userMapping.mapping;
+      }
+      logger.info(`Found ${Object.keys(userIdMapping).length} user ID mappings`);
+    } catch (error) {
+      logger.error("Could not load user ID mapping from Phase 1:", error);
+      throw new Error("User ID mapping is required for review migration");
+    }
+
     const processedReviews: ProcessedReview[] = [];
     const skippedReviews: Array<{ review: MySQLRating; reason: string }> = [];
     const ratingDistribution: Record<number, number> = {};
@@ -122,11 +139,31 @@ async function extractReviews(): Promise<ExtractionResult> {
           reviewsWithoutComments++;
         }
 
+        // Map MySQL user IDs to Supabase user IDs
+        const mappedCustomerId = userIdMapping[rating.buyer_id];
+        const mappedStylistId = userIdMapping[rating.stylist_id];
+
+        if (!mappedCustomerId) {
+          skippedReviews.push({
+            review: rating,
+            reason: `Customer ID ${rating.buyer_id} not found in user mapping`,
+          });
+          continue;
+        }
+
+        if (!mappedStylistId) {
+          skippedReviews.push({
+            review: rating,
+            reason: `Stylist ID ${rating.stylist_id} not found in user mapping`,
+          });
+          continue;
+        }
+
         const processedReview: ProcessedReview = {
           id: rating.id.toLowerCase(),
           booking_id: rating.booking_id,
-          customer_id: rating.buyer_id,
-          stylist_id: rating.stylist_id,
+          customer_id: mappedCustomerId,
+          stylist_id: mappedStylistId,
           rating: ratingValue,
           comment: rating.review && rating.review.trim().length > 0 ? rating.review : null,
           created_at: rating.created_at,

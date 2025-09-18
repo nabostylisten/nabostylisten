@@ -65,6 +65,22 @@ async function validateReviews(): Promise<ValidationResult> {
 
     logger.info("Connected to both data sources");
 
+    // Load user ID mapping from Phase 1
+    const userMappingPath = path.join(tempDir, "user-id-mapping.json");
+    let userIdMapping: Record<string, string> = {};
+
+    try {
+      const userMapping = JSON.parse(
+        await fs.readFile(userMappingPath, "utf-8"),
+      );
+      if (userMapping.mapping) {
+        userIdMapping = userMapping.mapping;
+      }
+      logger.info(`Loaded ${Object.keys(userIdMapping).length} user ID mappings for validation`);
+    } catch (error) {
+      logger.warn("Could not load user ID mapping for validation:", error);
+    }
+
     const validation_errors: string[] = [];
     const rating_discrepancies: ValidationResult["rating_discrepancies"] = [];
     const customer_mismatches: ValidationResult["customer_mismatches"] = [];
@@ -185,8 +201,9 @@ async function validateReviews(): Promise<ValidationResult> {
             });
           }
 
-          // Check customer mapping
-          if (mysqlRating.buyer_id !== pgReview.customer_id) {
+          // Check customer mapping (apply user ID mapping before comparison)
+          const expectedCustomerId = userIdMapping[mysqlRating.buyer_id] || mysqlRating.buyer_id;
+          if (expectedCustomerId !== pgReview.customer_id) {
             customer_mismatches.push({
               review_id: pgReview.id,
               mysql_customer: mysqlRating.buyer_id,
@@ -194,8 +211,9 @@ async function validateReviews(): Promise<ValidationResult> {
             });
           }
 
-          // Check stylist mapping
-          if (mysqlRating.stylist_id !== pgReview.stylist_id) {
+          // Check stylist mapping (apply user ID mapping before comparison)
+          const expectedStylistId = userIdMapping[mysqlRating.stylist_id] || mysqlRating.stylist_id;
+          if (expectedStylistId !== pgReview.stylist_id) {
             stylist_mismatches.push({
               review_id: pgReview.id,
               mysql_stylist: mysqlRating.stylist_id,

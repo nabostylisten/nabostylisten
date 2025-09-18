@@ -36,6 +36,7 @@ interface MySQLBooking {
   status: string;
 }
 
+
 interface ProcessedPayment extends
   Omit<
     Database["public"]["Tables"]["payments"]["Insert"],
@@ -91,10 +92,31 @@ async function extractPayments(): Promise<ExtractionResult> {
     logger.info("Parsing payments and bookings from MySQL dump...");
 
     // Parse payments and bookings
-    const [payments, bookings] = await Promise.all([
+    const [payments, rawBookings] = await Promise.all([
       parser.parseTable<MySQLPayment>("payment"),
-      parser.parseTable<MySQLBooking>("booking"),
+      parser.parseTable<any>("booking"), // Use 'any' to handle column count mismatches
     ]);
+
+    // Convert raw bookings to MySQLBooking format
+    // The MySQLParser might return bookings with incorrect column parsing due to JSON,
+    // but we only need the first 13 columns: id, buyer_id, stylist_id, date_time, duration,
+    // amount, currency, status, additional_notes, formatted_address, short_address, address_id, payment_id
+    const bookings: MySQLBooking[] = rawBookings
+      .filter((raw: any) => raw && typeof raw === 'object')
+      .map((raw: any) => {
+        // Extract the essential fields we need for payment mapping
+        return {
+          id: raw.id || '',
+          buyer_id: raw.buyer_id || '',
+          stylist_id: raw.stylist_id || '',
+          payment_id: raw.payment_id || '',
+          date_time: raw.date_time || '',
+          status: raw.status || '',
+        };
+      })
+      .filter((booking: MySQLBooking) =>
+        booking.id && booking.payment_id // Only keep bookings with valid ID and payment_id
+      );
 
     logger.info(
       `Found ${payments.length} payments and ${bookings.length} bookings in MySQL`,

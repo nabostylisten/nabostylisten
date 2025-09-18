@@ -14,6 +14,7 @@ import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 import { MigrationLogger } from "../shared/logger";
 import { MigrationDatabase } from "../shared/database";
+import { MySQLCoordinateParser } from "../shared/mysql-coordinate-parser";
 import type { AddressMigrationStats, MigrationProgress } from "../shared/types";
 import type { Database } from "@/types/database.types";
 
@@ -155,22 +156,33 @@ async function main() {
       // Prepare batch of address records with PostGIS geography
       const addressBatch:
         Database["public"]["Tables"]["addresses"]["Insert"][] = batch.map(
-          (address) => ({
-            id: address.id,
-            user_id: address.user_id,
-            street_address: address.street_address ?? "",
-            // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
-            city: address.city || "", // Empty string if null (MySQL NOT NULL behavior)
-            postal_code: address.postal_code || "", // Empty string if null (MySQL NOT NULL behavior)
-            country: address.country ?? "",
-            country_code: address.country_code,
-            nickname: address.nickname,
-            entry_instructions: address.entry_instructions,
-            location: null,
-            is_primary: address.is_primary,
-            created_at: address.created_at,
-            updated_at: address.updated_at,
-          }),
+          (address) => {
+            // Parse hex WKB coordinates to PostGIS POINT format
+            let location: string | null = null;
+            if (address.location && address.location.startsWith('0x')) {
+              const parsed = MySQLCoordinateParser.parseCoordinates(address.location);
+              if (parsed) {
+                location = `POINT(${parsed.lng} ${parsed.lat})`;
+              }
+            }
+
+            return {
+              id: address.id,
+              user_id: address.user_id,
+              street_address: address.street_address ?? "",
+              // Use MySQL data as-is, providing minimal defaults only when absolutely necessary
+              city: address.city || "", // Empty string if null (MySQL NOT NULL behavior)
+              postal_code: address.postal_code || "", // Empty string if null (MySQL NOT NULL behavior)
+              country: address.country ?? "",
+              country_code: address.country_code,
+              nickname: address.nickname,
+              entry_instructions: address.entry_instructions,
+              location: location,
+              is_primary: address.is_primary,
+              created_at: address.created_at,
+              updated_at: address.updated_at,
+            };
+          },
         );
 
       try {
@@ -214,6 +226,15 @@ async function main() {
 
           // Try individual inserts for this batch to identify specific failures
           for (const address of batch) {
+            // Parse hex WKB coordinates to PostGIS POINT format
+            let location: string | null = null;
+            if (address.location && address.location.startsWith('0x')) {
+              const parsed = MySQLCoordinateParser.parseCoordinates(address.location);
+              if (parsed) {
+                location = `POINT(${parsed.lng} ${parsed.lat})`;
+              }
+            }
+
             const addressRecord:
               Database["public"]["Tables"]["addresses"]["Insert"] = {
                 id: address.id,
@@ -226,7 +247,7 @@ async function main() {
                 country_code: address.country_code,
                 nickname: address.nickname,
                 entry_instructions: address.entry_instructions,
-                location: null,
+                location: location,
                 is_primary: address.is_primary,
                 created_at: address.created_at,
                 updated_at: address.updated_at,

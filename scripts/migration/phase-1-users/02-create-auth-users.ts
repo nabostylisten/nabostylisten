@@ -152,7 +152,7 @@ async function main() {
       },
       {
         batchSize,
-        delayBetweenBatches: 500, // Longer delay for auth operations
+        delayBetweenBatches: 200, // Reduced delay for faster processing
         progressCallback: (current, total) => {
           const progress: MigrationProgress = {
             phase: "Phase 1 Step 2",

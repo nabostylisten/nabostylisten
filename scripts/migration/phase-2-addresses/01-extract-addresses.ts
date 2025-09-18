@@ -232,7 +232,7 @@ async function main() {
       }
     }
 
-    // Note: Geography coordinates will be added later by a separate Mapbox integration script
+    // Note: Geography coordinates are now extracted from MySQL POINT data during processing
 
     // Validate processed addresses
     logger.info("Validating processed addresses...");
@@ -334,8 +334,8 @@ async function main() {
       "Buyer Addresses": stats.buyer_addresses,
       "Stylist Addresses": stats.stylist_addresses,
       "Validation Errors": validationErrors.length,
-      "Mapbox Geocoding": "⚠️ Deferred to separate script",
-      "Geocoding Status": "⚠️ Deferred to separate Mapbox script",
+      "Coordinate Source": "✅ MySQL POINT data extracted",
+      "Geocoding Status": "✅ Using MySQL coordinates where available",
       "Status": validationErrors.length === 0
         ? "✅ SUCCESS"
         : "⚠️  SUCCESS WITH WARNINGS",
@@ -389,18 +389,18 @@ async function processAddress(
     return null;
   }
 
-  // Skip coordinate parsing - will be handled by separate Mapbox script
-  const location: string | null = null;
-  const geocodingConfidence: "high" | "medium" | "low" | "none" = "none";
+  // Use extracted MySQL hex coordinates for PostGIS processing
+  const location: string | null = address.coordinates;
+  const geocodingConfidence: "high" | "medium" | "low" | "none" =
+    (address.coordinates && (address.coordinates.startsWith('0x') || address.coordinates.length > 10)) ? "high" : "none";
 
   // Build address components
   const streetAddress = [address.street_name, address.street_no]
     .filter(Boolean)
     .join(" ") || address.formatted_address || null;
 
-  const nickname = [address.short_address, address.tag]
-    .filter(Boolean)
-    .join(" - ") || null;
+  // Use only the tag as nickname, not the short_address prefix
+  const nickname = address.tag || null;
 
   // Use city and postal code from MySQL, preserving empty strings as valid data
   const city = address.city; // Keep as-is from MySQL (could be empty string)
@@ -409,7 +409,7 @@ async function processAddress(
   const country = address.country || "Norway";
   const countryCode = deriveCountryCode(country);
 
-  // Location will be set to NULL initially, populated later by separate script
+  // Location contains hex WKB data that will be converted by PostGIS during insertion
 
   return {
     id: address.id,
@@ -423,8 +423,22 @@ async function processAddress(
     entry_instructions: null, // Default empty
     location,
     is_primary: false, // Will be updated in step 3
-    created_at: new Date(address.created_at).toISOString(),
-    updated_at: new Date(address.updated_at).toISOString(),
+    created_at: (() => {
+      try {
+        return address.created_at ? new Date(address.created_at).toISOString() : new Date().toISOString();
+      } catch {
+        console.log(`⚠️  Invalid created_at date for address ${address.id}: "${address.created_at}"`);
+        return new Date().toISOString();
+      }
+    })(),
+    updated_at: (() => {
+      try {
+        return address.updated_at ? new Date(address.updated_at).toISOString() : new Date().toISOString();
+      } catch {
+        console.log(`⚠️  Invalid updated_at date for address ${address.id}: "${address.updated_at}"`);
+        return new Date().toISOString();
+      }
+    })(),
     source_table: sourceTable,
     original_id: address.id,
     geocoding_confidence: geocodingConfidence,

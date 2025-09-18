@@ -17,6 +17,7 @@ This document outlines the process for dumping data from the legacy MySQL Aurora
 Since the source database is in production, we use a snapshot approach to avoid any performance impact:
 
 1. **Navigate to AWS RDS Console**
+
    - Go to RDS → Databases → Select your Aurora cluster
    - Note existing automated snapshots (daily at 01:36 UTC)
 
@@ -27,7 +28,8 @@ Since the source database is in production, we use a snapshot approach to avoid 
 ### 2. Configure Restored Instance
 
 **Restore Settings:**
-- **DB instance identifier**: `nabostylisten-dev-dump-temp` 
+
+- **DB instance identifier**: `nabostylisten-dev-dump-temp`
 - **DB instance class**: `db.t3.micro` (cost optimization)
 - **VPC**: Same as original
 - **Security group**: Same as original
@@ -38,6 +40,7 @@ Since the source database is in production, we use a snapshot approach to avoid 
 ### 3. Network Configuration
 
 **Security Group Setup:**
+
 1. Go to restored instance → Connectivity & security
 2. Click on Security group link
 3. Add Inbound rule:
@@ -45,12 +48,14 @@ Since the source database is in production, we use a snapshot approach to avoid 
    - Source: Your IP address or 0.0.0.0/0 for testing
 
 **Public Access Verification:**
+
 - Ensure "Publicly accessible" shows "Yes"
 - If not, use "Modify" button to change this setting
 
 ### 4. Database Connection Details
 
 **Connection Parameters:**
+
 - **Endpoint**: `nabostylisten-dev-dump-temp.ckdnqlzrf5jw.eu-north-1.rds.amazonaws.com`
 - **Port**: `3306`
 - **Username**: `admin`
@@ -60,30 +65,35 @@ Since the source database is in production, we use a snapshot approach to avoid 
 ### 5. Data Export
 
 **MySQL Client Compatibility Issue:**
+
 - Local MySQL client 9.3.0 incompatible with RDS MySQL 8.0.40 authentication
 - **Solution**: Use MySQL 8.0 client specifically
 
 **Install MySQL 8.0 Client:**
+
 ```bash
 brew install mysql@8.0
 ```
 
 **Export Command:**
+
 ```bash
 /opt/homebrew/opt/mysql@8.0/bin/mysqldump \
-  -h dev-dump-temp.ckdnqlzrf5jw.eu-north-1.rds.amazonaws.com \
+  --hex-blob -h prod-snapshot-2025-09-18.ckdnqlzrf5jw.eu-north-1.rds.amazonaws.com \
   -P 3306 \
   -u admin \
-  -p nabostylisten-dev > nabostylisten_dump.sql
+  -p nabostylisten-prod > nabostylisten_prod.sql
 ```
 
 **Expected Warnings:** (These are normal and can be ignored)
+
 - GTID warnings about partial dumps
 - Consistency warnings (acceptable for migration purposes)
 
 ### 6. Cleanup
 
 **Important:** Delete the temporary RDS instance immediately after successful dump to avoid ongoing charges:
+
 - Go to RDS → Databases → `nabostylisten-dev-dump-temp`
 - Actions → Delete
 - Confirm deletion
@@ -91,10 +101,12 @@ brew install mysql@8.0
 ## Troubleshooting
 
 ### Connection Issues
+
 - **Error 2003**: Instance not yet available or security group misconfigured
 - **Error 2059**: MySQL client version compatibility - use MySQL 8.0 client
 
-### Network Issues  
+### Network Issues
+
 - Verify Public accessibility is enabled
 - Check security group inbound rules
 - Ensure instance status is "Available"

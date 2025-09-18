@@ -678,4 +678,66 @@ export class MigrationDatabase {
       return -1;
     }
   }
+
+  /**
+   * Create address record with PostGIS coordinate conversion
+   */
+  async createAddressWithCoordinates(
+    address: Database["public"]["Tables"]["addresses"]["Insert"] & {
+      wkb_hex?: string; // Additional field for hex WKB data
+    }
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      const { wkb_hex, ...addressData } = address;
+
+      // If we have hex WKB data, use PostGIS to convert it
+      if (wkb_hex && wkb_hex.startsWith('0x')) {
+        // Use raw SQL to insert with PostGIS conversion
+        const { error } = await this.supabase.rpc('create_address_with_coordinates', {
+          address_data: addressData,
+          wkb_hex_data: wkb_hex.slice(2) // Remove '0x' prefix
+        });
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+      } else {
+        // Regular insert without coordinates
+        const { error } = await this.supabase
+          .from("addresses")
+          .insert(addressData);
+
+        if (error) {
+          return { success: false, error: error.message };
+        }
+      }
+
+      return { success: true };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
+
+  /**
+   * Execute raw SQL query
+   */
+  async executeRawSQL(sql: string): Promise<{ success: boolean; data?: any; error?: string }> {
+    try {
+      const { data, error } = await this.supabase.rpc('execute_sql', { query: sql });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      return { success: true, data };
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      };
+    }
+  }
 }

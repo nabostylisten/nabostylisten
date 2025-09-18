@@ -5,6 +5,7 @@
 import { readFileSync } from "fs";
 import type { MySQLBuyer, MySQLStylist } from "../../shared/types";
 import type { MigrationLogger } from "../../shared/logger";
+import { MySQLCoordinateParser } from "../../shared/mysql-coordinate-parser";
 
 // Address data from MySQL
 export interface MySQLAddress {
@@ -270,7 +271,7 @@ export class MySQLParser {
 
     let match;
     while ((match = rowPattern.exec(valuesString)) !== null) {
-      rowBoundaries.push(match.index + 1); // Position after ),(
+      rowBoundaries.push(match.index + 2); // Position after ),( - skip both ) and ,
     }
 
     // Add the end position
@@ -413,38 +414,53 @@ export class MySQLParser {
     // Remove leading/trailing parentheses and whitespace
     let cleanText = rowText.replace(/^\s*\(/, "").replace(/\)\s*$/, "").trim();
 
-    // Handle the binary coordinate field (position 4) specially
-    // More robust pattern for _binary 'complex_data_with_nulls_and_special_chars'
-    // We need to find _binary and then skip to the next field after the binary data
+    // Handle the coordinate field (position 4) specially
+    // Extract hex coordinate data for PostGIS processing
+    let extractedCoordinates: string | null = null;
 
-    const binaryStartIndex = cleanText.indexOf("_binary");
-    if (binaryStartIndex !== -1) {
-      // Find the quote after _binary
-      const quoteStartIndex = cleanText.indexOf("'", binaryStartIndex);
-      if (quoteStartIndex !== -1) {
-        // Find the closing quote, but we need to be careful with escaped quotes and null bytes
-        let quoteEndIndex = -1;
-        let i = quoteStartIndex + 1;
+    // First check for hex format (0x...)
+    const hexMatch = cleanText.match(/(0x[0-9A-Fa-f]+)/);
+    if (hexMatch) {
+      extractedCoordinates = hexMatch[1];
+      // Replace hex with placeholder
+      cleanText = cleanText.replace(hexMatch[1], `COORDINATES_EXTRACTED:'${extractedCoordinates}'`);
+    } else {
+      // Check for _binary format
+      const binaryStartIndex = cleanText.indexOf("_binary");
+      if (binaryStartIndex !== -1) {
+        // Find the quote after _binary
+        const quoteStartIndex = cleanText.indexOf("'", binaryStartIndex);
+        if (quoteStartIndex !== -1) {
+          // Find the closing quote, but we need to be careful with escaped quotes and null bytes
+          let quoteEndIndex = -1;
+          let i = quoteStartIndex + 1;
 
-        // Look for the end of the binary data by finding the pattern ','
-        // after the binary section (which should be after the closing quote)
-        while (i < cleanText.length) {
-          if (
-            cleanText[i] === "'" &&
-            i + 1 < cleanText.length &&
-            cleanText[i + 1] === ","
-          ) {
-            quoteEndIndex = i;
-            break;
+          // Look for the end of the binary data by finding the pattern ','
+          // after the binary section (which should be after the closing quote)
+          while (i < cleanText.length) {
+            if (
+              cleanText[i] === "'" &&
+              i + 1 < cleanText.length &&
+              cleanText[i + 1] === ","
+            ) {
+              quoteEndIndex = i;
+              break;
+            }
+            i++;
           }
-          i++;
-        }
 
-        if (quoteEndIndex !== -1) {
-          // Replace the entire _binary '...' section with placeholder
-          const before = cleanText.substring(0, binaryStartIndex);
-          const after = cleanText.substring(quoteEndIndex + 1);
-          cleanText = before + "BINARY_PLACEHOLDER" + after;
+          if (quoteEndIndex !== -1) {
+            // Extract the binary coordinate data
+            const binaryData = cleanText.substring(quoteStartIndex + 1, quoteEndIndex);
+
+            // Store the raw binary/hex data for PostGIS processing
+            extractedCoordinates = binaryData;
+
+            // Replace the entire _binary '...' section with a placeholder that includes the raw hex
+            const before = cleanText.substring(0, binaryStartIndex);
+            const after = cleanText.substring(quoteEndIndex + 1);
+            cleanText = before + `COORDINATES_EXTRACTED:'${extractedCoordinates || 'NULL'}'` + after;
+          }
         }
       }
     }
@@ -491,10 +507,16 @@ export class MySQLParser {
       values.push(currentValue.trim());
     }
 
-    // Convert values to proper format, handling the binary placeholder
+    // Convert values to proper format, handling the extracted coordinates
     for (const value of values) {
-      if (value === "BINARY_PLACEHOLDER") {
-        row.push(null); // Skip binary coordinates
+      if (value.startsWith("COORDINATES_EXTRACTED:")) {
+        // Extract the coordinate value from the placeholder
+        const coordMatch = value.match(/COORDINATES_EXTRACTED:'([^']+)'/);
+        if (coordMatch && coordMatch[1] !== 'NULL') {
+          row.push(coordMatch[1]); // PostGIS format coordinates
+        } else {
+          row.push(null); // No valid coordinates found
+        }
       } else {
         row.push(this.parseValue(value));
       }
@@ -606,26 +628,34 @@ export class MySQLParser {
 
     const addresses: MySQLAddress[] = [];
 
-    // First try the original pattern for multiple INSERT statements
-    const multipleInsertPattern =
-      /INSERT INTO `address` VALUES\s*\(([^;]+)\);/gi;
-    let match;
+    // Check if we have multiple INSERT statements or one massive INSERT
+    // Count the number of INSERT INTO `address` statements
+    const insertCount = (dumpContent.match(/INSERT INTO `address` VALUES/gi) || []).length;
+    this.logger.debug(`Found ${insertCount} INSERT INTO address statements`);
+
     let foundMultiple = false;
 
-    while ((match = multipleInsertPattern.exec(dumpContent)) !== null) {
-      foundMultiple = true;
-      const valuesString = match[1];
-      const rows = this.parseInsertValues(valuesString, "address");
+    if (insertCount > 1) {
+      // Multiple separate INSERT statements
+      const multipleInsertPattern =
+        /INSERT INTO `address` VALUES\s*\(([^;]+)\);/gi;
+      let match;
 
-      for (const row of rows) {
-        try {
-          const address = this.parseAddressRow(row);
-          if (address) {
-            addresses.push(address);
+      while ((match = multipleInsertPattern.exec(dumpContent)) !== null) {
+        foundMultiple = true;
+        const valuesString = match[1];
+        const rows = this.parseInsertValues(valuesString, "address");
+
+        for (const row of rows) {
+          try {
+            const address = this.parseAddressRow(row);
+            if (address) {
+              addresses.push(address);
+            }
+          } catch (error) {
+            this.logger.debug(`Skipping problematic address row: ${error}`);
+            continue;
           }
-        } catch (error) {
-          this.logger.debug(`Skipping problematic address row: ${error}`);
-          continue;
         }
       }
     }
@@ -658,16 +688,82 @@ export class MySQLParser {
           `Actually parsed ${rows.length} address rows from single INSERT statement`,
         );
 
-        for (const row of rows) {
+        // Debug: Log details about parsing
+        this.logger.debug(
+          `First 500 chars of values string: ${valuesString.substring(0, 500)}...`,
+        );
+        this.logger.debug(
+          `Last 500 chars of values string: ...${valuesString.substring(valuesString.length - 500)}`,
+        );
+
+        // Debug: Check if the values start with the expected pattern
+        const startsWithParen = valuesString.startsWith('(');
+        const firstCommaIndex = valuesString.indexOf(',');
+        const firstQuoteContent = valuesString.match(/^\('([^']+)'/);
+        this.logger.info(`Values string analysis: startsWithParen=${startsWithParen}, firstCommaAt=${firstCommaIndex}, firstID="${firstQuoteContent?.[1] || 'NOT_FOUND'}"`);
+
+        for (let i = 0; i < rows.length; i++) {
+          const row = rows[i];
           try {
             const address = this.parseAddressRow(row);
             if (address) {
               addresses.push(address);
+              if (i < 5) {
+                this.logger.debug(`✅ Successfully parsed address ${i + 1}: ID=${address.id}, buyer_id=${address.buyer_id}, stylist_id=${address.stylist_id}`);
+              }
+            } else {
+              if (i < 5) {
+                this.logger.debug(`❌ parseAddressRow returned null for row ${i + 1} with ${row.length} fields. First 3 fields: [${row.slice(0, 3).join(', ')}]`);
+              }
             }
           } catch (error) {
-            this.logger.debug(`Skipping problematic address row: ${error}`);
+            if (i < 5) {
+              this.logger.debug(`⚠️ Error parsing row ${i + 1}: ${error}`);
+            }
             continue;
           }
+        }
+
+        this.logger.info(
+          `From ${rows.length} parsed rows, successfully created ${addresses.length} address objects`,
+        );
+
+        // Count parsing failures
+        let nullCount = 0;
+        let errorCount = 0;
+        let shortRowCount = 0;
+        let missingIdCount = 0;
+
+        for (let i = 0; i < Math.min(50, rows.length); i++) {
+          const row = rows[i];
+          try {
+            if (row.length < 8) {
+              shortRowCount++;
+              continue;
+            }
+
+            const id = row[0];
+            if (!id) {
+              missingIdCount++;
+              continue;
+            }
+
+            const address = this.parseAddressRow(row);
+            if (!address) {
+              nullCount++;
+            }
+          } catch (error) {
+            errorCount++;
+          }
+        }
+
+        this.logger.info(`Sample of first 50 rows: shortRows=${shortRowCount}, missingId=${missingIdCount}, nullResults=${nullCount}, errors=${errorCount}`);
+
+        // Debug first few rows that have missing IDs
+        this.logger.info("=== DEBUGGING ROWS WITH MISSING IDs ===");
+        for (let i = 0; i < Math.min(3, rows.length); i++) {
+          const row = rows[i];
+          this.logger.info(`Row ${i + 1}: [${row.slice(0, 5).map(field => `"${field}"`).join(', ')}...] (${row.length} fields total)`);
         }
       } else {
         this.logger.warn("No INSERT statements found for address table");
@@ -683,6 +779,7 @@ export class MySQLParser {
    */
   private parseAddressRow(row: (string | null)[]): MySQLAddress | null {
     if (row.length < 8) {
+      this.logger.debug(`Address row too short: ${row.length} fields`);
       return null; // Skip rows that are too short
     }
 
@@ -693,7 +790,8 @@ export class MySQLParser {
     const stylistId = row[2] === "NULL" ? null : row[2];
     const salonId = row[3] === "NULL" ? null : row[3];
 
-    // Skip the binary coordinates (row[4]) - we'll handle this in separate Mapbox script
+    // Extract the coordinates from row[4] (already parsed by parseAddressRowText)
+    const coordinates = row[4]; // PostGIS format coordinates or null
     const shortAddress = row[5]; // This was incorrectly mapped as streetName before
     const formattedAddress = row[6];
     const tag = row[7];
@@ -718,8 +816,9 @@ export class MySQLParser {
       ? (row[15] === "NULL" || row[15] === "" ? null : row[15])
       : null;
 
-    // Only return address if we have an ID and either buyer_id or stylist_id
-    if (!id || (!buyerId && !stylistId)) {
+    // Only return address if we have an ID (extract ALL addresses for now)
+    if (!id) {
+      this.logger.debug(`Address skipped: missing ID`);
       return null;
     }
 
@@ -736,7 +835,7 @@ export class MySQLParser {
       country: country || "Norway", // Default to Norway
       short_address: shortAddress,
       tag: tag,
-      coordinates: null, // Will be geocoded using Mapbox later
+      coordinates: coordinates, // Extracted from MySQL POINT data
       created_at: createdAt,
       updated_at: updatedAt,
       deleted_at: deletedAt,

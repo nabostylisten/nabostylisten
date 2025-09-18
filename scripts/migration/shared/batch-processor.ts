@@ -369,7 +369,7 @@ export function getOptimalBatchSize(
 ): number {
   // Different operations have different optimal batch sizes
   const batchSizes: Record<OperationType, number> = {
-    "auth_users": 50, // Increased for better throughput
+    "auth_users": 100, // Significantly increased for faster auth user creation
     "profiles": 200, // Database inserts can be larger
     "services": 100, // Increased for better performance
     "addresses": 150, // PostGIS operations are moderately expensive

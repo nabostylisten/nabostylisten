@@ -26,10 +26,10 @@ export async function getAllAddressesForMap() {
     const supabase = await createClient();
 
     // Use the RPC function with pagination to get all addresses
-    const result = await fetchAllRowsFromRPC<MapAddress>(
+    const result = await fetchAllRowsFromRPC<"get_map_addresses", MapAddress>(
       supabase,
-      'get_map_addresses',
-      {}
+      "get_map_addresses",
+      {},
     );
 
     return result;
@@ -45,13 +45,16 @@ export async function getUserCountsByRole() {
     const supabase = await createClient();
 
     // Use fetchAllRows to get all addresses with coordinates (not limited to 1000)
-    const result = await fetchAllRows<{ profiles: { role: string } }>((offset, limit) =>
-      supabase
-        .from('addresses')
+    const result = await fetchAllRows<{ profiles: { role: string } }>(async (
+      offset,
+      limit,
+    ) =>
+      await supabase
+        .from("addresses")
         .select(`
           profiles!inner(role)
         `)
-        .not('location', 'is', null)
+        .not("location", "is", null)
         .range(offset, offset + limit - 1)
     );
 
@@ -65,12 +68,12 @@ export async function getUserCountsByRole() {
       (acc, item) => {
         const role = item.profiles.role;
         acc.total++;
-        if (role === 'customer') acc.customers++;
-        else if (role === 'stylist') acc.stylists++;
-        else if (role === 'admin') acc.admins++;
+        if (role === "customer") acc.customers++;
+        else if (role === "stylist") acc.stylists++;
+        else if (role === "admin") acc.admins++;
         return acc;
       },
-      { total: 0, customers: 0, stylists: 0, admins: 0 }
+      { total: 0, customers: 0, stylists: 0, admins: 0 },
     );
 
     return { data: stats, error: null };

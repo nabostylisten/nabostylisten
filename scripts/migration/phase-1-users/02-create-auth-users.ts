@@ -41,12 +41,7 @@ async function main() {
     
     let users: ConsolidatedUser[] = consolidatedData.users;
 
-    // Apply head limit if specified
-    const headLimit = process.env.HEAD_LIMIT ? parseInt(process.env.HEAD_LIMIT, 10) : undefined;
-    if (headLimit && headLimit > 0) {
-      users = users.slice(0, headLimit);
-      logger.warn(`🔢 Limited to first ${headLimit} users (HEAD_LIMIT environment variable)`);
-    }
+    // Process all users (HEAD_LIMIT logic removed for production migration)
 
     logger.info(`Processing ${users.length} consolidated users`);
 

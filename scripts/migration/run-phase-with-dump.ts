@@ -32,19 +32,7 @@ async function main() {
 
   const [phaseNumber, dumpFilePath] = args;
 
-  // Parse optional --head parameter
-  let headLimit: number | undefined;
-  for (let i = 2; i < args.length; i++) {
-    if (args[i] === '--head' && args[i + 1]) {
-      const limit = parseInt(args[i + 1], 10);
-      if (isNaN(limit) || limit <= 0) {
-        logger.error('Invalid --head value. Must be a positive number.');
-        process.exit(1);
-      }
-      headLimit = limit;
-      break;
-    }
-  }
+  // HEAD_LIMIT logic removed for production migration
 
   // Validate phase number
   const phase = parseInt(phaseNumber, 10);
@@ -61,16 +49,13 @@ async function main() {
   }
 
   logger.info(`🚀 === RUNNING PHASE ${phase} WITH DUMP: ${dumpFilePath} ===`);
-  if (headLimit) {
-    logger.warn(`⚠️ LIMITING TO FIRST ${headLimit} USERS (--head parameter)`);
-  }
+  logger.info('🎯 Running with FULL dataset (no limits)');
 
   try {
     // Set up environment with dump file path
     const env = {
       ...process.env,
-      MYSQL_DUMP_PATH: dumpFilePath,
-      ...(headLimit && { HEAD_LIMIT: headLimit.toString() })
+      MYSQL_DUMP_PATH: dumpFilePath
     };
 
     // Initialize database connection for validation
@@ -106,9 +91,6 @@ async function main() {
     logger.info(`\n📋 Executing Phase ${phase} Migration`);
     logger.info(`Script: ${scriptPath}`);
     logger.info(`Dump file: ${dumpFilePath}`);
-    if (headLimit) {
-      logger.info(`User limit: ${headLimit} users (--head)`);
-    }
 
     // Execute the phase script
     const phaseStartTime = Date.now();

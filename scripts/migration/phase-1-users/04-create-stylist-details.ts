@@ -46,12 +46,7 @@ async function main() {
     let users: ConsolidatedUser[] = consolidatedData.users;
     const userMapping: Record<string, string> = mappingData.mapping;
 
-    // Apply head limit if specified (for consistency with auth users step)
-    const headLimit = process.env.HEAD_LIMIT ? parseInt(process.env.HEAD_LIMIT, 10) : undefined;
-    if (headLimit && headLimit > 0) {
-      users = users.slice(0, headLimit);
-      logger.warn(`🔢 Limited to first ${headLimit} users (HEAD_LIMIT environment variable)`);
-    }
+    // Process all users (HEAD_LIMIT logic removed for production migration)
 
     // Get list of existing profiles from database to verify successful creation
     const existingProfileIds = new Set(

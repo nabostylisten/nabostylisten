@@ -31,14 +31,17 @@ interface MappingValidationReport {
 }
 
 interface ServiceCreated {
-  migrated_at: string;
-  successful_services: number;
-  failed_services: number;
-  services: Array<{
-    old_service_id: string;
-    new_service_id: string;
+  metadata: {
+    created_at: string;
+    total_processed: number;
+    successful_creations: number;
+    failed_creations: number;
+  };
+  results: Array<{
+    original_id: string;
+    supabase_id: string;
+    title: string;
     stylist_id: string;
-    name: string;
     success: boolean;
   }>;
 }
@@ -115,10 +118,10 @@ async function migrateServiceImages(): Promise<void> {
 
   // Create service mapping lookup
   const serviceMapping: Record<string, { newServiceId: string; stylistId: string }> = {};
-  for (const service of servicesCreated.services) {
+  for (const service of servicesCreated.results) {
     if (service.success) {
-      serviceMapping[service.old_service_id] = {
-        newServiceId: service.new_service_id,
+      serviceMapping[service.original_id] = {
+        newServiceId: service.supabase_id,
         stylistId: service.stylist_id,
       };
     }

@@ -1,6 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { uploadFile, storagePaths } from "@/lib/supabase/storage";
-import { compressImage, type CompressionResult } from "./image-compressor";
+import { uploadFile, storagePaths, bucketConfigs } from "@/lib/supabase/storage";
+import { compressImageToSizeLimit, type CompressionResult } from "./image-compressor";
 import { validateImageFile, type FileTypeInfo } from "./file-type-detector";
 import fs from "fs/promises";
 
@@ -66,11 +66,12 @@ export async function uploadProfileImage({
       };
     }
 
-    // Compress the image
-    compressionResult = await compressImage(filePath, fileInfo.extension);
+    // Compress the image with size limit for avatars bucket
+    const maxSizeBytes = bucketConfigs.avatars.maxSize;
+    compressionResult = await compressImageToSizeLimit(filePath, fileInfo.extension, maxSizeBytes);
 
-    // Generate filename: keep original user ID for traceability
-    const filename = `${oldUserId}${fileInfo.extension}`;
+    // Generate filename: keep original user ID for traceability (with proper dot separator)
+    const filename = `${oldUserId}.${fileInfo.extension}`;
     const storagePath = storagePaths.avatar(newUserId, filename);
 
     // Create File object from compressed image
@@ -172,11 +173,12 @@ export async function uploadServiceImage({
       };
     }
 
-    // Compress the image
-    compressionResult = await compressImage(filePath, fileInfo.extension);
+    // Compress the image with size limit for service-media bucket
+    const maxSizeBytes = bucketConfigs["service-media"].maxSize;
+    compressionResult = await compressImageToSizeLimit(filePath, fileInfo.extension, maxSizeBytes);
 
-    // Generate filename: keep original image ID for traceability
-    const filename = `${imageId}${fileInfo.extension}`;
+    // Generate filename: keep original image ID for traceability (with proper dot separator)
+    const filename = `${imageId}.${fileInfo.extension}`;
     const storagePath = storagePaths.serviceMedia(newServiceId, filename);
 
     // Create File object from compressed image

@@ -1,10 +1,7 @@
-import { exec } from "child_process";
-import { promisify } from "util";
+import sharp from "sharp";
 import fs from "fs/promises";
 import path from "path";
 import { tmpdir } from "os";
-
-const execAsync = promisify(exec);
 
 export interface CompressionResult {
   compressedPath: string;
@@ -17,16 +14,126 @@ export interface CompressionResult {
 }
 
 const COMPRESSION_SETTINGS = {
-  ".jpg": "-quality 85",
-  ".jpeg": "-quality 85",
-  ".png": "-quality 90",
-  ".gif": "-quality 90",
-  ".webp": "-quality 80",
-  ".tiff": "-quality 85",
-  ".tif": "-quality 85",
+  ".jpg": { quality: 85, mozjpeg: true },
+  ".jpeg": { quality: 85, mozjpeg: true },
+  ".png": { compressionLevel: 9, quality: 90 },
+  ".webp": { quality: 80 },
 } as const;
 
-const DEFAULT_QUALITY = "-quality 85";
+const DEFAULT_QUALITY = { quality: 85 };
+
+export async function compressImageToSizeLimit(
+  inputPath: string,
+  fileExtension: string,
+  maxSizeBytes: number,
+  tempDir: string = tmpdir()
+): Promise<CompressionResult> {
+  const startTime = Date.now();
+  let currentQuality = 90; // Start with high quality
+  const minQuality = 10; // Don't go below this quality
+  let attempts = 0;
+  const maxAttempts = 8;
+
+  try {
+    const originalStats = await fs.stat(inputPath);
+    const originalSize = originalStats.size;
+
+    // If original is already under limit, do light compression
+    if (originalSize <= maxSizeBytes) {
+      return await compressImage(inputPath, fileExtension, tempDir);
+    }
+
+    let bestResult: CompressionResult | null = null;
+    const normalizedExt = fileExtension.toLowerCase();
+
+    console.log(`File ${path.basename(inputPath)} (${formatBytes(originalSize)}) exceeds limit (${formatBytes(maxSizeBytes)}), applying aggressive compression...`);
+
+    while (currentQuality >= minQuality && attempts < maxAttempts) {
+      attempts++;
+
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 9);
+      const outputFilename = `compressed_${timestamp}_${randomSuffix}_q${currentQuality}${fileExtension}`;
+      const outputPath = path.join(tempDir, outputFilename);
+
+      try {
+        console.log(`  Attempt ${attempts}: Quality ${currentQuality}%`);
+
+        // Use Sharp to compress based on file type
+        let sharpInstance = sharp(inputPath);
+
+        if (normalizedExt === ".jpg" || normalizedExt === ".jpeg") {
+          sharpInstance = sharpInstance.jpeg({ quality: currentQuality, mozjpeg: true });
+        } else if (normalizedExt === ".png") {
+          sharpInstance = sharpInstance.png({
+            compressionLevel: 9,
+            quality: currentQuality,
+            progressive: true
+          });
+        } else if (normalizedExt === ".webp") {
+          sharpInstance = sharpInstance.webp({ quality: currentQuality });
+        } else {
+          // For other formats, convert to JPEG with quality setting
+          sharpInstance = sharpInstance.jpeg({ quality: currentQuality, mozjpeg: true });
+        }
+
+        await sharpInstance.toFile(outputPath);
+
+        const compressedStats = await fs.stat(outputPath);
+        const compressedSize = compressedStats.size;
+
+        console.log(`  Result: ${formatBytes(compressedSize)}`);
+
+        // Clean up previous attempt if we have one
+        if (bestResult && bestResult.compressedPath) {
+          try {
+            await fs.unlink(bestResult.compressedPath);
+          } catch {
+            // Ignore cleanup errors
+          }
+        }
+
+        bestResult = {
+          compressedPath: outputPath,
+          originalSize,
+          compressedSize,
+          compressionRatio: ((originalSize - compressedSize) / originalSize) * 100,
+          compressionTime: Date.now() - startTime,
+          success: true,
+        };
+
+        // If we're under the limit, we're done!
+        if (compressedSize <= maxSizeBytes) {
+          console.log(`  ✅ Success: Final size ${formatBytes(compressedSize)} is under limit`);
+          return bestResult;
+        }
+
+        // Reduce quality for next attempt
+        currentQuality = Math.max(minQuality, currentQuality - 10);
+
+      } catch (error) {
+        console.log(`  Failed at quality ${currentQuality}: ${error}`);
+        // Try with lower quality
+        currentQuality = Math.max(minQuality, currentQuality - 15);
+      }
+    }
+
+    // If we couldn't get under the limit, return the best result we got
+    if (bestResult) {
+      console.log(`  ⚠️ Best effort: ${formatBytes(bestResult.compressedSize)} (still over limit)`);
+      return bestResult;
+    }
+
+    // Final fallback - return original file
+    throw new Error(`Could not compress ${inputPath} under size limit after ${attempts} attempts`);
+
+  } catch (error) {
+    console.error(`Compression to size limit failed for ${inputPath}:`, error);
+
+    // Fallback to original compression method
+    return await compressImage(inputPath, fileExtension, tempDir);
+  }
+}
 
 export async function compressImage(
   inputPath: string,
@@ -50,16 +157,29 @@ export async function compressImage(
     const normalizedExt = fileExtension.toLowerCase();
     const compressionSetting = COMPRESSION_SETTINGS[normalizedExt as keyof typeof COMPRESSION_SETTINGS] || DEFAULT_QUALITY;
 
-    // Build ImageMagick command
-    // Using 'magick' command for ImageMagick 7.x compatibility
-    const command = `magick "${inputPath}" ${compressionSetting} "${outputPath}"`;
+    console.log(`Compressing ${path.basename(inputPath)} with Sharp...`);
 
-    console.log(`Compressing ${path.basename(inputPath)} with settings: ${compressionSetting}`);
+    // Use Sharp to compress based on file type
+    let sharpInstance = sharp(inputPath);
 
-    // Execute compression
-    await execAsync(command);
+    if (normalizedExt === ".jpg" || normalizedExt === ".jpeg") {
+      const jpegSettings = compressionSetting as typeof COMPRESSION_SETTINGS[".jpg"];
+      sharpInstance = sharpInstance.jpeg(jpegSettings);
+    } else if (normalizedExt === ".png") {
+      const pngSettings = compressionSetting as typeof COMPRESSION_SETTINGS[".png"];
+      sharpInstance = sharpInstance.png(pngSettings);
+    } else if (normalizedExt === ".webp") {
+      const webpSettings = compressionSetting as typeof COMPRESSION_SETTINGS[".webp"];
+      sharpInstance = sharpInstance.webp(webpSettings);
+    } else {
+      // For other formats, convert to JPEG with default quality
+      const defaultSettings = DEFAULT_QUALITY as { quality: number };
+      sharpInstance = sharpInstance.jpeg({ quality: defaultSettings.quality, mozjpeg: true });
+    }
 
-    // Verify output file exists
+    await sharpInstance.toFile(outputPath);
+
+    // Verify output file exists and get size
     const compressedStats = await fs.stat(outputPath);
     const compressedSize = compressedStats.size;
 

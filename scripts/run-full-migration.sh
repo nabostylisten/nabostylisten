@@ -3,7 +3,8 @@
 # Full Migration Script
 # This script resets the database and runs all migration phases in order
 #
-# Usage: ./scripts/run-full-migration.sh [SQL_DUMP_FILE]
+# Usage: timeout 2700 ./scripts/run-full-migration.sh [SQL_DUMP_FILE]
+# Note: 2700 seconds = 45 minutes timeout
 #
 # Arguments:
 #   SQL_DUMP_FILE   Path to the MySQL dump file (optional)
@@ -17,6 +18,7 @@
 # Phase 5: Payments (MySQL payment → payments with affiliate integration fields)
 # Phase 6: Communication (chat + message → chats + chat_messages)
 # Phase 7: Reviews (rating → reviews)
+# Phase 8: Media (S3 backup → Supabase Storage with compression and media records)
 #
 # NOT MIGRATED (Clean start or new features):
 # - Discount system (old promocode) - Admin will create new discounts
@@ -50,6 +52,7 @@ fi
 echo "🚀 Starting Full Migration Process"
 echo "================================================================"
 echo "📁 Using SQL dump file: $SQL_DUMP_FILE"
+echo "⏱️  Timeout: 45 minutes (2700 seconds)"
 echo "================================================================"
 
 # Colors for output
@@ -88,7 +91,7 @@ fi
 echo ""
 
 # Step 2: Run migration phases
-PHASES=(1 2 3 4 5 6 7)
+PHASES=(1 2 3 4 5 6 7 8)
 FAILED_PHASES=()
 SUCCESSFUL_PHASES=()
 WARNING_PHASES=()

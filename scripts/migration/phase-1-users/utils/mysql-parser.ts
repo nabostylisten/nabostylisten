@@ -6,6 +6,7 @@ import { readFileSync } from "fs";
 import type { MySQLBuyer, MySQLStylist } from "../../shared/types";
 import type { MigrationLogger } from "../../shared/logger";
 import { MySQLCoordinateParser } from "../../shared/mysql-coordinate-parser";
+import { UserValidator } from "./validation";
 
 // Address data from MySQL
 export interface MySQLAddress {
@@ -30,10 +31,12 @@ export interface MySQLAddress {
 export class MySQLParser {
   private logger: MigrationLogger;
   private dumpFilePath: string;
+  private validator: UserValidator;
 
   constructor(dumpFilePath: string, logger: MigrationLogger) {
     this.logger = logger;
     this.dumpFilePath = dumpFilePath;
+    this.validator = new UserValidator(logger);
   }
 
   /**
@@ -423,7 +426,10 @@ export class MySQLParser {
     if (hexMatch) {
       extractedCoordinates = hexMatch[1];
       // Replace hex with placeholder
-      cleanText = cleanText.replace(hexMatch[1], `COORDINATES_EXTRACTED:'${extractedCoordinates}'`);
+      cleanText = cleanText.replace(
+        hexMatch[1],
+        `COORDINATES_EXTRACTED:'${extractedCoordinates}'`,
+      );
     } else {
       // Check for _binary format
       const binaryStartIndex = cleanText.indexOf("_binary");
@@ -451,7 +457,10 @@ export class MySQLParser {
 
           if (quoteEndIndex !== -1) {
             // Extract the binary coordinate data
-            const binaryData = cleanText.substring(quoteStartIndex + 1, quoteEndIndex);
+            const binaryData = cleanText.substring(
+              quoteStartIndex + 1,
+              quoteEndIndex,
+            );
 
             // Store the raw binary/hex data for PostGIS processing
             extractedCoordinates = binaryData;
@@ -459,7 +468,9 @@ export class MySQLParser {
             // Replace the entire _binary '...' section with a placeholder that includes the raw hex
             const before = cleanText.substring(0, binaryStartIndex);
             const after = cleanText.substring(quoteEndIndex + 1);
-            cleanText = before + `COORDINATES_EXTRACTED:'${extractedCoordinates || 'NULL'}'` + after;
+            cleanText = before +
+              `COORDINATES_EXTRACTED:'${extractedCoordinates || "NULL"}'` +
+              after;
           }
         }
       }
@@ -512,7 +523,7 @@ export class MySQLParser {
       if (value.startsWith("COORDINATES_EXTRACTED:")) {
         // Extract the coordinate value from the placeholder
         const coordMatch = value.match(/COORDINATES_EXTRACTED:'([^']+)'/);
-        if (coordMatch && coordMatch[1] !== 'NULL') {
+        if (coordMatch && coordMatch[1] !== "NULL") {
           row.push(coordMatch[1]); // PostGIS format coordinates
         } else {
           row.push(null); // No valid coordinates found
@@ -600,8 +611,12 @@ export class MySQLParser {
       commission_percentage: raw.commission_percentage
         ? parseFloat(raw.commission_percentage)
         : null,
-      facebook_profile: raw.facebook_profile || "",
-      instagram_profile: raw.instagram_profile || "",
+      facebook_profile: raw.facebook_profile
+        ? this.validator.normalizeFacebookUrl(raw.facebook_profile)
+        : "",
+      instagram_profile: raw.instagram_profile
+        ? this.validator.normalizeInstagramUrl(raw.instagram_profile)
+        : "",
       twitter_profile: raw.twitter_profile || "",
       is_active: raw.is_active === "1",
       can_travel: raw.can_travel === "1",
@@ -630,7 +645,8 @@ export class MySQLParser {
 
     // Check if we have multiple INSERT statements or one massive INSERT
     // Count the number of INSERT INTO `address` statements
-    const insertCount = (dumpContent.match(/INSERT INTO `address` VALUES/gi) || []).length;
+    const insertCount =
+      (dumpContent.match(/INSERT INTO `address` VALUES/gi) || []).length;
     this.logger.debug(`Found ${insertCount} INSERT INTO address statements`);
 
     let foundMultiple = false;
@@ -690,17 +706,25 @@ export class MySQLParser {
 
         // Debug: Log details about parsing
         this.logger.debug(
-          `First 500 chars of values string: ${valuesString.substring(0, 500)}...`,
+          `First 500 chars of values string: ${
+            valuesString.substring(0, 500)
+          }...`,
         );
         this.logger.debug(
-          `Last 500 chars of values string: ...${valuesString.substring(valuesString.length - 500)}`,
+          `Last 500 chars of values string: ...${
+            valuesString.substring(valuesString.length - 500)
+          }`,
         );
 
         // Debug: Check if the values start with the expected pattern
-        const startsWithParen = valuesString.startsWith('(');
-        const firstCommaIndex = valuesString.indexOf(',');
+        const startsWithParen = valuesString.startsWith("(");
+        const firstCommaIndex = valuesString.indexOf(",");
         const firstQuoteContent = valuesString.match(/^\('([^']+)'/);
-        this.logger.info(`Values string analysis: startsWithParen=${startsWithParen}, firstCommaAt=${firstCommaIndex}, firstID="${firstQuoteContent?.[1] || 'NOT_FOUND'}"`);
+        this.logger.info(
+          `Values string analysis: startsWithParen=${startsWithParen}, firstCommaAt=${firstCommaIndex}, firstID="${
+            firstQuoteContent?.[1] || "NOT_FOUND"
+          }"`,
+        );
 
         for (let i = 0; i < rows.length; i++) {
           const row = rows[i];
@@ -709,11 +733,21 @@ export class MySQLParser {
             if (address) {
               addresses.push(address);
               if (i < 5) {
-                this.logger.debug(`✅ Successfully parsed address ${i + 1}: ID=${address.id}, buyer_id=${address.buyer_id}, stylist_id=${address.stylist_id}`);
+                this.logger.debug(
+                  `✅ Successfully parsed address ${
+                    i + 1
+                  }: ID=${address.id}, buyer_id=${address.buyer_id}, stylist_id=${address.stylist_id}`,
+                );
               }
             } else {
               if (i < 5) {
-                this.logger.debug(`❌ parseAddressRow returned null for row ${i + 1} with ${row.length} fields. First 3 fields: [${row.slice(0, 3).join(', ')}]`);
+                this.logger.debug(
+                  `❌ parseAddressRow returned null for row ${
+                    i + 1
+                  } with ${row.length} fields. First 3 fields: [${
+                    row.slice(0, 3).join(", ")
+                  }]`,
+                );
               }
             }
           } catch (error) {
@@ -753,17 +787,24 @@ export class MySQLParser {
               nullCount++;
             }
           } catch (error) {
+            this.logger.debug(`Error parsing row ${i + 1}: ${error}`);
             errorCount++;
           }
         }
 
-        this.logger.info(`Sample of first 50 rows: shortRows=${shortRowCount}, missingId=${missingIdCount}, nullResults=${nullCount}, errors=${errorCount}`);
+        this.logger.info(
+          `Sample of first 50 rows: shortRows=${shortRowCount}, missingId=${missingIdCount}, nullResults=${nullCount}, errors=${errorCount}`,
+        );
 
         // Debug first few rows that have missing IDs
         this.logger.info("=== DEBUGGING ROWS WITH MISSING IDs ===");
         for (let i = 0; i < Math.min(3, rows.length); i++) {
           const row = rows[i];
-          this.logger.info(`Row ${i + 1}: [${row.slice(0, 5).map(field => `"${field}"`).join(', ')}...] (${row.length} fields total)`);
+          this.logger.info(
+            `Row ${i + 1}: [${
+              row.slice(0, 5).map((field) => `"${field}"`).join(", ")
+            }...] (${row.length} fields total)`,
+          );
         }
       } else {
         this.logger.warn("No INSERT statements found for address table");

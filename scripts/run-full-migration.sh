@@ -100,8 +100,8 @@ for phase in "${PHASES[@]}"; do
     print_info "Running Phase $phase..."
 
     # Capture both output and exit code
-    # Pass the SQL dump file as environment variable
-    if output=$(MYSQL_DUMP_PATH="$SQL_DUMP_FILE" bun scripts/migration/run-phase-$phase.ts 2>&1); then
+    # Pass the SQL dump file as environment variable with 45 minute timeout per phase
+    if output=$(timeout 2700 bash -c "MYSQL_DUMP_PATH=\"$SQL_DUMP_FILE\" bun scripts/migration/run-phase-$phase.ts" 2>&1); then
         # Phase completed successfully
         print_status "Phase $phase completed successfully"
         SUCCESSFUL_PHASES+=($phase)

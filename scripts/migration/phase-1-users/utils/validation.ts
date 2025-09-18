@@ -409,20 +409,88 @@ export class UserValidator {
     return isoRegex.test(dateString) && this.isValidDate(dateString);
   }
 
-  private isValidInstagramUrl(url: string): boolean {
-    // Allow full URLs or just usernames
-    if (url.startsWith('@') || !url.includes('instagram.com')) {
-      // Just a username or handle
-      return /^@?[\w\.-]+$/.test(url);
+  /**
+   * Normalize Instagram URL to standard format: https://www.instagram.com/username/
+   */
+  public normalizeInstagramUrl(url: string): string {
+    if (!url) return url;
+
+    // Remove @ prefix if present
+    let cleanUrl = url.trim().replace(/^@/, '');
+
+    // Handle username-only format
+    if (!cleanUrl.includes('instagram.com')) {
+      return `https://www.instagram.com/${cleanUrl}/`;
     }
-    
-    const instagramRegex = /^https?:\/\/(www\.)?instagram\.com\/[\w\.-]+\/?$/;
-    return instagramRegex.test(url);
+
+    // Handle URLs with or without protocol
+    if (!cleanUrl.startsWith('http')) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+
+    // Ensure www. prefix
+    cleanUrl = cleanUrl.replace(/^https?:\/\/(?!www\.)/, 'https://www.');
+
+    // Extract username from URL (everything after last slash, before query params)
+    const urlMatch = cleanUrl.match(/instagram\.com\/([^/?#]+)/i);
+    if (urlMatch && urlMatch[1]) {
+      const username = urlMatch[1];
+      return `https://www.instagram.com/${username}/`;
+    }
+
+    return cleanUrl;
+  }
+
+  /**
+   * Normalize Facebook URL to standard format: https://www.facebook.com/username/
+   */
+  public normalizeFacebookUrl(url: string): string {
+    if (!url) return url;
+
+    // Remove @ prefix if present
+    let cleanUrl = url.trim().replace(/^@/, '');
+
+    // Handle username-only format
+    if (!cleanUrl.includes('facebook.com') && !cleanUrl.includes('fb.com')) {
+      return `https://www.facebook.com/${cleanUrl}/`;
+    }
+
+    // Handle URLs with or without protocol
+    if (!cleanUrl.startsWith('http')) {
+      cleanUrl = 'https://' + cleanUrl;
+    }
+
+    // Replace fb.com with facebook.com and ensure www. prefix
+    cleanUrl = cleanUrl.replace(/^https?:\/\/(www\.)?fb\.com/, 'https://www.facebook.com');
+    cleanUrl = cleanUrl.replace(/^https?:\/\/(?!www\.)facebook\.com/, 'https://www.facebook.com');
+
+    // Extract username from URL (everything after last slash, before query params)
+    const urlMatch = cleanUrl.match(/facebook\.com\/([^/?#]+)/i);
+    if (urlMatch && urlMatch[1]) {
+      const username = urlMatch[1];
+      return `https://www.facebook.com/${username}/`;
+    }
+
+    return cleanUrl;
+  }
+
+  private isValidInstagramUrl(url: string): boolean {
+    if (!url) return false;
+
+    // First normalize the URL
+    const normalizedUrl = this.normalizeInstagramUrl(url);
+
+    // Check if the normalized URL matches our standard format
+    return /^https:\/\/www\.instagram\.com\/[\w\.-]+\/$/i.test(normalizedUrl);
   }
 
   private isValidFacebookUrl(url: string): boolean {
-    // Allow various Facebook URL formats
-    const facebookRegex = /^https?:\/\/(www\.)?(facebook\.com|fb\.com)\/[\w\.-]+\/?$/;
-    return facebookRegex.test(url);
+    if (!url) return false;
+
+    // First normalize the URL
+    const normalizedUrl = this.normalizeFacebookUrl(url);
+
+    // Check if the normalized URL matches our standard format
+    return /^https:\/\/www\.facebook\.com\/[\w\.-]+\/$/i.test(normalizedUrl);
   }
 }

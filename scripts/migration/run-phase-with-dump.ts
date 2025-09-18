@@ -13,11 +13,11 @@
  *   bun scripts/migration/run-phase-with-dump.ts 2 ./nabostylisten_prod.sql
  */
 
-import { execSync } from 'child_process';
-import { join } from 'path';
-import { existsSync, mkdirSync } from 'fs';
-import { MigrationLogger } from './shared/logger';
-import { MigrationDatabase } from './shared/database';
+import { execSync } from "child_process";
+import { join } from "path";
+import { existsSync, mkdirSync } from "fs";
+import { MigrationLogger } from "./shared/logger";
+import { MigrationDatabase } from "./shared/database";
 
 async function main() {
   const logger = new MigrationLogger();
@@ -32,12 +32,12 @@ async function main() {
 
   const [phaseNumber, dumpFilePath] = args;
 
-  // HEAD_LIMIT logic removed for production migration
+  //  logic removed for production migration
 
   // Validate phase number
   const phase = parseInt(phaseNumber, 10);
   if (isNaN(phase) || phase < 1 || phase > 7) {
-    logger.error('Invalid phase number. Must be between 1 and 7.');
+    logger.error("Invalid phase number. Must be between 1 and 7.");
     showUsage();
     process.exit(1);
   }
@@ -49,29 +49,29 @@ async function main() {
   }
 
   logger.info(`🚀 === RUNNING PHASE ${phase} WITH DUMP: ${dumpFilePath} ===`);
-  logger.info('🎯 Running with FULL dataset (no limits)');
+  logger.info("🎯 Running with FULL dataset (no limits)");
 
   try {
     // Set up environment with dump file path
     const env = {
       ...process.env,
-      MYSQL_DUMP_PATH: dumpFilePath
+      MYSQL_DUMP_PATH: dumpFilePath,
     };
 
     // Initialize database connection for validation
     const database = new MigrationDatabase(logger);
 
-    logger.info('Verifying prerequisites...');
+    logger.info("Verifying prerequisites...");
 
     // Test database connection
     const isConnected = await database.testConnection();
     if (!isConnected) {
-      throw new Error('Database connection failed');
+      throw new Error("Database connection failed");
     }
-    logger.success('Database connection verified');
+    logger.success("Database connection verified");
 
     // Ensure temp directory exists
-    const tempDir = join(process.cwd(), 'scripts', 'migration', 'temp');
+    const tempDir = join(process.cwd(), "scripts", "migration", "temp");
     if (!existsSync(tempDir)) {
       mkdirSync(tempDir, { recursive: true });
       logger.info(`Created temp directory: ${tempDir}`);
@@ -79,10 +79,15 @@ async function main() {
 
     // Get initial database state
     const initialCounts = await database.getCurrentCounts();
-    logger.stats('Initial Database State', initialCounts);
+    logger.stats("Initial Database State", initialCounts);
 
     // Determine the script path
-    const scriptPath = join(process.cwd(), 'scripts', 'migration', `run-phase-${phase}.ts`);
+    const scriptPath = join(
+      process.cwd(),
+      "scripts",
+      "migration",
+      `run-phase-${phase}.ts`,
+    );
 
     if (!existsSync(scriptPath)) {
       throw new Error(`Phase ${phase} script not found: ${scriptPath}`);
@@ -97,20 +102,22 @@ async function main() {
 
     logger.info(`Running: bun ${scriptPath}`);
     execSync(`bun ${scriptPath}`, {
-      stdio: 'inherit',
+      stdio: "inherit",
       cwd: process.cwd(),
-      env
+      env,
     });
 
     const phaseDuration = Date.now() - phaseStartTime;
-    logger.success(`✅ Phase ${phase} completed in ${Math.round(phaseDuration / 1000)}s`);
+    logger.success(
+      `✅ Phase ${phase} completed in ${Math.round(phaseDuration / 1000)}s`,
+    );
 
     // Get final database state
     const finalCounts = await database.getCurrentCounts();
 
     // Calculate changes
     const changes: Record<string, number> = {};
-    Object.keys(finalCounts).forEach(table => {
+    Object.keys(finalCounts).forEach((table) => {
       const initial = initialCounts[table] || 0;
       const final = finalCounts[table] || 0;
       const change = final - initial;
@@ -123,37 +130,48 @@ async function main() {
 
     logger.info(`\n🎉 === PHASE ${phase} COMPLETED SUCCESSFULLY ===`);
 
-    logger.stats('Migration Summary', {
-      'Phase': phase,
-      'Dump File': dumpFilePath,
-      'Total Duration': `${Math.round(totalTime / 1000)}s`,
+    logger.stats("Migration Summary", {
+      "Phase": phase,
+      "Dump File": dumpFilePath,
+      "Total Duration": `${Math.round(totalTime / 1000)}s`,
       ...Object.entries(changes).reduce((acc, [table, change]) => {
-        acc[`${table} (${change > 0 ? '+' : ''}${change})`] = finalCounts[table];
+        acc[`${table} (${change > 0 ? "+" : ""}${change})`] =
+          finalCounts[table];
         return acc;
-      }, {} as Record<string, unknown>)
+      }, {} as Record<string, unknown>),
     });
 
     logger.success(`✅ Phase ${phase} migration completed successfully`);
 
-    logger.info('\nNext Steps:');
+    logger.info("\nNext Steps:");
     if (phase < 7) {
       logger.info(`1. Review the migrated data in your database`);
-      logger.info(`2. Run the next phase: bun scripts/migration/run-phase-with-dump.ts ${phase + 1} ${dumpFilePath}`);
+      logger.info(
+        `2. Run the next phase: bun scripts/migration/run-phase-with-dump.ts ${
+          phase + 1
+        } ${dumpFilePath}`,
+      );
     } else {
-      logger.info('1. All phases complete! Review your fully migrated database');
-      logger.info('2. Test your application with the migrated data');
+      logger.info(
+        "1. All phases complete! Review your fully migrated database",
+      );
+      logger.info("2. Test your application with the migrated data");
     }
-
   } catch (error) {
     const totalTime = Date.now() - startTime;
-    logger.error(`❌ Phase ${phase} migration failed after ${Math.round(totalTime / 1000)}s`, error);
+    logger.error(
+      `❌ Phase ${phase} migration failed after ${
+        Math.round(totalTime / 1000)
+      }s`,
+      error,
+    );
 
-    logger.info('\nTroubleshooting:');
-    logger.info('1. Check the error logs above');
-    logger.info('2. Verify database connection and credentials');
-    logger.info('3. Check that the SQL dump file exists and is readable');
-    logger.info('4. Ensure the database schema is up to date');
-    logger.info('5. Run individual migration scripts for debugging');
+    logger.info("\nTroubleshooting:");
+    logger.info("1. Check the error logs above");
+    logger.info("2. Verify database connection and credentials");
+    logger.info("3. Check that the SQL dump file exists and is readable");
+    logger.info("4. Ensure the database schema is up to date");
+    logger.info("5. Run individual migration scripts for debugging");
 
     process.exit(1);
   }
@@ -199,13 +217,13 @@ Prerequisites:
 }
 
 // Handle help flag
-if (process.argv.includes('--help') || process.argv.includes('-h')) {
+if (process.argv.includes("--help") || process.argv.includes("-h")) {
   showUsage();
   process.exit(0);
 }
 
 // Run the migration
-main().catch(error => {
-  console.error('Migration failed:', error);
+main().catch((error) => {
+  console.error("Migration failed:", error);
   process.exit(1);
 });

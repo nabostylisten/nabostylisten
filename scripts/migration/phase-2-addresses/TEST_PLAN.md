@@ -12,16 +12,6 @@ This test plan provides step-by-step validation procedures for each script in th
 - **Supabase local database**: Running with Phase 1 data
 - **PostGIS Extension**: Enabled in Supabase for geography data types
 
-## Environment Variables
-
-Set these before running any scripts:
-
-```bash
-export HEAD_LIMIT=10  # Start with small batch for testing
-```
-
----
-
 ## Step 1: Extract Addresses (`01-extract-addresses.ts`)
 
 ### Purpose

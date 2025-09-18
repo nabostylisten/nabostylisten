@@ -11,16 +11,6 @@ This test plan provides step-by-step validation procedures for each script in th
 - All dependencies installed (`bun install`)
 - **Phase 1 User Migration completed successfully** (required for stylist_id references)
 
-## Environment Variables
-
-Set these before running any scripts:
-
-```bash
-export HEAD_LIMIT=10  # Start with small batch for testing
-```
-
----
-
 ## Step 1: Create Parent Categories (`00-create-parent-categories.ts`)
 
 ### Purpose
@@ -785,7 +775,6 @@ After successful Phase 3 completion, proceed to Phase 4 (Booking System Migratio
 
 ### Batch Processing
 
-- Use `HEAD_LIMIT` environment variable for testing
 - Process services in batches of 100-500 for production
 - Monitor memory usage during large service migrations
 

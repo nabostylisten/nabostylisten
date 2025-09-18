@@ -13,16 +13,6 @@ This test plan provides step-by-step validation procedures for each script in th
 - **Supabase local database**: Running with Phase 1 and Phase 4 data
 - **All dependencies installed**: (`bun install`)
 
-## Environment Variables
-
-Set these before running any scripts:
-
-```bash
-export HEAD_LIMIT=10  # Start with small batch for testing
-```
-
----
-
 ## Migration Strategy Overview
 
 Phase 7 implements a **direct field mapping** strategy with **low complexity**:

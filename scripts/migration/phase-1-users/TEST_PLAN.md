@@ -14,10 +14,6 @@ This test plan provides step-by-step validation procedures for each script in th
 
 Set these before running any scripts:
 
-```bash
-export HEAD_LIMIT=10  # Start with small batch for testing
-```
-
 ---
 
 ## Step 1: Extract Users (`01-extract-users.ts`)
@@ -562,7 +558,6 @@ After successful Phase 1 completion, proceed to Phase 2 (Address Migration).
 
 ### Test Configuration
 
-- **Batch Size**: 10 users (HEAD_LIMIT=10)
 - **Source Data**: 278 buyers, 221 stylists
 - **Database**: Clean Supabase local instance
 

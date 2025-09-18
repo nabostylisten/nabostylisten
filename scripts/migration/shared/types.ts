@@ -26,11 +26,13 @@ export interface MySQLBuyer {
 }
 
 export interface MySQLStylist {
+  // Core fields (matching order in CREATE TABLE)
   id: string; // VARCHAR(36)
   name: string;
-  email: string | null;
   phone_number: string | null;
+  email: string | null;
   default_address_id: string | null;
+  profile_picture_uploaded: boolean;
   is_deleted: boolean;
   phone_verified: boolean;
   email_verified: boolean;
@@ -54,7 +56,7 @@ export interface MySQLStylist {
   salon_id: string | null;
   stripe_onboarding_completed: boolean;
   scheduler_resource_id: number | null;
-  profile_picture_uploaded: boolean;
+  is_blocked: boolean;
   has_own_place: boolean;
 }
 

@@ -940,7 +940,6 @@ If any step fails critically:
 
 ### Batch Processing
 
-- Use `HEAD_LIMIT` environment variable for testing
 - Process payments in batches of 500-1000 for production
 - Monitor memory usage during large payment migrations
 - Consider using database transactions for atomicity

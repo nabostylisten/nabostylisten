@@ -13,19 +13,12 @@ This test plan provides step-by-step validation procedures for each script in th
 - **Supabase local database**: Running with Phase 1 and Phase 3 data
 - **All dependencies installed**: (`bun install`)
 
-## Environment Variables
-
-Set these before running any scripts:
-
-```bash
-export HEAD_LIMIT=10  # Start with small batch for testing
-```
-
 ## ✅ PHASE 4 COMPLETED SUCCESSFULLY
 
 **Migration Status**: ✅ COMPLETED
 **Completion Date**: 2025-01-17
 **Total Results**:
+
 - **2,828 bookings** extracted and created
 - **2,625 booking-service relationships** successfully created
 - **857 failed relationships** (due to missing service mappings)
@@ -34,12 +27,14 @@ export HEAD_LIMIT=10  # Start with small batch for testing
 ### Key Issues Resolved
 
 1. **JSON Service Parsing Bug Fixed** 🐛➡️✅
+
    - **Issue**: Service IDs weren't being extracted from booking JSON fields
    - **Root Cause**: MySQL dump contained escaped JSON (`\"` instead of `"`)
    - **Solution**: Fixed `parseBookingServices()` function to handle escaped JSON with `bookingService.replace(/\\"/g, '"')`
    - **Result**: Successfully extracted **3,482 service relationships** from JSON fields
 
 2. **MySQL Parser Column Mismatch Resolved** ⚠️➡️✅
+
    - **Issue**: Parser expected 3 columns for `booking_services_service` table but MySQL had 2
    - **Root Cause**: Interface definition included `created_at` field not present in actual table
    - **Solution**: Updated interface to match actual MySQL table structure (only `booking_id` and `service_id`)
@@ -200,12 +195,14 @@ bun run scripts/migration/phase-4-bookings/01-extract-bookings.ts
 ### ✅ Step 1 Results (Completed Successfully)
 
 **Final Statistics**:
+
 - **4,749 total bookings** found in MySQL
 - **2,828 bookings migrated** (60% success rate)
 - **1,921 bookings skipped** due to missing user mappings
 - **2,736 bookings with JSON services** successfully parsed
 
 **Status Distribution**:
+
 - completed: 1,229
 - expired: 735
 - cancelled: 349
@@ -216,13 +213,13 @@ bun run scripts/migration/phase-4-bookings/01-extract-bookings.ts
 
 ### Common Issues & Solutions (Step 1 - Extract Bookings)
 
-| Issue                           | Solution                                          | Status |
-| ------------------------------- | ------------------------------------------------- | ------ |
-| "No user mapping found"         | Ensure Phase 1 completed successfully             | ✅ Resolved |
-| "Invalid date format"           | Check MySQL datetime format and timezone handling | ✅ Working |
+| Issue                           | Solution                                                  | Status       |
+| ------------------------------- | --------------------------------------------------------- | ------------ |
+| "No user mapping found"         | Ensure Phase 1 completed successfully                     | ✅ Resolved  |
+| "Invalid date format"           | Check MySQL datetime format and timezone handling         | ✅ Working   |
 | **"JSON parsing failed"**       | **Fixed escaped JSON handling in parseBookingServices()** | ✅ **FIXED** |
-| High missing user mapping count | Expected - only users in Phase 1 are available   | ✅ Expected |
-| "Invalid booking status"        | Check for unmapped status values in MySQL data    | ✅ Working |
+| High missing user mapping count | Expected - only users in Phase 1 are available            | ✅ Expected  |
+| "Invalid booking status"        | Check for unmapped status values in MySQL data            | ✅ Working   |
 
 ---
 
@@ -367,6 +364,7 @@ WHERE status = 'cancelled' AND cancelled_at IS NULL;  -- Should be 0
 ### ✅ Step 2 Results (Completed Successfully)
 
 **Final Statistics**:
+
 - **2,828 bookings** successfully created in PostgreSQL
 - **0 failed creations** (100% success rate)
 - All foreign key relationships validated
@@ -374,12 +372,12 @@ WHERE status = 'cancelled' AND cancelled_at IS NULL;  -- Should be 0
 
 ### Common Issues & Solutions (Step 2 - Create Bookings)
 
-| Issue                    | Solution                               | Status |
-| ------------------------ | -------------------------------------- | ------ |
+| Issue                    | Solution                               | Status      |
+| ------------------------ | -------------------------------------- | ----------- |
 | "Foreign key violation"  | Ensure customer/stylist profiles exist | ✅ Resolved |
-| "Check constraint error" | Verify price/duration validation       | ✅ Working |
-| "Invalid timestamp"      | Check date format conversion           | ✅ Working |
-| "Duplicate key error"    | Check for re-runs or UUID conflicts    | ✅ Working |
+| "Check constraint error" | Verify price/duration validation       | ✅ Working  |
+| "Invalid timestamp"      | Check date format conversion           | ✅ Working  |
+| "Duplicate key error"    | Check for re-runs or UUID conflicts    | ✅ Working  |
 
 ---
 
@@ -647,7 +645,6 @@ If any step fails critically:
 
 ### Batch Processing
 
-- Use `HEAD_LIMIT` environment variable for testing
 - Process bookings in batches of 100-500 for production
 - Monitor memory usage during large booking migrations
 - Consider pagination for very large datasets

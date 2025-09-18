@@ -1314,7 +1314,10 @@ CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON public.payments(booking_id
 CREATE INDEX IF NOT EXISTS idx_payments_status ON public.payments(status);
 
 -- Function to get all addresses with user data for map display
-CREATE OR REPLACE FUNCTION public.get_map_addresses()
+CREATE OR REPLACE FUNCTION public.get_map_addresses(
+  limit_param integer DEFAULT 1000,
+  offset_param integer DEFAULT 0
+)
 RETURNS TABLE (
   id uuid,
   user_id uuid,
@@ -1350,7 +1353,9 @@ AS $$
   FROM public.addresses a
   INNER JOIN public.profiles p ON a.user_id = p.id
   WHERE a.location IS NOT NULL
-  ORDER BY p.role, a.city;
+  ORDER BY p.role, a.city
+  LIMIT limit_param
+  OFFSET offset_param;
 $$;
 
 -- ================== DEFAULT DATA ==================

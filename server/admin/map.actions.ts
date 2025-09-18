@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { requireAdmin } from "./middleware";
+import { fetchAllRows, fetchAllRowsFromRPC } from "@/lib/supabase/utils";
 
 export interface MapAddress {
   id: string;
@@ -24,19 +25,17 @@ export async function getAllAddressesForMap() {
     await requireAdmin();
     const supabase = await createClient();
 
-    // Query to get all addresses with their associated user data
-    // Using PostGIS functions to extract lat/lng from geography column
-    const { data: addresses, error } = await supabase.rpc('get_map_addresses');
+    // Use the RPC function with pagination to get all addresses
+    const result = await fetchAllRowsFromRPC<MapAddress>(
+      supabase,
+      'get_map_addresses',
+      {}
+    );
 
-    if (error) {
-      console.error("Error fetching addresses for map:", error);
-      return { data: null, error: error.message };
-    }
-
-    return { data: addresses || [], error: null };
+    return result;
   } catch (error) {
     console.error("Error in getAllAddressesForMap:", error);
-    return { data: null, error: "Failed to fetch addresses" };
+    return { data: [], error: "Failed to fetch addresses" };
   }
 }
 
@@ -45,21 +44,24 @@ export async function getUserCountsByRole() {
     await requireAdmin();
     const supabase = await createClient();
 
-    // Query to get user role counts from addresses with coordinates
-    const { data: statsData, error: statsError } = await supabase
-      .from('addresses')
-      .select(`
-        profiles!inner(role)
-      `)
-      .not('location', 'is', null);
+    // Use fetchAllRows to get all addresses with coordinates (not limited to 1000)
+    const result = await fetchAllRows<{ profiles: { role: string } }>((offset, limit) =>
+      supabase
+        .from('addresses')
+        .select(`
+          profiles!inner(role)
+        `)
+        .not('location', 'is', null)
+        .range(offset, offset + limit - 1)
+    );
 
-    if (statsError) {
-      console.error("Error fetching user stats:", statsError);
-      return { data: null, error: statsError.message };
+    if (result.error) {
+      console.error("Error fetching user stats:", result.error);
+      return { data: null, error: result.error };
     }
 
     // Calculate statistics from the database query
-    const stats = statsData.reduce(
+    const stats = result.data.reduce(
       (acc, item) => {
         const role = item.profiles.role;
         acc.total++;

@@ -11,105 +11,7 @@ This test plan provides step-by-step validation procedures for each script in th
 - All dependencies installed (`bun install`)
 - **Phase 1 User Migration completed successfully** (required for stylist_id references)
 
-## Step 1: Create Parent Categories (`00-create-parent-categories.ts`)
-
-### Purpose
-
-Creates the top-level service categories (Hair, Makeup, Nails, Lashes, Brows) in the PostgreSQL service_categories table with parent_category_id = NULL.
-
-### Input Validation
-
-1. **Verify database connection:**
-
-   ```bash
-   bun ensure:nabostylisten-db  # Ensure local database is running
-   ```
-
-2. **Check existing service_categories table:**
-
-   ```sql
-   SELECT COUNT(*) FROM service_categories;  # Should be 0 initially
-   ```
-
-### Expected Parent Categories
-
-The script should create these hard-coded parent categories:
-
-```json
-[
-  {
-    "id": "1f81ebf7-4f92-4829-b8a7-374b4f460c10",
-    "name": "Makeup",
-    "description": ""
-  },
-  {
-    "id": "3df149ce-600c-42d6-9c1d-a7052863e598",
-    "name": "Lashes",
-    "description": ""
-  },
-  {
-    "id": "61134b7c-d0ec-4bf0-b07c-dbed6626a19a",
-    "name": "Brows",
-    "description": ""
-  },
-  {
-    "id": "8b22a2a4-4976-486b-8352-db92daf894c7",
-    "name": "Nails",
-    "description": ""
-  },
-  {
-    "id": "939ba099-f641-42a8-9dc4-1a61081993a5",
-    "name": "Hair",
-    "description": ""
-  }
-]
-```
-
-### Run the Script
-
-```bash
-bun run scripts/migration/phase-3-services/00-create-parent-categories.ts
-```
-
-### Database Validation
-
-```sql
--- Check parent categories created
-SELECT
-  id,
-  name,
-  description,
-  parent_category_id,
-  created_at,
-  updated_at
-FROM service_categories
-WHERE parent_category_id IS NULL
-ORDER BY name;
-
--- Should return exactly 5 records
--- All should have parent_category_id = NULL
--- Names should be: Brows, Hair, Lashes, Makeup, Nails
-```
-
-### Success Criteria
-
-- [ ] Exactly 5 parent categories created
-- [ ] All have `parent_category_id = NULL`
-- [ ] UUIDs match expected hard-coded values
-- [ ] Names are: Brows, Hair, Lashes, Makeup, Nails
-- [ ] No duplicate entries
-
-### Common Issues & Solutions
-
-| Issue                        | Solution                                                      |
-| ---------------------------- | ------------------------------------------------------------- |
-| "Duplicate key error"        | Check if categories already exist; may need to reset database |
-| "Database connection failed" | Ensure Supabase is running: `bun supabase:start`              |
-| "UUID format error"          | Verify hard-coded UUIDs are valid PostgreSQL UUIDs            |
-
----
-
-## Step 2: Extract Categories (`01-extract-categories.ts`)
+## Step 1: Extract Categories (`01-extract-categories.ts`)
 
 ### Purpose
 
@@ -237,16 +139,15 @@ bun run scripts/migration/phase-3-services/01-extract-categories.ts
 
 ---
 
-## Step 3: Create Categories (`02-create-categories.ts`)
+## Step 2: Create Categories (`02-create-categories.ts`)
 
 ### Purpose
 
-Creates service category records in PostgreSQL based on extracted MySQL categories and subcategories, establishing the hierarchical relationship.
+Creates service category records in PostgreSQL based on extracted MySQL categories and subcategories, establishing the hierarchical relationship. This step also creates the hard-coded parent categories (Hair, Makeup, Nails, Lashes, Brows) first.
 
 ### Input Requirements
 
-- `temp/extracted-categories.json` (from Step 2)
-- Parent categories in database (from Step 1)
+- `temp/extracted-categories.json` (from Step 1)
 
 ### Run the Script
 
@@ -337,7 +238,7 @@ FROM service_categories;
 
 ---
 
-## Step 4: Extract Services (`03-extract-services.ts`)
+## Step 3: Extract Services (`03-extract-services.ts`)
 
 ### Purpose
 
@@ -469,7 +370,7 @@ bun run scripts/migration/phase-3-services/03-extract-services.ts
 
 ---
 
-## Step 5: Create Services (`04-create-services.ts`)
+## Step 4: Create Services (`04-create-services.ts`)
 
 ### Purpose
 
@@ -574,7 +475,7 @@ SELECT COUNT(*) FROM services WHERE duration_minutes <= 0;  -- Should be 0
 
 ---
 
-## Step 6: Create Service Categories Junction (`05-create-service-categories.ts`)
+## Step 5: Create Service Categories Junction (`05-create-service-categories.ts`)
 
 ### Purpose
 
@@ -582,9 +483,9 @@ Creates the many-to-many relationship between services and categories in the ser
 
 ### Input Requirements
 
-- `temp/services-created.json` (from Step 5)
-- `temp/extracted-services.json` (from Step 4)
-- Categories in database (from Steps 1-3)
+- `temp/services-created.json` (from Step 4)
+- `temp/extracted-services.json` (from Step 3)
+- Categories in database (from Steps 1-2)
 
 ### Run the Script
 
@@ -736,7 +637,7 @@ If any step fails critically:
 
 Phase 3 is considered successful when:
 
-- ✅ All 6 steps complete without critical errors
+- ✅ All 5 steps complete without critical errors
 - ✅ Error rate is below 5% of total records
 - ✅ All database integrity checks pass
 - ✅ Service catalog is searchable and filterable

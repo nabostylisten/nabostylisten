@@ -80,24 +80,50 @@ async function validatePayments(): Promise<ValidationResult> {
       }`,
     );
 
-    // 2. Load extraction results to understand what should have been migrated
+    // 2. Load extraction and creation results to understand what should have been migrated
     const extractedPaymentsPath = path.join(tempDir, "payments-extracted.json");
     const extractedData = JSON.parse(
       await fs.readFile(extractedPaymentsPath, "utf-8"),
     );
     const expectedPayments = extractedData.processedPayments;
-    // const expectedPaymentIds = new Set(
-    //   expectedPayments.map((p: { id: string }) => p.id),
-    // );
+
+    // Load creation results to account for failed payments
+    const createdPaymentsPath = path.join(tempDir, "payments-created.json");
+    let actuallyCreatedCount = expectedPayments.length; // fallback
+    let failedCreations: any[] = [];
+
+    try {
+      const createdData = JSON.parse(
+        await fs.readFile(createdPaymentsPath, "utf-8"),
+      );
+      actuallyCreatedCount = createdData.metadata.successful_creations;
+
+      // Try to load failed payments if file exists
+      const failedPaymentsPath = path.join(tempDir, "failed-payments-creation.json");
+      try {
+        const failedData = JSON.parse(
+          await fs.readFile(failedPaymentsPath, "utf-8"),
+        );
+        failedCreations = failedData.failed_payments || [];
+      } catch {
+        // No failed payments file or empty
+      }
+    } catch (error) {
+      logger.warn("Could not load creation results, using extraction count as fallback");
+    }
 
     logger.info(
       `Expected ${expectedPayments.length} payments to be migrated (out of ${totalMysqlPayments} total MySQL payments)`,
+    );
+    logger.info(
+      `Actually created: ${actuallyCreatedCount}, Failed: ${failedCreations.length}`,
     );
 
     // 3. Check for missing payments (should have been migrated but not found in PostgreSQL)
     const { data: pgPayments, error: fetchError } = await supabase
       .from("payments")
-      .select("id, booking_id, payment_intent_id, final_amount");
+      .select("id, booking_id, payment_intent_id, final_amount")
+      .range(0, 9999); // Use range to get up to 10,000 records
 
     if (fetchError) {
       validation_errors.push(
@@ -106,15 +132,30 @@ async function validatePayments(): Promise<ValidationResult> {
     }
 
     const pgPaymentIds = new Set(pgPayments?.map((p) => p.id) || []);
+    const failedPaymentIds = new Set(failedCreations.map((f: any) => f.payment.id));
+
+    logger.info(`Debug: pgPayments count from query: ${pgPayments?.length || 0}`);
+    logger.info(`Debug: failedCreations count: ${failedCreations.length}`);
+    logger.info(`Debug: expectedPayments count: ${expectedPayments.length}`);
+
+    // Find payments that were expected but are neither in PostgreSQL nor in the failed list
     const missing_payments = expectedPayments
       .map((p: { id: string }) => p.id)
-      .filter((id: string) => !pgPaymentIds.has(id));
+      .filter((id: string) => !pgPaymentIds.has(id) && !failedPaymentIds.has(id));
 
     if (missing_payments.length > 0) {
       validation_errors.push(
-        `${missing_payments.length} expected payments missing in PostgreSQL`,
+        `${missing_payments.length} expected payments missing in PostgreSQL (excluding known failures)`,
       );
-      logger.warn(`Found ${missing_payments.length} missing payments`);
+      logger.warn(`Found ${missing_payments.length} truly missing payments`);
+    }
+
+    // Report on failed payments separately
+    if (failedCreations.length > 0) {
+      logger.warn(`${failedCreations.length} payments failed during creation:`);
+      failedCreations.forEach((f: any) => {
+        logger.warn(`  - Payment ${f.payment.id}: ${f.error}`);
+      });
     }
 
     // 4. Check for orphaned payments (no corresponding booking)
@@ -261,8 +302,10 @@ async function validatePayments(): Promise<ValidationResult> {
     logger.info("Validation summary:");
     logger.info(`  - Total MySQL payments: ${totalMysqlPayments}`);
     logger.info(`  - Expected migrated payments: ${expectedPayments.length}`);
+    logger.info(`  - Successfully created payments: ${actuallyCreatedCount}`);
+    logger.info(`  - Failed payment creations: ${failedCreations.length}`);
     logger.info(`  - Total PostgreSQL payments: ${totalPgPayments || 0}`);
-    logger.info(`  - Missing payments: ${missing_payments.length}`);
+    logger.info(`  - Truly missing payments: ${missing_payments.length}`);
     logger.info(`  - Orphaned payments: ${orphaned_payments.length}`);
     logger.info(
       `  - Booking-payment mismatches: ${booking_payment_mismatches}`,

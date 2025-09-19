@@ -639,19 +639,17 @@ export function BookingDetailsContent({
                       <div>
                         <h4 className="text-sm font-medium mb-2">Tjenester:</h4>
                         <div className="space-y-1">
-                          {booking.main_booking.booking_services.map(
-                            (bs: any) => (
-                              <div
-                                key={bs.service.id}
-                                className="flex justify-between text-sm"
-                              >
-                                <span>{bs.service.title}</span>
-                                <span className="text-muted-foreground">
-                                  {bs.service.price} {bs.service.currency}
-                                </span>
-                              </div>
-                            )
-                          )}
+                          {booking.main_booking.booking_services.map((bs) => (
+                            <div
+                              key={bs.service.id}
+                              className="flex justify-between text-sm"
+                            >
+                              <span>{bs.service.title}</span>
+                              <span className="text-muted-foreground">
+                                {bs.service.price} {bs.service.currency}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     )}

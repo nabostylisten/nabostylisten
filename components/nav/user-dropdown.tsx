@@ -14,10 +14,11 @@ import { isAdmin } from "@/lib/permissions";
 import { LogOut } from "lucide-react";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
+import { DatabaseTables } from "@/types";
 
 interface UserDropdownProps {
   user: User;
-  profile: any;
+  profile: DatabaseTables["profiles"]["Row"];
   onSignOut: () => void;
 }
 
@@ -49,10 +50,7 @@ export function UserDropdown({ user, profile, onSignOut }: UserDropdownProps) {
               const Icon = item.icon;
               return (
                 <DropdownMenuItem key={item.href} asChild>
-                  <Link
-                    href={item.href}
-                    className="flex items-center gap-2"
-                  >
+                  <Link href={item.href} className="flex items-center gap-2">
                     <Icon className="w-4 h-4" />
                     {item.title}
                   </Link>

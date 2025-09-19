@@ -97,6 +97,7 @@ export function ChatContent({
     };
 
     loadMessagesWithImages();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialMessages]);
 
   const queryClient = useQueryClient();

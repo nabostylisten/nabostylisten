@@ -7,17 +7,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
 import {
-  Bell,
-  Mail,
   MessageSquare,
   Calendar,
-  CreditCard,
-  Shield,
   Settings,
-  Smartphone,
-  Volume2,
   Users,
-  Star,
   FileCheck,
   Megaphone,
 } from "lucide-react";
@@ -25,7 +18,6 @@ import {
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -142,7 +134,7 @@ export function PreferencesForm({ userId, userRole }: PreferencesFormProps) {
       queryClient.invalidateQueries({ queryKey: ["preferences", userId] });
       toast.success("Preferanser oppdatert!");
     },
-    onError: (error: any) => {
+    onError: (error) => {
       toast.error("Feil ved oppdatering: " + (error?.message || "Ukjent feil"));
     },
   });

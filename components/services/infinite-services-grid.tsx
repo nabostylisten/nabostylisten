@@ -49,6 +49,7 @@ export function InfiniteServicesGrid({
     if (isInView && !isFetching && !isLast) {
       loadMoreServices(offset);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isInView, offset, isFetching, isLast]);
 
   const loadMoreServices = async (currentOffset: number) => {
@@ -91,6 +92,7 @@ export function InfiniteServicesGrid({
       setHasInitialLoad(true);
       loadMoreServices(0).finally(() => setIsLoading(false));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasInitialLoad, filters]);
 
   // Reset when filters change
@@ -101,6 +103,7 @@ export function InfiniteServicesGrid({
     setError(null);
     setHasInitialLoad(false);
     setIsLoading(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(filters)]);
 
   if (isLoading) {

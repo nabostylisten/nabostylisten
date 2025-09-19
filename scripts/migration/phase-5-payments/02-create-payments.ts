@@ -184,7 +184,11 @@ async function createPayments(): Promise<CreationResult> {
           logger.error(`Failed to create payment ${payment.id}:`, error);
           failed_payments.push({
             payment,
-            error: error instanceof Error ? error.message : String(error),
+            error: error instanceof Error
+              ? error.message
+              : typeof error === 'object' && error !== null
+                ? (error.message || error.details || JSON.stringify(error))
+                : String(error),
           });
         }
       });

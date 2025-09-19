@@ -58,7 +58,7 @@ export function StylistApplicationDataTable() {
     select: (data) => data.data,
   });
 
-  const data = applicationsData || [];
+  const data = React.useMemo(() => applicationsData || [], [applicationsData]);
 
   // Filter data based on status tab
   const filteredData = React.useMemo(() => {

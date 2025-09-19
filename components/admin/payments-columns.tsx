@@ -322,10 +322,12 @@ export const columns: ColumnDef<PaymentWithDetails>[] = [
     id: "actions",
     cell: ({ row }) => {
       const payment = row.original;
+      // eslint-disable-next-line react-hooks/rules-of-hooks
       const [refundDialogOpen, setRefundDialogOpen] = React.useState(false);
 
       // Calculate if refund is possible
-      const remainingRefundable = payment.final_amount - (payment.refunded_amount || 0);
+      const remainingRefundable =
+        payment.final_amount - (payment.refunded_amount || 0);
       const canRefund = remainingRefundable > 0;
 
       return (

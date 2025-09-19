@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import {
-  ColumnDef,
   VisibilityState,
   flexRender,
   getCoreRowModel,
@@ -29,15 +28,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Settings2,
-  Download,
-  RefreshCcw,
-  Plus,
-  ToggleLeft,
-  ToggleRight,
-  Trash2,
-} from "lucide-react";
+import { Settings2, Download, RefreshCcw, Plus } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -433,10 +424,9 @@ export function DiscountsDataTable({
           <div className="overflow-hidden rounded-md border">
             {isLoading ? (
               <DataTableSkeleton
-                columns={Array.from(
-                  { length: 8 },
-                  (_, i) => ({ id: i.toString() }) as any
-                )}
+                columns={Array.from({ length: 8 }, (_, i) => ({
+                  id: i.toString(),
+                }))}
                 rows={6}
               />
             ) : (

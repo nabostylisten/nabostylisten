@@ -67,29 +67,6 @@ export function ApplyDiscountForm({
   const [appliedDiscount, setAppliedDiscount] =
     useState<AppliedDiscount | null>(null);
 
-  // Validate orderAmountNOK
-  if (!orderAmountNOK || isNaN(orderAmountNOK) || orderAmountNOK <= 0) {
-    console.error(
-      "Invalid orderAmountNOK passed to ApplyDiscountForm:",
-      orderAmountNOK
-    );
-    return (
-      <Card className={className}>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Percent className="w-5 h-5" />
-            Rabattkode
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground">
-            Rabatt- og partnerkoder er ikke tilgjengelige for øyeblikket.
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
-
   const form = useForm<ApplyDiscountFormData>({
     resolver: zodResolver(applyDiscountSchema),
     defaultValues: {
@@ -177,6 +154,29 @@ export function ApplyDiscountForm({
       }) + "%"
     );
   };
+
+  // Validate orderAmountNOK
+  if (!orderAmountNOK || isNaN(orderAmountNOK) || orderAmountNOK <= 0) {
+    console.error(
+      "Invalid orderAmountNOK passed to ApplyDiscountForm:",
+      orderAmountNOK
+    );
+    return (
+      <Card className={className}>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Percent className="w-5 h-5" />
+            Rabattkode
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-muted-foreground">
+            Rabatt- og partnerkoder er ikke tilgjengelige for øyeblikket.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className={className}>

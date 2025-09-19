@@ -96,7 +96,7 @@ export function AffiliateMetricsChart({
         color: "amber",
       },
     ],
-    [clickCount, conversionCount, conversionRate, totalEarnings, previousPeriod]
+    [clickCount, conversionCount, conversionRate, totalEarnings, previousPeriod, previousConversionRate]
   );
 
   const formatValue = (value: number, format?: string) => {

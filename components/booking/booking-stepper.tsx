@@ -125,7 +125,7 @@ export function BookingStepper({
 
   const stylistProfile = stylistData?.data?.profile;
   const stylistPrimaryAddress = stylistProfile?.addresses?.find(
-    (addr: any) => addr.is_primary
+    (addr) => addr.is_primary
   );
 
   // Create stepper dynamically based on trial session availability
@@ -286,9 +286,11 @@ export function BookingStepper({
                         "message-discount",
                         "payment",
                       ] as const);
-                  const currentIndex = steps.indexOf(currentStep as any);
+                  const currentIndex = steps.findIndex(
+                    (step) => step === currentStep
+                  );
                   if (currentIndex > 0) {
-                    setCurrentStep(steps[currentIndex - 1] as any);
+                    setCurrentStep(steps[currentIndex - 1]);
                   }
                 }}
                 disabled={methods.isFirst || isProcessingBooking}
@@ -316,9 +318,11 @@ export function BookingStepper({
                           "message-discount",
                           "payment",
                         ] as const);
-                    const currentIndex = steps.indexOf(currentStep as any);
-                    if (currentIndex < steps.length - 1) {
-                      setCurrentStep(steps[currentIndex + 1] as any);
+                    const currentIndex = steps.findIndex(
+                      (step) => step === currentStep
+                    );
+                    if (currentIndex >= 0 && currentIndex < steps.length - 1) {
+                      setCurrentStep(steps[currentIndex + 1]);
                     }
                   }
                 }}

@@ -240,11 +240,12 @@ export function AffiliateCodeCard({
               <span>Last ned</span>
             </Button>
           </div>
-          
+
           <QRCodeInfo />
-          
+
           <div className="flex justify-center p-4 bg-muted/30 rounded-lg">
             {qrCodeDataUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={qrCodeDataUrl}
                 alt="QR-kode for partnerlenke"

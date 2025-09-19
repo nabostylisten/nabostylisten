@@ -316,7 +316,6 @@ export function DiscountForm({
     }
   };
 
-
   const mutation = useMutation({
     mutationFn: async (data: DiscountFormData) => {
       const discountData = {
@@ -352,7 +351,7 @@ export function DiscountForm({
         );
       } else {
         return await createDiscountWithRestrictions(
-          discountData as any,
+          discountData,
           restrictedUserIds
         );
       }
@@ -887,8 +886,8 @@ export function DiscountForm({
                 </FormControl>
                 <FormDescription>
                   Hvis ingen brukere er valgt, kan alle bruke rabattkoden. Hvis
-                  brukere er valgt, kan kun disse brukerne bruke koden. 
-                  Kryss av/av for å legge til eller fjerne brukere.
+                  brukere er valgt, kan kun disse brukerne bruke koden. Kryss
+                  av/av for å legge til eller fjerne brukere.
                 </FormDescription>
                 <FormMessage />
               </FormItem>

@@ -14,7 +14,41 @@ import { useTheme } from "next-themes";
 import colors from "tailwindcss/colors";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { CircleLayer, MapboxEvent, SymbolLayer } from "mapbox-gl";
-import { MapMouseEvent } from "mapbox-gl";
+
+type ClusterClickEvent = {
+  features: {
+    properties: {
+      cluster_id: string;
+    };
+    geometry: {
+      coordinates: [number, number];
+    };
+  }[];
+};
+
+type HoveredFeatureProperties = {
+  id: string;
+  user_role: string;
+  user_name: string;
+  user_email: string;
+  street_address: string;
+  city: string;
+  postal_code: string;
+  nickname: string;
+  is_primary: boolean;
+};
+
+type PointClickEvent = {
+  features: {
+    properties: HoveredFeatureProperties;
+    geometry: {
+      coordinates: [number, number];
+    };
+    layer: {
+      id: string;
+    };
+  }[];
+};
 
 // Default map configuration
 const DEFAULT_ZOOM = 6;
@@ -109,18 +143,7 @@ export function AdminMapView() {
   } = useAdminMap();
 
   const [hoveredFeature, setHoveredFeature] = useState<{
-    properties: {
-      id: string;
-      user_id: string;
-      user_role: string;
-      user_name: string;
-      user_email: string;
-      street_address: string;
-      city: string;
-      postal_code: string;
-      nickname: string;
-      is_primary: boolean;
-    };
+    properties: HoveredFeatureProperties;
     coordinates: [number, number];
   } | null>(null);
 
@@ -140,47 +163,71 @@ export function AdminMapView() {
 
   // Handle cluster clicks (zoom to cluster with smooth animation)
   const onClusterClick = useCallback(
-    (event: any) => {
+    (event: ClusterClickEvent) => {
       const feature = event.features[0];
       const clusterId = feature.properties.cluster_id;
 
       if (mapRef) {
-        const source = mapRef.getSource("addresses") as any;
-        source.getClusterExpansionZoom(clusterId, (err: any, zoom: number) => {
-          if (err) return;
+        const source = mapRef.getSource("addresses") as unknown as
+          | {
+              getClusterExpansionZoom: (
+                clusterId: string,
+                callback: (err: unknown, zoom: number) => void
+              ) => void;
+            }
+          | undefined;
 
-          // Use flyTo for smooth zoom animation
-          mapRef.flyTo({
-            center: [
-              feature.geometry.coordinates[0],
-              feature.geometry.coordinates[1],
-            ],
-            zoom: zoom || DEFAULT_ZOOM + 4,
-            speed: 2,
-            curve: 1.42,
-            easing: (t) => t,
-          });
-        });
+        source?.getClusterExpansionZoom(
+          clusterId,
+          (err: unknown, zoom: number) => {
+            if (err) return;
+
+            // Use flyTo for smooth zoom animation
+            mapRef.flyTo({
+              center: [
+                feature.geometry.coordinates[0],
+                feature.geometry.coordinates[1],
+              ],
+              zoom: zoom || DEFAULT_ZOOM + 4,
+              speed: 2,
+              curve: 1.42,
+              easing: (t) => t,
+            });
+          }
+        );
       }
     },
     [mapRef]
   );
 
   // Handle individual point clicks (show card)
-  const onPointClick = useCallback((event: any) => {
-    const feature = event.features?.find(
-      (f: any) => f.layer?.id === "unclustered-point"
-    );
-    if (feature) {
-      setHoveredFeature({
-        properties: feature.properties,
-        coordinates: [
-          feature.geometry.coordinates[0],
-          feature.geometry.coordinates[1],
-        ],
-      });
-    }
-  }, []);
+  const onPointClick = useCallback(
+    (event: {
+      features: {
+        properties: HoveredFeatureProperties;
+        geometry: {
+          coordinates: [number, number];
+        };
+        layer: {
+          id: string;
+        };
+      }[];
+    }) => {
+      const feature = event.features?.find(
+        (f) => f.layer?.id === "unclustered-point"
+      );
+      if (feature) {
+        setHoveredFeature({
+          properties: feature.properties,
+          coordinates: [
+            feature.geometry.coordinates[0],
+            feature.geometry.coordinates[1],
+          ],
+        });
+      }
+    },
+    []
+  );
 
   const closeCard = useCallback(() => {
     setHoveredFeature(null);
@@ -372,9 +419,9 @@ export function AdminMapView() {
               if (features && features.length > 0) {
                 const feature = features[0];
                 if (feature.layer?.id === "clusters") {
-                  onClusterClick(event);
+                  onClusterClick(event as unknown as ClusterClickEvent);
                 } else if (feature.layer?.id === "unclustered-point") {
-                  onPointClick(event);
+                  onPointClick(event as unknown as PointClickEvent);
                 }
               }
             }}

@@ -39,7 +39,6 @@ const stripePromise = loadStripe(
 );
 
 function PaymentForm({
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   clientSecret: _clientSecret,
   bookingId,
 }: {

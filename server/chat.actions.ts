@@ -156,6 +156,24 @@ export async function getChatByParticipants(
   return { error: null, data: chat };
 }
 
+export async function createChatByParticipants(
+  customerId: string,
+  stylistId: string,
+) {
+  const supabase = await createClient();
+  const { data: chat, error } = await supabase
+    .from("chats")
+    .insert({ customer_id: customerId, stylist_id: stylistId })
+    .select("id, customer_id, stylist_id, created_at")
+    .single();
+
+  if (error) {
+    return { error: error.message, data: null };
+  }
+
+  return { error: null, data: chat };
+}
+
 export async function getChatMessages(chatId: string) {
   const supabase = await createClient();
 

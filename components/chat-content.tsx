@@ -1,38 +1,27 @@
 "use client";
 
 import { RealtimeChat } from "@/components/realtime-chat";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { ArrowLeft, Calendar, MessageCircle, User } from "lucide-react";
+import { Card, CardHeader } from "@/components/ui/card";
+import { ArrowLeft, MessageCircle, User } from "lucide-react";
 import Link from "next/link";
-import { BookingActionsDropdown } from "@/components/my-bookings/booking-actions-dropdown";
 import { useCallback, useEffect, useState, useRef } from "react";
 import {
   createChatMessage,
   markChatMessagesAsRead,
   getChatMessageImages,
-  getPreviousBookingsBetweenUsers,
 } from "@/server/chat.actions";
 import { toast } from "sonner";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { ChatMessage } from "@/hooks/use-realtime-chat";
-import { PreviousBookingsAlert } from "@/components/chat/previous-bookings-alert";
-import { Database } from "@/types/database.types";
 
-export type BookingStatus =
-  Database["public"]["Tables"]["bookings"]["Row"]["status"];
-
-interface BookingChatContentProps {
-  bookingId: string;
+interface ChatContentProps {
   chatId: string;
+  customerId: string;
+  stylistId: string;
   currentUserId: string;
   currentUserName: string;
   partnerName: string;
-  serviceTitles: string[];
-  bookingDate: string;
-  bookingStatus: BookingStatus;
-  bookingTotalPrice?: number;
   initialMessages: Array<{
     id: string;
     content: string;
@@ -43,42 +32,18 @@ interface BookingChatContentProps {
     };
   }>;
   messagesError?: string | null;
-  // New props for previous bookings functionality
-  stylistId?: string;
-  customerId?: string;
-  isCurrentUserStylist?: boolean;
 }
 
-export function BookingChatContent({
-  bookingId,
+export function ChatContent({
   chatId,
   currentUserId,
   currentUserName,
   partnerName,
-  serviceTitles,
-  bookingDate,
-  bookingStatus,
-  bookingTotalPrice = 0,
   initialMessages,
   messagesError,
-  stylistId,
-  customerId,
-  isCurrentUserStylist = false,
-}: BookingChatContentProps) {
+}: ChatContentProps) {
   const [convertedMessages, setConvertedMessages] = useState<ChatMessage[]>([]);
   const processedMessageIds = useRef<Set<string>>(new Set());
-
-  // Check for previous bookings between stylist and customer (only for stylists)
-  const { data: previousBookingsResponse } = useQuery({
-    queryKey: ["previous-bookings-check", stylistId, customerId, bookingId],
-    queryFn: () =>
-      stylistId && customerId
-        ? getPreviousBookingsBetweenUsers(stylistId, customerId, bookingId)
-        : Promise.resolve({ data: [], error: null }),
-    enabled: isCurrentUserStylist && !!stylistId && !!customerId,
-  });
-
-  const hasPreviousBookings = (previousBookingsResponse?.data?.length || 0) > 0;
 
   // Load images for messages and convert to ChatMessage format
   useEffect(() => {
@@ -110,9 +75,7 @@ export function BookingChatContent({
             content: msg.content.substring(0, 50) + "...",
           });
 
-          // IMPORTANT: Use the same username format for both loaded and new messages
-          // If the message is from current user, use currentUserName ("Kunde" or "Stylist")
-          // Otherwise use the sender's full name
+          // Use consistent username format for both loaded and new messages
           const userName = isOwnMessage
             ? currentUserName
             : msg.sender.full_name || "Ukjent bruker";
@@ -123,7 +86,7 @@ export function BookingChatContent({
             createdAt: msg.created_at,
             user: {
               name: userName,
-              senderId: msg.sender.id, // Add sender ID for proper comparison
+              senderId: msg.sender.id,
             },
             images: images.length > 0 ? images : undefined,
           };
@@ -135,36 +98,6 @@ export function BookingChatContent({
 
     loadMessagesWithImages();
   }, [initialMessages]);
-
-  const getStatusVariant = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "default";
-      case "pending":
-        return "secondary";
-      case "completed":
-        return "outline";
-      case "cancelled":
-        return "destructive";
-      default:
-        return "secondary";
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return "Bekreftet";
-      case "pending":
-        return "Avventer";
-      case "completed":
-        return "Fullført";
-      case "cancelled":
-        return "Avlyst";
-      default:
-        return status;
-    }
-  };
 
   const queryClient = useQueryClient();
 
@@ -273,17 +206,17 @@ export function BookingChatContent({
       <div className="flex items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
         <Button variant="ghost" size="sm" asChild className="shrink-0">
           <Link
-            href={`/bookinger/${bookingId}`}
+            href={`/profiler/${currentUserId}/chat`}
             className="flex items-center gap-1 sm:gap-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span className="hidden sm:inline">Tilbake til booking</span>
+            <span className="hidden sm:inline">Tilbake til samtaler</span>
             <span className="sm:hidden">Tilbake</span>
           </Link>
         </Button>
       </div>
 
-      {/* Booking Info Card */}
+      {/* Chat Info Card */}
       <Card className="mb-4 sm:mb-6">
         <CardHeader className="pb-3 px-3 sm:px-6">
           <div className="flex items-center gap-2 sm:gap-3">
@@ -297,53 +230,6 @@ export function BookingChatContent({
             </div>
           </div>
         </CardHeader>
-        <CardContent className="pt-0 px-3 sm:px-6">
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3 sm:gap-4 text-sm">
-            <div className="flex items-center gap-1 flex-wrap">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
-              <span className="break-words">
-                {new Date(bookingDate).toLocaleDateString("nb-NO", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </div>
-
-            {serviceTitles.length > 0 && (
-              <div className="text-muted-foreground break-words">
-                {serviceTitles.join(", ")}
-              </div>
-            )}
-
-            <div className="flex items-center justify-between sm:justify-start gap-3 sm:gap-4">
-              <Badge variant={getStatusVariant(bookingStatus)}>
-                {getStatusLabel(bookingStatus)}
-              </Badge>
-
-              {/* Actions dropdown for both customers and stylists */}
-              <BookingActionsDropdown
-                booking={{
-                  id: bookingId,
-                  customer_id: customerId || "",
-                  stylist_id: stylistId || "",
-                  start_time: bookingDate,
-                  end_time: bookingDate,
-                  total_price: bookingTotalPrice,
-                  status: bookingStatus,
-                }}
-                currentUserId={currentUserId}
-                userRole={isCurrentUserStylist ? "stylist" : "customer"}
-                serviceName={serviceTitles[0] || "Booking"}
-                customerName={
-                  isCurrentUserStylist ? partnerName : currentUserName
-                }
-              />
-            </div>
-          </div>
-        </CardContent>
       </Card>
 
       {/* Error handling */}
@@ -353,17 +239,6 @@ export function BookingChatContent({
             Feil ved lasting av meldinger: {messagesError}
           </p>
         </div>
-      )}
-
-      {/* Previous Bookings Alert (only for stylists) */}
-      {isCurrentUserStylist && stylistId && customerId && (
-        <PreviousBookingsAlert
-          stylistId={stylistId}
-          customerId={customerId}
-          customerName={partnerName}
-          currentBookingId={bookingId}
-          hasPreviousBookings={hasPreviousBookings}
-        />
       )}
 
       {/* Chat Container */}

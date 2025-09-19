@@ -3,6 +3,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getBookingDetails } from "@/server/booking/crud.actions";
 import {
+  createChatByParticipants,
+  getChatByParticipants,
+} from "@/server/chat.actions";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -56,6 +60,8 @@ import { ReviewDialog } from "@/components/reviews/review-dialog";
 import { getReviewByBookingId } from "@/server/review.actions";
 import { Database } from "@/types/database.types";
 import { BlurFade } from "@/components/magicui/blur-fade";
+import { Spinner } from "@/components/ui/kibo-ui/spinner";
+import { useMutation } from "@tanstack/react-query";
 import {
   getPlatformFromUrl,
   getSocialMediaDisplayName,
@@ -139,6 +145,32 @@ export function BookingDetailsContent({
     queryFn: () => getReviewByBookingId(bookingId),
     enabled:
       bookingResponse?.data?.status === "completed" && userRole === "customer",
+  });
+
+  // Get chat for this booking's participants
+  const { data: chatResponse } = useQuery({
+    queryKey: [
+      "chat-by-participants",
+      bookingResponse?.data?.customer_id,
+      bookingResponse?.data?.stylist_id,
+    ],
+    queryFn: () =>
+      getChatByParticipants(
+        bookingResponse?.data?.customer_id || "",
+        bookingResponse?.data?.stylist_id || ""
+      ),
+    enabled:
+      !!bookingResponse?.data?.customer_id &&
+      !!bookingResponse?.data?.stylist_id,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+  });
+
+  const { mutate: createChat, isPending: isCreatingChat } = useMutation({
+    mutationFn: () =>
+      createChatByParticipants(
+        bookingResponse?.data?.customer_id || "",
+        bookingResponse?.data?.stylist_id || ""
+      ),
   });
 
   if (isLoading) {
@@ -287,15 +319,46 @@ export function BookingDetailsContent({
                   </>
                 )}
               </Button>
-              <Button variant="outline" asChild className="w-full sm:w-auto">
-                <Link
-                  href={`/bookinger/${booking.id}/chat`}
-                  className="flex items-center justify-center gap-2"
+              {chatResponse?.data?.id ? (
+                <Button
+                  variant="outline"
+                  asChild
+                  className="w-full sm:w-auto"
+                  disabled={!chatResponse?.data?.id}
                 >
-                  <MessageSquare className="w-4 h-4" />
-                  <span>Åpne chat</span>
-                </Link>
-              </Button>
+                  <Link
+                    href={
+                      chatResponse?.data?.id
+                        ? `/chat/${chatResponse.data.id}`
+                        : "#"
+                    }
+                    className="flex items-center justify-center gap-2"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>Åpne chat</span>
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  asChild
+                  className="w-full sm:w-auto"
+                  onClick={() => createChat()}
+                  disabled={isCreatingChat}
+                >
+                  {isCreatingChat ? (
+                    <>
+                      <Spinner className="w-4 h-4" />
+                      <span>Laster...</span>
+                    </>
+                  ) : (
+                    <>
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Ny chat</span>
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </BlurFade>

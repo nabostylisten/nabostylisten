@@ -108,14 +108,12 @@ export function ChatPageContent({ profileId, userRole }: ChatPageContentProps) {
             let filteredChatsForEmptyCheck = chats;
             if (userRole === "stylist") {
               filteredChatsForEmptyCheck = chats.filter((chat) => {
-                const booking = chat.bookings;
-                const isCustomerInBooking = booking.customer_id === profileId;
-                const isStylistInBooking = booking.stylist_id === profileId;
-
                 if (stylistMode === "personal") {
-                  return isCustomerInBooking;
+                  // Show chats where stylist is acting as a customer
+                  return chat.customer_id === profileId;
                 } else {
-                  return isStylistInBooking;
+                  // Show chats where stylist is providing services
+                  return chat.stylist_id === profileId;
                 }
               });
             }
@@ -167,33 +165,20 @@ export function ChatPageContent({ profileId, userRole }: ChatPageContentProps) {
                   let filteredChats = chats;
                   if (userRole === "stylist") {
                     filteredChats = chats.filter((chat) => {
-                      const booking = chat.bookings;
-                      const isCustomerInBooking =
-                        booking.customer_id === profileId;
-                      const isStylistInBooking =
-                        booking.stylist_id === profileId;
-
                       if (stylistMode === "personal") {
                         // Show chats where stylist is acting as a customer
-                        return isCustomerInBooking;
+                        return chat.customer_id === profileId;
                       } else {
                         // Show chats where stylist is providing services
-                        return isStylistInBooking;
+                        return chat.stylist_id === profileId;
                       }
                     });
                   }
 
                   // Process chats to add unread counts and sort
                   const processedChats = filteredChats.map((chat) => {
-                    const booking = chat.bookings;
-                    const isCustomer = booking.customer_id === profileId;
-                    const partner = isCustomer
-                      ? booking.stylist
-                      : booking.customer;
-                    const serviceTitles =
-                      booking.booking_services
-                        ?.map((bs) => bs.services?.title)
-                        .filter(Boolean) || [];
+                    const isCustomer = chat.customer_id === profileId;
+                    const partner = isCustomer ? chat.stylist : chat.customer;
 
                     // Count unread messages (not sent by current user)
                     const unreadCount =
@@ -203,10 +188,8 @@ export function ChatPageContent({ profileId, userRole }: ChatPageContentProps) {
 
                     return {
                       chat,
-                      booking,
                       isCustomer,
                       partner,
-                      serviceTitles,
                       unreadCount,
                     };
                   });
@@ -240,13 +223,12 @@ export function ChatPageContent({ profileId, userRole }: ChatPageContentProps) {
                         >
                           <ChatCard
                             chatId={item.chat.id}
-                            bookingId={item.booking.id}
+                            bookingId="" // Will be updated when ChatCard is redesigned
                             partnerName={
                               item.partner?.full_name || "Ukjent bruker"
                             }
-                            serviceTitles={item.serviceTitles}
-                            bookingDate={item.booking.start_time}
-                            bookingStatus={item.booking.status}
+                            serviceTitles={[]} // Unified chat shows all services over time
+                            bookingDate={item.chat.created_at} // Use chat creation date
                             lastMessageTime={item.chat.updated_at}
                             currentUserId={profileId}
                             isCustomer={item.isCustomer}
@@ -276,13 +258,13 @@ export function ChatPageContent({ profileId, userRole }: ChatPageContentProps) {
                         >
                           <ChatCard
                             chatId={item.chat.id}
-                            bookingId={item.booking.id}
+                            bookingId="" // Will be updated when ChatCard is redesigned
                             partnerName={
                               item.partner?.full_name || "Ukjent bruker"
                             }
-                            serviceTitles={item.serviceTitles}
-                            bookingDate={item.booking.start_time}
-                            bookingStatus={item.booking.status}
+                            serviceTitles={[]} // Unified chat shows all services over time
+                            bookingDate={item.chat.created_at} // Use chat creation date
+                            bookingStatus="ongoing" // Unified chats are ongoing conversations
                             lastMessageTime={item.chat.updated_at}
                             currentUserId={profileId}
                             isCustomer={item.isCustomer}

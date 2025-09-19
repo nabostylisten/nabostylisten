@@ -35,8 +35,8 @@ export function PreviousBookingsAlert({
         <AlertDescription>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <span className="text-sm">
-              Du har tidligere bookinger med {customerName}. Se innsikt og
-              læring fra tidligere samtaler.
+              Du har tidligere bookinger med {customerName}. Se detaljer fra
+              tidligere bookinger.
             </span>
             <Button
               variant="outline"

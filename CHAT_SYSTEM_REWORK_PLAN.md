@@ -608,3 +608,118 @@ await createCurrentChatMessages(seed, chats, customerUsers, stylistUsers);
 - Enhanced user engagement through continuous conversations
 
 This rework creates a more intuitive and continuous communication experience while simplifying the underlying technical architecture.
+
+## 12. Routing Rework: Chat-based URLs
+
+### 12.1 Current Problem
+
+The current routing is still booking-based:
+- `/bookinger/[bookingId]/chat` - Accesses chat via booking ID
+- Requires booking lookup → customer/stylist IDs → chat lookup
+- Maintains booking-centric navigation
+
+### 12.2 New Chat-based Routing
+
+**Primary Chat Route:**
+```
+/chat/[chatId] - Direct chat access via chat ID
+```
+
+**Migration Strategy:**
+
+1. **Create New Route**: `app/chat/[chatId]/page.tsx`
+   - Direct chat access via chat ID
+   - Validate user is chat participant (customer or stylist)
+   - Show booking context as optional query parameter
+   - Clean chat-centric architecture
+
+2. **Remove Booking-based Chat Access**: Delete `/bookinger/[bookingId]/chat`
+   - Replace with direct chat access from booking actions
+   - Booking actions → get chat ID → navigate to `/chat/[chatId]`
+   - Clean break from booking-centric chat navigation
+
+3. **Update All Navigation**:
+   - Chat cards → link to `/chat/[chatId]`
+   - Chat notifications → link to `/chat/[chatId]`
+   - Booking actions → link to `/chat/[chatId]?from=booking-[bookingId]`
+
+### 12.3 Implementation Plan
+
+**Step 1: Create `/app/chat/[chatId]/page.tsx`**
+```typescript
+export default async function ChatPage({
+  params,
+}: {
+  params: Promise<{ chatId: string }>;
+}) {
+  const { chatId } = await params;
+  const supabase = await createClient();
+
+  // Get current user
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/auth/login");
+
+  // Get chat and validate access
+  const { data: chat } = await supabase
+    .from("chats")
+    .select(`
+      id, customer_id, stylist_id, created_at,
+      customer:profiles!customer_id (id, full_name),
+      stylist:profiles!stylist_id (id, full_name)
+    `)
+    .eq("id", chatId)
+    .single();
+
+  if (!chat) notFound();
+
+  // Validate user is participant
+  const hasAccess = chat.customer_id === user.id || chat.stylist_id === user.id;
+  if (!hasAccess) notFound();
+
+  // Get chat messages
+  const { data: messages } = await getChatMessages(chatId);
+
+  return (
+    <ProfileLayout profileId={user.id}>
+      <UnifiedChatContent
+        chatId={chatId}
+        customerId={chat.customer_id}
+        stylistId={chat.stylist_id}
+        currentUserId={user.id}
+        customer={chat.customer}
+        stylist={chat.stylist}
+        initialMessages={messages || []}
+      />
+    </ProfileLayout>
+  );
+}
+```
+
+**Step 2: Remove `/bookinger/[bookingId]/chat/page.tsx`**
+```bash
+# Delete the old booking-based chat page
+rm -rf app/bookinger/[bookingId]/chat/
+```
+
+**Step 3: Update Component Navigation**
+- ChatCard: `href={/chat/${chatId}}`
+- Booking actions: Get chat ID and link to `/chat/${chatId}`
+- Chat notifications: Direct to `/chat/${chatId}`
+
+### 12.4 Benefits
+
+1. **Simplified Access**: Direct chat access without booking intermediary
+2. **Future-proof**: URL structure matches data model
+3. **Better UX**: Consistent chat URLs regardless of entry point
+4. **Clean Architecture**: Complete separation of chat and booking concerns
+5. **Cleaner Code**: Remove all booking dependencies from chat components
+
+### 12.5 Migration Checklist
+
+- [ ] Create `/app/chat/[chatId]/page.tsx`
+- [ ] Delete `/bookinger/[bookingId]/chat/` directory
+- [ ] Update `ChatCard` navigation to use chat IDs
+- [ ] Update booking action navigation to use chat IDs
+- [ ] Update notification system URLs
+- [ ] Test direct chat access flow
+- [ ] Update documentation and user guides

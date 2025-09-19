@@ -133,11 +133,6 @@ export async function getUserBookings(
                     at_stylist_place
                 )
             ),
-            chats(
-                id,
-                created_at,
-                updated_at
-            ),
             payments(
                 id,
                 original_amount,

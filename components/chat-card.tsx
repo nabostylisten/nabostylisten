@@ -8,28 +8,27 @@ import { nb } from "date-fns/locale";
 
 interface ChatCardProps {
   chatId: string;
-  bookingId: string;
   partnerName: string;
-  serviceTitles: string[];
-  bookingDate: string;
-  bookingStatus: string;
   lastMessageTime: string;
   currentUserId: string;
   isCustomer: boolean;
   unreadCount?: number;
+  // Optional booking context for display when accessed from booking
+  bookingId?: string;
+  serviceTitles?: string[];
+  bookingDate?: string;
 }
 
 export function ChatCard({
   chatId,
-  bookingId,
   partnerName,
-  serviceTitles,
-  bookingDate,
-  bookingStatus,
   lastMessageTime,
   currentUserId,
   isCustomer,
   unreadCount = 0,
+  bookingId,
+  serviceTitles,
+  bookingDate,
 }: ChatCardProps) {
   const relativeTime = formatDistanceToNow(new Date(lastMessageTime), {
     addSuffix: true,
@@ -92,32 +91,30 @@ export function ChatCard({
                 )}
               </div>
 
-              <div className="text-sm text-muted-foreground mb-2">
-                <div className="flex items-center gap-1 mb-1 flex-wrap">
-                  <Calendar className="w-3 h-3" />
-                  <span className="break-words">
-                    {new Date(bookingDate).toLocaleDateString("nb-NO", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </span>
-                </div>
+              {bookingDate && (
+                <div className="text-sm text-muted-foreground mb-2">
+                  <div className="flex items-center gap-1 mb-1 flex-wrap">
+                    <Calendar className="w-3 h-3" />
+                    <span className="break-words">
+                      {new Date(bookingDate).toLocaleDateString("nb-NO", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                  </div>
 
-                {serviceTitles.length > 0 && (
-                  <div className="text-xs break-words">{serviceTitles.join(", ")}</div>
-                )}
-              </div>
+                  {serviceTitles && serviceTitles.length > 0 && (
+                    <div className="text-xs break-words">
+                      {serviceTitles.join(", ")}
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <Badge
-                  variant={getStatusVariant(bookingStatus)}
-                  className="text-xs"
-                >
-                  {getStatusLabel(bookingStatus)}
-                </Badge>
                 <span className="text-xs text-muted-foreground">
                   Sist aktiv {relativeTime}
                 </span>
@@ -132,7 +129,10 @@ export function ChatCard({
               variant={unreadCount > 0 ? "default" : "outline"}
               className="w-full sm:w-auto"
             >
-              <Link href={`/bookinger/${bookingId}/chat`} className="flex items-center justify-center gap-2">
+              <Link
+                href={`/chat/${chatId}`}
+                className="flex items-center justify-center gap-2"
+              >
                 <MessageCircle className="w-4 h-4" />
                 <span className="sm:inline">Åpne chat</span>
               </Link>

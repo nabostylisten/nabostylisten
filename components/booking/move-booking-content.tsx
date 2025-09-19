@@ -27,10 +27,12 @@ import { nb } from "date-fns/locale";
 import { MoveBookingScheduler } from "./move-booking-scheduler";
 import { RescheduleConfirmationDialog } from "./reschedule-confirmation-dialog";
 import { toast } from "sonner";
+import { GetBookingDetailsResponse } from "@/server/booking/crud.actions";
+import { DatabaseTables } from "@/types";
 
 interface MoveBookingContentProps {
   bookingId: string;
-  booking: any; // Complex booking type with relations
+  booking: GetBookingDetailsResponse["data"];
   stylistId: string;
   serviceDuration: number;
   serviceTitles: string[];
@@ -127,10 +129,10 @@ export function MoveBookingContent({
           </CardTitle>
           <CardDescription>
             {isTrialSession
-              ? `Velg et nytt tidspunkt for prøvetimen med ${booking.customer?.full_name || "kunden"}`
+              ? `Velg et nytt tidspunkt for prøvetimen med ${booking?.customer?.full_name || "kunden"}`
               : hasTrialSession
                 ? `Velg et nytt tidspunkt for hovedbookingen med ${booking.customer?.full_name || "kunden"}`
-                : `Velg et nytt tidspunkt for bookingen med ${booking.customer?.full_name || "kunden"}`}
+                : `Velg et nytt tidspunkt for bookingen med ${booking?.customer?.full_name || "kunden"}`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -352,7 +354,7 @@ export function MoveBookingContent({
         currentEndTime={currentEnd}
         newStartTime={selectedStartTime}
         newEndTime={selectedEndTime}
-        customerName={booking.customer?.full_name || "kunden"}
+        customerName={booking?.customer?.full_name || "kunden"}
         moveBothBookings={
           hasTrialSession && !isTrialSession ? moveBothBookings : false
         }

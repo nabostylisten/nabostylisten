@@ -89,7 +89,13 @@ async function createPayments(): Promise<CreationResult> {
 
           if (checkError) {
             logger.error(
-              `Failed to check if payment already exists: ${checkError}`,
+              `Failed to check if payment already exists: ${checkError.message || checkError.details || 'Unknown error'}`,
+              {
+                code: checkError.code,
+                details: checkError.details,
+                hint: checkError.hint,
+                payment_intent_id: payment.payment_intent_id
+              }
             );
           }
 
@@ -160,8 +166,13 @@ async function createPayments(): Promise<CreationResult> {
 
             if (updateError) {
               logger.warn(
-                `Failed to update booking ${payment.booking_id} with payment intent:`,
-                updateError,
+                `Failed to update booking ${payment.booking_id} with payment intent: ${updateError.message || updateError.details || 'Unknown error'}`,
+                {
+                  code: updateError.code,
+                  details: updateError.details,
+                  hint: updateError.hint,
+                  booking_id: payment.booking_id
+                }
               );
             } else {
               updated_bookings++;

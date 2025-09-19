@@ -109,6 +109,13 @@ export class MySQLParser {
         return records as T[];
       }
 
+      // Use custom booking parser for booking table to handle JSON service field
+      if (tableName === "booking") {
+        const records = this.extractBookingTableData(dumpContent);
+        this.logger.success(`Parsed ${records.length} records from ${tableName} using custom parser`);
+        return records as T[];
+      }
+
       const records = this.extractTableData(dumpContent, tableName);
       this.logger.success(`Parsed ${records.length} records from ${tableName}`);
       return records as T[];
@@ -181,6 +188,178 @@ export class MySQLParser {
 
     this.logger.debug(`Successfully parsed ${records.length} chat records with custom parser`);
     return records;
+  }
+
+  /**
+   * Custom booking table data extraction with hardcoded correct column structure
+   * This fixes the column count mismatch issue for the booking table specifically.
+   * The booking table has JSON data in the 'service' field that contains commas,
+   * causing the generic parser to miscount columns.
+   */
+  private extractBookingTableData(dumpContent: string): Record<string, string | null>[] {
+    this.logger.debug("Using custom booking table parser with correct 18-column structure");
+
+    // Hardcode the correct booking table columns (18 columns total)
+    const bookingColumns = [
+      "id",
+      "buyer_id",
+      "stylist_id",
+      "date_time",
+      "duration",
+      "amount",
+      "currency",
+      "status",
+      "additional_notes",
+      "formatted_address",
+      "short_address",
+      "address_id",
+      "payment_id",
+      "service", // This field contains JSON with commas that break parsing
+      "created_at",
+      "updated_at",
+      "deleted_at",
+      "checkout_session_id"
+    ];
+
+    this.logger.debug(`Expected booking columns (${bookingColumns.length}): ${bookingColumns.join(", ")}`);
+
+    const records: Record<string, string | null>[] = [];
+    const insertPattern = /INSERT INTO `booking` VALUES \((.*?)\);/gs;
+    let match;
+    let rowCount = 0;
+
+    while ((match = insertPattern.exec(dumpContent)) !== null) {
+      const valuesPart = match[1];
+
+      // Split by '),(' to handle multiple rows in a single INSERT statement
+      const rowStrings = valuesPart.split('),(');
+
+      for (let i = 0; i < rowStrings.length; i++) {
+        let rowString = rowStrings[i];
+
+        // Clean up row string - remove leading/trailing parentheses if present
+        if (i === 0 && rowString.startsWith('(')) {
+          rowString = rowString.substring(1);
+        }
+        if (i === rowStrings.length - 1 && rowString.endsWith(')')) {
+          rowString = rowString.substring(0, rowString.length - 1);
+        }
+
+        rowCount++;
+
+        try {
+          // Use a more sophisticated parsing approach for booking rows
+          // The service field (column 14) contains JSON that can have commas
+          const row = this.parseBookingRow(rowString, rowCount);
+
+          if (row.length !== bookingColumns.length) {
+            this.logger.warn(`Booking row ${rowCount}: Expected ${bookingColumns.length} columns, got ${row.length}. Attempting to fix...`);
+
+            // Try to handle column count mismatch
+            if (row.length > bookingColumns.length) {
+              // If we have too many columns, truncate (likely due to JSON comma splitting)
+              row.splice(bookingColumns.length);
+            } else if (row.length < bookingColumns.length) {
+              // If we have too few columns, pad with nulls
+              while (row.length < bookingColumns.length) {
+                row.push(null);
+              }
+            }
+          }
+
+          // Map row values to column names
+          const record: Record<string, string | null> = {};
+          bookingColumns.forEach((column, index) => {
+            record[column] = row[index];
+          });
+
+          records.push(record);
+        } catch (error) {
+          this.logger.error(`Failed to parse booking row ${rowCount}: ${error}`);
+          this.logger.debug(`Problematic row: ${rowString}`);
+          // Continue with next row rather than failing entire parse
+        }
+      }
+    }
+
+    this.logger.debug(`Successfully parsed ${records.length} booking records with custom parser`);
+    return records;
+  }
+
+  /**
+   * Parse a single booking row, handling the JSON service field carefully
+   */
+  private parseBookingRow(rowString: string, rowNumber: number): (string | null)[] {
+    const values: (string | null)[] = [];
+    let current = '';
+    let inQuotes = false;
+    let quoteChar = '';
+    let braceDepth = 0;
+    let i = 0;
+
+    while (i < rowString.length) {
+      const char = rowString[i];
+      const nextChar = i < rowString.length - 1 ? rowString[i + 1] : '';
+
+      if (!inQuotes) {
+        if (char === "'" || char === '"') {
+          inQuotes = true;
+          quoteChar = char;
+          current += char;
+        } else if (char === '{') {
+          braceDepth++;
+          current += char;
+        } else if (char === '}') {
+          braceDepth--;
+          current += char;
+        } else if (char === ',' && braceDepth === 0) {
+          // Only treat comma as separator if we're not inside JSON braces
+          values.push(this.cleanValue(current));
+          current = '';
+        } else if (char === 'N' && nextChar === 'U' && rowString.substring(i, i + 4) === 'NULL') {
+          current += 'NULL';
+          i += 3; // Skip the remaining 'ULL'
+        } else {
+          current += char;
+        }
+      } else {
+        current += char;
+        if (char === quoteChar) {
+          // Check if it's escaped
+          if (i > 0 && rowString[i - 1] !== '\\') {
+            inQuotes = false;
+            quoteChar = '';
+          }
+        }
+      }
+      i++;
+    }
+
+    // Add the last value
+    if (current.trim() !== '') {
+      values.push(this.cleanValue(current));
+    }
+
+    return values;
+  }
+
+  /**
+   * Clean and normalize a parsed value
+   */
+  private cleanValue(value: string): string | null {
+    const trimmed = value.trim();
+
+    if (trimmed === 'NULL' || trimmed === '') {
+      return null;
+    }
+
+    // Remove quotes if present
+    if ((trimmed.startsWith("'") && trimmed.endsWith("'")) ||
+        (trimmed.startsWith('"') && trimmed.endsWith('"'))) {
+      return trimmed.slice(1, -1);
+    }
+
+    return trimmed;
   }
 
   /**

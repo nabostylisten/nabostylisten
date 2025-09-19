@@ -185,7 +185,7 @@ export function ChatContent({
         });
       }
     },
-    [chatId, currentUserName, initialMessages]
+    [chatId, currentUserName]
   );
 
   // Handle real-time read status changes

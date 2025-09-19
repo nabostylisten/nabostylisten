@@ -8,6 +8,7 @@ import {
 } from "@/schemas/database.schema";
 import type { BookingFilters, DatabaseTables } from "@/types";
 import type { Profile, Service } from "@/types/database-helpers";
+import { AsyncParseReturnType } from "zod/v3";
 
 export async function getBooking(id: string) {
     const supabase = await createClient();
@@ -322,6 +323,10 @@ export async function getUserBookings(
     return { data, error: null, total, totalPages, currentPage: page };
 }
 
+export type GetBookingDetailsResponse = Awaited<
+    ReturnType<typeof getBookingDetails>
+>;
+
 export async function getBookingDetails(bookingId: string) {
     const supabase = await createClient();
     const supabaseServiceClient = await createServiceClient();
@@ -377,7 +382,8 @@ export async function getBookingDetails(bookingId: string) {
 
         if (affiliateLink) {
             affiliateCode = affiliateLink.link_code;
-            affiliateCommissionPercentage = paymentRecord.affiliate_commission_percentage;
+            affiliateCommissionPercentage =
+                paymentRecord.affiliate_commission_percentage;
         }
     }
 
@@ -631,7 +637,8 @@ export async function getBookingDetails(bookingId: string) {
         affiliate_code: affiliateCode,
         affiliate_commission_percentage: affiliateCommissionPercentage,
         // Add discount code if available (prefer payment record, fallback to discount table)
-        discount_code: paymentRecord?.discount_code || booking.discounts?.code || null,
+        discount_code: paymentRecord?.discount_code ||
+            booking.discounts?.code || null,
         // Calculate original total price if there's a discount
         original_total_price: booking.discount_applied > 0
             ? booking.total_price + booking.discount_applied

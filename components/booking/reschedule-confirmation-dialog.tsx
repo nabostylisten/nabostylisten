@@ -37,7 +37,18 @@ interface RescheduleConfirmationDialogProps {
   newEndTime?: Date;
   customerName: string;
   moveBothBookings?: boolean;
-  trialBooking?: DatabaseTables["bookings"]["Row"];
+  trialBooking?: Pick<
+    DatabaseTables["bookings"]["Row"],
+    | "id"
+    | "start_time"
+    | "end_time"
+    | "total_price"
+    | "total_duration_minutes"
+    | "status"
+    | "is_trial_session"
+    | "message_to_stylist"
+    | "discount_applied"
+  > | null;
 }
 
 export function RescheduleConfirmationDialog({

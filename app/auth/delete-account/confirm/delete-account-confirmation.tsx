@@ -6,7 +6,6 @@ import {
   verifyAccountDeletionToken,
   deleteUserAccount,
 } from "@/server/auth.actions";
-import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";

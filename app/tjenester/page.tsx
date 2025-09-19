@@ -13,7 +13,9 @@ import { BlurFade } from "@/components/magicui/blur-fade";
 import { createPageMetadata } from "@/lib/brand";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = createPageMetadata('tjenester', { url: '/tjenester' })
+export const metadata: Metadata = createPageMetadata("tjenester", {
+  url: "/tjenester",
+});
 
 interface TjenesterPageProps {
   searchParams: Promise<ServiceSearchParams>;
@@ -106,8 +108,8 @@ export default async function TjenesterPage({
                 Kan du ikke finne det du leter etter?
               </h2>
               <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-                Vi har hundrevis av stylister som tilbyr ulike tjenester. Kontakt
-                oss så hjelper vi deg med å finne riktig match.
+                Vi har hundrevis av stylister som tilbyr ulike tjenester.
+                Kontakt oss så hjelper vi deg med å finne riktig match.
               </p>
               <Button size="lg" asChild>
                 <Link href="/kontakt">Kontakt oss</Link>

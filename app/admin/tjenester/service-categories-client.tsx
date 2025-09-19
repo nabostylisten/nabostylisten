@@ -26,17 +26,16 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { ServiceCategoryForm } from "@/components/service-category-form";
-import { deleteServiceCategory, getAllServiceCategories } from "@/server/service-category.actions";
+import {
+  deleteServiceCategory,
+  getAllServiceCategories,
+} from "@/server/service-category.actions";
 import type { Database } from "@/types/database.types";
 
 type ServiceCategory =
   Database["public"]["Tables"]["service_categories"]["Row"];
 
 type CategoryWithChildren = ServiceCategory & { children: ServiceCategory[] };
-
-interface ServiceCategoriesClientProps {
-  // No props needed anymore since we're fetching client-side
-}
 
 // Helper function to build nested category structure
 function buildCategoryTree(
@@ -139,11 +138,21 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
         </div>
 
         <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto sm:justify-start flex-shrink-0">
-          <Button variant="outline" size="sm" onClick={() => onEdit(category)} className="flex items-center gap-2 justify-center w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onEdit(category)}
+            className="flex items-center gap-2 justify-center w-full sm:w-auto"
+          >
             <Edit className="w-4 h-4" />
             <span>Rediger</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onDelete(category)} className="flex items-center gap-2 justify-center w-full sm:w-auto">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onDelete(category)}
+            className="flex items-center gap-2 justify-center w-full sm:w-auto"
+          >
             <Trash2 className="w-4 h-4" />
             <span>Slett</span>
           </Button>
@@ -169,7 +178,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({
   );
 };
 
-export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
+export function ServiceCategoriesClient() {
   const queryClient = useQueryClient();
   const [categoryFormOpen, setCategoryFormOpen] = React.useState(false);
   const [categoryFormMode, setCategoryFormMode] = React.useState<
@@ -187,7 +196,11 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
   );
 
   // Fetch categories with TanStack Query
-  const { data: categories = [], isLoading, error } = useQuery({
+  const {
+    data: categories = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["service-categories"],
     queryFn: async () => {
       const result = await getAllServiceCategories();
@@ -311,10 +324,18 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
               Ny kategori
             </Button>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={expandAll} className="flex-1 sm:flex-initial">
+              <Button
+                variant="outline"
+                onClick={expandAll}
+                className="flex-1 sm:flex-initial"
+              >
                 Utvid alle
               </Button>
-              <Button variant="outline" onClick={collapseAll} className="flex-1 sm:flex-initial">
+              <Button
+                variant="outline"
+                onClick={collapseAll}
+                className="flex-1 sm:flex-initial"
+              >
                 Skjul alle
               </Button>
             </div>
@@ -334,13 +355,18 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
                 Kunne ikke laste kategorier
               </h3>
               <p className="text-red-700 dark:text-red-300 text-center mb-4 max-w-md">
-                Det oppstod en feil ved lasting av tjenestekategorier. Vennligst prøv på nytt.
+                Det oppstod en feil ved lasting av tjenestekategorier. Vennligst
+                prøv på nytt.
               </p>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   className="border-red-300 text-red-700 hover:bg-red-100 dark:border-red-700 dark:text-red-300 dark:hover:bg-red-900/20"
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ["service-categories"] })}
+                  onClick={() =>
+                    queryClient.invalidateQueries({
+                      queryKey: ["service-categories"],
+                    })
+                  }
                 >
                   Prøv på nytt
                 </Button>
@@ -358,13 +384,18 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
           // Loading skeleton matching the category layout
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((index) => (
-              <div key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-3 sm:gap-0">
+              <div
+                key={index}
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-lg gap-3 sm:gap-0"
+              >
                 <div className="flex items-center gap-3 flex-1 min-w-0">
                   <Skeleton className="h-6 w-6 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Skeleton className="h-5 w-32" />
-                      {index % 2 === 0 && <Skeleton className="h-4 w-24 flex-shrink-0" />}
+                      {index % 2 === 0 && (
+                        <Skeleton className="h-4 w-24 flex-shrink-0" />
+                      )}
                     </div>
                     {index % 3 === 0 && <Skeleton className="h-4 w-48 mt-1" />}
                   </div>
@@ -461,7 +492,9 @@ export function ServiceCategoriesClient({}: ServiceCategoriesClientProps) {
                           </span>
                         </p>
                         <ul className="mt-2 text-sm text-orange-700 dark:text-orange-300 space-y-1">
-                          <li className="break-words">• 1 hovedkategori ({categoryToDelete.name})</li>
+                          <li className="break-words">
+                            • 1 hovedkategori ({categoryToDelete.name})
+                          </li>
                           <li>• {descendantCount} underkategorier</li>
                         </ul>
                       </div>

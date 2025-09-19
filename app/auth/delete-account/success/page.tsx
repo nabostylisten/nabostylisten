@@ -21,6 +21,7 @@ export default function AccountDeletionSuccessPage() {
         await supabase.auth.signOut();
       } catch (signOutError) {
         // Continue anyway since account is deleted
+        console.error("Error signing out user:", signOutError);
       }
     };
 

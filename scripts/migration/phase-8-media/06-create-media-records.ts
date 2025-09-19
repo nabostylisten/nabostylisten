@@ -4,9 +4,9 @@ import fs from "fs/promises";
 import path from "path";
 import {
   calculateMediaRecordStats,
+  createChatMediaRecord,
   createProfileMediaRecord,
   createServiceMediaRecord,
-  createChatMediaRecord,
   formatMediaRecordReport,
   type MediaRecordResult,
 } from "./utils/media-record-creator";
@@ -56,6 +56,57 @@ interface ChatUpload {
   uploadTime: number;
   success: boolean;
   error?: string;
+}
+
+interface Phase6CreationResult {
+  created_at: string;
+  created_chats: Array<{
+    id: string;
+    customer_id: string;
+    stylist_id: string;
+  }>;
+  created_messages: Array<{
+    id: string;
+    chat_id: string;
+    sender_id: string;
+  }>;
+  metadata: {
+    total_chats_to_create: number;
+    total_messages_to_create: number;
+    successful_chat_creations: number;
+    successful_message_creations: number;
+    failed_chat_creations: number;
+    failed_message_creations: number;
+    duration_ms: number;
+  };
+}
+
+interface ChatsExtracted {
+  extracted_at: string;
+  processedChats: Array<{
+    id: string;
+    customer_id: string;
+    stylist_id: string;
+  }>;
+  processedMessages: Array<{
+    id: string;
+    chat_id: string;
+    sender_id: string;
+  }>;
+  imageMessages: Array<{
+    message: {
+      id: string;
+      chat_id: string;
+      is_image: string;
+    };
+    chat_id: string;
+  }>;
+  imageMessageMapping: Record<string, {
+    mysql_message_id: string;
+    mysql_chat_id: string;
+    processed_message_id: string;
+    processed_chat_id: string;
+  }>;
 }
 
 interface ProfileImageMigrationReport {
@@ -131,6 +182,8 @@ const TEMP_DIR = path.join(__dirname, "../temp");
 const PROFILE_REPORT_PATH = path.join(TEMP_DIR, "profile-images-migrated.json");
 const SERVICE_REPORT_PATH = path.join(TEMP_DIR, "service-images-migrated.json");
 const CHAT_REPORT_PATH = path.join(TEMP_DIR, "chat-images-migrated.json");
+const PHASE6_CHAT_PATH = path.join(TEMP_DIR, "chats-created.json"); // Phase 6 output
+const CHATS_EXTRACTED_PATH = path.join(TEMP_DIR, "chats-extracted.json"); // Phase 6 extraction output
 const OUTPUT_PATH = path.join(TEMP_DIR, "media-records-created.json");
 
 async function loadJsonFile<T>(filePath: string, fileName: string): Promise<T> {
@@ -147,23 +200,44 @@ async function createMediaRecords(): Promise<void> {
 
   // Load migration reports
   console.log("📄 Loading migration reports...");
-  const [profileReport, serviceReport, chatReport] = await Promise.all([
-    loadJsonFile<ProfileImageMigrationReport>(
-      PROFILE_REPORT_PATH,
-      "profile images migration report",
-    ),
-    loadJsonFile<ServiceImageMigrationReport>(
-      SERVICE_REPORT_PATH,
-      "service images migration report",
-    ),
-    loadJsonFile<ChatImageMigrationReport>(
-      CHAT_REPORT_PATH,
-      "chat images migration report",
-    ).catch(() => {
-      console.log("⚠️  Chat images report not found, skipping chat records creation");
-      return null;
-    }),
-  ]);
+  const [profileReport, serviceReport, chatReport, phase6ChatData, chatsExtracted] =
+    await Promise.all([
+      loadJsonFile<ProfileImageMigrationReport>(
+        PROFILE_REPORT_PATH,
+        "profile images migration report",
+      ),
+      loadJsonFile<ServiceImageMigrationReport>(
+        SERVICE_REPORT_PATH,
+        "service images migration report",
+      ),
+      loadJsonFile<ChatImageMigrationReport>(
+        CHAT_REPORT_PATH,
+        "chat images migration report",
+      ).catch(() => {
+        console.log(
+          "⚠️  Chat images report not found, skipping chat records creation",
+        );
+        return null;
+      }),
+      loadJsonFile<Phase6CreationResult>(
+        PHASE6_CHAT_PATH,
+        "Phase 6 chat creation report",
+      ).catch(() => {
+        console.log(
+          "⚠️  Phase 6 chat creation report not found",
+        );
+        return null;
+      }),
+      loadJsonFile<ChatsExtracted>(
+        CHATS_EXTRACTED_PATH,
+        "chats extracted data",
+      ).catch(() => {
+        console.log(
+          "⚠️  Phase 6 extraction data not found, skipping chat image mapping",
+        );
+        return null;
+      }),
+    ]);
 
   // Filter for successful uploads only
   const successfulProfileUploads = profileReport.uploads.filter((u) =>
@@ -172,9 +246,12 @@ async function createMediaRecords(): Promise<void> {
   const successfulServiceUploads = serviceReport.uploads.filter((u) =>
     u.success
   );
-  const successfulChatUploads = chatReport?.uploads.filter((u) =>
-    u.success
-  ) || [];
+  const successfulChatUploads = chatReport?.uploads.filter((u) => u.success) ||
+    [];
+
+  // Get Phase 6 chat messages with images
+  const phase6ChatMessages =
+    phase6ChatData?.created_messages.filter((m) => m.has_image === true) || [];
 
   console.log(
     `✅ Found ${successfulProfileUploads.length} successful profile image uploads`,
@@ -183,15 +260,21 @@ async function createMediaRecords(): Promise<void> {
     `✅ Found ${successfulServiceUploads.length} successful service image uploads`,
   );
   console.log(
-    `✅ Found ${successfulChatUploads.length} successful chat image uploads`,
+    `✅ Found ${successfulChatUploads.length} successful legacy chat image uploads`,
+  );
+  console.log(
+    `✅ Found ${phase6ChatMessages.length} Phase 6 chat messages with images`,
   );
 
   if (
     successfulProfileUploads.length === 0 &&
     successfulServiceUploads.length === 0 &&
-    successfulChatUploads.length === 0
+    successfulChatUploads.length === 0 &&
+    phase6ChatMessages.length === 0
   ) {
-    console.log("⚠️  No successful uploads found to create records for");
+    console.log(
+      "⚠️  No successful uploads or chat messages found to create records for",
+    );
     return;
   }
 
@@ -206,7 +289,8 @@ async function createMediaRecords(): Promise<void> {
     try {
       processed++;
       const progress = `[${processed}/${
-        successfulProfileUploads.length + successfulServiceUploads.length + successfulChatUploads.length
+        successfulProfileUploads.length + successfulServiceUploads.length +
+        successfulChatUploads.length
       }]`;
 
       console.log(
@@ -255,7 +339,8 @@ async function createMediaRecords(): Promise<void> {
     try {
       processed++;
       const progress = `[${processed}/${
-        successfulProfileUploads.length + successfulServiceUploads.length + successfulChatUploads.length
+        successfulProfileUploads.length + successfulServiceUploads.length +
+        successfulChatUploads.length
       }]`;
 
       console.log(
@@ -312,19 +397,27 @@ async function createMediaRecords(): Promise<void> {
     try {
       processed++;
       const progress = `[${processed}/${
-        successfulProfileUploads.length + successfulServiceUploads.length + successfulChatUploads.length
+        successfulProfileUploads.length + successfulServiceUploads.length +
+        successfulChatUploads.length
       }]`;
 
       console.log(
         `${progress} Creating record for chat message ${upload.messageId}...`,
       );
 
-      // We need to find the sender ID from the chat upload data
-      // For now, we'll use a placeholder - in a real scenario we'd need to look up the message sender
-      const senderId = upload.newChatId; // This should be replaced with actual sender lookup
+      // Find the sender ID from the chat messages with uploads
+      const messageWithUpload = chatMessagesWithUploads.find(
+        m => m.messageId === upload.messageId
+      );
+
+      if (!messageWithUpload) {
+        console.log(`${progress} ⚠️  No sender info found for message ${upload.messageId}, skipping...`);
+        errors.push(`No sender info found for chat message ${upload.messageId}`);
+        continue;
+      }
 
       const result = await createChatMediaRecord({
-        userId: senderId, // This should be the actual sender ID
+        userId: messageWithUpload.senderId,
         messageId: upload.messageId,
         storagePath: upload.storagePath,
       });
@@ -358,6 +451,9 @@ async function createMediaRecords(): Promise<void> {
       });
     }
   }
+
+  // Note: Chat image records are created above for uploaded images only
+  // No need for separate Phase 6 processing since we create records for uploaded images
 
   // Calculate statistics
   const stats = calculateMediaRecordStats(allRecords);
@@ -417,6 +513,9 @@ async function createMediaRecords(): Promise<void> {
       const chatUpload = successfulChatUploads.find((u) =>
         u.storagePath === record.storagePath
       );
+      const chatMessageWithUpload = chatMessagesWithUploads.find((m: { storagePath: string }) =>
+        m.storagePath === record.storagePath
+      );
 
       return {
         mediaType: record.mediaType === "avatar"
@@ -426,10 +525,10 @@ async function createMediaRecords(): Promise<void> {
           : "chat" as const,
         mediaId: record.mediaId,
         storagePath: record.storagePath,
-        userId: profileUpload?.newUserId || serviceUpload?.stylistId || chatUpload?.newChatId ||
-          "unknown",
+        userId: profileUpload?.newUserId || serviceUpload?.stylistId ||
+          chatMessageWithUpload?.senderId || "unknown",
         serviceId: serviceUpload?.newServiceId,
-        messageId: chatUpload?.messageId,
+        messageId: chatUpload?.messageId || chatMessageWithUpload?.messageId,
         isPreview: serviceUpload?.isPreview || false,
         success: record.success,
         error: record.error,
@@ -485,6 +584,9 @@ async function createMediaRecords(): Promise<void> {
     `  └─ Successful: ${report.chatRecords.successful.toLocaleString()}`,
   );
   console.log(`  └─ Failed: ${report.chatRecords.failed.toLocaleString()}`);
+  console.log(
+    `  └─ Chat Image Uploads: ${successfulChatUploads.length.toLocaleString()}`,
+  );
 
   if (errors.length > 0) {
     console.log(`\n❌ Errors (${errors.length}):`);

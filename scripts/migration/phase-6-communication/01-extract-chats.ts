@@ -15,9 +15,9 @@ import type { Database } from "../../../types/database.types";
 
 interface MySQLChat {
   id: string;
-  booking_id: string;
   buyer_id: string;
   stylist_id: string;
+  booking_id: string | null; // Still exists in MySQL table but not used for new system
   buyer_has_unread: string | null; // "0" or "1"
   stylist_has_unread: string | null; // "0" or "1"
   is_active: string; // "0" or "1"
@@ -35,11 +35,6 @@ interface MySQLMessage {
   created_at: string;
 }
 
-interface MySQLBooking {
-  id: string;
-  buyer_id: string;
-  stylist_id: string;
-}
 
 interface ProcessedChat extends
   Omit<
@@ -56,7 +51,6 @@ interface ProcessedMessage extends
     "created_at"
   > {
   created_at: string;
-  has_image?: boolean; // For media handling
 }
 
 interface ExtractionResult {
@@ -65,10 +59,16 @@ interface ExtractionResult {
   skippedChats: Array<{ chat: MySQLChat; reason: string }>;
   skippedMessages: Array<{ message: MySQLMessage; reason: string }>;
   imageMessages: Array<{ message: MySQLMessage; chat_id: string }>;
+  // Enhanced mapping for Phase 8 consumption
+  imageMessageMapping: Record<string, {
+    mysql_message_id: string;
+    mysql_chat_id: string;
+    processed_message_id: string;
+    processed_chat_id: string;
+  }>;
   metadata: {
     total_mysql_chats: number;
     total_mysql_messages: number;
-    total_mysql_bookings: number;
     processed_chats: number;
     processed_messages: number;
     skipped_chats: number;
@@ -91,29 +91,17 @@ async function extractChats(): Promise<ExtractionResult> {
     const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), "nabostylisten_prod.sql");
     const parser = new MySQLParser(dumpPath, logger);
 
-    logger.info("Parsing chats, messages, and bookings from MySQL dump...");
+    logger.info("Parsing chats and messages from MySQL dump...");
 
-    // Parse all required tables
-    const [chats, messages, bookings] = await Promise.all([
+    // Parse required tables - no longer need bookings for chat relationships
+    const [chats, messages] = await Promise.all([
       parser.parseTable<MySQLChat>("chat"),
       parser.parseTable<MySQLMessage>("message"),
-      parser.parseTable<MySQLBooking>("booking"),
     ]);
 
     logger.info(
-      `Found ${chats.length} chats, ${messages.length} messages, and ${bookings.length} bookings in MySQL`,
+      `Found ${chats.length} chats and ${messages.length} messages in MySQL`,
     );
-
-    // Create booking ID to buyer/stylist mapping
-    const bookingMap = new Map<string, { buyer_id: string; stylist_id: string }>();
-    for (const booking of bookings) {
-      bookingMap.set(booking.id, {
-        buyer_id: booking.buyer_id,
-        stylist_id: booking.stylist_id,
-      });
-    }
-
-    logger.info(`Created booking mapping for ${bookingMap.size} bookings`);
 
     // Get user ID mapping for resolving buyer/stylist to new user IDs
     const userMappingPath = path.join(tempDir, "user-id-mapping.json");
@@ -140,6 +128,12 @@ async function extractChats(): Promise<ExtractionResult> {
     const skippedChats: Array<{ chat: MySQLChat; reason: string }> = [];
     const skippedMessages: Array<{ message: MySQLMessage; reason: string }> = [];
     const imageMessages: Array<{ message: MySQLMessage; chat_id: string }> = [];
+    const imageMessageMapping: Record<string, {
+      mysql_message_id: string;
+      mysql_chat_id: string;
+      processed_message_id: string;
+      processed_chat_id: string;
+    }> = {};
     const senderDistribution: Record<string, number> = {};
 
     // First pass: Process chats
@@ -154,24 +148,14 @@ async function extractChats(): Promise<ExtractionResult> {
           continue;
         }
 
-        // Get booking information for user resolution
-        const bookingInfo = bookingMap.get(chat.booking_id);
-        if (!bookingInfo) {
-          skippedChats.push({
-            chat,
-            reason: "No booking found for this chat",
-          });
-          continue;
-        }
-
-        // Map old user IDs to new user IDs
-        const newCustomerId = userMapping.get(bookingInfo.buyer_id);
-        const newStylistId = userMapping.get(bookingInfo.stylist_id);
+        // Map old user IDs to new user IDs directly from chat
+        const newCustomerId = userMapping.get(chat.buyer_id);
+        const newStylistId = userMapping.get(chat.stylist_id);
 
         if (!newCustomerId || !newStylistId) {
           skippedChats.push({
             chat,
-            reason: "Could not resolve customer or stylist ID mapping",
+            reason: `Could not resolve customer or stylist ID mapping - buyer_id: ${chat.buyer_id} (found: ${!!newCustomerId}), stylist_id: ${chat.stylist_id} (found: ${!!newStylistId})`,
           });
           continue;
         }
@@ -221,23 +205,13 @@ async function extractChats(): Promise<ExtractionResult> {
           continue;
         }
 
-        // Get booking information for sender resolution
-        const bookingInfo = bookingMap.get(chat.booking_id);
-        if (!bookingInfo) {
-          skippedMessages.push({
-            message,
-            reason: "Could not find booking information for sender resolution",
-          });
-          continue;
-        }
-
-        // Resolve sender_id based on is_from field
+        // Resolve sender_id based on is_from field using chat's buyer/stylist IDs
         let sender_id: string;
         if (message.is_from === "buyer") {
-          sender_id = bookingInfo.buyer_id;
+          sender_id = chat.buyer_id;
           senderDistribution["customer"] = (senderDistribution["customer"] || 0) + 1;
         } else if (message.is_from === "stylist") {
-          sender_id = bookingInfo.stylist_id;
+          sender_id = chat.stylist_id;
           senderDistribution["stylist"] = (senderDistribution["stylist"] || 0) + 1;
         } else {
           skippedMessages.push({
@@ -256,17 +230,36 @@ async function extractChats(): Promise<ExtractionResult> {
           });
         }
 
+        // Map sender_id to new user ID
+        const newSenderId = userMapping.get(sender_id);
+        if (!newSenderId) {
+          skippedMessages.push({
+            message,
+            reason: "Could not resolve sender ID mapping",
+          });
+          continue;
+        }
+
         const processedMessage: ProcessedMessage = {
           id: message.id.toLowerCase(),
           chat_id: message.chat_id.toLowerCase(),
-          sender_id: sender_id,
+          sender_id: newSenderId,
           content: message.message,
           is_read: message.is_unread !== "1", // Invert the logic
           created_at: message.created_at,
-          has_image: hasImage,
         };
 
         processedMessages.push(processedMessage);
+
+        // Track image message mapping for Phase 8
+        if (hasImage) {
+          imageMessageMapping[message.id.toLowerCase()] = {
+            mysql_message_id: message.id,
+            mysql_chat_id: message.chat_id,
+            processed_message_id: message.id.toLowerCase(),
+            processed_chat_id: message.chat_id.toLowerCase(),
+          };
+        }
 
         logger.debug(
           `✓ Processed message: ${message.id} from ${message.is_from} in chat: ${message.chat_id}`,
@@ -286,10 +279,10 @@ async function extractChats(): Promise<ExtractionResult> {
       skippedChats,
       skippedMessages,
       imageMessages,
+      imageMessageMapping,
       metadata: {
         total_mysql_chats: chats.length,
         total_mysql_messages: messages.length,
-        total_mysql_bookings: bookings.length,
         processed_chats: processedChats.length,
         processed_messages: processedMessages.length,
         skipped_chats: skippedChats.length,
@@ -309,6 +302,7 @@ async function extractChats(): Promise<ExtractionResult> {
           processedChats,
           processedMessages,
           imageMessages,
+          imageMessageMapping,
           metadata: result.metadata,
         },
         null,

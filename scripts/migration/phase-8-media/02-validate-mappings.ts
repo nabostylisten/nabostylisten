@@ -53,8 +53,9 @@ interface ServiceCreated {
   }>;
 }
 
+
 interface ValidationResult {
-  category: "profile" | "service";
+  category: "profile" | "service" | "chat";
   originalPath: string;
   oldId: string;
   newId?: string;
@@ -87,10 +88,18 @@ interface MappingValidationReport {
       validSize: number;
       invalidSize: number;
     };
+    chatImages: {
+      total: number;
+      valid: number;
+      invalid: number;
+      validSize: number;
+      invalidSize: number;
+    };
   };
   errors: {
     missingUserMappings: string[];
     missingServiceMappings: string[];
+    missingChatMappings: string[];
     invalidFileStructures: string[];
   };
 }
@@ -145,6 +154,7 @@ async function validateMappings(): Promise<void> {
   const errors = {
     missingUserMappings: [] as string[],
     missingServiceMappings: [] as string[],
+    missingChatMappings: [] as string[],
     invalidFileStructures: [] as string[],
   };
 
@@ -266,6 +276,13 @@ async function validateMappings(): Promise<void> {
       validSize: validServiceResults.reduce((sum, r) => sum + r.fileSize, 0),
       invalidSize: invalidServiceResults.reduce((sum, r) => sum + r.fileSize, 0),
     },
+    chatImages: {
+      total: 0,
+      valid: 0,
+      invalid: 0,
+      validSize: 0,
+      invalidSize: 0,
+    },
   };
 
   // Create validation report
@@ -282,6 +299,7 @@ async function validateMappings(): Promise<void> {
     errors: {
       missingUserMappings: [...new Set(errors.missingUserMappings)],
       missingServiceMappings: [...new Set(errors.missingServiceMappings)],
+      missingChatMappings: [...new Set(errors.missingChatMappings)],
       invalidFileStructures: [...new Set(errors.invalidFileStructures)],
     },
   };

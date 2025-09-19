@@ -39,6 +39,7 @@ const stripePromise = loadStripe(
 );
 
 function PaymentForm({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   clientSecret: _clientSecret,
   bookingId,
 }: {
@@ -156,7 +157,11 @@ function PaymentForm({
       <div className="max-w-4xl mx-auto">
         <BlurFade duration={0.5} inView>
           <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 mb-8">
-            <Button variant="ghost" onClick={() => router.back()} className="self-start">
+            <Button
+              variant="ghost"
+              onClick={() => router.back()}
+              className="self-start"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Tilbake
             </Button>

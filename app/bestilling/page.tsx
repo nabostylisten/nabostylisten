@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useCartStore } from "@/stores/cart.store";
 import { useBookingStore } from "@/stores/booking.store";
-import { ArrowLeft, Clock, User, AlertCircle, Info } from "lucide-react";
+import { ArrowLeft, Clock, User, AlertCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { BookingStepper, OrderSummary } from "@/components/booking";
@@ -36,7 +36,7 @@ export default function BookingPage() {
     updateBookingData,
   } = useBookingStore();
   const [isRedirectingToCheckout, setIsRedirectingToCheckout] = useState(false);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   const totalItems = getTotalItems();
   const totalPrice = getTotalPrice();
@@ -75,9 +75,6 @@ export default function BookingPage() {
     applicableServices,
     canAutoApply,
     nonApplicableReason,
-    isLoading: affiliateLoading,
-    error: affiliateError,
-    affiliateInfo,
   } = useAffiliateAttribution({
     cartItems,
     userId: user?.id,

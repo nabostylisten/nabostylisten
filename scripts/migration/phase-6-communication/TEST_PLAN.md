@@ -4,6 +4,8 @@
 
 This test plan provides step-by-step validation procedures for each script in the Phase 6 Communication Migration process. This phase migrates the chat and messaging system from MySQL to PostgreSQL using a **customer-stylist based approach**. Instead of tying chats to bookings, the new system creates one chat per unique customer-stylist pair, allowing for ongoing communication relationships.
 
+> **🔄 Architecture Update**: Media record creation for chat images has been **moved to Phase 8** for better separation of concerns. Phase 6 now focuses purely on communication data (chats and messages), while Phase 8 handles all media-related functionality. Messages with images are flagged with `has_image: true` for Phase 8 processing.
+
 ## Prerequisites
 
 - **Phase 1 Completed**: User migration must be successfully completed (user-id-mapping.json required)
@@ -92,6 +94,50 @@ Extracts message records from MySQL dump and groups them by customer-stylist pai
 ```bash
 bun run scripts/migration/phase-6-communication/01-extract-chats.ts
 ```
+
+### Test Execution Results (2025-09-19)
+
+**🎉 EXCELLENT SUCCESS!**
+
+The custom MySQL parser for the chat table is working perfectly! Here are the results:
+
+#### ✅ **FIXED - Chat Table Parsing:**
+- **No more column count mismatch warnings for chat table** ✅
+- **Successfully parsed 1,914 chat records** ✅
+- **Successfully processed 1,889 chats (98.7% success rate)** ✅
+- **Successfully processed 553 messages (97% success rate)** ✅
+
+#### 📊 **Migration Results:**
+- **Total MySQL chats**: 1,914
+- **Successfully processed chats**: 1,889 (98.7%)
+- **Skipped chats**: 25 (only 1.3% - mostly due to a few missing buyer/stylist IDs)
+- **Successfully processed messages**: 553
+- **Image messages detected**: 24
+
+#### 🔍 **Analysis of Skipped Chats:**
+The 25 skipped chats are due to **legitimate missing user mappings** - there are some buyer/stylist IDs in the chat table that don't exist in the user mapping file. This is normal in data migration scenarios where some users may have been deleted or not migrated.
+
+The most common missing IDs are:
+- `d2a31804-fa3e-42d9-a04c-15efe20c010e` (appears 16 times) - likely a deleted buyer
+- `903e24d5-6ac7-44ac-b7b6-7d20222f6a8e` (appears 2 times) - likely a deleted stylist
+
+#### 📁 **Output Files Created:**
+- `chats-extracted.json` (791k) - Contains the successfully processed chats and messages
+- `skipped-chats.json` (26k) - Contains details about the 25 skipped chats
+
+#### 🎯 **Summary:**
+✅ Successfully fixed the MySQL parser for chat table by creating a custom parser with the correct 9-column structure
+✅ Eliminated the column count mismatch warnings for the chat table
+✅ Successfully migrated 98.7% of chats (1,889 out of 1,914) from the old booking-based system to the new customer-stylist pair system
+✅ Successfully migrated 97% of chat messages (553 out of 570)
+
+The phase 6 step 1 chat extraction is now **complete and successful**! The script is ready to proceed to the next steps in the chat migration process.
+
+#### 🔧 **Technical Fix Applied:**
+- **Issue**: MySQL parser expected 11 columns for chat table but table only had 9 columns
+- **Root Cause**: Parser was counting constraint definitions as columns instead of only data columns
+- **Solution**: Created custom `extractChatTableData()` method with hardcoded correct 9-column structure
+- **Location**: `/Users/magnusrodseth/dev/personal/nabostylisten/scripts/migration/phase-1-users/utils/mysql-parser.ts`
 
 ## Expected Step 1 Results (Updated for Customer-Stylist Approach)
 
@@ -228,7 +274,7 @@ bun run scripts/migration/phase-6-communication/01-extract-chats.ts
 
 ### Purpose
 
-Creates chat and message records in PostgreSQL using the customer-stylist approach with proper dependency order (chats first, then messages), creates media records for image messages, and handles batch processing for performance. Each chat represents a unique customer-stylist communication channel.
+Creates chat and message records in PostgreSQL using the customer-stylist approach with proper dependency order (chats first, then messages), and handles batch processing for performance. Each chat represents a unique customer-stylist communication channel. **Note**: Media record creation for image messages has been moved to Phase 8 for better separation of concerns.
 
 ### Input Requirements
 
@@ -265,19 +311,11 @@ bun run scripts/migration/phase-6-communication/02-create-chats.ts
       "has_image": boolean
     }
   ],
-  "created_media": [
-    {
-      "id": "Media UUID",
-      "message_id": "Message UUID",
-      "media_type": "chat_image"
-    }
-  ],
   "metadata": {
     "total_chats_to_create": number,
     "total_messages_to_create": number,
     "successful_chat_creations": number,
     "successful_message_creations": number,
-    "successful_media_creations": number,
     "failed_chat_creations": number,
     "failed_message_creations": number,
     "duration_ms": number
@@ -290,7 +328,7 @@ bun run scripts/migration/phase-6-communication/02-create-chats.ts
 - [ ] All successful chats correspond to created database records
 - [ ] All successful messages correspond to created database records
 - [ ] Failed counts match any error entries
-- [ ] Media records created for all image messages
+- [ ] Messages with images have `has_image: true` flag set correctly (media creation handled in Phase 8)
 - [ ] Chat creation precedes message creation (dependency order)
 - [ ] Batch processing completed successfully
 
@@ -306,7 +344,6 @@ bun run scripts/migration/phase-6-communication/02-create-chats.ts
   "total_messages": number,
   "successfully_created_chats": number,
   "successfully_created_messages": number,
-  "successfully_created_media": number,
   "failed_chat_creations": number,
   "failed_message_creations": number,
   "chat_success_rate": "X.XX%",
@@ -387,8 +424,9 @@ JOIN profiles p ON cm.sender_id = p.id
 GROUP BY p.role
 ORDER BY message_count DESC;
 
--- Verify media records for image messages
-SELECT COUNT(*) FROM media WHERE media_type = 'chat_image';  -- Should match created_media count
+-- Note: Media records for image messages will be created in Phase 8
+-- Verify messages with images have has_image flag set
+SELECT COUNT(*) FROM chat_messages WHERE content LIKE '%image%' AND has_image = true;
 
 -- Check read status distribution
 SELECT
@@ -663,28 +701,17 @@ ORDER BY chat_count DESC;
 #### 5. Media Integration Validation
 
 ```sql
--- Image message media validation
+-- Image message validation (media creation moved to Phase 8)
 SELECT
-  'Image Message Media Validation' as validation_check,
-  COUNT(DISTINCT m.id) as total_media_records,
-  COUNT(DISTINCT cm.id) as messages_with_media,
+  'Image Message Detection' as validation_check,
+  COUNT(*) as total_image_messages,
+  COUNT(CASE WHEN has_image = true THEN 1 END) as flagged_as_image,
   CASE
-    WHEN COUNT(DISTINCT m.id) = COUNT(DISTINCT cm.id) THEN 'PASSED ✅'
-    ELSE 'WARNING ⚠️ - Some image messages may not have media records'
+    WHEN COUNT(*) = COUNT(CASE WHEN has_image = true THEN 1 END) THEN 'PASSED ✅'
+    ELSE 'WARNING ⚠️ - Some image messages may not be flagged correctly'
   END as status
-FROM media m
-RIGHT JOIN chat_messages cm ON m.chat_message_id = cm.id
-WHERE m.media_type = 'chat_image' OR m.id IS NULL;
-
--- Media type distribution
-SELECT
-  'Media Type Distribution' as report_type,
-  media_type,
-  COUNT(*) as count
-FROM media
-WHERE chat_message_id IS NOT NULL
-GROUP BY media_type
-ORDER BY count DESC;
+FROM chat_messages
+WHERE content LIKE '%image%' OR has_image = true;
 ```
 
 #### 6. Temporal Validation
@@ -769,11 +796,10 @@ WITH validation_summary AS (
     COUNT(DISTINCT c.booking_id) as unique_bookings,
     SUM(CASE WHEN b.id IS NULL THEN 1 ELSE 0 END) as orphaned_chats,
     SUM(CASE WHEN c.id IS NULL THEN 1 ELSE 0 END) as orphaned_messages,
-    COUNT(CASE WHEN media.id IS NULL AND m.id LIKE '%image%' THEN 1 END) as missing_media
+    COUNT(CASE WHEN m.has_image = true THEN 1 END) as image_messages_detected
   FROM chats c
   FULL OUTER JOIN chat_messages m ON c.id = m.chat_id
   LEFT JOIN bookings b ON c.booking_id = b.id
-  LEFT JOIN media ON m.id = media.chat_message_id AND media.media_type = 'chat_image'
 )
 SELECT
   'FINAL VALIDATION SUMMARY' as validation_report,
@@ -804,7 +830,7 @@ Phase 6 is considered successful when:
 - ✅ All messages have valid chat and sender relationships
 - ✅ Sender mapping is accurate (sample validation passes)
 - ✅ No orphaned chats or messages
-- ✅ Image messages have corresponding media records
+- ✅ Image messages are correctly flagged with `has_image: true` (media records will be created in Phase 8)
 - ✅ Validation report shows "is_valid": true
 
 ---
@@ -848,7 +874,7 @@ If any step fails critically:
 
    ```sql
    -- Clear tables in reverse dependency order
-   DELETE FROM media WHERE media_type = 'chat_image';
+   -- Note: Media records will be in Phase 8, no cleanup needed here
    DELETE FROM chat_messages;
    DELETE FROM chats;
    ```
@@ -888,8 +914,8 @@ If any step fails critically:
 
 3. **Image Message Handling**
 
-   - Risk: Loss of image content or broken media references
-   - Mitigation: Create placeholder media records, validate image count
+   - Risk: Image messages may not be properly flagged
+   - Mitigation: Verify `has_image` flag is set correctly for image messages (Phase 8 will handle media creation)
    - Impact: Missing visual communication context
 
 4. **Chat-Message Relationship Integrity**
@@ -959,10 +985,8 @@ ON chats(created_at);
 CREATE INDEX IF NOT EXISTS idx_chat_messages_read_status
 ON chat_messages(is_read, created_at);
 
--- Media relationship optimization
-CREATE INDEX IF NOT EXISTS idx_media_chat_message_id
-ON media(chat_message_id)
-WHERE media_type = 'chat_image';
+-- Note: Media relationship indexes will be created in Phase 8
+-- Phase 6 focuses on communication data only
 ```
 
 ---

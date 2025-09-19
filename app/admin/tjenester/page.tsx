@@ -60,9 +60,10 @@ export default async function AdminTjenesterPage() {
                     1
                   </span>
                   <span>
-                    <strong>Opprett hovedkategorier</strong> (f.eks. "Hår",
-                    "Negler", "Sminke") ved å klikke "Ny kategori" og la
-                    "Overordnet kategori" stå tom
+                    <strong>Opprett hovedkategorier</strong> (f.eks.
+                    &ldquo;Hår&rdquo;, &ldquo;Negler&rdquo;,
+                    &ldquo;Sminke&rdquo;) ved å klikke &ldquo;Ny kategori&rdquo;
+                    og la &ldquo;Overordnet kategori&rdquo; stå tom
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -71,8 +72,8 @@ export default async function AdminTjenesterPage() {
                   </span>
                   <span>
                     <strong>Opprett underkategorier</strong> ved å velge en
-                    hovedkategori som "Overordnet kategori" (f.eks. "Klipp"
-                    under "Hår")
+                    hovedkategori som &ldquo;Overordnet kategori&rdquo; (f.eks.
+                    &ldquo;Klipp&rdquo; under &ldquo;Hår&rdquo;)
                   </span>
                 </li>
                 <li className="flex items-start gap-2">
@@ -98,8 +99,8 @@ export default async function AdminTjenesterPage() {
                     5
                   </span>
                   <span>
-                    Bruk "Utvid alle" / "Skjul alle" for å navigere i
-                    kategoritreet
+                    Bruk &ldquo;Utvid alle&rdquo; / &ldquo;Skjul alle&rdquo; for
+                    å navigere i kategoritreet
                   </span>
                 </li>
               </ol>

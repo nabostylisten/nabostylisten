@@ -3,7 +3,8 @@
  * Phase 6 - Step 3: Validate Chat Migration
  *
  * This script validates that chats and messages have been correctly migrated
- * and that all relationships are intact.
+ * using the customer-stylist approach and that all relationships are intact.
+ * Note: Media validation has been moved to Phase 8.
  */
 
 import fs from "fs/promises";
@@ -19,7 +20,8 @@ interface ValidationResult {
   total_mysql_messages: number;
   total_pg_chats: number;
   total_pg_messages: number;
-  missing_chats: string[];
+  unique_customer_stylist_pairs: number;
+  messages_with_images: number;
   missing_messages: string[];
   orphaned_chats: string[];
   orphaned_messages: string[];
@@ -50,58 +52,78 @@ async function validateChats(): Promise<ValidationResult> {
     const supabase = createClient<Database>(supabaseUrl, supabaseServiceKey);
 
     // Load MySQL dump
-    const dumpPath = process.env.MYSQL_DUMP_PATH || path.join(process.cwd(), "nabostylisten_prod.sql");
+    const dumpPath = process.env.MYSQL_DUMP_PATH ||
+      path.join(process.cwd(), "nabostylisten_prod.sql");
     const parser = new MySQLParser(dumpPath, logger);
 
     logger.info("Connected to both data sources");
 
     const validation_errors: string[] = [];
-    const message_sender_mismatches: ValidationResult["message_sender_mismatches"] = [];
+    const message_sender_mismatches:
+      ValidationResult["message_sender_mismatches"] = [];
 
-    // 1. Get MySQL data
-    const [mysqlChats, mysqlMessages, mysqlBookings] = await Promise.all([
+    // 1. Load extracted chat data from Phase 6 Step 1
+    const extractedChatsPath = path.join(tempDir, "chats-extracted.json");
+    const extractedData = JSON.parse(
+      await fs.readFile(extractedChatsPath, "utf-8"),
+    );
+    const processedChats = extractedData.processedChats || [];
+    const processedMessages = extractedData.processedMessages || [];
+
+    // Also get raw MySQL data for comparison
+    const [mysqlChats, mysqlMessages] = await Promise.all([
       parser.parseTable<{
         id: string;
-        booking_id: string;
+        buyer_id: string;
+        stylist_id: string;
         is_active: string;
       }>("chat"),
       parser.parseTable<{
         id: string;
         chat_id: string;
         is_from: string;
+        is_image: string;
       }>("message"),
-      parser.parseTable<{
-        id: string;
-        buyer_id: string;
-        stylist_id: string;
-      }>("booking"),
     ]);
 
-    // Filter for active chats only (matching extraction logic)
-    const activeChats = mysqlChats.filter(chat => chat.is_active === "1");
-    const totalMysqlChats = activeChats.length;
+    // Count data using customer-stylist approach
+    const totalMysqlChats = mysqlChats.length;
     const totalMysqlMessages = mysqlMessages.length;
+    const messagesWithImages = mysqlMessages.filter((m) =>
+      m.is_image === "1"
+    ).length;
 
     logger.info(
-      `MySQL: ${totalMysqlChats} active chats, ${totalMysqlMessages} messages`,
+      `MySQL: ${totalMysqlChats} total chats, ${totalMysqlMessages} messages, ${messagesWithImages} with images`,
+    );
+    logger.info(
+      `Processed: ${processedChats.length} unique customer-stylist chats, ${processedMessages.length} messages`,
     );
 
-    // Create booking mapping for sender validation
-    const bookingMap = new Map<string, { buyer_id: string; stylist_id: string }>();
-    for (const booking of mysqlBookings) {
-      bookingMap.set(booking.id, {
-        buyer_id: booking.buyer_id,
-        stylist_id: booking.stylist_id,
-      });
+    // Create chat mapping for validation (MySQL chat -> customer-stylist pairs)
+    const chatToCustomerStylistMap = new Map<
+      string,
+      { buyer_id: string; stylist_id: string }
+    >();
+    for (const chat of mysqlChats) {
+      if (chat.buyer_id && chat.stylist_id) {
+        chatToCustomerStylistMap.set(chat.id, {
+          buyer_id: chat.buyer_id,
+          stylist_id: chat.stylist_id,
+        });
+      }
     }
 
     // 2. Count PostgreSQL data
     const [
       { count: totalPgChats, error: chatCountError },
-      { count: totalPgMessages, error: messageCountError }
+      { count: totalPgMessages, error: messageCountError },
     ] = await Promise.all([
       supabase.from("chats").select("*", { count: "exact", head: true }),
-      supabase.from("chat_messages").select("*", { count: "exact", head: true }),
+      supabase.from("chat_messages").select("*", {
+        count: "exact",
+        head: true,
+      }),
     ]);
 
     if (chatCountError) {
@@ -117,16 +139,22 @@ async function validateChats(): Promise<ValidationResult> {
     }
 
     logger.info(
-      `PostgreSQL: ${totalPgChats || 0} chats, ${totalPgMessages || 0} messages`,
+      `PostgreSQL: ${totalPgChats || 0} chats, ${
+        totalPgMessages || 0
+      } messages`,
     );
 
     // 3. Fetch all PostgreSQL data for detailed validation
     const [
       { data: pgChats, error: chatFetchError },
-      { data: pgMessages, error: messageFetchError }
+      { data: pgMessages, error: messageFetchError },
     ] = await Promise.all([
-      supabase.from("chats").select("id, customer_id, stylist_id"),
-      supabase.from("chat_messages").select("id, chat_id, sender_id"),
+      supabase.from("chats").select(
+        "id, customer_id, stylist_id, created_at, updated_at",
+      ),
+      supabase.from("chat_messages").select(
+        "id, chat_id, sender_id, created_at",
+      ),
     ]);
 
     if (chatFetchError) {
@@ -141,27 +169,40 @@ async function validateChats(): Promise<ValidationResult> {
       );
     }
 
-    // 4. Check for missing chats
-    const pgChatIds = new Set(pgChats?.map((c) => c.id) || []);
-    const missing_chats = activeChats
-      .map((c) => c.id.toLowerCase())
-      .filter((id) => !pgChatIds.has(id));
+    // 4. Validate customer-stylist pairs coverage
+    const pgCustomerStylistPairs = new Set(
+      pgChats?.map((c) => `${c.customer_id}-${c.stylist_id}`) || [],
+    );
+    const expectedPairs = new Set(
+      processedChats.map((c: { customer_id: string; stylist_id: string }) =>
+        `${c.customer_id}-${c.stylist_id}`
+      ),
+    ) as Set<string>;
 
-    if (missing_chats.length > 0) {
+    const missingPairs = Array.from(expectedPairs).filter(
+      (pair) => !pgCustomerStylistPairs.has(pair),
+    );
+
+    if (missingPairs.length > 0) {
       validation_errors.push(
-        `${missing_chats.length} chats missing in PostgreSQL`,
+        `${missingPairs.length} customer-stylist pairs missing in PostgreSQL`,
       );
-      logger.warn(`Found ${missing_chats.length} missing chats`);
+      logger.warn(
+        `Found ${missingPairs.length} missing customer-stylist pairs`,
+      );
     }
 
-    // 5. Check for missing messages (only for chats that were migrated)
-    const validChatIds = new Set(activeChats.map(c => c.id));
-    const validMessages = mysqlMessages.filter(m => validChatIds.has(m.chat_id));
-    
-    const pgMessageIds = new Set(pgMessages?.map((m) => m.id) || []);
-    const missing_messages = validMessages
-      .map((m) => m.id.toLowerCase())
-      .filter((id) => !pgMessageIds.has(id));
+    // 5. Check for missing messages
+    const pgMessageIds = new Set(
+      pgMessages?.map((m: { id: string }) => m.id) || [],
+    ) as Set<string>;
+    const expectedMessageIds = new Set(
+      processedMessages.map((m: { id: string }) => m.id),
+    ) as Set<string>;
+
+    const missing_messages = Array.from(expectedMessageIds).filter(
+      (id) => !pgMessageIds.has(id),
+    ) as string[];
 
     if (missing_messages.length > 0) {
       validation_errors.push(
@@ -170,8 +211,13 @@ async function validateChats(): Promise<ValidationResult> {
       logger.warn(`Found ${missing_messages.length} missing messages`);
     }
 
+    // 5.1. Log image message information (media records are created in Phase 8)
+    logger.info(`Image messages information:`);
+    logger.info(`  - MySQL messages with images: ${messagesWithImages}`);
+    logger.info(`  - Note: Media records will be created in Phase 8`);
+
     // 6. Check for chats with invalid customer/stylist references
-    const { data: orphanedChats, error: orphanError } = await supabase
+    const { data: chatsWithProfiles, error: orphanError } = await supabase
       .from("chats")
       .select(`
         id,
@@ -187,10 +233,21 @@ async function validateChats(): Promise<ValidationResult> {
       );
     }
 
-    const orphaned_chats = orphanedChats?.map((c) => c.id) || [];
+    const orphaned_chats = chatsWithProfiles?.filter((
+      c: {
+        customer: { role: string };
+        stylist: { role: string };
+        id: string;
+      },
+    ) =>
+      !c.customer || !c.stylist ||
+      c.customer.role !== "customer" ||
+      c.stylist.role !== "stylist"
+    ).map((c: { id: string }) => c.id) || [];
+
     if (orphaned_chats.length > 0) {
       validation_errors.push(
-        `${orphaned_chats.length} chats have no associated booking`,
+        `${orphaned_chats.length} chats have invalid customer/stylist references`,
       );
     }
 
@@ -213,41 +270,39 @@ async function validateChats(): Promise<ValidationResult> {
       );
     }
 
-    // 8. Validate chat-booking relationships
-    const { data: bookingsWithChats, error: bookingError } = await supabase
-      .from("bookings")
-      .select("id")
-      .in("id", pgChats?.map(c => c.booking_id) || []);
+    // 8. Validate unique customer-stylist relationships
+    const uniqueCustomerStylistPairs = pgChats?.length || 0;
+    const pgPairs = pgChats?.map((c) => `${c.customer_id}-${c.stylist_id}`) ||
+      [];
+    const uniquePgPairs = new Set(pgPairs).size;
 
-    if (bookingError) {
+    if (uniqueCustomerStylistPairs !== uniquePgPairs) {
       validation_errors.push(
-        `Failed to validate chat-booking relationships: ${bookingError.message}`,
+        `Duplicate customer-stylist pairs found: ${uniqueCustomerStylistPairs} chats but only ${uniquePgPairs} unique pairs`,
       );
     }
 
-    const existingBookingIds = new Set(bookingsWithChats?.map(b => b.id) || []);
-    const chatsWithMissingBookings = pgChats?.filter(c => 
-      c.booking_id && !existingBookingIds.has(c.booking_id)
-    ) || [];
-
-    const chat_booking_mismatches = chatsWithMissingBookings.length;
-    if (chat_booking_mismatches > 0) {
-      validation_errors.push(
-        `${chat_booking_mismatches} chats reference non-existent bookings`,
-      );
-    }
+    logger.info(
+      `Customer-stylist pairs: ${uniquePgPairs} unique pairs across ${uniqueCustomerStylistPairs} chats`,
+    );
 
     // 9. Validate message senders (sample check)
     const sampleSize = Math.min(50, pgMessages?.length || 0);
     if (pgMessages && pgChats && sampleSize > 0) {
-      logger.info(`Validating sender mapping for ${sampleSize} sample messages...`);
+      logger.info(
+        `Validating sender mapping for ${sampleSize} sample messages...`,
+      );
 
-      // Create chat to booking mapping for PostgreSQL data
-      const pgChatToBookingMap = new Map<string, string>();
+      // Create chat ID to customer/stylist mapping for PostgreSQL data
+      const pgChatMap = new Map<
+        string,
+        { customer_id: string; stylist_id: string }
+      >();
       for (const chat of pgChats) {
-        if (chat.booking_id) {
-          pgChatToBookingMap.set(chat.id, chat.booking_id);
-        }
+        pgChatMap.set(chat.id, {
+          customer_id: chat.customer_id,
+          stylist_id: chat.stylist_id,
+        });
       }
 
       for (let i = 0; i < sampleSize; i++) {
@@ -257,20 +312,26 @@ async function validateChats(): Promise<ValidationResult> {
         );
 
         if (mysqlMessage && pgMessage.chat_id) {
-          const bookingId = pgChatToBookingMap.get(pgMessage.chat_id);
-          if (bookingId) {
-            const bookingInfo = bookingMap.get(bookingId);
-            if (bookingInfo) {
-              const expectedSender = mysqlMessage.is_from === "buyer" 
-                ? bookingInfo.buyer_id 
-                : bookingInfo.stylist_id;
+          const chatInfo = pgChatMap.get(pgMessage.chat_id);
+          if (chatInfo) {
+            // Find the original MySQL chat this message belonged to
+            const originalChat = mysqlChats.find((c) =>
+              c.id === mysqlMessage.chat_id
+            );
+            if (originalChat) {
+              const chatMapping = chatToCustomerStylistMap.get(originalChat.id);
+              if (chatMapping) {
+                const expectedSender = mysqlMessage.is_from === "buyer"
+                  ? chatMapping.buyer_id
+                  : chatMapping.stylist_id;
 
-              if (expectedSender !== pgMessage.sender_id) {
-                message_sender_mismatches.push({
-                  message_id: pgMessage.id,
-                  expected_sender: expectedSender,
-                  actual_sender: pgMessage.sender_id,
-                });
+                if (expectedSender !== pgMessage.sender_id) {
+                  message_sender_mismatches.push({
+                    message_id: pgMessage.id,
+                    expected_sender: expectedSender,
+                    actual_sender: pgMessage.sender_id,
+                  });
+                }
               }
             }
           }
@@ -287,30 +348,31 @@ async function validateChats(): Promise<ValidationResult> {
     // 10. Check message counts per chat (sample validation)
     if (pgChats && pgMessages) {
       logger.info("Validating message counts per chat...");
-      
+
       const chatMessageCounts = new Map<string, number>();
       for (const message of pgMessages) {
         if (message.chat_id) {
           chatMessageCounts.set(
             message.chat_id,
-            (chatMessageCounts.get(message.chat_id) || 0) + 1
+            (chatMessageCounts.get(message.chat_id) || 0) + 1,
           );
         }
       }
 
       logger.info(`Chat message distribution:`);
       const counts = Array.from(chatMessageCounts.values());
-      const avgMessages = counts.length > 0 ? counts.reduce((a, b) => a + b, 0) / counts.length : 0;
+      const avgMessages = counts.length > 0
+        ? counts.reduce((a, b) => a + b, 0) / counts.length
+        : 0;
       const maxMessages = counts.length > 0 ? Math.max(...counts) : 0;
       const minMessages = counts.length > 0 ? Math.min(...counts) : 0;
-      
+
       logger.info(`  - Average messages per chat: ${avgMessages.toFixed(2)}`);
       logger.info(`  - Max messages in a chat: ${maxMessages}`);
       logger.info(`  - Min messages in a chat: ${minMessages}`);
     }
 
     const is_valid = validation_errors.length === 0 &&
-      missing_chats.length === 0 &&
       missing_messages.length === 0 &&
       orphaned_chats.length === 0 &&
       orphaned_messages.length === 0 &&
@@ -322,11 +384,12 @@ async function validateChats(): Promise<ValidationResult> {
       total_mysql_messages: totalMysqlMessages,
       total_pg_chats: totalPgChats || 0,
       total_pg_messages: totalPgMessages || 0,
-      missing_chats,
+      unique_customer_stylist_pairs: uniquePgPairs,
+      messages_with_images: messagesWithImages,
       missing_messages,
       orphaned_chats,
       orphaned_messages,
-      chat_booking_mismatches,
+      invalid_customer_stylist_relationships: orphaned_chats.length,
       message_sender_mismatches,
       validation_errors,
     };
@@ -356,16 +419,22 @@ async function validateChats(): Promise<ValidationResult> {
     }
 
     logger.info("Validation summary:");
-    logger.info(`  - Total MySQL active chats: ${totalMysqlChats}`);
+    logger.info(`  - Total MySQL chats: ${totalMysqlChats}`);
     logger.info(`  - Total MySQL messages: ${totalMysqlMessages}`);
+    logger.info(`  - Messages with images (MySQL): ${messagesWithImages}`);
     logger.info(`  - Total PostgreSQL chats: ${totalPgChats || 0}`);
     logger.info(`  - Total PostgreSQL messages: ${totalPgMessages || 0}`);
-    logger.info(`  - Missing chats: ${missing_chats.length}`);
+    logger.info(`  - MySQL messages with images: ${messagesWithImages}`);
+    logger.info(`  - Unique customer-stylist pairs: ${uniquePgPairs}`);
     logger.info(`  - Missing messages: ${missing_messages.length}`);
     logger.info(`  - Orphaned chats: ${orphaned_chats.length}`);
     logger.info(`  - Orphaned messages: ${orphaned_messages.length}`);
-    logger.info(`  - Chat-booking mismatches: ${chat_booking_mismatches}`);
-    logger.info(`  - Message sender mismatches: ${message_sender_mismatches.length}`);
+    logger.info(
+      `  - Invalid customer-stylist relationships: ${orphaned_chats.length}`,
+    );
+    logger.info(
+      `  - Message sender mismatches: ${message_sender_mismatches.length}`,
+    );
 
     return result;
   } catch (error) {

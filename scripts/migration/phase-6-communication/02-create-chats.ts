@@ -3,7 +3,7 @@
  * Phase 6 - Step 2: Create Chats and Messages in Supabase
  *
  * This script takes the extracted chats and messages and creates them in Supabase.
- * Handles chat creation first, then messages, and image media records.
+ * Handles chat creation first, then messages. Media records are handled in Phase 8.
  */
 
 import fs from "fs/promises";
@@ -25,11 +25,7 @@ interface CreationResult {
     sender_id: string;
     has_image?: boolean;
   }>;
-  created_media: Array<{
-    id: string;
-    message_id: string;
-    media_type: string;
-  }>;
+  // Media creation removed - handled in Phase 8
   failed_chats: Array<{
     chat: ProcessedChat;
     error: string;
@@ -43,7 +39,7 @@ interface CreationResult {
     total_messages_to_create: number;
     successful_chat_creations: number;
     successful_message_creations: number;
-    successful_media_creations: number;
+    // Media creation removed - handled in Phase 8
     failed_chat_creations: number;
     failed_message_creations: number;
     duration_ms: number;
@@ -64,7 +60,7 @@ async function createChats(): Promise<CreationResult> {
     );
     const chats: ProcessedChat[] = extractedData.processedChats;
     const messages: ProcessedMessage[] = extractedData.processedMessages;
-    const imageMessages = extractedData.imageMessages || [];
+    // imageMessages will be handled in Phase 8
 
     logger.info(
       `Loaded ${chats.length} chats and ${messages.length} messages to create`,
@@ -83,7 +79,6 @@ async function createChats(): Promise<CreationResult> {
 
     const created_chats: CreationResult["created_chats"] = [];
     const created_messages: CreationResult["created_messages"] = [];
-    const created_media: CreationResult["created_media"] = [];
     const failed_chats: CreationResult["failed_chats"] = [];
     const failed_messages: CreationResult["failed_messages"] = [];
 
@@ -208,11 +203,10 @@ async function createChats(): Promise<CreationResult> {
             return;
           }
 
-          // Create the message (exclude has_image from insert)
-          const { has_image, ...messageData } = message;
+          // Create the message
           const { data: createdMessage, error: createError } = await supabase
             .from("chat_messages")
-            .insert(messageData)
+            .insert(message)
             .select("id, chat_id, sender_id")
             .single();
 
@@ -225,7 +219,6 @@ async function createChats(): Promise<CreationResult> {
               id: createdMessage.id,
               chat_id: createdMessage.chat_id,
               sender_id: createdMessage.sender_id,
-              has_image: has_image,
             });
 
             logger.debug(
@@ -249,68 +242,14 @@ async function createChats(): Promise<CreationResult> {
       );
     }
 
-    // Phase 3: Create media records for image messages
-    logger.info("Phase 3: Creating media records for image messages...");
-
-    const imageMessageIds = new Set(
-      imageMessages.map((img: { message: { id: string } }) => img.message.id),
-    );
-    const createdImageMessages = created_messages.filter((msg) =>
-      msg.has_image && imageMessageIds.has(msg.id)
-    );
-
-    if (createdImageMessages.length > 0) {
-      logger.info(
-        `Creating ${createdImageMessages.length} media records for image messages`,
-      );
-
-      const mediaPromises = createdImageMessages.map(async (message) => {
-        try {
-          // Create media record
-          const { data: createdMedia, error: createError } = await supabase
-            .from("media")
-            .insert({
-              media_type: "chat_image",
-              chat_message_id: message.id,
-              file_path: `/chats/images/${message.id}`, // Placeholder path
-              file_name: `${message.id}.jpg`, // Placeholder name
-              file_size: 0, // Unknown size
-              mime_type: "image/jpeg", // Default type
-            })
-            .select("id, media_type")
-            .single();
-
-          if (createError) {
-            throw createError;
-          }
-
-          if (createdMedia) {
-            created_media.push({
-              id: createdMedia.id,
-              message_id: message.id,
-              media_type: createdMedia.media_type,
-            });
-
-            logger.debug(`✓ Created media record for message: ${message.id}`);
-          }
-        } catch (error) {
-          logger.warn(
-            `Failed to create media record for message ${message.id}:`,
-            error,
-          );
-          // Non-critical error, don't fail the migration
-        }
-      });
-
-      await Promise.all(mediaPromises);
-    }
+    // Phase 3: Media record creation moved to Phase 8
+    logger.info("Phase 3: Media records will be handled in Phase 8...");
 
     const duration = Date.now() - startTime;
 
     const result: CreationResult = {
       created_chats,
       created_messages,
-      created_media,
       failed_chats,
       failed_messages,
       metadata: {
@@ -318,7 +257,6 @@ async function createChats(): Promise<CreationResult> {
         total_messages_to_create: messages.length,
         successful_chat_creations: created_chats.length,
         successful_message_creations: created_messages.length,
-        successful_media_creations: created_media.length,
         failed_chat_creations: failed_chats.length,
         failed_message_creations: failed_messages.length,
         duration_ms: duration,
@@ -333,7 +271,6 @@ async function createChats(): Promise<CreationResult> {
           created_at: new Date().toISOString(),
           created_chats,
           created_messages,
-          created_media,
           metadata: result.metadata,
         },
         null,
@@ -367,7 +304,7 @@ async function createChats(): Promise<CreationResult> {
           total_messages: messages.length,
           successfully_created_chats: created_chats.length,
           successfully_created_messages: created_messages.length,
-          successfully_created_media: created_media.length,
+          // Media creation moved to Phase 8
           failed_chat_creations: failed_chats.length,
           failed_message_creations: failed_messages.length,
           chat_success_rate: `${
@@ -396,9 +333,7 @@ async function createChats(): Promise<CreationResult> {
     logger.info(
       `  - Successfully created messages: ${result.metadata.successful_message_creations}`,
     );
-    logger.info(
-      `  - Successfully created media: ${result.metadata.successful_media_creations}`,
-    );
+    logger.info("  - Media records will be created in Phase 8");
     logger.info(
       `  - Failed chat creations: ${result.metadata.failed_chat_creations}`,
     );

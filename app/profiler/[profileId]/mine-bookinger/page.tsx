@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
 import { MyBookingsPageContent } from "@/components/my-bookings/my-bookings-page-content";
-import { BookingsWithoutReviewsAlerts } from "@/components/reviews/bookings-without-reviews-alerts";
 import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default async function MineBookingerPage({

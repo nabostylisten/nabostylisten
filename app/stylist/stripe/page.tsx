@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isAdmin } from "@/lib/permissions";
 import {
   getStripeAccountStatus,
   checkIdentityVerificationStatus,

@@ -423,26 +423,65 @@ async function processAddress(
     entry_instructions: null, // Default empty
     location,
     is_primary: false, // Will be updated in step 3
-    created_at: (() => {
-      try {
-        return address.created_at ? new Date(address.created_at).toISOString() : new Date().toISOString();
-      } catch {
-        console.log(`⚠️  Invalid created_at date for address ${address.id}: "${address.created_at}"`);
-        return new Date().toISOString();
-      }
-    })(),
-    updated_at: (() => {
-      try {
-        return address.updated_at ? new Date(address.updated_at).toISOString() : new Date().toISOString();
-      } catch {
-        console.log(`⚠️  Invalid updated_at date for address ${address.id}: "${address.updated_at}"`);
-        return new Date().toISOString();
-      }
-    })(),
+    created_at: parseTimestamp(address.created_at, address.id, 'created_at'),
+    updated_at: parseTimestamp(address.updated_at, address.id, 'updated_at'),
     source_table: sourceTable,
     original_id: address.id,
     geocoding_confidence: geocodingConfidence,
   };
+}
+
+/**
+ * Parse timestamp with robust error handling and date extraction
+ */
+function parseTimestamp(timestamp: string | null, addressId: string, fieldName: string): string {
+  if (!timestamp) {
+    return new Date().toISOString();
+  }
+
+  try {
+    // First try direct parsing
+    const directParse = new Date(timestamp);
+    if (!isNaN(directParse.getTime())) {
+      return directParse.toISOString();
+    }
+  } catch {
+    // Continue to extraction logic
+  }
+
+  try {
+    // Extract timestamp from malformed data using regex patterns
+    // Look for YYYY-MM-DD HH:MM:SS.ssssss pattern
+    const timestampMatch = timestamp.match(/(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/);
+
+    if (timestampMatch) {
+      const extractedTimestamp = timestampMatch[1];
+      const parsedDate = new Date(extractedTimestamp);
+
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString();
+      }
+    }
+
+    // Try to extract just the date part (YYYY-MM-DD)
+    const dateMatch = timestamp.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch) {
+      const extractedDate = dateMatch[1];
+      const parsedDate = new Date(extractedDate);
+
+      if (!isNaN(parsedDate.getTime())) {
+        return parsedDate.toISOString();
+      }
+    }
+
+    // If no patterns match, log and use current date
+    console.log(`⚠️  Invalid ${fieldName} date for address ${addressId}: "${timestamp}"`);
+    return new Date().toISOString();
+
+  } catch (error) {
+    console.log(`⚠️  Failed to parse ${fieldName} date for address ${addressId}: "${timestamp}" - ${error}`);
+    return new Date().toISOString();
+  }
 }
 
 /**

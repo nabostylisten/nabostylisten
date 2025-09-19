@@ -11,12 +11,10 @@ import { Highlighter } from "@/components/magicui/highlighter";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { AboutFounder } from "@/components/landing/about-founder";
 import { PopularServices } from "@/components/landing/popular-services";
-import { StatsSection } from "@/components/landing/stats-section";
 import { MediaMentions } from "@/components/landing/media-mentions";
 import { FAQPreview } from "@/components/landing/faq-preview";
 import { StylistCTA } from "@/components/landing/stylist-cta";
 import { brandColors } from "@/lib/brand";
-import { cookies } from "next/headers";
 
 async function ServiceFilterSection() {
   const [categoriesResult, stylistsResult] = await Promise.all([

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import { Calendar, Info } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { ProfileLayout } from "@/components/profile-layout";
 import { AvailabilitySchedulerWrapper } from "./availability-scheduler-wrapper";
 import { BlurFade } from "@/components/magicui/blur-fade";

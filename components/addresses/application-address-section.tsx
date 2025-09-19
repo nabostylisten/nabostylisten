@@ -1,13 +1,12 @@
 "use client";
 
-import { MapPin, X } from "lucide-react";
 import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
 import { AddressInput } from "@/components/ui/address-input";
 import type { MapboxSuggestion } from "@/types";
+import { parseMapboxResponse } from "@/lib/mapbox";
 
 interface ApplicationAddressSectionProps {
   onAddressChange: (address: {
@@ -48,39 +47,42 @@ export function ApplicationAddressSection({
     geometry: undefined as [number, number] | undefined,
   });
 
-  // Import the shared parseMapboxResponse function from lib/mapbox.ts
-  const parseMapboxResponse = (suggestion: MapboxSuggestion) => {
-    const { parseMapboxResponse: sharedParser } = require("@/lib/mapbox");
-    return sharedParser(suggestion);
-  };
-
   const handleAddressSelect = (suggestion: MapboxSuggestion) => {
     // Log the complete Mapbox suggestion to see what fields are available
-    console.log("🗺️ [MAPBOX] Complete suggestion object:", JSON.stringify(suggestion, null, 2));
+    console.log(
+      "🗺️ [MAPBOX] Complete suggestion object:",
+      JSON.stringify(suggestion, null, 2)
+    );
     console.log("🗺️ [MAPBOX] suggestion.context:", suggestion.context);
     console.log("🗺️ [MAPBOX] suggestion.properties:", suggestion.properties);
-    
+
     // Check for country-related fields that might contain ISO codes
     if (suggestion.context) {
-      const countryContext = suggestion.context.find(item => item.id?.startsWith("country"));
+      const countryContext = suggestion.context.find((item) =>
+        item.id?.startsWith("country")
+      );
       console.log("🗺️ [MAPBOX] Country context item:", countryContext);
-      
+
       // Also log all context items to see what's available
       suggestion.context.forEach((item, index) => {
         console.log(`🗺️ [MAPBOX] Context[${index}]:`, item);
       });
     }
-    
+
     const parsed = parseMapboxResponse(suggestion);
     console.log("🗺️ [MAPBOX] Parsed result:", parsed);
-    
+
     // Log specifically if we got a country code
     if (parsed.countryCode) {
-      console.log(`🗺️ [MAPBOX] ✅ Found country ISO code: "${parsed.countryCode}" for country "${parsed.country}"`);
+      console.log(
+        `🗺️ [MAPBOX] ✅ Found country ISO code: "${parsed.countryCode}" for country "${parsed.country}"`
+      );
     } else {
-      console.log(`🗺️ [MAPBOX] ❌ No country ISO code found for country "${parsed.country}"`);
+      console.log(
+        `🗺️ [MAPBOX] ❌ No country ISO code found for country "${parsed.country}"`
+      );
     }
-    
+
     const newAddressData = {
       ...addressData,
       streetAddress: parsed.street,
@@ -122,27 +124,6 @@ export function ApplicationAddressSection({
       countryCode: newAddressData.countryCode,
       entryInstructions: newAddressData.entryInstructions || undefined,
       geometry: newAddressData.geometry,
-    });
-  };
-
-  const clearMapboxSelection = () => {
-    const newAddressData = {
-      ...addressData,
-      geometry: undefined,
-    };
-    setAddressData(newAddressData);
-    setAddressQuery("");
-
-    // Notify parent
-    onAddressChange({
-      nickname: newAddressData.nickname || undefined,
-      streetAddress: newAddressData.streetAddress,
-      city: newAddressData.city,
-      postalCode: newAddressData.postalCode,
-      country: newAddressData.country,
-      countryCode: newAddressData.countryCode,
-      entryInstructions: newAddressData.entryInstructions || undefined,
-      geometry: undefined,
     });
   };
 

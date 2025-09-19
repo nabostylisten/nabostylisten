@@ -40,6 +40,10 @@ const addressFormSchema = z.object({
 });
 
 type Address = Database["public"]["Tables"]["addresses"]["Row"];
+type UpdateAddressData = Omit<
+  Database["public"]["Tables"]["addresses"]["Update"],
+  "id" | "user_id" | "created_at" | "updated_at"
+>;
 
 interface AddressDialogProps {
   open: boolean;
@@ -126,7 +130,7 @@ export function AddressDialog({
   });
 
   const updateAddressMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: any }) =>
+    mutationFn: ({ id, data }: { id: string; data: UpdateAddressData }) =>
       updateAddress(id, data),
     onSuccess: (result) => {
       if (result.error) {
@@ -163,7 +167,7 @@ export function AddressDialog({
       is_primary: values.is_primary,
       // If we have coordinates, format them for PostGIS
       location: values.location
-        ? (`POINT(${values.location.lng} ${values.location.lat})` as any)
+        ? (`POINT(${values.location.lng} ${values.location.lat})` as unknown as string)
         : undefined,
     };
 

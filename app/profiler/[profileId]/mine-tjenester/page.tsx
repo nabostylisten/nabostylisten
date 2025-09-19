@@ -2,7 +2,6 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { ProfileLayout } from "@/components/profile-layout";
 import { ServicesPageClient } from "./services-page-client";
-import { BlurFade } from "@/components/magicui/blur-fade";
 
 export default async function MineTjenesterPage({
   params,

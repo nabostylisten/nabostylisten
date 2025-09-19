@@ -134,13 +134,36 @@ async function main() {
       'Final User Preferences Count': finalCounts.user_preferences
     });
 
+    // Create completion marker for Phase 2 prerequisite check
+    const completionMarkerPath = join(tempDir, 'phase-1-completed.json');
+    const fs = await import('fs');
+    const completionMarker = {
+      phase: "Phase 1 - User Migration",
+      completed_at: new Date().toISOString(),
+      status: "success",
+      final_stats: {
+        total_duration_seconds: Math.round(totalTime / 1000),
+        profiles_created: created.profiles,
+        stylist_details_created: created.stylist_details,
+        user_preferences_created: created.user_preferences
+      },
+      database_counts: {
+        profiles: finalCounts.profiles,
+        stylist_details: finalCounts.stylist_details,
+        user_preferences: finalCounts.user_preferences
+      }
+    };
+
+    fs.writeFileSync(completionMarkerPath, JSON.stringify(completionMarker, null, 2));
+    logger.success(`✅ Phase 1 completion marker created: ${completionMarkerPath}`);
+
     logger.success('✅ Users can now login with OTP using their original email addresses');
-    
+
     logger.info('\nNext Steps:');
     logger.info('1. Test user login with OTP authentication');
     logger.info('2. Verify user data in the Supabase dashboard');
     logger.info('3. Begin Phase 2: Address and Service data migration');
-    
+
     // Show test instructions
     logger.info('\nTo test user login:');
     logger.info('1. Go to your application login page');

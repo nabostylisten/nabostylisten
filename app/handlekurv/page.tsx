@@ -309,8 +309,8 @@ export default function CartPage() {
                                   Fjern tjeneste
                                 </AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  Er du sikker på at du vil fjerne "
-                                  {item.service.title}" fra handlekurven?
+                                  Er du sikker på at du vil fjerne &ldquo;
+                                  {item.service.title}&rdquo; fra handlekurven?
                                 </AlertDialogDescription>
                               </AlertDialogHeader>
                               <AlertDialogFooter>
@@ -359,8 +359,9 @@ export default function CartPage() {
                                     Fjern tjeneste
                                   </AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    Er du sikker på at du vil fjerne "
-                                    {item.service.title}" fra handlekurven?
+                                    Er du sikker på at du vil fjerne &ldquo;
+                                    {item.service.title}&rdquo; fra
+                                    handlekurven?
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

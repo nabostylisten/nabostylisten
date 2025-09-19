@@ -7,7 +7,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import { CheckCircle, Heart, Users, Star } from "lucide-react";
+import { CheckCircle, Users, Star } from "lucide-react";
 import { BlurFade } from "@/components/magicui/blur-fade";
 import { getPlatformStats } from "@/server/stats.actions";
 import { HowItWorks } from "@/components/landing/how-it-works";

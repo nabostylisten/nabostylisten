@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Home, Building } from "lucide-react";
 import type { MapboxSuggestion } from "@/types";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import {
   FormControl,
   FormDescription,
@@ -40,7 +39,6 @@ interface AddressFormProps {
 
 export function AddressForm({ form }: AddressFormProps) {
   const [addressFieldsLocked, setAddressFieldsLocked] = useState(false);
-  const isMobile = useMediaQuery("(max-width: 640px)");
 
   // Watch for changes in the full address field
   const fullAddress = form.watch("fullAddress");

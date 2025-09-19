@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback } from "react";
-import Map, { Source, Layer, Popup } from "react-map-gl/mapbox";
-import type { MapRef, ViewStateChangeEvent } from "react-map-gl/mapbox";
+import Map, { Source, Layer } from "react-map-gl/mapbox";
+import type { ViewStateChangeEvent } from "react-map-gl/mapbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,11 +12,9 @@ import { MapPin, Users, RotateCcw, X } from "lucide-react";
 import { useState } from "react";
 import { useTheme } from "next-themes";
 import colors from "tailwindcss/colors";
-
-// Import Mapbox CSS
 import "mapbox-gl/dist/mapbox-gl.css";
 import { CircleLayer, MapboxEvent, SymbolLayer } from "mapbox-gl";
-import { brandColors } from "@/lib/brand";
+import { MapMouseEvent } from "mapbox-gl";
 
 // Default map configuration
 const DEFAULT_ZOOM = 6;
@@ -111,7 +109,18 @@ export function AdminMapView() {
   } = useAdminMap();
 
   const [hoveredFeature, setHoveredFeature] = useState<{
-    properties: any;
+    properties: {
+      id: string;
+      user_id: string;
+      user_role: string;
+      user_name: string;
+      user_email: string;
+      street_address: string;
+      city: string;
+      postal_code: string;
+      nickname: string;
+      is_primary: boolean;
+    };
     coordinates: [number, number];
   } | null>(null);
 

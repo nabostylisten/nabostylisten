@@ -1,15 +1,14 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   BarChart3,
   Users,
   Calendar,
   Package,
   DollarSign,
-  Settings,
   Activity,
   UserCheck,
 } from "lucide-react";

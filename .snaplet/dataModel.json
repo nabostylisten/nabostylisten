@@ -3216,20 +3216,6 @@
           "hasDefaultValue": false
         },
         {
-          "name": "chats",
-          "type": "chats",
-          "isRequired": false,
-          "kind": "object",
-          "relationName": "chatsTobookings",
-          "relationFromFields": [],
-          "relationToFields": [],
-          "isList": true,
-          "isId": false,
-          "isGenerated": false,
-          "sequence": false,
-          "hasDefaultValue": false
-        },
-        {
           "name": "discount_usage",
           "type": "discount_usage",
           "isRequired": false,
@@ -3678,9 +3664,9 @@
           "maxLength": null
         },
         {
-          "id": "public.chats.booking_id",
-          "name": "booking_id",
-          "columnName": "booking_id",
+          "id": "public.chats.customer_id",
+          "name": "customer_id",
+          "columnName": "customer_id",
           "type": "uuid",
           "isRequired": true,
           "kind": "scalar",
@@ -3692,13 +3678,45 @@
           "maxLength": null
         },
         {
-          "name": "bookings",
-          "type": "bookings",
+          "id": "public.chats.stylist_id",
+          "name": "stylist_id",
+          "columnName": "stylist_id",
+          "type": "uuid",
+          "isRequired": true,
+          "kind": "scalar",
+          "isList": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false,
+          "isId": false,
+          "maxLength": null
+        },
+        {
+          "name": "profiles_chats_customer_idToprofiles",
+          "type": "profiles",
           "isRequired": true,
           "kind": "object",
-          "relationName": "chatsTobookings",
+          "relationName": "chats_customer_idToprofiles",
           "relationFromFields": [
-            "booking_id"
+            "customer_id"
+          ],
+          "relationToFields": [
+            "id"
+          ],
+          "isList": false,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "profiles_chats_stylist_idToprofiles",
+          "type": "profiles",
+          "isRequired": true,
+          "kind": "object",
+          "relationName": "chats_stylist_idToprofiles",
+          "relationFromFields": [
+            "stylist_id"
           ],
           "relationToFields": [
             "id"
@@ -3726,9 +3744,10 @@
       ],
       "uniqueConstraints": [
         {
-          "name": "chats_booking_id_key",
+          "name": "chats_customer_id_stylist_id_key",
           "fields": [
-            "booking_id"
+            "customer_id",
+            "stylist_id"
           ],
           "nullNotDistinct": false
         },
@@ -7304,6 +7323,34 @@
           "isRequired": false,
           "kind": "object",
           "relationName": "chat_messagesToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "chats_chats_customer_idToprofiles",
+          "type": "chats",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "chats_customer_idToprofiles",
+          "relationFromFields": [],
+          "relationToFields": [],
+          "isList": true,
+          "isId": false,
+          "isGenerated": false,
+          "sequence": false,
+          "hasDefaultValue": false
+        },
+        {
+          "name": "chats_chats_stylist_idToprofiles",
+          "type": "chats",
+          "isRequired": false,
+          "kind": "object",
+          "relationName": "chats_stylist_idToprofiles",
           "relationFromFields": [],
           "relationToFields": [],
           "isList": true,

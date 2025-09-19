@@ -1,5 +1,4 @@
 import type {
-  bookingsScalars,
   chatsScalars,
   SeedClient,
   usersScalars,
@@ -7,18 +6,29 @@ import type {
 import { addDays, subDays } from "date-fns";
 
 /**
- * Creates chat channels for selected bookings to test real-time messaging
+ * Creates customer-stylist chat channels for continuous conversations
  */
-export async function createBookingChats(
+export async function createCustomerStylistChats(
   seed: SeedClient,
-  bookings: bookingsScalars[],
+  customerUsers: usersScalars[],
+  stylistUsers: usersScalars[],
 ) {
-  console.log("-- Creating chats for selected bookings...");
+  console.log("-- Creating customer-stylist chats...");
 
+  // Create chats between specific customer-stylist pairs
   const { chats } = await seed.chats([
-    { booking_id: bookings[0].id }, // Upcoming confirmed booking
-    { booking_id: bookings[1].id }, // Upcoming pending booking
-    { booking_id: bookings[4].id }, // Wedding booking
+    {
+      customer_id: customerUsers[0].id, // Kari
+      stylist_id: stylistUsers[0].id, // Maria
+    },
+    {
+      customer_id: customerUsers[0].id, // Kari
+      stylist_id: stylistUsers[1].id, // Emma
+    },
+    {
+      customer_id: customerUsers[1].id, // Ole
+      stylist_id: stylistUsers[1].id, // Emma
+    },
   ]);
 
   return chats;
@@ -80,50 +90,57 @@ export async function createCurrentChatMessages(
   console.log("-- Creating current chat messages...");
 
   await seed.chat_messages([
-    // Messages for upcoming confirmed booking
+    // Chat 1: Kari (customer) <-> Maria (stylist) - Multiple booking context
     {
       chat_id: chats[0].id,
       sender_id: customerUsers[0].id, // Kari
       content:
-        "Hei Maria! Gleder meg til å få balayage neste uke. Har du noen tips til hvordan jeg skal forberede håret?",
+        "Hei Maria! Takk for forrige balayage. Kan jeg booke en oppfriskning?",
       is_read: true,
     },
     {
       chat_id: chats[0].id,
       sender_id: stylistUsers[0].id, // Maria
       content:
-        "Hei Kari! Så hyggelig at du kommer til meg. Unngå å vaske håret dagen før, så får vi best resultat 😊",
+        "Hei Kari! Så hyggelig å høre fra deg igjen! Selvfølgelig, la oss finne en tid som passer 😊",
       is_read: true,
     },
     {
       chat_id: chats[0].id,
       sender_id: customerUsers[0].id, // Kari
-      content: "Tusen takk for tipset! Sees neste uke!",
-      is_read: false,
+      content: "Kan du i dag klokka 15? Samme sted som sist?",
+      is_read: false, // Unread message for demo
     },
 
-    // Messages for pending booking
+    // Chat 2: Kari (customer) <-> Emma (stylist) - Different stylist
     {
       chat_id: chats[1].id,
       sender_id: customerUsers[0].id, // Kari
       content:
-        "Hei Emma! Lurer på om du kan komme til sommerhuset mitt i stedet? Sender adressen i meldingen til stylisten.",
+        "Hei Emma! Jeg har booket neglene hos deg. Har du tid til å diskutere design?",
+      is_read: true,
+    },
+    {
+      chat_id: chats[1].id,
+      sender_id: stylistUsers[1].id, // Emma
+      content:
+        "Hei! Ja, la oss finne et design du vil like. Har du noen inspirasjon?",
       is_read: false,
     },
 
-    // Messages for wedding booking
+    // Chat 3: Ole (customer) <-> Emma (stylist) - Wedding booking
     {
       chat_id: chats[2].id,
       sender_id: customerUsers[1].id, // Ole
       content:
-        "Hei Emma! Dette er for bryllupet vårt. Har du gjort bryllupsstyling før?",
+        "Hei Emma! Dette er for bryllupet vårt. Vi trenger både hår og makeup.",
       is_read: true,
     },
     {
       chat_id: chats[2].id,
       sender_id: stylistUsers[1].id, // Emma
       content:
-        "Gratulerer med bryllupet! Ja, jeg har mye erfaring med bryllup. Dette blir fantastisk! 💍✨",
+        "Gratulerer! 🎉 Jeg elsker bryllupsstyling. Skal vi møtes for en prøve først?",
       is_read: true,
     },
   ]);

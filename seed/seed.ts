@@ -9,7 +9,7 @@ import {
   createAffiliateLinksAndTracking,
   createAffiliatePayouts,
   // Chat system
-  createBookingChats,
+  createCustomerStylistChats,
   // Booking system
   createBookingNotes,
   createComprehensiveBookings,
@@ -128,7 +128,11 @@ async function main() {
 
   // 9. Create chat system
   console.log("-- Phase 9: Chat System");
-  const chats = await createBookingChats(seed, bookings);
+  const chats = await createCustomerStylistChats(
+    seed,
+    customerUsers,
+    stylistUsers,
+  );
   await createOldChatMessagesForCronTesting(
     seed,
     chats,

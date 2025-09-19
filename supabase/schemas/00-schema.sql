@@ -452,14 +452,16 @@ CREATE TABLE IF NOT EXISTS public.recurring_unavailability_exceptions (
     new_end_time timestamp with time zone
 );
 
--- Table for chats between a customer and a stylist, linked to a booking
+-- Table for chats between a customer and a stylist pair
 CREATE TABLE IF NOT EXISTS public.chats (
     id uuid NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone DEFAULT now() NOT NULL,
 
-    -- A chat is uniquely identified by the booking it's associated with.
-    booking_id uuid NOT NULL UNIQUE REFERENCES public.bookings(id) ON DELETE CASCADE
+    -- A chat is uniquely identified by the customer-stylist pair.
+    customer_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    stylist_id uuid NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    UNIQUE(customer_id, stylist_id)
 );
 
 -- Table for chat messages within a chat
@@ -836,16 +838,11 @@ BEGIN
         'sender_id', NEW.sender_id
       ),
       'chat_message_read_status',
-      'booking-' || (
-        SELECT b.id::text 
-        FROM public.chats c 
-        JOIN public.bookings b ON c.booking_id = b.id 
-        WHERE c.id = NEW.chat_id
-      ),
+      'chat-' || NEW.chat_id::text,
       false
     );
   END IF;
-  
+
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;

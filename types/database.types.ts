@@ -80,11 +80,11 @@ export type Database = {
     }
     Functions: {
       _postgis_deprecate: {
-        Args: { version: string; oldname: string; newname: string }
+        Args: { oldname: string; version: string; newname: string }
         Returns: undefined
       }
       _postgis_index_extent: {
-        Args: { col: string; tbl: unknown }
+        Args: { tbl: unknown; col: string }
         Returns: unknown
       }
       _postgis_pgsql_version: {
@@ -96,7 +96,7 @@ export type Database = {
         Returns: string
       }
       _postgis_selectivity: {
-        Args: { mode?: string; geom: unknown; att_name: string; tbl: unknown }
+        Args: { mode?: string; tbl: unknown; geom: unknown; att_name: string }
         Returns: number
       }
       _st_3dintersects: {
@@ -133,9 +133,9 @@ export type Database = {
       }
       _st_dwithin: {
         Args: {
-          tolerance: number
           geog1: unknown
           geog2: unknown
+          tolerance: number
           use_spheroid?: boolean
         }
         Returns: boolean
@@ -182,15 +182,15 @@ export type Database = {
       }
       _st_voronoi: {
         Args: {
-          tolerance?: number
-          clip?: unknown
           g1: unknown
+          clip?: unknown
+          tolerance?: number
           return_polygons?: boolean
         }
         Returns: unknown
       }
       _st_within: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: boolean
       }
       addauth: {
@@ -200,29 +200,29 @@ export type Database = {
       addgeometrycolumn: {
         Args:
           | {
-              new_type: string
-              use_typmod?: boolean
               new_dim: number
-              new_srid_in: number
+              use_typmod?: boolean
+              new_type: string
+              new_srid: number
               column_name: string
+              table_name: string
+            }
+          | {
+              schema_name: string
+              table_name: string
+              column_name: string
+              new_srid: number
+              new_type: string
+              new_dim: number
+              use_typmod?: boolean
+            }
+          | {
+              use_typmod?: boolean
               table_name: string
               schema_name: string
               catalog_name: string
-            }
-          | {
-              table_name: string
               column_name: string
-              new_srid: number
-              new_type: string
-              new_dim: number
-              schema_name: string
-              use_typmod?: boolean
-            }
-          | {
-              use_typmod?: boolean
-              table_name: string
-              column_name: string
-              new_srid: number
+              new_srid_in: number
               new_type: string
               new_dim: number
             }
@@ -278,19 +278,19 @@ export type Database = {
       }
       dropgeometrycolumn: {
         Args:
-          | { column_name: string; schema_name: string; table_name: string }
           | {
-              schema_name: string
-              table_name: string
               catalog_name: string
+              table_name: string
               column_name: string
+              schema_name: string
             }
+          | { schema_name: string; table_name: string; column_name: string }
           | { table_name: string; column_name: string }
         Returns: string
       }
       dropgeometrytable: {
         Args:
-          | { schema_name: string; catalog_name: string; table_name: string }
+          | { catalog_name: string; schema_name: string; table_name: string }
           | { schema_name: string; table_name: string }
           | { table_name: string }
         Returns: string
@@ -360,7 +360,7 @@ export type Database = {
         Returns: boolean
       }
       geometry_below: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: boolean
       }
       geometry_cmp: {
@@ -380,7 +380,7 @@ export type Database = {
         Returns: boolean
       }
       geometry_distance_box: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: number
       }
       geometry_distance_centroid: {
@@ -392,7 +392,7 @@ export type Database = {
         Returns: boolean
       }
       geometry_ge: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
       geometry_gist_compress_2d: {
@@ -416,7 +416,7 @@ export type Database = {
         Returns: undefined
       }
       geometry_gt: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
       geometry_hash: {
@@ -428,11 +428,11 @@ export type Database = {
         Returns: unknown
       }
       geometry_le: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
       geometry_left: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: boolean
       }
       geometry_lt: {
@@ -452,7 +452,7 @@ export type Database = {
         Returns: boolean
       }
       geometry_overlaps: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
       geometry_overlaps_3d: {
@@ -460,7 +460,7 @@ export type Database = {
         Returns: boolean
       }
       geometry_overleft: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
       geometry_overright: {
@@ -472,7 +472,7 @@ export type Database = {
         Returns: unknown
       }
       geometry_right: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: boolean
       }
       geometry_same: {
@@ -613,8 +613,8 @@ export type Database = {
       }
       populate_geometry_columns: {
         Args:
-          | { tbl_oid: unknown; use_typmod?: boolean }
           | { use_typmod?: boolean }
+          | { use_typmod?: boolean; tbl_oid: unknown }
         Returns: string
       }
       postgis_addbbox: {
@@ -774,7 +774,7 @@ export type Database = {
         Returns: unknown
       }
       st_3dmakebox: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
       }
       st_3dmaxdistance: {
@@ -790,13 +790,13 @@ export type Database = {
         Returns: unknown
       }
       st_addpoint: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
       }
       st_angle: {
         Args:
           | { line1: unknown; line2: unknown }
-          | { pt4?: unknown; pt3: unknown; pt2: unknown; pt1: unknown }
+          | { pt3: unknown; pt1: unknown; pt2: unknown; pt4?: unknown }
         Returns: number
       }
       st_area: {
@@ -832,10 +832,10 @@ export type Database = {
           | { geog: unknown; maxdecimaldigits?: number; options?: number }
           | { geom: unknown; maxdecimaldigits?: number; options?: number }
           | {
-              maxdecimaldigits?: number
-              pretty_bool?: boolean
               r: Record<string, unknown>
               geom_column?: string
+              maxdecimaldigits?: number
+              pretty_bool?: boolean
             }
         Returns: string
       }
@@ -849,19 +849,19 @@ export type Database = {
               nprefix?: string
               id?: string
             }
-          | { options?: number; geom: unknown; maxdecimaldigits?: number }
           | {
-              version: number
-              geog: unknown
-              maxdecimaldigits?: number
-              options?: number
-              nprefix?: string
               id?: string
-            }
-          | {
               version: number
               geom: unknown
               maxdecimaldigits?: number
+              options?: number
+              nprefix?: string
+            }
+          | { maxdecimaldigits?: number; geom: unknown; options?: number }
+          | {
+              maxdecimaldigits?: number
+              version: number
+              geog: unknown
               options?: number
               nprefix?: string
               id?: string
@@ -875,8 +875,8 @@ export type Database = {
       st_askml: {
         Args:
           | { "": string }
-          | { geog: unknown; maxdecimaldigits?: number; nprefix?: string }
           | { maxdecimaldigits?: number; geom: unknown; nprefix?: string }
+          | { nprefix?: string; geog: unknown; maxdecimaldigits?: number }
         Returns: string
       }
       st_aslatlontext: {
@@ -884,15 +884,15 @@ export type Database = {
         Returns: string
       }
       st_asmarc21: {
-        Args: { format?: string; geom: unknown }
+        Args: { geom: unknown; format?: string }
         Returns: string
       }
       st_asmvtgeom: {
         Args: {
-          buffer?: number
           geom: unknown
           bounds: unknown
           extent?: number
+          buffer?: number
           clip_geom?: boolean
         }
         Returns: unknown
@@ -901,7 +901,7 @@ export type Database = {
         Args:
           | { "": string }
           | { geog: unknown; rel?: number; maxdecimaldigits?: number }
-          | { rel?: number; geom: unknown; maxdecimaldigits?: number }
+          | { geom: unknown; rel?: number; maxdecimaldigits?: number }
         Returns: string
       }
       st_astext: {
@@ -911,21 +911,21 @@ export type Database = {
       st_astwkb: {
         Args:
           | {
-              ids: number[]
               prec?: number
               prec_z?: number
-              with_boxes?: boolean
+              geom: unknown
               with_sizes?: boolean
               prec_m?: number
-              geom: unknown[]
+              with_boxes?: boolean
             }
           | {
               with_sizes?: boolean
-              prec?: number
-              with_boxes?: boolean
-              prec_z?: number
               prec_m?: number
-              geom: unknown
+              prec_z?: number
+              with_boxes?: boolean
+              prec?: number
+              ids: number[]
+              geom: unknown[]
             }
         Returns: string
       }
@@ -935,7 +935,7 @@ export type Database = {
       }
       st_azimuth: {
         Args:
-          | { geog1: unknown; geog2: unknown }
+          | { geog2: unknown; geog1: unknown }
           | { geom2: unknown; geom1: unknown }
         Returns: number
       }
@@ -949,8 +949,8 @@ export type Database = {
       }
       st_buffer: {
         Args:
-          | { geom: unknown; options?: string; radius: number }
-          | { quadsegs: number; radius: number; geom: unknown }
+          | { geom: unknown; radius: number; quadsegs: number }
+          | { radius: number; geom: unknown; options?: string }
         Returns: unknown
       }
       st_buildarea: {
@@ -1034,11 +1034,11 @@ export type Database = {
         Returns: unknown
       }
       st_delaunaytriangles: {
-        Args: { flags?: number; g1: unknown; tolerance?: number }
+        Args: { g1: unknown; tolerance?: number; flags?: number }
         Returns: unknown
       }
       st_difference: {
-        Args: { geom2: unknown; gridsize?: number; geom1: unknown }
+        Args: { geom1: unknown; gridsize?: number; geom2: unknown }
         Returns: unknown
       }
       st_dimension: {
@@ -1051,8 +1051,8 @@ export type Database = {
       }
       st_distance: {
         Args:
-          | { geog1: unknown; geog2: unknown; use_spheroid?: boolean }
-          | { geom2: unknown; geom1: unknown }
+          | { geog1: unknown; use_spheroid?: boolean; geog2: unknown }
+          | { geom1: unknown; geom2: unknown }
         Returns: number
       }
       st_distancesphere: {
@@ -1062,7 +1062,7 @@ export type Database = {
         Returns: number
       }
       st_distancespheroid: {
-        Args: { geom1: unknown; geom2: unknown }
+        Args: { geom2: unknown; geom1: unknown }
         Returns: number
       }
       st_dump: {
@@ -1104,9 +1104,9 @@ export type Database = {
       }
       st_expand: {
         Args:
-          | { box: unknown; dy: number; dx: number }
-          | { dx: number; dy: number; dz?: number; dm?: number; geom: unknown }
-          | { dy: number; box: unknown; dz?: number; dx: number }
+          | { box: unknown; dx: number; dy: number }
+          | { box: unknown; dz?: number; dy: number; dx: number }
+          | { dx: number; dz?: number; geom: unknown; dm?: number; dy: number }
         Returns: unknown
       }
       st_exteriorring: {
@@ -1122,11 +1122,11 @@ export type Database = {
         Returns: unknown
       }
       st_force3d: {
-        Args: { zvalue?: number; geom: unknown }
+        Args: { geom: unknown; zvalue?: number }
         Returns: unknown
       }
       st_force3dm: {
-        Args: { mvalue?: number; geom: unknown }
+        Args: { geom: unknown; mvalue?: number }
         Returns: unknown
       }
       st_force3dz: {
@@ -1134,7 +1134,7 @@ export type Database = {
         Returns: unknown
       }
       st_force4d: {
-        Args: { geom: unknown; mvalue?: number; zvalue?: number }
+        Args: { zvalue?: number; mvalue?: number; geom: unknown }
         Returns: unknown
       }
       st_forcecollection: {
@@ -1163,8 +1163,8 @@ export type Database = {
       }
       st_generatepoints: {
         Args:
-          | { area: unknown; npoints: number; seed: number }
           | { npoints: number; area: unknown }
+          | { seed: number; area: unknown; npoints: number }
         Returns: unknown
       }
       st_geogfromtext: {
@@ -1255,7 +1255,7 @@ export type Database = {
         Returns: boolean
       }
       st_hausdorffdistance: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: number
       }
       st_hexagon: {
@@ -1271,7 +1271,7 @@ export type Database = {
         Returns: number
       }
       st_intersection: {
-        Args: { geom1: unknown; gridsize?: number; geom2: unknown }
+        Args: { gridsize?: number; geom1: unknown; geom2: unknown }
         Returns: unknown
       }
       st_intersects: {
@@ -1313,7 +1313,7 @@ export type Database = {
         Returns: boolean
       }
       st_isvaliddetail: {
-        Args: { flags?: number; geom: unknown }
+        Args: { geom: unknown; flags?: number }
         Returns: Database["gis"]["CompositeTypes"]["valid_detail"]
       }
       st_isvalidreason: {
@@ -1360,7 +1360,7 @@ export type Database = {
         Returns: unknown
       }
       st_linelocatepoint: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: number
       }
       st_linemerge: {
@@ -1413,7 +1413,7 @@ export type Database = {
         Returns: unknown
       }
       st_makevalid: {
-        Args: { "": unknown } | { params: string; geom: unknown }
+        Args: { "": unknown } | { geom: unknown; params: string }
         Returns: unknown
       }
       st_maxdistance: {
@@ -1429,7 +1429,7 @@ export type Database = {
         Returns: number
       }
       st_minimumboundingcircle: {
-        Args: { inputgeom: unknown; segs_per_quarter?: number }
+        Args: { segs_per_quarter?: number; inputgeom: unknown }
         Returns: unknown
       }
       st_minimumboundingradius: {
@@ -1537,7 +1537,7 @@ export type Database = {
         Returns: number
       }
       st_offsetcurve: {
-        Args: { line: unknown; distance: number; params?: string }
+        Args: { distance: number; params?: string; line: unknown }
         Returns: unknown
       }
       st_orderingequals: {
@@ -1625,21 +1625,21 @@ export type Database = {
         Returns: unknown
       }
       st_project: {
-        Args: { geog: unknown; distance: number; azimuth: number }
+        Args: { azimuth: number; geog: unknown; distance: number }
         Returns: unknown
       }
       st_quantizecoordinates: {
         Args: {
-          g: unknown
           prec_m?: number
-          prec_z?: number
-          prec_y?: number
+          g: unknown
           prec_x: number
+          prec_y?: number
+          prec_z?: number
         }
         Returns: unknown
       }
       st_reduceprecision: {
-        Args: { gridsize: number; geom: unknown }
+        Args: { geom: unknown; gridsize: number }
         Returns: unknown
       }
       st_relate: {
@@ -1659,11 +1659,11 @@ export type Database = {
         Returns: unknown
       }
       st_setsrid: {
-        Args: { geog: unknown; srid: number } | { srid: number; geom: unknown }
+        Args: { srid: number; geog: unknown } | { srid: number; geom: unknown }
         Returns: unknown
       }
       st_sharedpaths: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
       }
       st_shiftlongitude: {
@@ -1679,7 +1679,7 @@ export type Database = {
         Returns: unknown
       }
       st_split: {
-        Args: { geom2: unknown; geom1: unknown }
+        Args: { geom1: unknown; geom2: unknown }
         Returns: unknown
       }
       st_square: {
@@ -1699,7 +1699,7 @@ export type Database = {
         Returns: unknown
       }
       st_subdivide: {
-        Args: { maxvertices?: number; gridsize?: number; geom: unknown }
+        Args: { geom: unknown; maxvertices?: number; gridsize?: number }
         Returns: unknown[]
       }
       st_summary: {
@@ -1707,11 +1707,11 @@ export type Database = {
         Returns: string
       }
       st_swapordinates: {
-        Args: { geom: unknown; ords: unknown }
+        Args: { ords: unknown; geom: unknown }
         Returns: unknown
       }
       st_symdifference: {
-        Args: { geom2: unknown; geom1: unknown; gridsize?: number }
+        Args: { gridsize?: number; geom1: unknown; geom2: unknown }
         Returns: unknown
       }
       st_symmetricdifference: {
@@ -1720,11 +1720,11 @@ export type Database = {
       }
       st_tileenvelope: {
         Args: {
-          margin?: number
           zoom: number
-          x: number
-          y: number
+          margin?: number
           bounds?: unknown
+          y: number
+          x: number
         }
         Returns: unknown
       }
@@ -1734,9 +1734,9 @@ export type Database = {
       }
       st_transform: {
         Args:
-          | { from_proj: string; geom: unknown; to_proj: string }
+          | { from_proj: string; to_proj: string; geom: unknown }
+          | { from_proj: string; to_srid: number; geom: unknown }
           | { geom: unknown; to_proj: string }
-          | { to_srid: number; from_proj: string; geom: unknown }
         Returns: unknown
       }
       st_triangulatepolygon: {
@@ -1746,8 +1746,8 @@ export type Database = {
       st_union: {
         Args:
           | { "": unknown[] }
-          | { geom1: unknown; geom2: unknown; gridsize: number }
-          | { geom2: unknown; geom1: unknown }
+          | { geom1: unknown; geom2: unknown }
+          | { gridsize: number; geom1: unknown; geom2: unknown }
         Returns: unknown
       }
       st_voronoilines: {
@@ -1755,7 +1755,7 @@ export type Database = {
         Returns: unknown
       }
       st_voronoipolygons: {
-        Args: { extend_to?: unknown; g1: unknown; tolerance?: number }
+        Args: { g1: unknown; tolerance?: number; extend_to?: unknown }
         Returns: unknown
       }
       st_within: {
@@ -1826,9 +1826,9 @@ export type Database = {
         Args: {
           catalogn_name: string
           schema_name: string
+          new_srid_in: number
           table_name: string
           column_name: string
-          new_srid_in: number
         }
         Returns: string
       }
@@ -2653,29 +2653,39 @@ export type Database = {
       }
       chats: {
         Row: {
-          booking_id: string
           created_at: string
+          customer_id: string
           id: string
+          stylist_id: string
           updated_at: string
         }
         Insert: {
-          booking_id: string
           created_at?: string
+          customer_id: string
           id?: string
+          stylist_id: string
           updated_at?: string
         }
         Update: {
-          booking_id?: string
           created_at?: string
+          customer_id?: string
           id?: string
+          stylist_id?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "chats_booking_id_fkey"
-            columns: ["booking_id"]
-            isOneToOne: true
-            referencedRelation: "bookings"
+            foreignKeyName: "chats_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chats_stylist_id_fkey"
+            columns: ["stylist_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -3591,7 +3601,7 @@ export type Database = {
         }[]
       }
       get_map_addresses: {
-        Args: Record<PropertyKey, never>
+        Args: { limit_param?: number; offset_param?: number }
         Returns: {
           id: string
           user_id: string
@@ -3602,10 +3612,10 @@ export type Database = {
           country: string
           latitude: number
           longitude: number
-          user_role: Database["public"]["Enums"]["user_role"]
-          user_name: string
-          is_primary: boolean
           user_email: string
+          is_primary: boolean
+          user_name: string
+          user_role: Database["public"]["Enums"]["user_role"]
         }[]
       }
       get_my_role: {
@@ -3769,1671 +3779,6 @@ export type Database = {
         | "cancelled"
         | "succeeded"
       user_role: "customer" | "stylist" | "admin"
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
-  stripe: {
-    Tables: {
-      charges: {
-        Row: {
-          amount: number | null
-          amount_refunded: number | null
-          application: string | null
-          application_fee: string | null
-          balance_transaction: string | null
-          captured: boolean | null
-          created: number | null
-          currency: string | null
-          customer: string | null
-          description: string | null
-          destination: string | null
-          dispute: string | null
-          failure_code: string | null
-          failure_message: string | null
-          fraud_details: Json | null
-          id: string
-          invoice: string | null
-          livemode: boolean | null
-          metadata: Json | null
-          object: string | null
-          on_behalf_of: string | null
-          order: string | null
-          outcome: Json | null
-          paid: boolean | null
-          payment_intent: string | null
-          payment_method_details: Json | null
-          receipt_email: string | null
-          receipt_number: string | null
-          refunded: boolean | null
-          refunds: Json | null
-          review: string | null
-          shipping: Json | null
-          source: Json | null
-          source_transfer: string | null
-          statement_descriptor: string | null
-          status: string | null
-          transfer_group: string | null
-          updated: number | null
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          amount_refunded?: number | null
-          application?: string | null
-          application_fee?: string | null
-          balance_transaction?: string | null
-          captured?: boolean | null
-          created?: number | null
-          currency?: string | null
-          customer?: string | null
-          description?: string | null
-          destination?: string | null
-          dispute?: string | null
-          failure_code?: string | null
-          failure_message?: string | null
-          fraud_details?: Json | null
-          id: string
-          invoice?: string | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          object?: string | null
-          on_behalf_of?: string | null
-          order?: string | null
-          outcome?: Json | null
-          paid?: boolean | null
-          payment_intent?: string | null
-          payment_method_details?: Json | null
-          receipt_email?: string | null
-          receipt_number?: string | null
-          refunded?: boolean | null
-          refunds?: Json | null
-          review?: string | null
-          shipping?: Json | null
-          source?: Json | null
-          source_transfer?: string | null
-          statement_descriptor?: string | null
-          status?: string | null
-          transfer_group?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          amount_refunded?: number | null
-          application?: string | null
-          application_fee?: string | null
-          balance_transaction?: string | null
-          captured?: boolean | null
-          created?: number | null
-          currency?: string | null
-          customer?: string | null
-          description?: string | null
-          destination?: string | null
-          dispute?: string | null
-          failure_code?: string | null
-          failure_message?: string | null
-          fraud_details?: Json | null
-          id?: string
-          invoice?: string | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          object?: string | null
-          on_behalf_of?: string | null
-          order?: string | null
-          outcome?: Json | null
-          paid?: boolean | null
-          payment_intent?: string | null
-          payment_method_details?: Json | null
-          receipt_email?: string | null
-          receipt_number?: string | null
-          refunded?: boolean | null
-          refunds?: Json | null
-          review?: string | null
-          shipping?: Json | null
-          source?: Json | null
-          source_transfer?: string | null
-          statement_descriptor?: string | null
-          status?: string | null
-          transfer_group?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      coupons: {
-        Row: {
-          amount_off: number | null
-          created: number | null
-          currency: string | null
-          duration: string | null
-          duration_in_months: number | null
-          id: string
-          livemode: boolean | null
-          max_redemptions: number | null
-          metadata: Json | null
-          name: string | null
-          object: string | null
-          percent_off: number | null
-          percent_off_precise: number | null
-          redeem_by: number | null
-          times_redeemed: number | null
-          updated: number | null
-          updated_at: string
-          valid: boolean | null
-        }
-        Insert: {
-          amount_off?: number | null
-          created?: number | null
-          currency?: string | null
-          duration?: string | null
-          duration_in_months?: number | null
-          id: string
-          livemode?: boolean | null
-          max_redemptions?: number | null
-          metadata?: Json | null
-          name?: string | null
-          object?: string | null
-          percent_off?: number | null
-          percent_off_precise?: number | null
-          redeem_by?: number | null
-          times_redeemed?: number | null
-          updated?: number | null
-          updated_at?: string
-          valid?: boolean | null
-        }
-        Update: {
-          amount_off?: number | null
-          created?: number | null
-          currency?: string | null
-          duration?: string | null
-          duration_in_months?: number | null
-          id?: string
-          livemode?: boolean | null
-          max_redemptions?: number | null
-          metadata?: Json | null
-          name?: string | null
-          object?: string | null
-          percent_off?: number | null
-          percent_off_precise?: number | null
-          redeem_by?: number | null
-          times_redeemed?: number | null
-          updated?: number | null
-          updated_at?: string
-          valid?: boolean | null
-        }
-        Relationships: []
-      }
-      credit_notes: {
-        Row: {
-          amount: number | null
-          amount_shipping: number | null
-          created: number | null
-          currency: string | null
-          customer: string | null
-          customer_balance_transaction: string | null
-          discount_amount: number | null
-          discount_amounts: Json | null
-          id: string
-          invoice: string | null
-          lines: Json | null
-          livemode: boolean | null
-          memo: string | null
-          metadata: Json | null
-          number: string | null
-          object: string | null
-          out_of_band_amount: number | null
-          pdf: string | null
-          reason: string | null
-          refund: string | null
-          shipping_cost: Json | null
-          status: string | null
-          subtotal: number | null
-          subtotal_excluding_tax: number | null
-          tax_amounts: Json | null
-          total: number | null
-          total_excluding_tax: number | null
-          type: string | null
-          voided_at: string | null
-        }
-        Insert: {
-          amount?: number | null
-          amount_shipping?: number | null
-          created?: number | null
-          currency?: string | null
-          customer?: string | null
-          customer_balance_transaction?: string | null
-          discount_amount?: number | null
-          discount_amounts?: Json | null
-          id: string
-          invoice?: string | null
-          lines?: Json | null
-          livemode?: boolean | null
-          memo?: string | null
-          metadata?: Json | null
-          number?: string | null
-          object?: string | null
-          out_of_band_amount?: number | null
-          pdf?: string | null
-          reason?: string | null
-          refund?: string | null
-          shipping_cost?: Json | null
-          status?: string | null
-          subtotal?: number | null
-          subtotal_excluding_tax?: number | null
-          tax_amounts?: Json | null
-          total?: number | null
-          total_excluding_tax?: number | null
-          type?: string | null
-          voided_at?: string | null
-        }
-        Update: {
-          amount?: number | null
-          amount_shipping?: number | null
-          created?: number | null
-          currency?: string | null
-          customer?: string | null
-          customer_balance_transaction?: string | null
-          discount_amount?: number | null
-          discount_amounts?: Json | null
-          id?: string
-          invoice?: string | null
-          lines?: Json | null
-          livemode?: boolean | null
-          memo?: string | null
-          metadata?: Json | null
-          number?: string | null
-          object?: string | null
-          out_of_band_amount?: number | null
-          pdf?: string | null
-          reason?: string | null
-          refund?: string | null
-          shipping_cost?: Json | null
-          status?: string | null
-          subtotal?: number | null
-          subtotal_excluding_tax?: number | null
-          tax_amounts?: Json | null
-          total?: number | null
-          total_excluding_tax?: number | null
-          type?: string | null
-          voided_at?: string | null
-        }
-        Relationships: []
-      }
-      customers: {
-        Row: {
-          address: Json | null
-          balance: number | null
-          created: number | null
-          currency: string | null
-          default_source: string | null
-          deleted: boolean
-          delinquent: boolean | null
-          description: string | null
-          discount: Json | null
-          email: string | null
-          id: string
-          invoice_prefix: string | null
-          invoice_settings: Json | null
-          livemode: boolean | null
-          metadata: Json | null
-          name: string | null
-          next_invoice_sequence: number | null
-          object: string | null
-          phone: string | null
-          preferred_locales: Json | null
-          shipping: Json | null
-          tax_exempt: string | null
-          updated_at: string
-        }
-        Insert: {
-          address?: Json | null
-          balance?: number | null
-          created?: number | null
-          currency?: string | null
-          default_source?: string | null
-          deleted?: boolean
-          delinquent?: boolean | null
-          description?: string | null
-          discount?: Json | null
-          email?: string | null
-          id: string
-          invoice_prefix?: string | null
-          invoice_settings?: Json | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          name?: string | null
-          next_invoice_sequence?: number | null
-          object?: string | null
-          phone?: string | null
-          preferred_locales?: Json | null
-          shipping?: Json | null
-          tax_exempt?: string | null
-          updated_at?: string
-        }
-        Update: {
-          address?: Json | null
-          balance?: number | null
-          created?: number | null
-          currency?: string | null
-          default_source?: string | null
-          deleted?: boolean
-          delinquent?: boolean | null
-          description?: string | null
-          discount?: Json | null
-          email?: string | null
-          id?: string
-          invoice_prefix?: string | null
-          invoice_settings?: Json | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          name?: string | null
-          next_invoice_sequence?: number | null
-          object?: string | null
-          phone?: string | null
-          preferred_locales?: Json | null
-          shipping?: Json | null
-          tax_exempt?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      disputes: {
-        Row: {
-          amount: number | null
-          balance_transactions: Json | null
-          charge: string | null
-          created: number | null
-          currency: string | null
-          evidence: Json | null
-          evidence_details: Json | null
-          id: string
-          is_charge_refundable: boolean | null
-          livemode: boolean | null
-          metadata: Json | null
-          object: string | null
-          payment_intent: string | null
-          reason: string | null
-          status: string | null
-          updated: number | null
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          balance_transactions?: Json | null
-          charge?: string | null
-          created?: number | null
-          currency?: string | null
-          evidence?: Json | null
-          evidence_details?: Json | null
-          id: string
-          is_charge_refundable?: boolean | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          object?: string | null
-          payment_intent?: string | null
-          reason?: string | null
-          status?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          balance_transactions?: Json | null
-          charge?: string | null
-          created?: number | null
-          currency?: string | null
-          evidence?: Json | null
-          evidence_details?: Json | null
-          id?: string
-          is_charge_refundable?: boolean | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          object?: string | null
-          payment_intent?: string | null
-          reason?: string | null
-          status?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      early_fraud_warnings: {
-        Row: {
-          actionable: boolean | null
-          charge: string | null
-          created: number | null
-          fraud_type: string | null
-          id: string
-          livemode: boolean | null
-          object: string | null
-          payment_intent: string | null
-          updated_at: string
-        }
-        Insert: {
-          actionable?: boolean | null
-          charge?: string | null
-          created?: number | null
-          fraud_type?: string | null
-          id: string
-          livemode?: boolean | null
-          object?: string | null
-          payment_intent?: string | null
-          updated_at?: string
-        }
-        Update: {
-          actionable?: boolean | null
-          charge?: string | null
-          created?: number | null
-          fraud_type?: string | null
-          id?: string
-          livemode?: boolean | null
-          object?: string | null
-          payment_intent?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      events: {
-        Row: {
-          api_version: string | null
-          created: number | null
-          data: Json | null
-          id: string
-          livemode: boolean | null
-          object: string | null
-          pending_webhooks: number | null
-          request: string | null
-          type: string | null
-          updated: number | null
-          updated_at: string
-        }
-        Insert: {
-          api_version?: string | null
-          created?: number | null
-          data?: Json | null
-          id: string
-          livemode?: boolean | null
-          object?: string | null
-          pending_webhooks?: number | null
-          request?: string | null
-          type?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Update: {
-          api_version?: string | null
-          created?: number | null
-          data?: Json | null
-          id?: string
-          livemode?: boolean | null
-          object?: string | null
-          pending_webhooks?: number | null
-          request?: string | null
-          type?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      invoices: {
-        Row: {
-          account_country: string | null
-          account_name: string | null
-          account_tax_ids: Json | null
-          amount_due: number | null
-          amount_paid: number | null
-          amount_remaining: number | null
-          application_fee_amount: number | null
-          attempt_count: number | null
-          attempted: boolean | null
-          auto_advance: boolean | null
-          billing_reason: string | null
-          charge: string | null
-          collection_method: string | null
-          created: number | null
-          currency: string | null
-          custom_fields: Json | null
-          customer: string | null
-          customer_address: Json | null
-          customer_email: string | null
-          customer_name: string | null
-          customer_phone: string | null
-          customer_shipping: Json | null
-          customer_tax_exempt: string | null
-          customer_tax_ids: Json | null
-          default_payment_method: string | null
-          default_source: string | null
-          default_tax_rates: Json | null
-          description: string | null
-          discount: Json | null
-          discounts: Json | null
-          due_date: number | null
-          ending_balance: number | null
-          footer: string | null
-          hosted_invoice_url: string | null
-          id: string
-          invoice_pdf: string | null
-          last_finalization_error: Json | null
-          lines: Json | null
-          livemode: boolean | null
-          metadata: Json | null
-          next_payment_attempt: number | null
-          number: string | null
-          object: string | null
-          on_behalf_of: string | null
-          paid: boolean | null
-          payment_intent: string | null
-          payment_settings: Json | null
-          period_end: number | null
-          period_start: number | null
-          post_payment_credit_notes_amount: number | null
-          pre_payment_credit_notes_amount: number | null
-          receipt_number: string | null
-          starting_balance: number | null
-          statement_descriptor: string | null
-          status: Database["stripe"]["Enums"]["invoice_status"] | null
-          status_transitions: Json | null
-          subscription: string | null
-          subtotal: number | null
-          tax: number | null
-          total: number | null
-          total_discount_amounts: Json | null
-          total_tax_amounts: Json | null
-          transfer_data: Json | null
-          updated_at: string
-          webhooks_delivered_at: number | null
-        }
-        Insert: {
-          account_country?: string | null
-          account_name?: string | null
-          account_tax_ids?: Json | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          amount_remaining?: number | null
-          application_fee_amount?: number | null
-          attempt_count?: number | null
-          attempted?: boolean | null
-          auto_advance?: boolean | null
-          billing_reason?: string | null
-          charge?: string | null
-          collection_method?: string | null
-          created?: number | null
-          currency?: string | null
-          custom_fields?: Json | null
-          customer?: string | null
-          customer_address?: Json | null
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          customer_shipping?: Json | null
-          customer_tax_exempt?: string | null
-          customer_tax_ids?: Json | null
-          default_payment_method?: string | null
-          default_source?: string | null
-          default_tax_rates?: Json | null
-          description?: string | null
-          discount?: Json | null
-          discounts?: Json | null
-          due_date?: number | null
-          ending_balance?: number | null
-          footer?: string | null
-          hosted_invoice_url?: string | null
-          id: string
-          invoice_pdf?: string | null
-          last_finalization_error?: Json | null
-          lines?: Json | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          next_payment_attempt?: number | null
-          number?: string | null
-          object?: string | null
-          on_behalf_of?: string | null
-          paid?: boolean | null
-          payment_intent?: string | null
-          payment_settings?: Json | null
-          period_end?: number | null
-          period_start?: number | null
-          post_payment_credit_notes_amount?: number | null
-          pre_payment_credit_notes_amount?: number | null
-          receipt_number?: string | null
-          starting_balance?: number | null
-          statement_descriptor?: string | null
-          status?: Database["stripe"]["Enums"]["invoice_status"] | null
-          status_transitions?: Json | null
-          subscription?: string | null
-          subtotal?: number | null
-          tax?: number | null
-          total?: number | null
-          total_discount_amounts?: Json | null
-          total_tax_amounts?: Json | null
-          transfer_data?: Json | null
-          updated_at?: string
-          webhooks_delivered_at?: number | null
-        }
-        Update: {
-          account_country?: string | null
-          account_name?: string | null
-          account_tax_ids?: Json | null
-          amount_due?: number | null
-          amount_paid?: number | null
-          amount_remaining?: number | null
-          application_fee_amount?: number | null
-          attempt_count?: number | null
-          attempted?: boolean | null
-          auto_advance?: boolean | null
-          billing_reason?: string | null
-          charge?: string | null
-          collection_method?: string | null
-          created?: number | null
-          currency?: string | null
-          custom_fields?: Json | null
-          customer?: string | null
-          customer_address?: Json | null
-          customer_email?: string | null
-          customer_name?: string | null
-          customer_phone?: string | null
-          customer_shipping?: Json | null
-          customer_tax_exempt?: string | null
-          customer_tax_ids?: Json | null
-          default_payment_method?: string | null
-          default_source?: string | null
-          default_tax_rates?: Json | null
-          description?: string | null
-          discount?: Json | null
-          discounts?: Json | null
-          due_date?: number | null
-          ending_balance?: number | null
-          footer?: string | null
-          hosted_invoice_url?: string | null
-          id?: string
-          invoice_pdf?: string | null
-          last_finalization_error?: Json | null
-          lines?: Json | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          next_payment_attempt?: number | null
-          number?: string | null
-          object?: string | null
-          on_behalf_of?: string | null
-          paid?: boolean | null
-          payment_intent?: string | null
-          payment_settings?: Json | null
-          period_end?: number | null
-          period_start?: number | null
-          post_payment_credit_notes_amount?: number | null
-          pre_payment_credit_notes_amount?: number | null
-          receipt_number?: string | null
-          starting_balance?: number | null
-          statement_descriptor?: string | null
-          status?: Database["stripe"]["Enums"]["invoice_status"] | null
-          status_transitions?: Json | null
-          subscription?: string | null
-          subtotal?: number | null
-          tax?: number | null
-          total?: number | null
-          total_discount_amounts?: Json | null
-          total_tax_amounts?: Json | null
-          transfer_data?: Json | null
-          updated_at?: string
-          webhooks_delivered_at?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "invoices_customer_fkey"
-            columns: ["customer"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "invoices_subscription_fkey"
-            columns: ["subscription"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      migrations: {
-        Row: {
-          executed_at: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Insert: {
-          executed_at?: string | null
-          hash: string
-          id: number
-          name: string
-        }
-        Update: {
-          executed_at?: string | null
-          hash?: string
-          id?: number
-          name?: string
-        }
-        Relationships: []
-      }
-      payment_intents: {
-        Row: {
-          amount: number | null
-          amount_capturable: number | null
-          amount_details: Json | null
-          amount_received: number | null
-          application: string | null
-          application_fee_amount: number | null
-          automatic_payment_methods: string | null
-          canceled_at: number | null
-          cancellation_reason: string | null
-          capture_method: string | null
-          client_secret: string | null
-          confirmation_method: string | null
-          created: number | null
-          currency: string | null
-          customer: string | null
-          description: string | null
-          id: string
-          invoice: string | null
-          last_payment_error: string | null
-          livemode: boolean | null
-          metadata: Json | null
-          next_action: string | null
-          object: string | null
-          on_behalf_of: string | null
-          payment_method: string | null
-          payment_method_options: Json | null
-          payment_method_types: Json | null
-          processing: string | null
-          receipt_email: string | null
-          review: string | null
-          setup_future_usage: string | null
-          shipping: Json | null
-          statement_descriptor: string | null
-          statement_descriptor_suffix: string | null
-          status: string | null
-          transfer_data: Json | null
-          transfer_group: string | null
-        }
-        Insert: {
-          amount?: number | null
-          amount_capturable?: number | null
-          amount_details?: Json | null
-          amount_received?: number | null
-          application?: string | null
-          application_fee_amount?: number | null
-          automatic_payment_methods?: string | null
-          canceled_at?: number | null
-          cancellation_reason?: string | null
-          capture_method?: string | null
-          client_secret?: string | null
-          confirmation_method?: string | null
-          created?: number | null
-          currency?: string | null
-          customer?: string | null
-          description?: string | null
-          id: string
-          invoice?: string | null
-          last_payment_error?: string | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          next_action?: string | null
-          object?: string | null
-          on_behalf_of?: string | null
-          payment_method?: string | null
-          payment_method_options?: Json | null
-          payment_method_types?: Json | null
-          processing?: string | null
-          receipt_email?: string | null
-          review?: string | null
-          setup_future_usage?: string | null
-          shipping?: Json | null
-          statement_descriptor?: string | null
-          statement_descriptor_suffix?: string | null
-          status?: string | null
-          transfer_data?: Json | null
-          transfer_group?: string | null
-        }
-        Update: {
-          amount?: number | null
-          amount_capturable?: number | null
-          amount_details?: Json | null
-          amount_received?: number | null
-          application?: string | null
-          application_fee_amount?: number | null
-          automatic_payment_methods?: string | null
-          canceled_at?: number | null
-          cancellation_reason?: string | null
-          capture_method?: string | null
-          client_secret?: string | null
-          confirmation_method?: string | null
-          created?: number | null
-          currency?: string | null
-          customer?: string | null
-          description?: string | null
-          id?: string
-          invoice?: string | null
-          last_payment_error?: string | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          next_action?: string | null
-          object?: string | null
-          on_behalf_of?: string | null
-          payment_method?: string | null
-          payment_method_options?: Json | null
-          payment_method_types?: Json | null
-          processing?: string | null
-          receipt_email?: string | null
-          review?: string | null
-          setup_future_usage?: string | null
-          shipping?: Json | null
-          statement_descriptor?: string | null
-          statement_descriptor_suffix?: string | null
-          status?: string | null
-          transfer_data?: Json | null
-          transfer_group?: string | null
-        }
-        Relationships: []
-      }
-      payment_methods: {
-        Row: {
-          billing_details: Json | null
-          card: Json | null
-          created: number | null
-          customer: string | null
-          id: string
-          metadata: Json | null
-          object: string | null
-          type: string | null
-        }
-        Insert: {
-          billing_details?: Json | null
-          card?: Json | null
-          created?: number | null
-          customer?: string | null
-          id: string
-          metadata?: Json | null
-          object?: string | null
-          type?: string | null
-        }
-        Update: {
-          billing_details?: Json | null
-          card?: Json | null
-          created?: number | null
-          customer?: string | null
-          id?: string
-          metadata?: Json | null
-          object?: string | null
-          type?: string | null
-        }
-        Relationships: []
-      }
-      payouts: {
-        Row: {
-          amount: number | null
-          amount_reversed: number | null
-          arrival_date: string | null
-          automatic: boolean | null
-          balance_transaction: string | null
-          bank_account: Json | null
-          created: number | null
-          currency: string | null
-          date: string | null
-          description: string | null
-          destination: string | null
-          failure_balance_transaction: string | null
-          failure_code: string | null
-          failure_message: string | null
-          id: string
-          livemode: boolean | null
-          metadata: Json | null
-          method: string | null
-          object: string | null
-          recipient: string | null
-          source_transaction: string | null
-          source_type: string | null
-          statement_description: string | null
-          statement_descriptor: string | null
-          status: string | null
-          transfer_group: string | null
-          type: string | null
-          updated: number | null
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          amount_reversed?: number | null
-          arrival_date?: string | null
-          automatic?: boolean | null
-          balance_transaction?: string | null
-          bank_account?: Json | null
-          created?: number | null
-          currency?: string | null
-          date?: string | null
-          description?: string | null
-          destination?: string | null
-          failure_balance_transaction?: string | null
-          failure_code?: string | null
-          failure_message?: string | null
-          id: string
-          livemode?: boolean | null
-          metadata?: Json | null
-          method?: string | null
-          object?: string | null
-          recipient?: string | null
-          source_transaction?: string | null
-          source_type?: string | null
-          statement_description?: string | null
-          statement_descriptor?: string | null
-          status?: string | null
-          transfer_group?: string | null
-          type?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          amount_reversed?: number | null
-          arrival_date?: string | null
-          automatic?: boolean | null
-          balance_transaction?: string | null
-          bank_account?: Json | null
-          created?: number | null
-          currency?: string | null
-          date?: string | null
-          description?: string | null
-          destination?: string | null
-          failure_balance_transaction?: string | null
-          failure_code?: string | null
-          failure_message?: string | null
-          id?: string
-          livemode?: boolean | null
-          metadata?: Json | null
-          method?: string | null
-          object?: string | null
-          recipient?: string | null
-          source_transaction?: string | null
-          source_type?: string | null
-          statement_description?: string | null
-          statement_descriptor?: string | null
-          status?: string | null
-          transfer_group?: string | null
-          type?: string | null
-          updated?: number | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      plans: {
-        Row: {
-          active: boolean | null
-          aggregate_usage: string | null
-          amount: number | null
-          billing_scheme: string | null
-          created: number | null
-          currency: string | null
-          id: string
-          interval: string | null
-          interval_count: number | null
-          livemode: boolean | null
-          metadata: Json | null
-          nickname: string | null
-          object: string | null
-          product: string | null
-          tiers_mode: string | null
-          transform_usage: string | null
-          trial_period_days: number | null
-          updated_at: string
-          usage_type: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          aggregate_usage?: string | null
-          amount?: number | null
-          billing_scheme?: string | null
-          created?: number | null
-          currency?: string | null
-          id: string
-          interval?: string | null
-          interval_count?: number | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          nickname?: string | null
-          object?: string | null
-          product?: string | null
-          tiers_mode?: string | null
-          transform_usage?: string | null
-          trial_period_days?: number | null
-          updated_at?: string
-          usage_type?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          aggregate_usage?: string | null
-          amount?: number | null
-          billing_scheme?: string | null
-          created?: number | null
-          currency?: string | null
-          id?: string
-          interval?: string | null
-          interval_count?: number | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          nickname?: string | null
-          object?: string | null
-          product?: string | null
-          tiers_mode?: string | null
-          transform_usage?: string | null
-          trial_period_days?: number | null
-          updated_at?: string
-          usage_type?: string | null
-        }
-        Relationships: []
-      }
-      prices: {
-        Row: {
-          active: boolean | null
-          billing_scheme: string | null
-          created: number | null
-          currency: string | null
-          id: string
-          livemode: boolean | null
-          lookup_key: string | null
-          metadata: Json | null
-          nickname: string | null
-          object: string | null
-          product: string | null
-          recurring: Json | null
-          tiers_mode: Database["stripe"]["Enums"]["pricing_tiers"] | null
-          transform_quantity: Json | null
-          type: Database["stripe"]["Enums"]["pricing_type"] | null
-          unit_amount: number | null
-          unit_amount_decimal: string | null
-          updated_at: string
-        }
-        Insert: {
-          active?: boolean | null
-          billing_scheme?: string | null
-          created?: number | null
-          currency?: string | null
-          id: string
-          livemode?: boolean | null
-          lookup_key?: string | null
-          metadata?: Json | null
-          nickname?: string | null
-          object?: string | null
-          product?: string | null
-          recurring?: Json | null
-          tiers_mode?: Database["stripe"]["Enums"]["pricing_tiers"] | null
-          transform_quantity?: Json | null
-          type?: Database["stripe"]["Enums"]["pricing_type"] | null
-          unit_amount?: number | null
-          unit_amount_decimal?: string | null
-          updated_at?: string
-        }
-        Update: {
-          active?: boolean | null
-          billing_scheme?: string | null
-          created?: number | null
-          currency?: string | null
-          id?: string
-          livemode?: boolean | null
-          lookup_key?: string | null
-          metadata?: Json | null
-          nickname?: string | null
-          object?: string | null
-          product?: string | null
-          recurring?: Json | null
-          tiers_mode?: Database["stripe"]["Enums"]["pricing_tiers"] | null
-          transform_quantity?: Json | null
-          type?: Database["stripe"]["Enums"]["pricing_type"] | null
-          unit_amount?: number | null
-          unit_amount_decimal?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prices_product_fkey"
-            columns: ["product"]
-            isOneToOne: false
-            referencedRelation: "products"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      products: {
-        Row: {
-          active: boolean | null
-          created: number | null
-          default_price: string | null
-          description: string | null
-          id: string
-          images: Json | null
-          livemode: boolean | null
-          marketing_features: Json | null
-          metadata: Json | null
-          name: string | null
-          object: string | null
-          package_dimensions: Json | null
-          shippable: boolean | null
-          statement_descriptor: string | null
-          unit_label: string | null
-          updated: number | null
-          updated_at: string
-          url: string | null
-        }
-        Insert: {
-          active?: boolean | null
-          created?: number | null
-          default_price?: string | null
-          description?: string | null
-          id: string
-          images?: Json | null
-          livemode?: boolean | null
-          marketing_features?: Json | null
-          metadata?: Json | null
-          name?: string | null
-          object?: string | null
-          package_dimensions?: Json | null
-          shippable?: boolean | null
-          statement_descriptor?: string | null
-          unit_label?: string | null
-          updated?: number | null
-          updated_at?: string
-          url?: string | null
-        }
-        Update: {
-          active?: boolean | null
-          created?: number | null
-          default_price?: string | null
-          description?: string | null
-          id?: string
-          images?: Json | null
-          livemode?: boolean | null
-          marketing_features?: Json | null
-          metadata?: Json | null
-          name?: string | null
-          object?: string | null
-          package_dimensions?: Json | null
-          shippable?: boolean | null
-          statement_descriptor?: string | null
-          unit_label?: string | null
-          updated?: number | null
-          updated_at?: string
-          url?: string | null
-        }
-        Relationships: []
-      }
-      refunds: {
-        Row: {
-          amount: number | null
-          balance_transaction: string | null
-          charge: string | null
-          created: number | null
-          currency: string | null
-          destination_details: Json | null
-          id: string
-          metadata: Json | null
-          object: string | null
-          payment_intent: string | null
-          reason: string | null
-          receipt_number: string | null
-          source_transfer_reversal: string | null
-          status: string | null
-          transfer_reversal: string | null
-          updated_at: string
-        }
-        Insert: {
-          amount?: number | null
-          balance_transaction?: string | null
-          charge?: string | null
-          created?: number | null
-          currency?: string | null
-          destination_details?: Json | null
-          id: string
-          metadata?: Json | null
-          object?: string | null
-          payment_intent?: string | null
-          reason?: string | null
-          receipt_number?: string | null
-          source_transfer_reversal?: string | null
-          status?: string | null
-          transfer_reversal?: string | null
-          updated_at?: string
-        }
-        Update: {
-          amount?: number | null
-          balance_transaction?: string | null
-          charge?: string | null
-          created?: number | null
-          currency?: string | null
-          destination_details?: Json | null
-          id?: string
-          metadata?: Json | null
-          object?: string | null
-          payment_intent?: string | null
-          reason?: string | null
-          receipt_number?: string | null
-          source_transfer_reversal?: string | null
-          status?: string | null
-          transfer_reversal?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      reviews: {
-        Row: {
-          billing_zip: string | null
-          charge: string | null
-          closed_reason: string | null
-          created: number | null
-          id: string
-          ip_address: string | null
-          ip_address_location: Json | null
-          livemode: boolean | null
-          object: string | null
-          open: boolean | null
-          opened_reason: string | null
-          payment_intent: string | null
-          reason: string | null
-          session: string | null
-          updated_at: string
-        }
-        Insert: {
-          billing_zip?: string | null
-          charge?: string | null
-          closed_reason?: string | null
-          created?: number | null
-          id: string
-          ip_address?: string | null
-          ip_address_location?: Json | null
-          livemode?: boolean | null
-          object?: string | null
-          open?: boolean | null
-          opened_reason?: string | null
-          payment_intent?: string | null
-          reason?: string | null
-          session?: string | null
-          updated_at?: string
-        }
-        Update: {
-          billing_zip?: string | null
-          charge?: string | null
-          closed_reason?: string | null
-          created?: number | null
-          id?: string
-          ip_address?: string | null
-          ip_address_location?: Json | null
-          livemode?: boolean | null
-          object?: string | null
-          open?: boolean | null
-          opened_reason?: string | null
-          payment_intent?: string | null
-          reason?: string | null
-          session?: string | null
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      setup_intents: {
-        Row: {
-          cancellation_reason: string | null
-          created: number | null
-          customer: string | null
-          description: string | null
-          id: string
-          latest_attempt: string | null
-          mandate: string | null
-          object: string | null
-          on_behalf_of: string | null
-          payment_method: string | null
-          single_use_mandate: string | null
-          status: string | null
-          usage: string | null
-        }
-        Insert: {
-          cancellation_reason?: string | null
-          created?: number | null
-          customer?: string | null
-          description?: string | null
-          id: string
-          latest_attempt?: string | null
-          mandate?: string | null
-          object?: string | null
-          on_behalf_of?: string | null
-          payment_method?: string | null
-          single_use_mandate?: string | null
-          status?: string | null
-          usage?: string | null
-        }
-        Update: {
-          cancellation_reason?: string | null
-          created?: number | null
-          customer?: string | null
-          description?: string | null
-          id?: string
-          latest_attempt?: string | null
-          mandate?: string | null
-          object?: string | null
-          on_behalf_of?: string | null
-          payment_method?: string | null
-          single_use_mandate?: string | null
-          status?: string | null
-          usage?: string | null
-        }
-        Relationships: []
-      }
-      subscription_items: {
-        Row: {
-          billing_thresholds: Json | null
-          created: number | null
-          deleted: boolean | null
-          id: string
-          metadata: Json | null
-          object: string | null
-          price: string | null
-          quantity: number | null
-          subscription: string | null
-          tax_rates: Json | null
-        }
-        Insert: {
-          billing_thresholds?: Json | null
-          created?: number | null
-          deleted?: boolean | null
-          id: string
-          metadata?: Json | null
-          object?: string | null
-          price?: string | null
-          quantity?: number | null
-          subscription?: string | null
-          tax_rates?: Json | null
-        }
-        Update: {
-          billing_thresholds?: Json | null
-          created?: number | null
-          deleted?: boolean | null
-          id?: string
-          metadata?: Json | null
-          object?: string | null
-          price?: string | null
-          quantity?: number | null
-          subscription?: string | null
-          tax_rates?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscription_items_price_fkey"
-            columns: ["price"]
-            isOneToOne: false
-            referencedRelation: "prices"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "subscription_items_subscription_fkey"
-            columns: ["subscription"]
-            isOneToOne: false
-            referencedRelation: "subscriptions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      subscription_schedules: {
-        Row: {
-          application: string | null
-          canceled_at: number | null
-          completed_at: number | null
-          created: number
-          current_phase: Json | null
-          customer: string
-          default_settings: Json | null
-          end_behavior: string | null
-          id: string
-          livemode: boolean
-          metadata: Json
-          object: string | null
-          phases: Json
-          released_at: number | null
-          released_subscription: string | null
-          status: Database["stripe"]["Enums"]["subscription_schedule_status"]
-          subscription: string | null
-          test_clock: string | null
-        }
-        Insert: {
-          application?: string | null
-          canceled_at?: number | null
-          completed_at?: number | null
-          created: number
-          current_phase?: Json | null
-          customer: string
-          default_settings?: Json | null
-          end_behavior?: string | null
-          id: string
-          livemode: boolean
-          metadata: Json
-          object?: string | null
-          phases: Json
-          released_at?: number | null
-          released_subscription?: string | null
-          status: Database["stripe"]["Enums"]["subscription_schedule_status"]
-          subscription?: string | null
-          test_clock?: string | null
-        }
-        Update: {
-          application?: string | null
-          canceled_at?: number | null
-          completed_at?: number | null
-          created?: number
-          current_phase?: Json | null
-          customer?: string
-          default_settings?: Json | null
-          end_behavior?: string | null
-          id?: string
-          livemode?: boolean
-          metadata?: Json
-          object?: string | null
-          phases?: Json
-          released_at?: number | null
-          released_subscription?: string | null
-          status?: Database["stripe"]["Enums"]["subscription_schedule_status"]
-          subscription?: string | null
-          test_clock?: string | null
-        }
-        Relationships: []
-      }
-      subscriptions: {
-        Row: {
-          application_fee_percent: number | null
-          billing_cycle_anchor: number | null
-          billing_thresholds: Json | null
-          cancel_at: number | null
-          cancel_at_period_end: boolean | null
-          canceled_at: number | null
-          collection_method: string | null
-          created: number | null
-          current_period_end: number | null
-          current_period_start: number | null
-          customer: string | null
-          days_until_due: number | null
-          default_payment_method: string | null
-          default_source: string | null
-          default_tax_rates: Json | null
-          discount: Json | null
-          ended_at: number | null
-          id: string
-          items: Json | null
-          latest_invoice: string | null
-          livemode: boolean | null
-          metadata: Json | null
-          next_pending_invoice_item_invoice: number | null
-          object: string | null
-          pause_collection: Json | null
-          pending_invoice_item_interval: Json | null
-          pending_setup_intent: string | null
-          pending_update: Json | null
-          plan: string | null
-          schedule: string | null
-          start_date: number | null
-          status: Database["stripe"]["Enums"]["subscription_status"] | null
-          transfer_data: Json | null
-          trial_end: Json | null
-          trial_start: Json | null
-          updated_at: string
-        }
-        Insert: {
-          application_fee_percent?: number | null
-          billing_cycle_anchor?: number | null
-          billing_thresholds?: Json | null
-          cancel_at?: number | null
-          cancel_at_period_end?: boolean | null
-          canceled_at?: number | null
-          collection_method?: string | null
-          created?: number | null
-          current_period_end?: number | null
-          current_period_start?: number | null
-          customer?: string | null
-          days_until_due?: number | null
-          default_payment_method?: string | null
-          default_source?: string | null
-          default_tax_rates?: Json | null
-          discount?: Json | null
-          ended_at?: number | null
-          id: string
-          items?: Json | null
-          latest_invoice?: string | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          next_pending_invoice_item_invoice?: number | null
-          object?: string | null
-          pause_collection?: Json | null
-          pending_invoice_item_interval?: Json | null
-          pending_setup_intent?: string | null
-          pending_update?: Json | null
-          plan?: string | null
-          schedule?: string | null
-          start_date?: number | null
-          status?: Database["stripe"]["Enums"]["subscription_status"] | null
-          transfer_data?: Json | null
-          trial_end?: Json | null
-          trial_start?: Json | null
-          updated_at?: string
-        }
-        Update: {
-          application_fee_percent?: number | null
-          billing_cycle_anchor?: number | null
-          billing_thresholds?: Json | null
-          cancel_at?: number | null
-          cancel_at_period_end?: boolean | null
-          canceled_at?: number | null
-          collection_method?: string | null
-          created?: number | null
-          current_period_end?: number | null
-          current_period_start?: number | null
-          customer?: string | null
-          days_until_due?: number | null
-          default_payment_method?: string | null
-          default_source?: string | null
-          default_tax_rates?: Json | null
-          discount?: Json | null
-          ended_at?: number | null
-          id?: string
-          items?: Json | null
-          latest_invoice?: string | null
-          livemode?: boolean | null
-          metadata?: Json | null
-          next_pending_invoice_item_invoice?: number | null
-          object?: string | null
-          pause_collection?: Json | null
-          pending_invoice_item_interval?: Json | null
-          pending_setup_intent?: string | null
-          pending_update?: Json | null
-          plan?: string | null
-          schedule?: string | null
-          start_date?: number | null
-          status?: Database["stripe"]["Enums"]["subscription_status"] | null
-          transfer_data?: Json | null
-          trial_end?: Json | null
-          trial_start?: Json | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_customer_fkey"
-            columns: ["customer"]
-            isOneToOne: false
-            referencedRelation: "customers"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tax_ids: {
-        Row: {
-          country: string | null
-          created: number
-          customer: string | null
-          id: string
-          livemode: boolean | null
-          object: string | null
-          owner: Json | null
-          type: string | null
-          value: string | null
-        }
-        Insert: {
-          country?: string | null
-          created: number
-          customer?: string | null
-          id: string
-          livemode?: boolean | null
-          object?: string | null
-          owner?: Json | null
-          type?: string | null
-          value?: string | null
-        }
-        Update: {
-          country?: string | null
-          created?: number
-          customer?: string | null
-          id?: string
-          livemode?: boolean | null
-          object?: string | null
-          owner?: Json | null
-          type?: string | null
-          value?: string | null
-        }
-        Relationships: []
-      }
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      [_ in never]: never
-    }
-    Enums: {
-      invoice_status:
-        | "draft"
-        | "open"
-        | "paid"
-        | "uncollectible"
-        | "void"
-        | "deleted"
-      pricing_tiers: "graduated" | "volume"
-      pricing_type: "one_time" | "recurring"
-      subscription_schedule_status:
-        | "not_started"
-        | "active"
-        | "completed"
-        | "released"
-        | "canceled"
-      subscription_status:
-        | "trialing"
-        | "active"
-        | "canceled"
-        | "incomplete"
-        | "incomplete_expired"
-        | "past_due"
-        | "unpaid"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -5619,36 +3964,6 @@ export const Constants = {
         "succeeded",
       ],
       user_role: ["customer", "stylist", "admin"],
-    },
-  },
-  stripe: {
-    Enums: {
-      invoice_status: [
-        "draft",
-        "open",
-        "paid",
-        "uncollectible",
-        "void",
-        "deleted",
-      ],
-      pricing_tiers: ["graduated", "volume"],
-      pricing_type: ["one_time", "recurring"],
-      subscription_schedule_status: [
-        "not_started",
-        "active",
-        "completed",
-        "released",
-        "canceled",
-      ],
-      subscription_status: [
-        "trialing",
-        "active",
-        "canceled",
-        "incomplete",
-        "incomplete_expired",
-        "past_due",
-        "unpaid",
-      ],
     },
   },
 } as const

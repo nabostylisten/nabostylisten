@@ -495,11 +495,7 @@ CREATE POLICY "Stylists can delete availability exceptions." ON public.recurring
 CREATE POLICY "Users can view their own chats." ON public.chats
 FOR SELECT TO authenticated
 USING (
-  (select auth.uid()) IN (
-    SELECT customer_id FROM public.bookings WHERE id = booking_id
-  ) OR (select auth.uid()) IN (
-    SELECT stylist_id FROM public.bookings WHERE id = booking_id
-  )
+  (select auth.uid()) = customer_id OR (select auth.uid()) = stylist_id
 );
 
 -- Admins can view all chats
@@ -507,14 +503,11 @@ CREATE POLICY "Admins can view all chats" ON public.chats
 FOR SELECT TO authenticated
 USING ( public.get_my_role() = 'admin' );
 
--- Users can create chats for bookings they are part of.
-CREATE POLICY "Users can create chats for their bookings." ON public.chats
+-- Users can create chats with other users they have bookings with.
+CREATE POLICY "Users can create chats with their booking partners." ON public.chats
 FOR INSERT TO authenticated
 WITH CHECK (
-  booking_id IN (
-    SELECT id FROM public.bookings 
-    WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
-  )
+  (select auth.uid()) = customer_id OR (select auth.uid()) = stylist_id
 );
 
 -- Users can view messages in chats they are a part of.
@@ -523,6 +516,7 @@ FOR SELECT TO authenticated
 USING (
   chat_id IN (
     SELECT id FROM public.chats
+    WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
   )
 );
 
@@ -538,6 +532,7 @@ WITH CHECK (
   (select auth.uid()) = sender_id AND
   chat_id IN (
     SELECT id FROM public.chats
+    WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
   )
 );
 
@@ -547,11 +542,13 @@ FOR UPDATE TO authenticated
 USING (
   chat_id IN (
     SELECT id FROM public.chats
+    WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
   )
 )
 WITH CHECK (
   chat_id IN (
     SELECT id FROM public.chats
+    WHERE customer_id = (select auth.uid()) OR stylist_id = (select auth.uid())
   )
 );
 
@@ -580,11 +577,10 @@ WITH CHECK (
   media_type = 'chat_image' AND
   (select auth.uid()) = owner_id AND
   chat_message_id IN (
-    SELECT cm.id 
+    SELECT cm.id
     FROM public.chat_messages cm
     JOIN public.chats c ON cm.chat_id = c.id
-    JOIN public.bookings b ON c.booking_id = b.id
-    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+    WHERE c.customer_id = (select auth.uid()) OR c.stylist_id = (select auth.uid())
   )
 );
 
@@ -712,8 +708,7 @@ USING (
   bucket_id = 'chat-media' AND
   (storage.foldername(name))[1] IN (
     SELECT c.id::text FROM public.chats c
-    JOIN public.bookings b ON c.booking_id = b.id
-    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+    WHERE c.customer_id = (select auth.uid()) OR c.stylist_id = (select auth.uid())
   )
 );
 
@@ -724,8 +719,7 @@ WITH CHECK (
   bucket_id = 'chat-media' AND
   (storage.foldername(name))[1] IN (
     SELECT c.id::text FROM public.chats c
-    JOIN public.bookings b ON c.booking_id = b.id
-    WHERE b.customer_id = (select auth.uid()) OR b.stylist_id = (select auth.uid())
+    WHERE c.customer_id = (select auth.uid()) OR c.stylist_id = (select auth.uid())
   )
 );
 

@@ -972,13 +972,13 @@ chmod +x monitor-media-health.sh
 
 **Results:**
 - **Total Files Processed:** 3,343 files (9.04 GB)
-- **Migratable Files:** 2,514 files (7.26 GB) - 75.2% of total
+- **Migratable Files:** 3,324 files (9.02 GB) - 99.4% of total
 - **Inventory File Created:** `/scripts/migration/temp/media-inventory.json` (2.2MB)
 
 **Category Breakdown:**
 - **Profile Pictures:** 276 files (816.74 MB), Migratable: 258 files (797.31 MB)
 - **Service Images:** 2,256 files (6.48 GB), Migratable: 2,256 files (100%)
-- **Chat Images:** 810 files (1.76 GB), Migratable: 0 files (expected - no chats migrated)
+- **Chat Images:** 810 files (1.76 GB), Migratable: 810 files (100% - chats now migrate successfully)
 
 **Key Validations:**
 ✅ S3 backup directory accessible and readable

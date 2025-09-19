@@ -9,8 +9,8 @@ This document provides a comprehensive analysis of the MySQL to PostgreSQL migra
 | Complexity       | Tables                                                                                        | Risk Level | Transformation Required                                |
 | ---------------- | --------------------------------------------------------------------------------------------- | ---------- | ------------------------------------------------------ |
 | **Critical**     | buyer, stylist, booking, payment                                                              | High       | User consolidation, status mapping, business logic     |
-| **High**         | address, service, chat, message                                                               | Medium     | Polymorphic → direct relationships, JSON normalization |
-| **Medium**       | category, subcategory, image, portfolio                                                       | Low-Medium | Table consolidation, file path updates                 |
+| **High**         | address, service                                                                               | Medium     | Polymorphic → direct relationships, JSON normalization |
+| **Medium**       | category, subcategory, chat, message, image, portfolio                                        | Low-Medium | Customer-stylist grouping, table consolidation, file path updates |
 | **Low**          | rating, booking_services_service                                                              | Low        | Direct field mapping                                   |
 | **Not Migrated** | salon, personalchat, personal_message, chat_notes, favourite, promocode, stripe_webhook_event | N/A        | Business model changes & clean start decisions        |
 
@@ -382,51 +382,56 @@ NULL                                      → payments.refund_reason
 
 ## Phase 6: Communication System
 
-### 6.1 MySQL `chat` → PostgreSQL `chats`
+### 6.1 MySQL `chat` + `message` → PostgreSQL `chats` (Customer-Stylist Based)
 
-**Complexity**: MEDIUM (Remove personal chat, booking-only)
+**Complexity**: MEDIUM (Direct customer-stylist relationships, no booking dependency)
 
 ```sql
--- CORE CHAT DATA
-chat.id                                   → chats.id
-chat.booking_id                           → chats.booking_id (UNIQUE)
-chat.created_at                           → chats.created_at
-chat.updated_at                           → chats.updated_at
+-- NEW APPROACH: Create chats based on unique customer-stylist pairs from messages
+-- Each unique (customer_id, stylist_id) pair becomes one chat in PostgreSQL
 
--- DERIVED DATA (not stored)
-chat.buyer_id                             → Derived from booking.customer_id
-chat.stylist_id                           → Derived from booking.stylist_id
-chat.buyer_has_unread                     → Calculate from messages
-chat.stylist_has_unread                   → Calculate from messages
+-- CORE CHAT DATA (derived from messages)
+message.buyer_id (via booking resolution)  → chats.customer_id
+message.stylist_id (via booking resolution) → chats.stylist_id
+MIN(message.created_at)                   → chats.created_at
+MAX(message.created_at)                   → chats.updated_at
+
+-- UNIQUE CONSTRAINT
+UNIQUE(customer_id, stylist_id)           → One chat per customer-stylist pair
+
+-- CHAT CREATION LOGIC
+1. Group all messages by (buyer_id, stylist_id) pairs from booking resolution
+2. Create one chat record for each unique pair
+3. Link all messages from that pair to the created chat
+
+-- REMOVED FIELDS (no longer booking-based)
+chat.booking_id                           → NOT MIGRATED (architectural change)
+chat.buyer_has_unread                     → Calculate from messages at runtime
+chat.stylist_has_unread                   → Calculate from messages at runtime
 
 -- FILTER
-chat.is_active                             → Only migrate active chats
+chat.is_active                           → Only process messages from active chats
 ```
 
 ### 6.2 MySQL `message` → PostgreSQL `chat_messages`
 
-**Complexity**: HIGH (Sender resolution required)
+**Complexity**: MEDIUM (Direct sender resolution from booking data)
 
 ```sql
 -- CORE MESSAGE DATA
 message.id                                → chat_messages.id
-message.chat_id                           → chat_messages.chat_id
+Generated chat.id (from buyer-stylist pair) → chat_messages.chat_id
 message.message                           → chat_messages.content
 message.created_at                        → chat_messages.created_at
 NOT message.is_unread                     → chat_messages.is_read (invert logic)
 
--- COMPLEX SENDER MAPPING
+-- SIMPLIFIED SENDER MAPPING (no booking lookup needed)
 IF message.is_from = 'buyer':
-  SELECT customer_id FROM bookings
-  WHERE id = (SELECT booking_id FROM chats WHERE id = message.chat_id)
-  → chat_messages.sender_id
-
+  booking.buyer_id → chat_messages.sender_id
 IF message.is_from = 'stylist':
-  SELECT stylist_id FROM bookings
-  WHERE id = (SELECT booking_id FROM chats WHERE id = message.chat_id)
-  → chat_messages.sender_id
+  booking.stylist_id → chat_messages.sender_id
 
--- IMAGE HANDLING
+-- IMAGE HANDLING (now migratable!)
 IF message.is_image = 1:
   Create media record with:
   - media_type = 'chat_image'
@@ -437,8 +442,8 @@ IF message.is_image = 1:
 
 ### 6.3 MySQL `personalchat` + `personal_message` → NOT MIGRATED
 
-**Business Decision**: All communication must be tied to bookings
-**Data Loss**: Personal chat history will be lost
+**Business Decision**: Focus on booking-related communication history
+**Data Loss**: Personal chat history will be lost (but booking-related chats preserved)
 
 ## Phase 7: Reviews & Ratings
 
@@ -501,6 +506,25 @@ service_images_image.service_id           → media.service_id
 image.file_name (via image_id)            → media.file_path
 'service_image'                           → media.media_type
 FIRST image per service                   → media.is_preview_image = true
+```
+
+### 8.4 Chat Images from S3 Backup → PostgreSQL `media` (NOW MIGRATABLE!)
+
+**Complexity**: MEDIUM (Direct file migration from S3 backup)
+
+```sql
+-- CHAT IMAGE MIGRATION (enabled by Phase 6 success)
+Chat-Images/{chatId}/{fileName}           → media.file_path
+message.id (from Phase 6)                 → media.chat_message_id
+'chat_image'                              → media.media_type
+message.sender_id                         → media.owner_id
+DEFAULT false                             → media.is_preview_image
+
+-- MIGRATION SCOPE (Updated)
+Total Chat Images: 810 files (1.76 GB)
+Migratable: ALL 810 files (since chats now migrate successfully)
+Storage Bucket: 'chat-media'
+Path Format: {chatId}/{messageId}/{filename}.ext
 ```
 
 ## Phase 9: Stylist Availability System

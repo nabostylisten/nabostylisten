@@ -23,7 +23,7 @@ interface ValidationResult {
   missing_messages: string[];
   orphaned_chats: string[];
   orphaned_messages: string[];
-  chat_booking_mismatches: number;
+  invalid_customer_stylist_relationships: number;
   message_sender_mismatches: Array<{
     message_id: string;
     expected_sender: string;
@@ -125,7 +125,7 @@ async function validateChats(): Promise<ValidationResult> {
       { data: pgChats, error: chatFetchError },
       { data: pgMessages, error: messageFetchError }
     ] = await Promise.all([
-      supabase.from("chats").select("id, booking_id"),
+      supabase.from("chats").select("id, customer_id, stylist_id"),
       supabase.from("chat_messages").select("id, chat_id, sender_id"),
     ]);
 
@@ -170,11 +170,16 @@ async function validateChats(): Promise<ValidationResult> {
       logger.warn(`Found ${missing_messages.length} missing messages`);
     }
 
-    // 6. Check for orphaned chats (no corresponding booking)
+    // 6. Check for chats with invalid customer/stylist references
     const { data: orphanedChats, error: orphanError } = await supabase
       .from("chats")
-      .select("id, booking_id")
-      .is("booking_id", null);
+      .select(`
+        id,
+        customer_id,
+        stylist_id,
+        customer:profiles!customer_id(id, role),
+        stylist:profiles!stylist_id(id, role)
+      `);
 
     if (orphanError) {
       validation_errors.push(

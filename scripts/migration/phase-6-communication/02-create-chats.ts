@@ -16,7 +16,8 @@ import type { ProcessedChat, ProcessedMessage } from "./01-extract-chats";
 interface CreationResult {
   created_chats: Array<{
     id: string;
-    booking_id: string;
+    customer_id: string;
+    stylist_id: string;
   }>;
   created_messages: Array<{
     id: string;
@@ -102,11 +103,12 @@ async function createChats(): Promise<CreationResult> {
       // Process each chat in the batch
       const batchPromises = batch.map(async (chat) => {
         try {
-          // Check if chat already exists
+          // Check if chat already exists for this customer-stylist pair
           const { data: existingChat, error: checkError } = await supabase
             .from("chats")
             .select("id")
-            .eq("booking_id", chat.booking_id)
+            .eq("customer_id", chat.customer_id)
+            .eq("stylist_id", chat.stylist_id)
             .single();
 
           if (checkError && checkError.code !== "PGRST116") {
@@ -117,7 +119,7 @@ async function createChats(): Promise<CreationResult> {
 
           if (existingChat) {
             logger.warn(
-              `Chat already exists for booking ${chat.booking_id}, skipping`,
+              `Chat already exists for customer: ${chat.customer_id}, stylist: ${chat.stylist_id}, skipping`,
             );
             return;
           }
@@ -127,11 +129,12 @@ async function createChats(): Promise<CreationResult> {
             .from("chats")
             .insert({
               id: chat.id,
-              booking_id: chat.booking_id,
+              customer_id: chat.customer_id,
+              stylist_id: chat.stylist_id,
               created_at: chat.created_at,
               updated_at: chat.updated_at,
             })
-            .select("id, booking_id")
+            .select("id, customer_id, stylist_id")
             .single();
 
           if (createError) {
@@ -141,11 +144,12 @@ async function createChats(): Promise<CreationResult> {
           if (createdChat) {
             created_chats.push({
               id: createdChat.id,
-              booking_id: createdChat.booking_id,
+              customer_id: createdChat.customer_id,
+              stylist_id: createdChat.stylist_id,
             });
 
             logger.debug(
-              `✓ Created chat: ${chat.id} for booking: ${chat.booking_id}`,
+              `✓ Created chat: ${chat.id} for customer: ${chat.customer_id}, stylist: ${chat.stylist_id}`,
             );
           }
         } catch (error) {

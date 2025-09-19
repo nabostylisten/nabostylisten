@@ -25,6 +25,12 @@ export interface ServiceMediaParams {
   isPreview: boolean;
 }
 
+export interface ChatMediaParams {
+  userId: string; // sender of the message
+  messageId: string;
+  storagePath: string;
+}
+
 export async function createProfileMediaRecord({
   userId,
   storagePath,
@@ -115,6 +121,54 @@ export async function createServiceMediaRecord({
       success: false,
       storagePath,
       mediaType: "service_image",
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+export async function createChatMediaRecord({
+  userId,
+  messageId,
+  storagePath,
+}: ChatMediaParams): Promise<MediaRecordResult> {
+  try {
+    const supabase = createServiceClient();
+
+    const mediaData: MediaInsert = {
+      owner_id: userId,
+      chat_message_id: messageId,
+      file_path: storagePath,
+      media_type: "chat_image",
+      is_preview_image: false,
+      created_at: new Date().toISOString(),
+    };
+
+    const { data, error } = await supabase
+      .from("media")
+      .insert(mediaData)
+      .select("id")
+      .single();
+
+    if (error) {
+      return {
+        success: false,
+        storagePath,
+        mediaType: "chat_image",
+        error: error.message,
+      };
+    }
+
+    return {
+      success: true,
+      mediaId: data.id,
+      storagePath,
+      mediaType: "chat_image",
+    };
+  } catch (error) {
+    return {
+      success: false,
+      storagePath,
+      mediaType: "chat_image",
       error: error instanceof Error ? error.message : String(error),
     };
   }

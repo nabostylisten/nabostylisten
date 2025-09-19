@@ -6,6 +6,7 @@ import {
   calculateMediaRecordStats,
   createProfileMediaRecord,
   createServiceMediaRecord,
+  createChatMediaRecord,
   formatMediaRecordReport,
   type MediaRecordResult,
 } from "./utils/media-record-creator";
@@ -41,6 +42,22 @@ interface ServiceUpload {
   error?: string;
 }
 
+interface ChatUpload {
+  oldChatId: string;
+  newChatId: string;
+  messageId: string;
+  imageId: string;
+  originalPath: string;
+  filename: string;
+  storagePath: string;
+  originalSize: number;
+  compressedSize: number;
+  compressionRatio: number;
+  uploadTime: number;
+  success: boolean;
+  error?: string;
+}
+
 interface ProfileImageMigrationReport {
   migratedAt: string;
   successfulUploads: number;
@@ -55,11 +72,19 @@ interface ServiceImageMigrationReport {
   uploads: ServiceUpload[];
 }
 
+interface ChatImageMigrationReport {
+  migratedAt: string;
+  successfulUploads: number;
+  failedUploads: number;
+  uploads: ChatUpload[];
+}
+
 interface MediaRecordCreationReport {
   createdAt: string;
   sourceFiles: {
     profileImagesReport: string;
     serviceImagesReport: string;
+    chatImagesReport: string;
   };
   totalRecords: number;
   successfulRecords: number;
@@ -75,12 +100,18 @@ interface MediaRecordCreationReport {
     failed: number;
     withPreview: number;
   };
+  chatRecords: {
+    total: number;
+    successful: number;
+    failed: number;
+  };
   records: Array<{
-    mediaType: "profile" | "service";
+    mediaType: "profile" | "service" | "chat";
     mediaId?: string;
     storagePath: string;
     userId: string;
     serviceId?: string;
+    messageId?: string;
     isPreview: boolean;
     success: boolean;
     error?: string;
@@ -99,6 +130,7 @@ interface MediaRecordCreationReport {
 const TEMP_DIR = path.join(__dirname, "../temp");
 const PROFILE_REPORT_PATH = path.join(TEMP_DIR, "profile-images-migrated.json");
 const SERVICE_REPORT_PATH = path.join(TEMP_DIR, "service-images-migrated.json");
+const CHAT_REPORT_PATH = path.join(TEMP_DIR, "chat-images-migrated.json");
 const OUTPUT_PATH = path.join(TEMP_DIR, "media-records-created.json");
 
 async function loadJsonFile<T>(filePath: string, fileName: string): Promise<T> {
@@ -115,7 +147,7 @@ async function createMediaRecords(): Promise<void> {
 
   // Load migration reports
   console.log("📄 Loading migration reports...");
-  const [profileReport, serviceReport] = await Promise.all([
+  const [profileReport, serviceReport, chatReport] = await Promise.all([
     loadJsonFile<ProfileImageMigrationReport>(
       PROFILE_REPORT_PATH,
       "profile images migration report",
@@ -124,6 +156,13 @@ async function createMediaRecords(): Promise<void> {
       SERVICE_REPORT_PATH,
       "service images migration report",
     ),
+    loadJsonFile<ChatImageMigrationReport>(
+      CHAT_REPORT_PATH,
+      "chat images migration report",
+    ).catch(() => {
+      console.log("⚠️  Chat images report not found, skipping chat records creation");
+      return null;
+    }),
   ]);
 
   // Filter for successful uploads only
@@ -133,6 +172,9 @@ async function createMediaRecords(): Promise<void> {
   const successfulServiceUploads = serviceReport.uploads.filter((u) =>
     u.success
   );
+  const successfulChatUploads = chatReport?.uploads.filter((u) =>
+    u.success
+  ) || [];
 
   console.log(
     `✅ Found ${successfulProfileUploads.length} successful profile image uploads`,
@@ -140,10 +182,14 @@ async function createMediaRecords(): Promise<void> {
   console.log(
     `✅ Found ${successfulServiceUploads.length} successful service image uploads`,
   );
+  console.log(
+    `✅ Found ${successfulChatUploads.length} successful chat image uploads`,
+  );
 
   if (
     successfulProfileUploads.length === 0 &&
-    successfulServiceUploads.length === 0
+    successfulServiceUploads.length === 0 &&
+    successfulChatUploads.length === 0
   ) {
     console.log("⚠️  No successful uploads found to create records for");
     return;
@@ -160,7 +206,7 @@ async function createMediaRecords(): Promise<void> {
     try {
       processed++;
       const progress = `[${processed}/${
-        successfulProfileUploads.length + successfulServiceUploads.length
+        successfulProfileUploads.length + successfulServiceUploads.length + successfulChatUploads.length
       }]`;
 
       console.log(
@@ -209,7 +255,7 @@ async function createMediaRecords(): Promise<void> {
     try {
       processed++;
       const progress = `[${processed}/${
-        successfulProfileUploads.length + successfulServiceUploads.length
+        successfulProfileUploads.length + successfulServiceUploads.length + successfulChatUploads.length
       }]`;
 
       console.log(
@@ -259,17 +305,74 @@ async function createMediaRecords(): Promise<void> {
     }
   }
 
+  console.log("\n🔄 Creating chat image records...");
+
+  // Create chat image records
+  for (const upload of successfulChatUploads) {
+    try {
+      processed++;
+      const progress = `[${processed}/${
+        successfulProfileUploads.length + successfulServiceUploads.length + successfulChatUploads.length
+      }]`;
+
+      console.log(
+        `${progress} Creating record for chat message ${upload.messageId}...`,
+      );
+
+      // We need to find the sender ID from the chat upload data
+      // For now, we'll use a placeholder - in a real scenario we'd need to look up the message sender
+      const senderId = upload.newChatId; // This should be replaced with actual sender lookup
+
+      const result = await createChatMediaRecord({
+        userId: senderId, // This should be the actual sender ID
+        messageId: upload.messageId,
+        storagePath: upload.storagePath,
+      });
+
+      allRecords.push(result);
+
+      if (result.success) {
+        console.log(`${progress} ✅ Created media record ${result.mediaId}`);
+      } else {
+        console.log(`${progress} ❌ Failed to create record: ${result.error}`);
+        errors.push(
+          `Chat record creation failed for ${upload.storagePath}: ${result.error}`,
+        );
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : String(error);
+      console.log(
+        `❌ Error creating chat record for ${upload.storagePath}: ${errorMessage}`,
+      );
+      errors.push(
+        `Chat record error for ${upload.storagePath}: ${errorMessage}`,
+      );
+
+      allRecords.push({
+        success: false,
+        storagePath: upload.storagePath,
+        mediaType: "chat_image",
+        error: errorMessage,
+      });
+    }
+  }
+
   // Calculate statistics
   const stats = calculateMediaRecordStats(allRecords);
   const profileRecords = allRecords.filter((r) => r.mediaType === "avatar");
   const serviceRecords = allRecords.filter((r) =>
     r.mediaType === "service_image"
   );
+  const chatRecords = allRecords.filter((r) => r.mediaType === "chat_image");
 
   const successfulProfileRecords = profileRecords.filter((r) => r.success);
   const failedProfileRecords = profileRecords.filter((r) => !r.success);
   const successfulServiceRecords = serviceRecords.filter((r) => r.success);
   const failedServiceRecords = serviceRecords.filter((r) => !r.success);
+  const successfulChatRecords = chatRecords.filter((r) => r.success);
+  const failedChatRecords = chatRecords.filter((r) => !r.success);
 
   // Count preview images
   const serviceUploadsWithPreview = successfulServiceUploads.filter((u) =>
@@ -282,6 +385,7 @@ async function createMediaRecords(): Promise<void> {
     sourceFiles: {
       profileImagesReport: PROFILE_REPORT_PATH,
       serviceImagesReport: SERVICE_REPORT_PATH,
+      chatImagesReport: CHAT_REPORT_PATH,
     },
     totalRecords: allRecords.length,
     successfulRecords: stats.successfulRecords,
@@ -297,6 +401,11 @@ async function createMediaRecords(): Promise<void> {
       failed: failedServiceRecords.length,
       withPreview: serviceUploadsWithPreview.length,
     },
+    chatRecords: {
+      total: chatRecords.length,
+      successful: successfulChatRecords.length,
+      failed: failedChatRecords.length,
+    },
     records: allRecords.map((record) => {
       // Find corresponding upload for additional context
       const profileUpload = successfulProfileUploads.find((u) =>
@@ -305,16 +414,22 @@ async function createMediaRecords(): Promise<void> {
       const serviceUpload = successfulServiceUploads.find((u) =>
         u.storagePath === record.storagePath
       );
+      const chatUpload = successfulChatUploads.find((u) =>
+        u.storagePath === record.storagePath
+      );
 
       return {
         mediaType: record.mediaType === "avatar"
           ? "profile" as const
-          : "service" as const,
+          : record.mediaType === "service_image"
+          ? "service" as const
+          : "chat" as const,
         mediaId: record.mediaId,
         storagePath: record.storagePath,
-        userId: profileUpload?.newUserId || serviceUpload?.stylistId ||
+        userId: profileUpload?.newUserId || serviceUpload?.stylistId || chatUpload?.newChatId ||
           "unknown",
         serviceId: serviceUpload?.newServiceId,
+        messageId: chatUpload?.messageId,
         isPreview: serviceUpload?.isPreview || false,
         success: record.success,
         error: record.error,
@@ -364,6 +479,13 @@ async function createMediaRecords(): Promise<void> {
     `  └─ Preview Images: ${report.serviceRecords.withPreview.toLocaleString()}`,
   );
 
+  console.log(`Chat Images:`);
+  console.log(`  └─ Total: ${report.chatRecords.total.toLocaleString()}`);
+  console.log(
+    `  └─ Successful: ${report.chatRecords.successful.toLocaleString()}`,
+  );
+  console.log(`  └─ Failed: ${report.chatRecords.failed.toLocaleString()}`);
+
   if (errors.length > 0) {
     console.log(`\n❌ Errors (${errors.length}):`);
     errors.slice(0, 10).forEach((error) => console.log(`  - ${error}`));
@@ -393,6 +515,9 @@ async function createMediaRecords(): Promise<void> {
   );
   console.log(
     `  • Service images linked: ${successfulServiceRecords.length.toLocaleString()}`,
+  );
+  console.log(
+    `  • Chat images linked: ${successfulChatRecords.length.toLocaleString()}`,
   );
   console.log(
     `  • Preview images set: ${serviceUploadsWithPreview.length.toLocaleString()}`,

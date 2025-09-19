@@ -5,7 +5,6 @@
 import { readFileSync } from "fs";
 import type { MySQLBuyer, MySQLStylist } from "../../shared/types";
 import type { MigrationLogger } from "../../shared/logger";
-import { MySQLCoordinateParser } from "../../shared/mysql-coordinate-parser";
 import { UserValidator } from "./validation";
 
 // Address data from MySQL

@@ -145,9 +145,11 @@ async function analyzeFile(
       chatId = pathSegments[1];
       imageId = pathSegments[2];
 
-      // Chat images cannot be migrated (no chats were migrated)
-      skipReason =
-        "Chat images cannot be migrated (no chats migrated in Phase 6)";
+      canMigrate = fileType.isSupported;
+      if (!fileType.isSupported) {
+        skipReason = `Unsupported file type: ${fileType.mimeType}`;
+      }
+      // Note: We'll validate if the chat was actually migrated in the next script
     } else {
       skipReason = "Invalid chat path structure";
     }

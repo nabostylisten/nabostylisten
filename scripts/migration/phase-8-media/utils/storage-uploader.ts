@@ -36,6 +36,15 @@ export interface ServiceImageUploadParams {
   isPreview?: boolean;
 }
 
+export interface ChatImageUploadParams {
+  oldChatId: string;
+  newChatId: string;
+  messageId: string;
+  imageId: string;
+  filePath: string;
+  fileInfo: FileTypeInfo;
+}
+
 export async function uploadProfileImage({
   oldUserId,
   newUserId,
@@ -250,7 +259,115 @@ export async function uploadServiceImage({
   }
 }
 
-export async function batchUploadFiles<T extends ProfileImageUploadParams | ServiceImageUploadParams>(
+export async function uploadChatImage({
+  newChatId,
+  messageId,
+  imageId,
+  filePath,
+  fileInfo,
+}: ChatImageUploadParams): Promise<UploadResult> {
+  const uploadStartTime = Date.now();
+  let compressionResult: CompressionResult | null = null;
+
+  try {
+    // Validate the image file first
+    const validation = await validateImageFile(filePath);
+    if (!validation.isValid) {
+      return {
+        success: false,
+        storagePath: "",
+        originalPath: filePath,
+        filename: "",
+        fileInfo,
+        compressionStats: {
+          originalSize: 0,
+          compressedSize: 0,
+          compressionRatio: 0,
+          compressionTime: 0,
+        },
+        uploadTime: Date.now() - uploadStartTime,
+        error: validation.error,
+      };
+    }
+
+    // Compress the image with size limit for chat-media bucket
+    const maxSizeBytes = bucketConfigs["chat-media"].maxSize;
+    compressionResult = await compressImageToSizeLimit(filePath, fileInfo.extension, maxSizeBytes);
+
+    // Generate filename: keep original image ID for traceability (with proper dot separator)
+    const filename = `${imageId}.${fileInfo.extension}`;
+    const storagePath = storagePaths.chatMedia(newChatId, messageId, filename);
+
+    // Create File object from compressed image
+    const fileBuffer = await fs.readFile(compressionResult.compressedPath);
+    const file = new File([new Uint8Array(fileBuffer)], filename, {
+      type: fileInfo.mimeType,
+    });
+
+    // Upload to Supabase Storage
+    const supabase = createServiceClient();
+    await uploadFile(supabase, {
+      bucket: storagePath.bucket,
+      path: storagePath.path,
+      file,
+      contentType: fileInfo.mimeType,
+    });
+
+    // Cleanup compressed file
+    await fs.unlink(compressionResult.compressedPath);
+
+    const uploadTime = Date.now() - uploadStartTime;
+
+    return {
+      success: true,
+      storagePath: storagePath.path,
+      originalPath: filePath,
+      filename,
+      fileInfo,
+      compressionStats: {
+        originalSize: compressionResult.originalSize,
+        compressedSize: compressionResult.compressedSize,
+        compressionRatio: compressionResult.compressionRatio,
+        compressionTime: compressionResult.compressionTime,
+      },
+      uploadTime,
+    };
+  } catch (error) {
+    // Cleanup on error
+    if (compressionResult?.compressedPath) {
+      try {
+        await fs.unlink(compressionResult.compressedPath);
+      } catch (cleanupError) {
+        console.warn("Failed to cleanup compressed file:", cleanupError);
+      }
+    }
+
+    return {
+      success: false,
+      storagePath: "",
+      originalPath: filePath,
+      filename: "",
+      fileInfo,
+      compressionStats: compressionResult
+        ? {
+            originalSize: compressionResult.originalSize,
+            compressedSize: compressionResult.compressedSize,
+            compressionRatio: compressionResult.compressionRatio,
+            compressionTime: compressionResult.compressionTime,
+          }
+        : {
+            originalSize: 0,
+            compressedSize: 0,
+            compressionRatio: 0,
+            compressionTime: 0,
+          },
+      uploadTime: Date.now() - uploadStartTime,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+export async function batchUploadFiles<T extends ProfileImageUploadParams | ServiceImageUploadParams | ChatImageUploadParams>(
   files: T[],
   uploadFunction: (params: T) => Promise<UploadResult>,
   concurrency: number = 3

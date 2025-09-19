@@ -115,26 +115,23 @@ async function extractChats(): Promise<ExtractionResult> {
 
     logger.info(`Created booking mapping for ${bookingMap.size} bookings`);
 
-    // Get list of migrated booking IDs from PostgreSQL bookings
-    const bookingMappingPath = path.join(tempDir, "bookings-created.json");
-    let migratedBookingIds = new Set<string>();
+    // Get user ID mapping for resolving buyer/stylist to new user IDs
+    const userMappingPath = path.join(tempDir, "user-id-mapping.json");
+    let userMapping = new Map<string, string>();
 
     try {
-      const bookingMapping = JSON.parse(
-        await fs.readFile(bookingMappingPath, "utf-8"),
+      const userMappingData = JSON.parse(
+        await fs.readFile(userMappingPath, "utf-8"),
       );
-      // The file contains booking IDs that were successfully migrated
-      if (bookingMapping.results) {
-        migratedBookingIds = new Set(
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          bookingMapping.results.map((r: any) => r.id),
-        );
+      // The file has structure: { metadata: {...}, mapping: { oldId: newId } }
+      if (userMappingData.mapping) {
+        userMapping = new Map(Object.entries(userMappingData.mapping));
       }
-      logger.info(`Found ${migratedBookingIds.size} migrated booking IDs`);
+      logger.info(`Found ${userMapping.size} user ID mappings`);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       logger.warn(
-        "Could not load booking creation results, will process all chats",
+        "Could not load user ID mappings, chat migration may fail",
       );
     }
 
@@ -157,17 +154,9 @@ async function extractChats(): Promise<ExtractionResult> {
           continue;
         }
 
-        // Check if the booking was successfully migrated to PostgreSQL
-        if (migratedBookingIds.size > 0 && !migratedBookingIds.has(chat.booking_id)) {
-          skippedChats.push({
-            chat,
-            reason: "Booking was not migrated to PostgreSQL",
-          });
-          continue;
-        }
-
-        // Validate booking exists in our mapping
-        if (!bookingMap.has(chat.booking_id)) {
+        // Get booking information for user resolution
+        const bookingInfo = bookingMap.get(chat.booking_id);
+        if (!bookingInfo) {
           skippedChats.push({
             chat,
             reason: "No booking found for this chat",
@@ -175,16 +164,29 @@ async function extractChats(): Promise<ExtractionResult> {
           continue;
         }
 
+        // Map old user IDs to new user IDs
+        const newCustomerId = userMapping.get(bookingInfo.buyer_id);
+        const newStylistId = userMapping.get(bookingInfo.stylist_id);
+
+        if (!newCustomerId || !newStylistId) {
+          skippedChats.push({
+            chat,
+            reason: "Could not resolve customer or stylist ID mapping",
+          });
+          continue;
+        }
+
         const processedChat: ProcessedChat = {
           id: chat.id.toLowerCase(),
-          booking_id: chat.booking_id,
+          customer_id: newCustomerId,
+          stylist_id: newStylistId,
           created_at: chat.created_at,
           updated_at: chat.updated_at,
         };
 
         processedChats.push(processedChat);
 
-        logger.debug(`✓ Processed chat: ${chat.id} for booking: ${chat.booking_id}`);
+        logger.debug(`✓ Processed chat: ${chat.id} for customer: ${newCustomerId}, stylist: ${newStylistId}`);
       } catch (error) {
         logger.error(`Failed to process chat ${chat.id}:`, error);
         skippedChats.push({

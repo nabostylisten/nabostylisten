@@ -588,7 +588,7 @@ ORDER BY booking_month DESC
 LIMIT 12;
 ```
 
-### ✅ Step 3 Results (Completed Successfully - 2025-01-19)
+### ✅ Step 3 Results (Completed Successfully)
 
 **Final Statistics**:
 
@@ -603,11 +603,14 @@ LIMIT 12;
 - **3,051 bookings with services** (68.4% have valid service relationships)
 - **1,408 bookings without services** (31.6% reference unmigrated services)
 
+**TODO**: Revise the migration script for bookings such that we migrate booking not necessarily linked to services or stylists.
+
 **Critical Discovery - Dual Service Storage Architecture**:
 
 The MySQL system used two distinct storage patterns for services, which explains the foreign key failures:
 
 1. **Service Table (Master Catalog)**: 389 total services
+
    - 229 active services → 200 migrated (87% of eligible)
    - 160 soft-deleted services → not migrated
    - 29 orphaned services (missing stylists) → not migrated
@@ -626,6 +629,7 @@ The MySQL system used two distinct storage patterns for services, which explains
 **Why This Is Actually Good Design**:
 
 The embedded service pattern is intentional data architecture that:
+
 - Preserves historical accuracy (service details at booking time)
 - Maintains booking integrity (bookings remain complete even after service deletion)
 - Prevents cascade deletion issues (bookings aren't lost when services are removed)

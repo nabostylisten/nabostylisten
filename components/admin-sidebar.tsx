@@ -35,7 +35,7 @@ const adminSidebarItems = [
     description: "Håndter stylist-søknader",
   },
   {
-    title: "Tjenester",
+    title: "Tjenestekategorier",
     href: "/admin/tjenester",
     icon: Scissors,
     description: "Administrer kategorier",

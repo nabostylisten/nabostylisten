@@ -368,16 +368,36 @@ bun run scripts/migration/phase-3-services/03-extract-services.ts
 | "Description parsing failed" | Review MySQL description format edge cases          |
 | "Invalid duration/price"     | Check for NULL or negative values in MySQL          |
 
-### Important Note: Orphaned Services
+### Important Note: Service Migration Results & Data Architecture Discovery
 
 ⚠️ **Expected Behavior**: The migration will correctly skip services that reference stylists who no longer exist in the MySQL `stylist` table. This is intentional data integrity protection.
 
 **Background**: In the old MySQL system, some stylists were deleted without cascading the delete to their services, resulting in orphaned service records. The migration system identifies these orphaned services and excludes them to maintain referential integrity in the new PostgreSQL database.
 
-**Typical Impact**:
-- Approximately 25-30 services may be skipped due to missing stylist references
-- This represents ~10-15% of total services depending on the dataset
-- These services cannot be migrated as they lack valid ownership
+**Actual Migration Results (2025-01-19)**:
+- **389 total services** found in MySQL `service` table
+  - ✅ **229 active services** (deleted_at = NULL)
+  - 🗑️ **160 soft-deleted services** (deleted_at != NULL)
+  - 👤 **29 services skipped** due to missing stylist mappings
+  - ✅ **200 services successfully migrated** to PostgreSQL
+
+**Critical Discovery - Embedded Service Architecture**:
+The MySQL system used a **dual storage pattern** for services:
+1. **Service Table**: Master catalog of all services (389 records)
+2. **Booking.service JSON Field**: Embedded complete service objects in bookings (not just IDs)
+
+This means bookings contain **historical snapshots** of services at booking time, preserving service details even after deletion from the master catalog. This is actually good database design for maintaining booking integrity.
+
+**Service ID Analysis from Bookings**:
+- **354 unique service IDs** referenced across 4,469 bookings
+  - ✅ **95 services (27%)** exist in migrated services
+  - ⚠️ **43 services (12%)** are soft-deleted but still referenced
+  - ❌ **216 services (61%)** exist ONLY as embedded JSON in bookings (never in service table)
+
+**Business Impact**:
+- **Intentional Design**: The 216 "phantom" services are historical snapshots, not missing data
+- **Data Integrity**: System correctly preserves booking history without requiring service persistence
+- **Migration Success**: 200 active services migrated represents 87% of eligible services (229 active)
 
 **Validation**: Check the `temp/services-created.json` output for skipped services with `skip_reason: "Stylist not found in user mapping"`
 

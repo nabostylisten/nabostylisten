@@ -16,49 +16,22 @@ export async function getChatsByProfileId(profileId: string) {
     return { error: "Unauthorized", data: null };
   }
 
-  // First get bookings where user is involved, then get their chats
-  const { data: userBookings, error: bookingsError } = await supabase
-    .from("bookings")
-    .select("id")
-    .or(`customer_id.eq.${profileId},stylist_id.eq.${profileId}`);
-
-  if (bookingsError) {
-    return { error: bookingsError.message, data: null };
-  }
-
-  if (!userBookings || userBookings.length === 0) {
-    return { error: null, data: [] };
-  }
-
-  const bookingIds = userBookings.map((b) => b.id);
-
-  // Get all chats for those bookings with unread message counts
+  // Direct chat participant lookup
   const { data: chats, error } = await supabase
     .from("chats")
     .select(`
       id,
-      booking_id,
+      customer_id,
+      stylist_id,
       created_at,
       updated_at,
-      bookings!inner (
+      customer:profiles!customer_id (
         id,
-        customer_id,
-        stylist_id,
-        start_time,
-        status,
-        customer:profiles!customer_id (
-          id,
-          full_name
-        ),
-        stylist:profiles!stylist_id (
-          id,
-          full_name
-        ),
-        booking_services (
-          services (
-            title
-          )
-        )
+        full_name
+      ),
+      stylist:profiles!stylist_id (
+        id,
+        full_name
       ),
       chat_messages (
         id,
@@ -67,7 +40,7 @@ export async function getChatsByProfileId(profileId: string) {
         created_at
       )
     `)
-    .in("booking_id", bookingIds)
+    .or(`customer_id.eq.${profileId},stylist_id.eq.${profileId}`)
     .order("updated_at", { ascending: false });
 
   if (error) {
@@ -92,56 +65,22 @@ export async function getChatsByRole(
     return { error: "Unauthorized", data: null };
   }
 
-  // Get bookings where user has the specified role
-  let bookingsQuery = supabase
-    .from("bookings")
-    .select("id");
-
-  if (role === "customer") {
-    bookingsQuery = bookingsQuery.eq("customer_id", profileId);
-  } else {
-    bookingsQuery = bookingsQuery.eq("stylist_id", profileId);
-  }
-
-  const { data: userBookings, error: bookingsError } = await bookingsQuery;
-
-  if (bookingsError) {
-    return { error: bookingsError.message, data: null };
-  }
-
-  if (!userBookings || userBookings.length === 0) {
-    return { error: null, data: [] };
-  }
-
-  const bookingIds = userBookings.map((b) => b.id);
-
-  // Get all chats for those bookings with unread message counts
-  const { data: chats, error } = await supabase
+  // Direct customer_id or stylist_id filtering
+  let query = supabase
     .from("chats")
     .select(`
       id,
-      booking_id,
+      customer_id,
+      stylist_id,
       created_at,
       updated_at,
-      bookings!inner (
+      customer:profiles!customer_id (
         id,
-        customer_id,
-        stylist_id,
-        start_time,
-        status,
-        customer:profiles!customer_id (
-          id,
-          full_name
-        ),
-        stylist:profiles!stylist_id (
-          id,
-          full_name
-        ),
-        booking_services (
-          services (
-            title
-          )
-        )
+        full_name
+      ),
+      stylist:profiles!stylist_id (
+        id,
+        full_name
       ),
       chat_messages (
         id,
@@ -149,9 +88,17 @@ export async function getChatsByRole(
         sender_id,
         created_at
       )
-    `)
-    .in("booking_id", bookingIds)
-    .order("updated_at", { ascending: false });
+    `);
+
+  if (role === "customer") {
+    query = query.eq("customer_id", profileId);
+  } else {
+    query = query.eq("stylist_id", profileId);
+  }
+
+  const { data: chats, error } = await query.order("updated_at", {
+    ascending: false,
+  });
 
   if (error) {
     return { error: error.message, data: null };
@@ -160,7 +107,10 @@ export async function getChatsByRole(
   return { error: null, data: chats };
 }
 
-export async function getChatByBookingId(bookingId: string) {
+export async function getChatByParticipants(
+  customerId: string,
+  stylistId: string,
+) {
   const supabase = await createClient();
 
   // Get current user
@@ -172,45 +122,32 @@ export async function getChatByBookingId(bookingId: string) {
     return { error: "Unauthorized", data: null };
   }
 
-  // First check if user has access to this booking
-  const { data: booking, error: bookingError } = await supabase
-    .from("bookings")
-    .select("customer_id, stylist_id")
-    .eq("id", bookingId)
-    .single();
-
-  if (bookingError || !booking) {
-    return { error: "Booking not found", data: null };
-  }
-
-  const hasAccess = booking.customer_id === user.id ||
-    booking.stylist_id === user.id;
-
-  if (!hasAccess) {
+  // Verify user has access (is either customer or stylist)
+  if (user.id !== customerId && user.id !== stylistId) {
     return { error: "Unauthorized", data: null };
   }
 
-  // Get or create chat for this booking
-  const chatResponse = await supabase
+  // Get or create chat for this customer-stylist pair
+  const chatResult = await supabase
     .from("chats")
-    .select("id, booking_id, created_at")
-    .eq("booking_id", bookingId)
+    .select("id, customer_id, stylist_id, created_at")
+    .eq("customer_id", customerId)
+    .eq("stylist_id", stylistId)
     .single();
-  const chatError = chatResponse.error;
-  let chat = chatResponse.data;
+  let chat = chatResult.data;
+  const chatError = chatResult.error;
 
   if (chatError && chatError.code === "PGRST116") {
     // Chat doesn't exist, create it
     const { data: newChat, error: createError } = await supabase
       .from("chats")
-      .insert({ booking_id: bookingId })
-      .select("id, booking_id, created_at")
+      .insert({ customer_id: customerId, stylist_id: stylistId })
+      .select("id, customer_id, stylist_id, created_at")
       .single();
 
     if (createError) {
       return { error: createError.message, data: null };
     }
-
     chat = newChat;
   } else if (chatError) {
     return { error: chatError.message, data: null };
@@ -231,16 +168,10 @@ export async function getChatMessages(chatId: string) {
     return { error: "Unauthorized", data: null };
   }
 
-  // Verify user has access to this chat through the booking
+  // Verify user has access to this chat via customer-stylist relationship
   const { data: chat, error: chatError } = await supabase
     .from("chats")
-    .select(`
-      id,
-      bookings!inner (
-        customer_id,
-        stylist_id
-      )
-    `)
+    .select("id, customer_id, stylist_id")
     .eq("id", chatId)
     .single();
 
@@ -248,8 +179,7 @@ export async function getChatMessages(chatId: string) {
     return { error: "Chat not found", data: null };
   }
 
-  const hasAccess = chat.bookings.customer_id === user.id ||
-    chat.bookings.stylist_id === user.id;
+  const hasAccess = chat.customer_id === user.id || chat.stylist_id === user.id;
 
   if (!hasAccess) {
     return { error: "Unauthorized", data: null };
@@ -297,16 +227,10 @@ export async function createChatMessage({
     return { error: "Unauthorized", data: null };
   }
 
-  // Verify user has access to this chat
+  // Verify user has access to this chat via customer-stylist relationship
   const { data: chat, error: chatError } = await supabase
     .from("chats")
-    .select(`
-      id,
-      bookings!inner (
-        customer_id,
-        stylist_id
-      )
-    `)
+    .select("id, customer_id, stylist_id")
     .eq("id", chatId)
     .single();
 
@@ -314,8 +238,7 @@ export async function createChatMessage({
     return { error: "Chat not found", data: null };
   }
 
-  const hasAccess = chat.bookings.customer_id === user.id ||
-    chat.bookings.stylist_id === user.id;
+  const hasAccess = chat.customer_id === user.id || chat.stylist_id === user.id;
 
   if (!hasAccess) {
     return { error: "Unauthorized", data: null };
@@ -366,16 +289,10 @@ export async function markChatMessagesAsRead(chatId: string) {
     return { error: "Unauthorized", data: null };
   }
 
-  // Verify user has access to this chat
+  // Verify user has access to this chat via customer-stylist relationship
   const { data: chat, error: chatError } = await supabase
     .from("chats")
-    .select(`
-      id,
-      bookings!inner (
-        customer_id,
-        stylist_id
-      )
-    `)
+    .select("id, customer_id, stylist_id")
     .eq("id", chatId)
     .single();
 
@@ -383,8 +300,7 @@ export async function markChatMessagesAsRead(chatId: string) {
     return { error: "Chat not found", data: null };
   }
 
-  const hasAccess = chat.bookings.customer_id === user.id ||
-    chat.bookings.stylist_id === user.id;
+  const hasAccess = chat.customer_id === user.id || chat.stylist_id === user.id;
 
   if (!hasAccess) {
     return { error: "Unauthorized", data: null };
@@ -417,27 +333,11 @@ export async function getUnreadMessageCount(profileId: string) {
     return { error: "Unauthorized", data: null };
   }
 
-  // First get bookings where user is involved
-  const { data: userBookings, error: bookingsError } = await supabase
-    .from("bookings")
-    .select("id")
-    .or(`customer_id.eq.${profileId},stylist_id.eq.${profileId}`);
-
-  if (bookingsError) {
-    return { error: bookingsError.message, data: null };
-  }
-
-  if (!userBookings || userBookings.length === 0) {
-    return { error: null, data: { count: 0 } };
-  }
-
-  const bookingIds = userBookings.map((b) => b.id);
-
-  // First get chat IDs for these bookings
+  // Get chat IDs for this user (either as customer or stylist)
   const { data: userChats, error: chatsError } = await supabase
     .from("chats")
     .select("id")
-    .in("booking_id", bookingIds);
+    .or(`customer_id.eq.${profileId},stylist_id.eq.${profileId}`);
 
   if (chatsError) {
     return { error: chatsError.message, data: null };
@@ -580,9 +480,6 @@ export async function getPreviousBookingsBetweenUsers(
           currency,
           duration_minutes
         )
-      ),
-      chats (
-        id
       )
     `)
     .eq("customer_id", customerId)

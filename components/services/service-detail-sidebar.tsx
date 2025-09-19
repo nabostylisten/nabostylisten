@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { AddToCartButton } from "@/components/cart/add-to-cart-button";
 import { Heart, ShoppingCart, TestTube } from "lucide-react";
 import type { PublicServiceData } from "@/server/service.actions";
+import { StartChatButton } from "@/components/stylist-public-profile/start-chat-button";
 
 interface ServiceDetailSidebarProps {
   service: NonNullable<PublicServiceData>;
@@ -39,8 +40,16 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
   };
 
   return (
-    <Card className="sticky top-24">
-      <CardHeader>
+    <div className="space-y-4">
+      {/* Chat Button */}
+      <StartChatButton
+        stylistId={stylist.id}
+        stylistName={stylist.full_name || "stylisten"}
+      />
+
+      {/* Pricing Card */}
+      <Card className="sticky top-24">
+        <CardHeader>
         <CardTitle className="text-2xl">
           Fra {service.price} {service.currency}
         </CardTitle>
@@ -95,6 +104,7 @@ export function ServiceDetailSidebar({ service }: ServiceDetailSidebarProps) {
           <p>✓ Kvalitetsgaranti</p>
         </div>
       </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }

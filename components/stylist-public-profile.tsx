@@ -36,6 +36,7 @@ import {
   getPlatformFromUrl,
   getSocialMediaDisplayName,
 } from "@/lib/social-media";
+import { StartChatButton } from "@/components/stylist-public-profile/start-chat-button";
 
 type StylistPublicProfileProps = NonNullable<StylistProfileData>;
 
@@ -262,6 +263,14 @@ export function StylistPublicProfile({
 
           {/* Sidebar */}
           <div className="lg:col-span-1 space-y-6">
+            {/* Chat Button */}
+            <BlurFade delay={0.14} duration={0.5} inView>
+              <StartChatButton
+                stylistId={profile.id}
+                stylistName={profile.full_name || "stylisten"}
+              />
+            </BlurFade>
+
             {/* Info Card */}
             {stylistDetails && (
               <BlurFade delay={0.15} duration={0.5} inView>
